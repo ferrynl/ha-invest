@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'portfolio' / 'app'))
 from storage import Store
-from provider import fetch_quote
+from provider import fetch_quote, search_stocks, _search_stocks
 
 class PortfolioTests(unittest.TestCase):
     def setUp(self):
@@ -62,6 +62,31 @@ class PortfolioTests(unittest.TestCase):
         self.assertIn('+00:00', stamp)
         with self.assertRaises(ValueError):
             fetch_quote('', 'ASML.AS', 'AMSTERDAM', 'USD')
+
+    @patch('provider.urlopen')
+    def test_search_filters_exchanges_and_deduplicates(self, request):
+        _search_stocks.cache_clear()
+        request.return_value.__enter__.return_value.read.return_value = json.dumps({'quotes': [
+            {'symbol': 'ASML.AS', 'longname': 'ASML Holding', 'exchange': 'AMS', 'quoteType': 'EQUITY'},
+            {'symbol': 'ASML.AS', 'exchange': 'AMS', 'quoteType': 'EQUITY'},
+            {'symbol': 'ASML', 'shortname': 'ASML ADR', 'exchange': 'NMS', 'quoteType': 'EQUITY'},
+            {'symbol': 'IBM', 'shortname': 'IBM', 'exchange': 'NYQ', 'quoteType': 'EQUITY'},
+            {'symbol': 'ASX.L', 'exchange': 'LSE', 'quoteType': 'EQUITY'},
+            {'symbol': '^AEX', 'exchange': 'AMS', 'quoteType': 'INDEX'},
+        ]}).encode()
+        results = search_stocks('AS')
+        self.assertEqual([item['symbol'] for item in results], ['ASML.AS', 'ASML', 'IBM'])
+        self.assertEqual(results[0]['currency'], 'EUR')
+        self.assertEqual(results[1]['currency'], 'USD')
+        self.assertEqual(results[2]['exchange'], 'NYSE')
+        self.assertEqual(search_stocks(' as '), results)
+        request.assert_called_once()
+        _search_stocks.cache_clear()
+
+    def test_search_requires_two_characters(self):
+        for query in ['', 'a', '  a  ', 'x' * 81]:
+            with self.assertRaises(ValueError):
+                search_stocks(query)
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,6 +1,6 @@
 # Aandelen Dashboard voor Home Assistant
 
-Eerste experimentele versie (0.1.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.1.1). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -20,7 +20,15 @@ De app bouwt uit de bron op het apparaat; er is geen containerregister nodig.
 
 ## Gebruik
 
-Voer naam, Yahoo-symbool, beurs, aantal, prijs per aandeel, valuta en aankoopdatum in.
+Typ minimaal twee tekens in **Zoek een aandeel**, op bedrijfsnaam of symbool.
+Kies een resultaat: naam, symbool, beurs en valuta worden automatisch ingevuld.
+Vul daarna alleen aantal, aankoopprijs per aandeel en aankoopdatum in.
+De lijst toont de passende aandelen die Yahoo teruggeeft (maximaal 50 aangevraagd),
+gefilterd op Amsterdam, Nasdaq en NYSE. Dit is geen volledige beurscatalogus;
+typ meer letters om je zoekopdracht te verfijnen. Verschillende beursnoteringen
+worden afzonderlijk getoond. Zoekresultaten worden kort gecachet en kunnen bij
+een storing tijdelijk ontbreken. Een aankoopprijs wordt bewust niet ingevuld met
+de huidige koers: die kan afwijken van wat je hebt betaald.
 Voorbeelden: `ASML.AS` / AMSTERDAM / EUR; `AAPL` / NASDAQ / USD;
 `IBM` / NYSE / USD. Gebruik het symbool van de juiste beursnotering.
 Elke invoer is een afzonderlijke aankoop. Meerdere aankopen worden samengevoegd

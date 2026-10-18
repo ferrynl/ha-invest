@@ -27,5 +27,31 @@ function draw(){
  for(const [field,color] of [['cost','#8694ac'],['value','#4de0b3']]){const line=document.createElementNS('http://www.w3.org/2000/svg','polyline');line.setAttribute('points',points.map(x=>`${40+(end===start?0.5:(x.time-start)/(end-start))*820},${210-(x[field]-low)/span*180}`).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke',color);line.setAttribute('stroke-width','3');svg.append(line);if(points.length===1){const dot=document.createElementNS(svg.namespaceURI,'circle');dot.setAttribute('cx','450');dot.setAttribute('cy',String(210-(points[0][field]-low)/span*180));dot.setAttribute('r','5');dot.setAttribute('fill',color);svg.append(dot);}}
 }
 $('instrument').addEventListener('change',draw);
-$('purchase').addEventListener('submit',async event=>{event.preventDefault();const button=event.target.querySelector('button');button.disabled=true;try{const response=await fetch('api/purchases',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(Object.fromEntries(new FormData(event.target)))});const result=await response.json();if(!response.ok)throw Error(result.error);$('feedback').textContent='Aankoop opgeslagen. De koers wordt opgehaald; het overzicht ververst automatisch.';event.target.reset();await load();}catch(error){$('feedback').textContent=error.message;}finally{button.disabled=false;}});
+let selectedStock=null,searchTimer,searchController,searchVersion=0;
+const stockFields=['name','symbol','exchange','currency'];
+function closeSearch(){ $('search-results').replaceChildren();$('search-results').hidden=true;$('stock-search').setAttribute('aria-expanded','false'); }
+function clearSelection(){selectedStock=null;for(const field of stockFields)$('purchase').elements.namedItem(field).value='';}
+function chooseStock(stock){
+ selectedStock=stock;for(const field of stockFields)$('purchase').elements.namedItem(field).value=stock[field];
+ $('stock-search').value=stock.name;closeSearch();$('search-status').textContent=stock.symbol+' · '+stock.exchange+' · '+stock.currency+' geselecteerd.';$('purchase').elements.namedItem('quantity').focus();
+}
+$('stock-search').addEventListener('input',()=>{
+ clearTimeout(searchTimer);searchController?.abort();const version=++searchVersion;clearSelection();closeSearch();
+ const query=$('stock-search').value.trim();
+ if(query.length<2){$('search-status').textContent='Typ minimaal twee letters van een bedrijfsnaam of symbool.';return;}
+ $('search-status').textContent='Aandelen zoeken…';
+ searchTimer=setTimeout(async()=>{
+  searchController=new AbortController();
+  try{
+   const response=await fetch('api/search?q='+encodeURIComponent(query),{signal:searchController.signal});const data=await response.json();
+   if(version!==searchVersion)return;if(!response.ok)throw Error(data.error);
+   for(const stock of data.results){const button=document.createElement('button');button.type='button';button.setAttribute('role','option');button.setAttribute('aria-selected','false');button.textContent=stock.name+' · '+stock.symbol+' · '+stock.exchange+' · '+stock.currency;button.addEventListener('click',()=>chooseStock(stock));$('search-results').append(button);}
+   $('search-results').hidden=!data.results.length;$('stock-search').setAttribute('aria-expanded',String(Boolean(data.results.length)));
+   $('search-status').textContent=data.results.length?data.results.length+' resultaten van Yahoo voor Amsterdam, Nasdaq en NYSE. Kies de juiste beursnotering; typ verder om te verfijnen.':'Geen passende aandelen gevonden op deze beurzen. Probeer meer letters of het symbool.';
+  }catch(error){if(error.name!=='AbortError'&&version===searchVersion)$('search-status').textContent=error.message||'Zoeken mislukt. Probeer opnieuw.';}
+ },350);
+});
+$('stock-search').addEventListener('keydown',event=>{if(event.key==='ArrowDown'){const first=$('search-results').querySelector('button');if(first){event.preventDefault();first.focus();}}if(event.key==='Escape'){clearTimeout(searchTimer);searchController?.abort();searchVersion++;closeSearch();}if(event.key==='Enter'){event.preventDefault();$('search-results').querySelector('button')?.focus();}});
+$('search-results').addEventListener('keydown',event=>{const buttons=[...$('search-results').querySelectorAll('button')],index=buttons.indexOf(document.activeElement);if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();buttons[(index+(event.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length]?.focus();}if(event.key==='Escape'){closeSearch();$('stock-search').focus();}});
+$('purchase').addEventListener('submit',async event=>{event.preventDefault();if(!selectedStock){$('feedback').textContent='Zoek en selecteer eerst een aandeel.';$('stock-search').focus();return;}const button=event.target.querySelector('button[type="submit"]');button.disabled=true;try{const response=await fetch('api/purchases',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(Object.fromEntries(new FormData(event.target)))});const result=await response.json();if(!response.ok)throw Error(result.error);$('feedback').textContent='Aankoop opgeslagen. De koers wordt opgehaald; het overzicht ververst automatisch.';event.target.reset();clearSelection();closeSearch();$('search-status').textContent='Zoek op bedrijfsnaam of symbool. Amsterdam, Nasdaq en NYSE.';await load();}catch(error){$('feedback').textContent=error.message;}finally{button.disabled=false;}});
 load();setInterval(load,60000);

@@ -5,9 +5,9 @@ import threading
 import time
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, parse_qs
 from storage import Store
-from provider import fetch_quote
+from provider import fetch_quote, search_stocks
 
 ROOT = Path(__file__).parent
 store = Store(os.environ.get('DATA_DIR', './data'))
@@ -69,6 +69,14 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlsplit(self.path).path
+        if path == '/api/search':
+            query = parse_qs(urlsplit(self.path).query).get('q', [''])[0]
+            if not 2 <= len(query.strip()) <= 80:
+                return self.respond({'error': 'Typ minimaal twee en maximaal 80 tekens.'}, 400)
+            try:
+                return self.respond({'results': search_stocks(query)})
+            except Exception:
+                return self.respond({'error': 'Zoeken bij Yahoo lukt nu niet. Probeer het opnieuw.'}, 502)
         if path == '/api/state':
             return self.respond({**store.state(), 'status': status, 'refresh_minutes': interval // 60})
         if path == '/api/backup':

@@ -56,3 +56,13 @@ class HttpTests(unittest.TestCase):
         self.assertTrue(backup.startswith(b'SQLite format 3'))
         self.assertIn('attachment;', headers['Content-Disposition'])
         self.assertEqual(self.request('POST', '/api/purchases', '[]', headers={'Content-Type': 'application/json', 'X-Portfolio-Request': '1'})[0], 400)
+
+    def test_search_validation_and_provider_failure(self):
+        self.assertEqual(self.request('GET', '/api/search?q=a')[0], 400)
+        with patch.object(self.module, 'search_stocks', return_value=[dict(name='Apple', symbol='AAPL', exchange='NASDAQ', currency='USD')]) as search:
+            status, body, _ = self.request('GET', '/api/search?q=ap')
+            self.assertEqual(status, 200)
+            self.assertEqual(json.loads(body)['results'][0]['symbol'], 'AAPL')
+            search.assert_called_once_with('ap')
+        with patch.object(self.module, 'search_stocks', side_effect=TimeoutError):
+            self.assertEqual(self.request('GET', '/api/search?q=ap')[0], 502)

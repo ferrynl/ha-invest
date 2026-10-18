@@ -1,8 +1,9 @@
 # Gebruik
 
-Open de webinterface of schakel de zijbalk in. Voeg je aankopen toe met het juiste
-Yahoo-symbool (Amsterdam: meestal `.AS`, VS: bijvoorbeeld `AAPL`). Kies beurs en
-valuta van die notering. Koersen worden standaard iedere 15 minuten gecontroleerd.
+Open de webinterface of schakel de zijbalk in. Typ minimaal twee letters in
+**Zoek een aandeel** en kies een resultaat uit Amsterdam, Nasdaq of NYSE.
+Naam, symbool, beurs en valuta worden automatisch ingevuld. Vul zelf aantal,
+aankoopprijs en datum in. Koersen worden standaard iedere 15 minuten gecontroleerd.
 Stel het interval in met `refresh_minutes` en herstart de app.
 
 De grafiek begint bij de eerste opgeslagen koers. Valuta worden apart gehouden.
