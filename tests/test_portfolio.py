@@ -31,6 +31,19 @@ class PortfolioTests(unittest.TestCase):
         self.store.add(self.buy)
         self.assertIsNone(self.store.state()['positions'][0]['value'])
 
+    def test_history_persists_upserts_and_reloads_earlier_purchase(self):
+        self.store.add(self.buy)
+        args = ('ASML.AS', 'AMSTERDAM', 'EUR', '2025-01-01')
+        self.assertTrue(self.store.history_needed(*args))
+        self.store.save_history(*args, [dict(day='2025-01-02',price='700')])
+        self.assertFalse(self.store.history_needed(*args))
+        self.assertTrue(self.store.history_needed(*args[:3], '2024-01-01'))
+        self.store.save_history(*args, [dict(day='2025-01-02',price='800')])
+        data = Store(self.tmp.name).state()['positions'][0]['history']
+        self.assertEqual(data[1]['value'], '2000.0')
+        with self.store.connect() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM daily_prices').fetchone()[0], 1)
+
     def test_reject_bad_inputs_atomically(self):
         for field, value in [('quantity', 'NaN'), ('price', '-1'), ('quantity', 'Infinity'), ('currency', 'EU'), ('purchased_on', '2099-01-01'), ('exchange', '')]:
             with self.assertRaises(ValueError):

@@ -18,14 +18,36 @@ async function load(){
  const selected=$('instrument').value;$('instrument').replaceChildren();state.positions.forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=p.name+' · '+p.currency;$('instrument').append(o);});if(selected&&Number(selected)<state.positions.length)$('instrument').value=selected;draw();
  }catch{$('status').textContent='Gegevens laden mislukt. Probeer de pagina opnieuw te openen.';}
 }
+let chartRange='1M';
+const dayLabel=day=>new Date(day+'T00:00:00Z').toLocaleDateString('nl-NL',{timeZone:'UTC'});
 function draw(){
- const svg=$('chart');svg.replaceChildren();const p=state.positions[Number($('instrument').value)];if(!p)return;
- const points=state.quotes.filter(q=>q.symbol===p.symbol&&q.exchange===p.exchange&&q.currency===p.currency).map(q=>{const lots=state.purchases.filter(l=>l.symbol===p.symbol&&l.exchange===p.exchange&&l.currency===p.currency&&l.purchased_on<=q.quoted_at.slice(0,10));return {time:new Date(q.quoted_at).getTime(),value:lots.reduce((s,l)=>s+Number(l.quantity),0)*Number(q.price),cost:lots.reduce((s,l)=>s+Number(l.quantity)*Number(l.price),0)};}).filter(x=>x.cost>0);
- $('chartnote').textContent=points.length?new Date(points[0].time).toLocaleString('nl-NL')+' — '+new Date(points.at(-1).time).toLocaleString('nl-NL')+' · '+p.currency:'Nog geen koershistorie. De grafiek begint zodra een koers na je aankoop is opgeslagen.';
+ const svg=$('chart');svg.replaceChildren();$('chart-days').replaceChildren();svg.onpointermove=null;
+ const p=state.positions[Number($('instrument').value)];if(!p){$('chartnote').textContent='Voeg een aankoop toe om de historie te bekijken.';return;}
+ const points=chartPeriodPoints(p.history??[],chartRange);
+ const known=points.filter(point=>point.value!==null);
+ $('chartnote').textContent=points.length?dayLabel(points[0].day)+' — '+dayLabel(points.at(-1).day)+' · '+points.length+' kalenderdagen · '+p.currency:'';
+ if(!known.length)$('chartnote').textContent+=' Historische koersen worden opgehaald. Bij een storing probeert de app het bij de volgende controle opnieuw.';
+ else if(known.length<points.length)$('chartnote').textContent+=' Voor '+(points.length-known.length)+' dag(en) ontbreekt nog een koers.';
+ $('chart-detail').textContent='Beweeg over de grafiek of bekijk de dagwaarden hieronder.';
+ for(const point of points){const row=document.createElement('tr');for(const value of [dayLabel(point.day),money(point.price,p.currency),money(point.value,p.currency),money(point.cost,p.currency),point.value===null?'—':money(Number(point.value)-Number(point.cost),p.currency),point.price===null?'Koers ontbreekt':point.carried?'Laatst bekende koers':'Dagkoers'])cell(row,value);$('chart-days').append(row);}
  if(!points.length)return;
- const values=points.flatMap(x=>[x.value,x.cost]),low=Math.min(...values)*.98,high=Math.max(...values)*1.02,span=high-low||1,start=points[0].time,end=points.at(-1).time;
- for(const [field,color] of [['cost','#8694ac'],['value','#4de0b3']]){const line=document.createElementNS('http://www.w3.org/2000/svg','polyline');line.setAttribute('points',points.map(x=>`${40+(end===start?0.5:(x.time-start)/(end-start))*820},${210-(x[field]-low)/span*180}`).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke',color);line.setAttribute('stroke-width','3');svg.append(line);if(points.length===1){const dot=document.createElementNS(svg.namespaceURI,'circle');dot.setAttribute('cx','450');dot.setAttribute('cy',String(210-(points[0][field]-low)/span*180));dot.setAttribute('r','5');dot.setAttribute('fill',color);svg.append(dot);}}
+ function node(tag,attrs,text){const el=document.createElementNS(svg.namespaceURI,tag);for(const [key,value] of Object.entries(attrs))el.setAttribute(key,String(value));if(text!==undefined)el.textContent=text;svg.append(el);return el;}
+ const values=points.flatMap(point=>point.value===null?[Number(point.cost)]:[Number(point.value),Number(point.cost)]);
+ const min=Math.min(...values),max=Math.max(...values),padding=Math.max((max-min)*.1,max*.01,1),low=Math.max(0,min-padding),high=max+padding;
+ const x=i=>90+(points.length===1?.5:i/(points.length-1))*790,y=value=>250-(Number(value)-low)/(high-low)*220;
+ for(let i=0;i<5;i++){const value=low+(high-low)*i/4;node('line',{x1:90,x2:880,y1:y(value),y2:y(value),stroke:'#293951'});node('text',{x:80,y:y(value)+4,'text-anchor':'end',fill:'#9eacc2','font-size':12},money(value,p.currency));}
+ const ticks=[...new Set([0,Math.floor((points.length-1)/2),points.length-1])];
+ for(const i of ticks)node('text',{x:x(i),y:280,'text-anchor':i===0?'start':i===points.length-1?'end':'middle',fill:'#9eacc2','font-size':12},dayLabel(points[i].day));
+ for(const [field,color] of [['cost','#8694ac'],['value','#4de0b3']]){
+  let path='',started=false;points.forEach((point,i)=>{if(point[field]===null){started=false;return;}path+=(started?'L':'M')+x(i)+' '+y(point[field])+' ';started=true;});
+  node('path',{d:path,fill:'none',stroke:color,'stroke-width':3,'stroke-linejoin':'round'});
+  if(points.length===1&&points[0][field]!==null)node('circle',{cx:x(0),cy:y(points[0][field]),r:5,fill:color});
+ }
+ const guide=node('line',{x1:90,x2:90,y1:25,y2:250,stroke:'#9eacc2','stroke-dasharray':'4 4',visibility:'hidden'});
+ svg.onpointermove=event=>{const matrix=svg.getScreenCTM();if(!matrix)return;const location=new DOMPoint(event.clientX,event.clientY).matrixTransform(matrix.inverse());const i=points.length===1?0:Math.max(0,Math.min(points.length-1,Math.round((location.x-90)/790*(points.length-1))));const point=points[i];guide.setAttribute('x1',x(i));guide.setAttribute('x2',x(i));guide.setAttribute('visibility','visible');$('chart-detail').textContent=dayLabel(point.day)+' · Waarde '+money(point.value,p.currency)+' · Inleg '+money(point.cost,p.currency)+(point.carried?' · Laatst bekende koers':' · Dagkoers');};
+ svg.onpointerleave=()=>guide.setAttribute('visibility','hidden');
 }
+$('chart-ranges').addEventListener('click',event=>{const button=event.target.closest('button[data-range]');if(!button)return;chartRange=button.dataset.range;for(const choice of $('chart-ranges').querySelectorAll('button'))choice.setAttribute('aria-pressed',String(choice===button));draw();});
 $('instrument').addEventListener('change',draw);
 let selectedStock=null,searchTimer,searchController,searchVersion=0;
 const stockFields=['name','symbol','exchange','currency'];

@@ -13,4 +13,6 @@ jobs:
         with:
           node-version: '22'
       - run: node --check portfolio/app/static/app.js
+      - run: node --check portfolio/app/static/chart.js
+      - run: node tests/test_chart.cjs
       - run: docker build portfolio -t aandelen-dashboard:test

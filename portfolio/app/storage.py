@@ -5,6 +5,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
 import re
 from contextlib import contextmanager, closing
+from history import daily_values
 
 def now():
     return datetime.now(timezone.utc).isoformat()
@@ -34,7 +35,15 @@ class Store:
                     currency TEXT NOT NULL, price TEXT NOT NULL, quoted_at TEXT NOT NULL,
                     fetched_at TEXT NOT NULL, source TEXT NOT NULL);
                 CREATE INDEX IF NOT EXISTS quote_instrument ON quotes(symbol,exchange,currency,id);
-                PRAGMA user_version=1;
+                CREATE TABLE IF NOT EXISTS daily_prices (
+                    symbol TEXT NOT NULL, exchange TEXT NOT NULL, currency TEXT NOT NULL,
+                    day TEXT NOT NULL, price TEXT NOT NULL,
+                    PRIMARY KEY(symbol,exchange,currency,day));
+                CREATE TABLE IF NOT EXISTS history_sync (
+                    symbol TEXT NOT NULL, exchange TEXT NOT NULL, currency TEXT NOT NULL,
+                    start TEXT NOT NULL, synced_on TEXT NOT NULL,
+                    PRIMARY KEY(symbol,exchange,currency));
+                PRAGMA user_version=2;
             ''')
 
     @contextmanager
@@ -75,6 +84,7 @@ class Store:
         with self.connect() as db:
             purchases = [dict(row) for row in db.execute('SELECT * FROM purchases ORDER BY purchased_on,id')]
             quotes = [dict(row) for row in db.execute('SELECT * FROM quotes ORDER BY quoted_at,id')]
+            daily = [dict(row) for row in db.execute('SELECT * FROM daily_prices ORDER BY day')]
         groups = {}
         for p in purchases:
             key = (p['symbol'], p['exchange'], p['currency'])
@@ -87,11 +97,27 @@ class Store:
                 groups[key]['quote'] = q
         positions = []
         for group in groups.values():
+            def matches(row):
+                return all(row[k] == group[k] for k in ('symbol', 'exchange', 'currency'))
+            chart = daily_values([p for p in purchases if matches(p)], [d for d in daily if matches(d)], [q for q in quotes if matches(q)])
             value = group['quantity'] * Decimal(group['quote']['price']) if group['quote'] else None
-            positions.append({**group, 'quantity': str(group['quantity']), 'cost': str(group['cost']),
+            positions.append({**group, 'history': chart, 'quantity': str(group['quantity']), 'cost': str(group['cost']),
                               'value': str(value) if value is not None else None,
                               'gain': str(value - group['cost']) if value is not None else None})
         return dict(purchases=purchases, positions=positions, quotes=quotes)
+
+    def history_needed(self, symbol, exchange, currency, start):
+        with self.connect() as db:
+            row = db.execute('SELECT start,synced_on FROM history_sync WHERE symbol=? AND exchange=? AND currency=?',
+                             (symbol, exchange, currency)).fetchone()
+        return not row or row['start'] > start or row['synced_on'] != date.today().isoformat()
+
+    def save_history(self, symbol, exchange, currency, start, rows):
+        validated = [(symbol, exchange, currency, date.fromisoformat(r['day']).isoformat(), positive(r['price'])) for r in rows]
+        with self.connect() as db:
+            db.executemany('INSERT OR REPLACE INTO daily_prices VALUES(?,?,?,?,?)', validated)
+            db.execute('INSERT OR REPLACE INTO history_sync VALUES(?,?,?,?,?)',
+                       (symbol, exchange, currency, start, date.today().isoformat()))
 
     def backup(self):
         folder = self.root / 'backups'

@@ -2,7 +2,7 @@
 import json
 from urllib.request import urlopen, Request
 from urllib.parse import quote, urlencode
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date, timedelta
 from functools import lru_cache
 import time
 
@@ -46,3 +46,25 @@ def fetch_quote(key, symbol, exchange, currency):
         raise ValueError('Koersdienst retourneerde een ander symbool of andere beurs.')
     timestamp = datetime.fromtimestamp(int(result['regularMarketTime']), timezone.utc).isoformat()
     return result['regularMarketPrice'], timestamp
+
+def fetch_history(symbol, exchange, currency, start):
+    # Include a preceding trading day so a weekend purchase has a reference price.
+    first = datetime.combine(date.fromisoformat(start) - timedelta(days=10), datetime.min.time(), timezone.utc)
+    params = urlencode({'interval': '1d', 'period1': int(first.timestamp()),
+                        'period2': int(datetime.now(timezone.utc).timestamp()), 'events': 'history'})
+    request = Request('https://query1.finance.yahoo.com/v8/finance/chart/' + quote(symbol, safe='') + '?' + params,
+                      headers={'User-Agent': 'Mozilla/5.0'})
+    with urlopen(request, timeout=30) as response:
+        result = json.load(response)['chart']['result'][0]
+    meta = result['meta']
+    market = EXCHANGES.get(meta.get('exchangeName', '').upper())
+    if meta.get('symbol', '').upper() != symbol or meta.get('currency') != currency or not market or market[0] != exchange:
+        raise ValueError('Historische notering of valuta wijkt af.')
+    closes = result['indicators']['quote'][0]['close']
+    rows = []
+    for stamp, close in zip(result.get('timestamp', []), closes):
+        if close is not None and close > 0:
+            rows.append({'day': datetime.fromtimestamp(stamp, timezone.utc).date().isoformat(), 'price': str(close)})
+    if not rows:
+        raise ValueError('Geen historische dagkoersen beschikbaar.')
+    return rows

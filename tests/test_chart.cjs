@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict');
+const {chartPeriodStart,chartPeriodPoints}=require('../portfolio/app/static/chart.js');
+assert.equal(chartPeriodStart('2026-10-18','1W'),'2026-10-12');
+assert.equal(chartPeriodStart('2026-10-18','1M'),'2026-09-18');
+assert.equal(chartPeriodStart('2026-10-18','3M'),'2026-07-18');
+assert.equal(chartPeriodStart('2026-10-18','6M'),'2026-04-18');
+assert.equal(chartPeriodStart('2026-10-18','YTD'),'2026-01-01');
+assert.equal(chartPeriodStart('2026-10-18','1Y'),'2025-10-18');
+assert.equal(chartPeriodStart('2026-03-31','1M'),'2026-02-28');
+assert.equal(chartPeriodStart('2024-02-29','1Y'),'2023-02-28');
+const points=[{day:'2026-10-01'},{day:'2026-10-12'},{day:'2026-10-18'}];
+assert.deepEqual(chartPeriodPoints(points,'1W'),points.slice(1));
+assert.deepEqual(chartPeriodPoints(points,'ALL'),points);
+assert.deepEqual(chartPeriodPoints([],'1W'),[]);
+console.log('Chart period checks passed (11 assertions)');

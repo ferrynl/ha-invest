@@ -1,6 +1,6 @@
 # Aandelen Dashboard voor Home Assistant
 
-Experimentele versie (0.1.1). Draait volledig als Home Assistant-app
+Experimentele versie (0.1.2). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -44,9 +44,19 @@ Beurs en valuta worden gecontroleerd voordat een koers wordt opgeslagen.
 
 EUR en USD hebben afzonderlijke totalen. Er is nog geen valutaomrekening.
 Ontbrekende koersen geven een onvolledig totaal in plaats van een misleidende nul.
-De grafiek toont per aandeel de waarde en inleg op opgeslagen koersmomenten,
-rekening houdend met de aankoopdatum. Er wordt geen historie vóór installatie
-verzonnen of automatisch opgehaald. Winst/verlies is exclusief kosten en dividend.
+De grafiek haalt historische dagkoersen op vanaf de eerste aankoop en toont elke
+kalenderdag tot vandaag. Weekenden en dagen zonder koers gebruiken de laatst
+bekende koers; dit staat ook in de tabel **Dagwaarden bekijken**. Zonder eerdere
+koers blijft de waarde onbekend. Historie wordt bij opstarten, een nieuwe aankoop
+en daarna dagelijks gecontroleerd en in SQLite bewaard. Een eerder gedateerde
+aankoop zorgt automatisch voor het ophalen van de extra historie.
+Gebruik **1W, 1M, 3M, 6M, YTD, 1Y of Alles** om te zoomen. YTD begint op 1 januari;
+er wordt nooit bezit getoond vóór de eerste aankoop. Datum- en waardeassen,
+aanwijzen van een dag en een tabel maken dagelijkse veranderingen zichtbaar.
+Historische koersen zijn Yahoo-dagsluitingen; vandaag kan de laatste beschikbare
+koers zijn. Yahoo kan historische prijzen aanpassen voor splitsingen. De app
+verwerkt aantallen bij splitsingen nog niet automatisch. Winst/verlies is exclusief
+kosten en dividend.
 
 ## Opslag en back-ups
 
@@ -92,6 +102,7 @@ python -m unittest discover -s tests -v
 
 - `portfolio/app/storage.py`: schema, validatie, berekeningen, back-ups.
 - `portfolio/app/provider.py`: vervangbare Yahoo-koerskoppeling.
+- `portfolio/app/history.py`: dagelijkse waardes met aankopen en kalenderdagen.
 - `portfolio/app/server.py`: lokale HTTP-API en geplande taken.
 - `portfolio/app/static/`: afzonderlijke HTML-, CSS- en JavaScript-bestanden.
 - `portfolio/config.yaml` en `Dockerfile`: HA-installatie en container.
@@ -101,7 +112,7 @@ python -m unittest discover -s tests -v
 ## Grenzen van deze eerste versie
 
 Alleen aankopen; nog geen verkopen, splitsingen, dividend, bewerkingsinterface,
-transactiekosten, historische koersimport of automatische valutawissel.
+transactiekosten of automatische valutawissel.
 Geen HACS-integratie: installatie gaat via een HA app-repository.
 Voor publieke distributie moet de geschiktheid van de koersdienst voor die toepassing
 nog worden vastgesteld. Iedere installatie haalt zelf koersen op; er is geen

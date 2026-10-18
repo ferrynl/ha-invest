@@ -1,3 +1,11 @@
+# 0.1.2
+
+- Historische dagkoersen vanaf de aankoopdatum automatisch ophalen en opslaan.
+- Elke kalenderdag zichtbaar, met laatst bekende koers op dagen zonder handel.
+- Zoomknoppen 1W, 1M, 3M, 6M, YTD, 1Y en Alles.
+- Grafiekassen, aanwijzen van dagwaardes en uitklapbare dagtabel.
+- Bestaande databases worden uitgebreid met behoud van aankopen en back-ups.
+
 # 0.1.1
 
 - Zoek aandelen op naam of symbool vanaf twee tekens.

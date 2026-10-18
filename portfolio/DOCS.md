@@ -6,7 +6,10 @@ Naam, symbool, beurs en valuta worden automatisch ingevuld. Vul zelf aantal,
 aankoopprijs en datum in. Koersen worden standaard iedere 15 minuten gecontroleerd.
 Stel het interval in met `refresh_minutes` en herstart de app.
 
-De grafiek begint bij de eerste opgeslagen koers. Valuta worden apart gehouden.
+De grafiek haalt historische dagkoersen op vanaf je eerste aankoop. Kies **1W, 1M,
+3M, 6M, YTD, 1Y of Alles**. Op dagen zonder handel loopt de laatst bekende koers
+door. Beweeg over de grafiek voor een dagwaarde of open **Dagwaarden bekijken**.
+Valuta worden apart gehouden.
 Yahoo-koersen kunnen vertraagd zijn; de koerstijd staat bij elke positie.
 
 Gebruik **Back-up downloaden** voor een losse SQLite-kopie. Neem deze app ook op

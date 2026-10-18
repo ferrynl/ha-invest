@@ -7,7 +7,7 @@ from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit, parse_qs
 from storage import Store
-from provider import fetch_quote, search_stocks
+from provider import fetch_quote, search_stocks, fetch_history
 
 ROOT = Path(__file__).parent
 store = Store(os.environ.get('DATA_DIR', './data'))
@@ -23,7 +23,16 @@ def refresh():
         return
     try:
         errors = 0
-        for p in store.state()['positions']:
+        snapshot = store.state()
+        history_errors = 0
+        for p in snapshot['positions']:
+            start = min(l['purchased_on'] for l in snapshot['purchases'] if all(l[k] == p[k] for k in ('symbol', 'exchange', 'currency')))
+            try:
+                if store.history_needed(p['symbol'], p['exchange'], p['currency'], start):
+                    rows = fetch_history(p['symbol'], p['exchange'], p['currency'], start)
+                    store.save_history(p['symbol'], p['exchange'], p['currency'], start, rows)
+            except Exception:
+                history_errors += 1
             try:
                 price, stamp = fetch_quote('', p['symbol'], p['exchange'], p['currency'])
                 store.quote(p['symbol'], p['exchange'], p['currency'], price, stamp, 'Yahoo Finance (mogelijk vertraagd)')
@@ -33,6 +42,8 @@ def refresh():
             time.sleep(1)
         from storage import now
         status.update(message=f'{errors} koersaanvragen mislukt. Vorige koersen blijven zichtbaar met hun oorspronkelijke tijd.' if errors else 'Yahoo-koersen bijgewerkt; mogelijk vertraagd. Buiten beurstijden zie je de laatst beschikbare koers.', last_attempt=now())
+        if history_errors:
+            status['message'] += f' Historie van {history_errors} aandeel/aandelen kon niet worden opgehaald; volgt bij de volgende controle.'
     finally:
         refresh_lock.release()
 
@@ -82,7 +93,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == '/api/backup':
             backup = store.backup()
             return self.respond(backup.read_bytes(), kind='application/vnd.sqlite3', filename=backup.name)
-        files = {'/': ('index.html', 'text/html; charset=utf-8'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
+        files = {'/': ('index.html', 'text/html; charset=utf-8'), '/app.js': ('app.js', 'text/javascript'), '/chart.js': ('chart.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
         if path in files:
             name, kind = files[path]
             return self.respond((ROOT / 'static' / name).read_bytes(), kind=kind)
