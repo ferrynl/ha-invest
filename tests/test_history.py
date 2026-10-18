@@ -6,10 +6,37 @@ from datetime import date
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'portfolio' / 'app'))
-from history import daily_values
+from history import daily_values, with_dividends, portfolio_values
 from provider import fetch_history
 
 class HistoryTests(unittest.TestCase):
+    def test_portfolio_totals_align_start_dates_and_keep_currencies_separate(self):
+        def position(symbol,currency,start,price,cost,dividend):
+            points=daily_values([dict(purchased_on=start,quantity='1',price=cost)],
+                                [dict(day=start,price=price)],[],date(2026,10,14))
+            return dict(symbol=symbol,currency=currency,history=with_dividends(points,[dict(paid_on='2026-10-14',amount=dividend)]))
+        positions=[position('ASML.AS','EUR','2026-10-12','120','100','5'),
+                   position('INGA.AS','EUR','2026-10-13','30','20','2'),
+                   position('AAPL','USD','2026-10-12','200','150','10')]
+        portfolios={p['currency']:p for p in portfolio_values(positions)}
+        eur=portfolios['EUR']['history']
+        self.assertEqual(eur[0]['value'],'120')
+        self.assertEqual(eur[1]['value'],'150')
+        self.assertEqual(eur[-1]['cost'],'120')
+        self.assertEqual(eur[-1]['dividend'],'7')
+        self.assertEqual(eur[-1]['total_gain'],'37')
+        self.assertEqual(eur[-1]['with_dividends'],'157')
+        self.assertEqual(portfolios['USD']['history'][-1]['total_gain'],'60')
+
+    def test_portfolio_does_not_present_partial_prices_as_complete(self):
+        positions=[]
+        for symbol,prices in [('A',[]),('B',[dict(day='2026-10-12',price='120')])]:
+            points=daily_values([dict(purchased_on='2026-10-12',quantity='1',price='100')],prices,[],date(2026,10,12))
+            positions.append(dict(symbol=symbol,currency='EUR',history=with_dividends(points,[])))
+        day=portfolio_values(positions)[0]['history'][0]
+        self.assertIsNone(day['value'])
+        self.assertIsNone(day['total_gain'])
+        self.assertEqual(day['cost'],'200')
     def test_daily_values_from_purchase_including_weekend_and_new_lot(self):
         lots = [dict(purchased_on='2026-10-12', quantity='1', price='999'),
                 dict(purchased_on='2026-10-15', quantity='2', price='1100')]

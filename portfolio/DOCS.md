@@ -10,6 +10,14 @@ De grafiek haalt historische dagkoersen op vanaf je eerste aankoop. Kies **1W, 1
 3M, 6M, YTD, 1Y of Alles**. Op dagen zonder handel loopt de laatst bekende koers
 door. Beweeg over de grafiek voor een dagwaarde of open **Dagwaarden bekijken**.
 Valuta worden apart gehouden.
+De standaardweergave toont alle aandelen met een lijn per aandeel in procenten,
+inclusief ontvangen dividend. Kies **Totaal portefeuille · EUR/USD** voor het totaal
+per valuta of selecteer één aandeel.
+
+Onder **Ontvangen dividend** boek je het totale netto ontvangen bedrag en de
+betaaldatum bij een bestaand aandeel. Gebruik de valuta die bij dat aandeel staat.
+Het dividend staat apart en telt mee in **Totale winst**: koerswinst plus dividend.
+Dividend wordt handmatig ingevoerd en niet automatisch herbelegd.
 Yahoo-koersen kunnen vertraagd zijn; de koerstijd staat bij elke positie.
 
 Gebruik **Back-up downloaden** voor een losse SQLite-kopie. Neem deze app ook op

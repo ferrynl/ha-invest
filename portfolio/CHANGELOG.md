@@ -1,3 +1,11 @@
+# 0.1.3
+
+- Alle aandelen samen zichtbaar met een eigen procentuele winstlijn per aandeel.
+- Portefeuilletotalen per valuta in de grafiek, met aparte lijn inclusief dividend.
+- Ontvangen netto dividend apart boeken met betaaldatum en notitie.
+- Eigen dividendregister en SQLite-tabel, meegenomen in back-ups.
+- Koerswinst, dividend en totale winst afzonderlijk zichtbaar, ook in daghistorie.
+
 # 0.1.2
 
 - Historische dagkoersen vanaf de aankoopdatum automatisch ophalen en opslaan.

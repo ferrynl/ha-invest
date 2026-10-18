@@ -31,6 +31,30 @@ class PortfolioTests(unittest.TestCase):
         self.store.add(self.buy)
         self.assertIsNone(self.store.state()['positions'][0]['value'])
 
+    def test_dividend_is_separate_cash_profit_and_persists_in_backup(self):
+        self.store.add(self.buy)
+        self.store.quote('ASML.AS','AMSTERDAM','EUR','800','2026-10-16T15:30:00+00:00','test')
+        self.store.add_dividend(dict(symbol='ASML.AS',exchange='AMSTERDAM',currency='EUR',amount='12.34',paid_on='2025-01-03',note='Netto'))
+        state = Store(self.tmp.name).state()
+        p = state['positions'][0]
+        self.assertEqual(p['value'], '2000.0')
+        self.assertEqual(p['gain'], '499.750')
+        self.assertEqual(p['dividend'], '12.34')
+        self.assertEqual(p['total_gain'], '512.090')
+        self.assertEqual(state['dividends'][0]['note'], 'Netto')
+        self.assertEqual(p['history'][0]['dividend'], '0')
+        self.assertEqual(p['history'][2]['dividend'], '12.34')
+        with closing(sqlite3.connect(self.store.backup())) as db:
+            self.assertEqual(db.execute('SELECT amount FROM dividends').fetchone()[0], '12.34')
+
+    def test_dividend_rejects_unknown_holding_currency_and_invalid_payment(self):
+        self.store.add(self.buy)
+        valid = dict(symbol='ASML.AS',exchange='AMSTERDAM',currency='EUR',amount='12',paid_on='2025-01-02')
+        for changes in [dict(symbol='AAPL'),dict(currency='USD'),dict(paid_on='2024-12-31'),dict(paid_on='2099-01-01'),dict(amount='-1'),dict(amount='NaN')]:
+            with self.assertRaises(ValueError):
+                self.store.add_dividend({**valid,**changes})
+        self.assertEqual(self.store.state()['dividends'], [])
+
     def test_history_persists_upserts_and_reloads_earlier_purchase(self):
         self.store.add(self.buy)
         args = ('ASML.AS', 'AMSTERDAM', 'EUR', '2025-01-01')

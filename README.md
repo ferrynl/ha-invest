@@ -1,6 +1,6 @@
 # Aandelen Dashboard voor Home Assistant
 
-Experimentele versie (0.1.2). Draait volledig als Home Assistant-app
+Experimentele versie (0.1.3). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -56,7 +56,34 @@ aanwijzen van een dag en een tabel maken dagelijkse veranderingen zichtbaar.
 Historische koersen zijn Yahoo-dagsluitingen; vandaag kan de laatste beschikbare
 koers zijn. Yahoo kan historische prijzen aanpassen voor splitsingen. De app
 verwerkt aantallen bij splitsingen nog niet automatisch. Winst/verlies is exclusief
-kosten en dividend.
+kosten. Ontvangen dividend kan apart worden geboekt, zoals hieronder beschreven.
+
+### Alle aandelen en dividend
+
+De grafiek opent standaard met **Alle aandelen**. Elk aandeel heeft een eigen lijn
+voor totale winst als percentage van de inleg, inclusief ontvangen netto dividend.
+Hierdoor kun je EUR- en USD-noteringen vergelijken zonder geldbedragen bij elkaar
+op te tellen. Het percentage is sinds aankoop en wordt bij zoomen niet opnieuw op
+nul gezet. Het is geen tijdgewogen rendement; extra aankopen kunnen het veranderen.
+Kies **Totaal portefeuille · EUR/USD** voor de gezamenlijke marktwaarde en inleg
+binnen één valuta, met een aparte lijn voor waarde plus ontvangen dividend.
+Individuele aandelen blijven ook selecteerbaar. Alle bestaande zoomknoppen werken
+voor iedere weergave.
+
+Onder **Ontvangen dividend** kies je een bestaand aandeel en voer je het **totale
+netto ontvangen bedrag**, betaaldatum en eventueel een notitie in. Het bedrag is
+in de valuta die bij het aandeel staat, niet per aandeel. Boek alleen daadwerkelijk
+ontvangen bedragen, geen aangekondigde uitkeringen. Er is geen brokerkoppeling of
+automatische bevestiging van ontvangst. Er is nog geen wisselkoersconversie als
+je broker in een andere valuta uitbetaalt.
+
+Dividend heeft een eigen `dividends`-tabel in SQLite, los van aankopen en koersen.
+Het dividendregister, de dividendkolom en het portefeuilletotaal tonen de ontvangen
+bedragen apart. **Totale winst = marktwaarde − inleg + ontvangen netto dividend**.
+Dividend telt pas vanaf de betaaldatum mee in de historie en wordt niet automatisch
+herbelegd of bij het aantal aandelen opgeteld. Het maakt deel uit van alle bestaande
+SQLite- en Home Assistant-back-ups. De database wordt bij de update uitgebreid;
+je bestaande aankopen en koershistorie blijven behouden.
 
 ## Opslag en back-ups
 
@@ -111,7 +138,7 @@ python -m unittest discover -s tests -v
 
 ## Grenzen van deze eerste versie
 
-Alleen aankopen; nog geen verkopen, splitsingen, dividend, bewerkingsinterface,
+Alleen aankopen en handmatig geboekt netto dividend; nog geen verkopen, splitsingen, bewerkingsinterface,
 transactiekosten of automatische valutawissel.
 Geen HACS-integratie: installatie gaat via een HA app-repository.
 Voor publieke distributie moet de geschiktheid van de koersdienst voor die toepassing

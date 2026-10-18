@@ -93,7 +93,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == '/api/backup':
             backup = store.backup()
             return self.respond(backup.read_bytes(), kind='application/vnd.sqlite3', filename=backup.name)
-        files = {'/': ('index.html', 'text/html; charset=utf-8'), '/app.js': ('app.js', 'text/javascript'), '/chart.js': ('chart.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
+        files = {'/': ('index.html', 'text/html; charset=utf-8'), '/app.js': ('app.js', 'text/javascript'), '/chart.js': ('chart.js', 'text/javascript'), '/chart-view.js': ('chart-view.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
         if path in files:
             name, kind = files[path]
             return self.respond((ROOT / 'static' / name).read_bytes(), kind=kind)
@@ -110,13 +110,17 @@ class Handler(BaseHTTPRequestHandler):
             data = json.loads(self.rfile.read(length))
             if not isinstance(data, dict):
                 raise ValueError('Object verwacht.')
-            if urlsplit(self.path).path != '/api/purchases':
+            path = urlsplit(self.path).path
+            if path == '/api/dividends':
+                store.add_dividend(data)
+                return self.respond({'ok': True}, 201)
+            if path != '/api/purchases':
                 return self.respond({'error': 'Niet gevonden'}, 404)
             store.add(data)
             refresh_requested.set()
             self.respond({'ok': True}, 201)
         except (ValueError, KeyError, TypeError):
-            self.respond({'error': 'Controleer alle velden, positieve getallen en aankoopdatum.'}, 400)
+            self.respond({'error': 'Controleer alle velden en positieve bedragen. De datum moet tussen de eerste aankoop en vandaag liggen bij dividend.'}, 400)
 
 if __name__ == '__main__':
     threading.Thread(target=background, daemon=True).start()

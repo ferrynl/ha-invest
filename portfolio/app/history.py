@@ -31,3 +31,37 @@ def daily_values(purchases, daily, quotes, today=None):
                            price=price, carried=not observed))
         day += timedelta(days=1)
     return points
+
+def with_dividends(points, dividends):
+    payments = sorted(dividends, key=lambda d: d['paid_on'])
+    cursor, received = 0, Decimal(0)
+    for point in points:
+        while cursor < len(payments) and payments[cursor]['paid_on'] <= point['day']:
+            received += Decimal(payments[cursor]['amount'])
+            cursor += 1
+        point['dividend'] = str(received)
+        value = Decimal(point['value']) if point['value'] is not None else None
+        point['total_gain'] = str(value - Decimal(point['cost']) + received) if value is not None else None
+        point['with_dividends'] = str(value + received) if value is not None else None
+    return points
+
+def portfolio_values(positions):
+    currencies = sorted({p['currency'] for p in positions})
+    result = []
+    for currency in currencies:
+        members = [p for p in positions if p['currency'] == currency]
+        days = sorted({point['day'] for p in members for point in p['history']})
+        by_position = [{point['day']: point for point in p['history']} for p in members]
+        points = []
+        for day in days:
+            active = [history[day] for history in by_position if day in history]
+            cost = sum((Decimal(p['cost']) for p in active), Decimal(0))
+            income = sum((Decimal(p['dividend']) for p in active), Decimal(0))
+            complete = all(p['value'] is not None for p in active)
+            value = sum((Decimal(p['value']) for p in active), Decimal(0)) if complete else None
+            points.append(dict(day=day, cost=str(cost), value=str(value) if complete else None,
+                               dividend=str(income), with_dividends=str(value + income) if complete else None,
+                               total_gain=str(value - cost + income) if complete else None, price=None,
+                               carried=any(p['carried'] for p in active)))
+        result.append(dict(name='Portefeuille', currency=currency, history=points))
+    return result

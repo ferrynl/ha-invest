@@ -38,7 +38,7 @@ class HttpTests(unittest.TestCase):
             conn.close()
 
     def test_frontend_and_api(self):
-        for path in ['/', '/style.css', '/app.js', '/api/state']:
+        for path in ['/', '/style.css', '/app.js', '/chart.js', '/chart-view.js', '/api/state']:
             status, body, headers = self.request('GET', path)
             self.assertEqual(status, 200)
             self.assertGreater(len(body), 0)
@@ -51,6 +51,11 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(self.request('POST', '/api/purchases', body, headers)[0], 201)
         status, data, _ = self.request('GET', '/api/state')
         self.assertEqual(json.loads(data)['positions'][0]['cost'], '400')
+        payment=json.dumps(dict(symbol='AAPL',exchange='NASDAQ',currency='USD',amount='3.25',paid_on='2025-01-02'))
+        self.assertEqual(self.request('POST','/api/dividends',payment,headers)[0],201)
+        status,data,_=self.request('GET','/api/state')
+        self.assertEqual(json.loads(data)['positions'][0]['dividend'],'3.25')
+        self.assertEqual(self.request('POST','/api/dividends',payment)[0],403)
         status, backup, headers = self.request('GET', '/api/backup')
         self.assertEqual(status, 200)
         self.assertTrue(backup.startswith(b'SQLite format 3'))

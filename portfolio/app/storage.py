@@ -5,7 +5,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
 import re
 from contextlib import contextmanager, closing
-from history import daily_values
+from history import daily_values, with_dividends, portfolio_values
 
 def now():
     return datetime.now(timezone.utc).isoformat()
@@ -43,7 +43,11 @@ class Store:
                     symbol TEXT NOT NULL, exchange TEXT NOT NULL, currency TEXT NOT NULL,
                     start TEXT NOT NULL, synced_on TEXT NOT NULL,
                     PRIMARY KEY(symbol,exchange,currency));
-                PRAGMA user_version=2;
+                CREATE TABLE IF NOT EXISTS dividends (
+                    id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL,
+                    currency TEXT NOT NULL, amount TEXT NOT NULL, paid_on TEXT NOT NULL,
+                    note TEXT NOT NULL, created_at TEXT NOT NULL);
+                PRAGMA user_version=3;
             ''')
 
     @contextmanager
@@ -80,11 +84,27 @@ class Store:
             db.execute('INSERT INTO quotes VALUES(NULL,?,?,?,?,?,?,?)',
                        (symbol, exchange, currency, positive(price), stamp.isoformat(), now(), source))
 
+    def add_dividend(self, data):
+        symbol, exchange, currency = (str(data.get(k, '')).strip().upper() for k in ('symbol', 'exchange', 'currency'))
+        day = date.fromisoformat(data['paid_on'])
+        amount = positive(data['amount'])
+        note = str(data.get('note', '')).strip()
+        if day > date.today() or len(note) > 200:
+            raise ValueError('Controleer betaaldatum en notitie.')
+        with self.connect() as db:
+            lot = db.execute('SELECT MIN(purchased_on) AS first FROM purchases WHERE symbol=? AND exchange=? AND currency=?',
+                             (symbol, exchange, currency)).fetchone()
+            if not lot['first'] or day.isoformat() < lot['first']:
+                raise ValueError('Kies een bestaand aandeel en een betaaldatum vanaf de eerste aankoop.')
+            db.execute('INSERT INTO dividends VALUES(NULL,?,?,?,?,?,?,?)',
+                       (symbol, exchange, currency, amount, day.isoformat(), note, now()))
+
     def state(self):
         with self.connect() as db:
             purchases = [dict(row) for row in db.execute('SELECT * FROM purchases ORDER BY purchased_on,id')]
             quotes = [dict(row) for row in db.execute('SELECT * FROM quotes ORDER BY quoted_at,id')]
             daily = [dict(row) for row in db.execute('SELECT * FROM daily_prices ORDER BY day')]
+            dividends = [dict(row) for row in db.execute('SELECT * FROM dividends ORDER BY paid_on,id')]
         groups = {}
         for p in purchases:
             key = (p['symbol'], p['exchange'], p['currency'])
@@ -100,11 +120,15 @@ class Store:
             def matches(row):
                 return all(row[k] == group[k] for k in ('symbol', 'exchange', 'currency'))
             chart = daily_values([p for p in purchases if matches(p)], [d for d in daily if matches(d)], [q for q in quotes if matches(q)])
+            income = [d for d in dividends if matches(d)]
+            chart = with_dividends(chart, income)
+            received = sum((Decimal(d['amount']) for d in income), Decimal(0))
             value = group['quantity'] * Decimal(group['quote']['price']) if group['quote'] else None
-            positions.append({**group, 'history': chart, 'quantity': str(group['quantity']), 'cost': str(group['cost']),
+            positions.append({**group, 'dividend': str(received), 'total_gain': str(value - group['cost'] + received) if value is not None else None,
+                              'history': chart, 'quantity': str(group['quantity']), 'cost': str(group['cost']),
                               'value': str(value) if value is not None else None,
                               'gain': str(value - group['cost']) if value is not None else None})
-        return dict(purchases=purchases, positions=positions, quotes=quotes)
+        return dict(purchases=purchases, positions=positions, quotes=quotes, dividends=dividends, portfolios=portfolio_values(positions))
 
     def history_needed(self, symbol, exchange, currency, start):
         with self.connect() as db:
