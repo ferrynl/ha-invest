@@ -1,6 +1,6 @@
-name: Aandelen Dashboard
+name: Home Invest
 url: https://github.com/ferrynl/ha-invest
-version: "0.2.0"
+version: "0.2.1"
 slug: aandelen_dashboard
 description: Persoonlijke aandelenportefeuille met SQLite en koershistorie
 arch: [amd64, aarch64]
@@ -11,7 +11,7 @@ stage: experimental
 ingress: true
 ingress_port: 8099
 panel_icon: mdi:chart-line
-panel_title: Aandelen
+panel_title: Home Invest
 options:
   refresh_minutes: 15
 schema:

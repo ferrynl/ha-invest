@@ -1,6 +1,6 @@
-# Aandelen Dashboard voor Home Assistant
+# Home Invest voor Home Assistant
 
-Experimentele versie (0.2.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.2.1). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -11,7 +11,7 @@ SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 3. Open in Home Assistant **Instellingen → Apps → App store → ⋮ → Repositories**
    (oudere versies noemen dit Add-ons).
 4. Voeg `https://github.com/ferrynl/ha-invest` toe.
-5. Zoek **Aandelen Dashboard**, installeer en start de app. Het bouwen kan even duren.
+5. Zoek **Home Invest**, installeer en start de app. Het bouwen kan even duren.
 6. Schakel **Weergeven in zijbalk** in en open het dashboard.
 
 Home Assistant OS met Supervisor is de beoogde installatie. Een gewone HA Container

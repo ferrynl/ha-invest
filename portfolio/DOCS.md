@@ -1,4 +1,4 @@
-# Gebruik
+# Home Invest — Gebruik
 
 Gebruik het menu links: **Home**, **Aandelen**, **Dividend**, **Rapporten** en
 **Instellingen**. Op een klein scherm verschijnt een menuknop. Home toont het

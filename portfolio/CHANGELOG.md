@@ -1,3 +1,7 @@
+# 0.2.1
+
+- De app heet overal Home Invest: app store, HA-zijbalk, menu, browsertitels en documentatie.
+
 # 0.2.0
 
 - Linkerzijbalk met Home, Aandelen, Dividend, Rapporten en Instellingen.

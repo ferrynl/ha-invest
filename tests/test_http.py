@@ -51,7 +51,7 @@ class HttpTests(unittest.TestCase):
         state=json.loads(data)
         self.assertEqual(state['settings']['default_range'],'3M')
         self.assertEqual(state['database_version'],4)
-        self.assertEqual(state['app_version'],'0.2.0')
+        self.assertEqual(state['app_version'],self.module.APP_VERSION)
         self.assertEqual(self.request('POST','/api/settings',json.dumps({'default_range':'bad'}),headers)[0],400)
 
     def test_purchase_backup_and_reject_cross_site_write(self):

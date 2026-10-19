@@ -4,7 +4,7 @@ function showPage(){
  const requested=location.hash.slice(1),page=Object.hasOwn(pageNames,requested)?requested:'home';
  for(const view of document.querySelectorAll('[data-page]'))view.hidden=view.dataset.page!==page;
  for(const link of document.querySelectorAll('[data-route]')){if(link.dataset.route===page)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
- $('page-title').textContent=pageNames[page];document.title=pageNames[page]+' · HA Invest';closeMenu();
+ $('page-title').textContent=pageNames[page];document.title=pageNames[page]+' · Home Invest';closeMenu();
  if(page==='home'&&state)requestAnimationFrame(draw);
  window.scrollTo(0,0);
 }
