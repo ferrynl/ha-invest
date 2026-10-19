@@ -128,4 +128,32 @@ class Trading212Tests(unittest.TestCase):
             self.assertFalse(result['pending']);self.assertNotIn('preview',result)
             self.assertFalse(api.connection_status(self.store,2)['pending'])
 
+    def test_resume_cached_api_csv_with_exact_time_utc_header_without_network(self):
+        import csv,io
+        from persistent_cache import cached_json
+        fields=['Action','Time (UTC)','ISIN','Ticker','Name','ID','No. of shares','Price / share','Currency (Price / share)','Exchange rate','Total','Currency (Total)','Withholding tax','Currency (Withholding tax)','Stamp duty reserve tax','Currency (Stamp duty reserve tax)']
+        output=io.StringIO();writer=csv.DictWriter(output,fieldnames=fields);writer.writeheader()
+        writer.writerow({'Action':'Market buy','Time (UTC)':'2026-10-12 10:00:00','ISIN':'NL0010273215','Ticker':'ASML','Name':'ASML','ID':'api-123','No. of shares':'1','Price / share':'100','Currency (Price / share)':'EUR','Total':'100','Currency (Total)':'EUR'})
+        value=api.read_connection(self.store,2)
+        value['plan']={'parts':[{'start':'2026-10-01T00:00:00+00:00','end':'2026-10-19T00:00:00+00:00'}],'completed':[123],'dividends':True}
+        api.persist(self.store,2,value)
+        cached_json(self.store,'trading212',value['identity']+':csv:123',86400,lambda:output.getvalue())
+        with patch.object(api,'request') as network:result=api.poll(Store(self.temp.name),2);network.assert_not_called()
+        row=result['preview']['rows'][0];self.assertIsNone(row['error']);self.assertEqual(row['day'],'2026-10-12')
+        self.assertEqual(row['raw']['Time (UTC)'],'2026-10-12 10:00:00')
+        self.assertEqual(row['raw']['ISIN'],'NL0010273215')
+        self.assertFalse(api.connection_status(self.store,2)['pending'])
+
+    def test_combine_mixed_time_headers_and_optional_tax_columns(self):
+        from persistent_cache import cached_json
+        first=CSV.replace('2026-01-01','2024-01-01')
+        second=CSV.replace('Action,Time,','Action,Time (UTC),').replace('2026-01-01','2025-01-01').replace(',ID\n',',ID,Withholding tax\n').replace(',123\n',',456,0\n')
+        value=api.read_connection(self.store,2)
+        value['plan']={'parts':[{},{}],'completed':[1,2],'dividends':True}
+        api.persist(self.store,2,value)
+        for index,text in enumerate([first,second],1):cached_json(self.store,'trading212',value['identity']+':csv:'+str(index),86400,lambda:text)
+        with patch.object(api,'request') as network:result=api.poll(self.store,2);network.assert_not_called()
+        rows=result['preview']['rows'];self.assertEqual(len(rows),2);self.assertTrue(all(r['error'] is None for r in rows))
+        self.assertEqual(rows[1]['raw']['Withholding tax'],'0');self.assertEqual(rows[0]['raw']['Withholding tax'],'')
+
 if __name__=='__main__':unittest.main()

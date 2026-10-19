@@ -37,6 +37,18 @@ class ImportTests(unittest.TestCase):
   other=preview(self.store,3,'trading212','same.csv',CSV)
   self.assertEqual(commit(self.store,other['batch_id'],MAPPING)['imported'],3)
   self.assertEqual(len(self.store.state()['positions']),2)
+ def test_time_utc_header_preserves_raw_columns_and_existing_import_identity(self):
+  old=parse_csv(CSV);modern=parse_csv(CSV.replace('Action,Time,','Action,Time (UTC),'))
+  for first,second in zip(old,modern):
+   self.assertEqual(first.get('digest'),second.get('digest'));self.assertEqual(first.get('external_id'),second.get('external_id'))
+   self.assertIn('Time (UTC)',second['raw']);self.assertNotIn('Time',second['raw'])
+  imported=preview(self.store,2,'trading212','old.csv',CSV);commit(self.store,imported['batch_id'],MAPPING)
+  again=preview(self.store,2,'trading212','api.csv',CSV.replace('Action,Time,','Action,Time (UTC),'))
+  self.assertEqual(commit(self.store,again['batch_id'],{})['imported'],0)
+ def test_conflicting_time_aliases_and_duplicate_headers_are_rejected(self):
+  conflict=CSV.replace('Action,Time,','Action,Time (UTC),Time,').replace('2026-10-12 10:00:00,','2026-10-12 10:00:00,2026-10-12 11:00:00,')
+  self.assertIn('verschillende transactietijden',parse_csv(conflict)[0]['error'])
+  with self.assertRaises(ValueError):parse_csv('Action,Time,Time,Ticker,Name\n')
  def test_bad_sell_or_unknown_action_rolls_back_entire_batch(self):
   oversell=CSV.replace(',1,150,EUR,150,EUR,sell-1',',3,150,EUR,450,EUR,sell-1')
   result=preview(self.store,2,'trading212','bad.csv',oversell)

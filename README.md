@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.5.3). Draait volledig als Home Assistant-app
+Experimentele versie (0.5.4). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -444,3 +444,17 @@ als reden gelogd. Tekst van onbekende externe exceptions en aanroepargumenten bl
 weggelaten. Een bestaande log met alleen `ValueError` kan niet achteraf worden
 hersteld: voer de actie na bijwerken opnieuw uit. Schema blijft 7; verbindingen en
 lopende importplannen blijven behouden.
+
+### Trading 212 datumkolommen (0.5.4)
+
+Zowel `Time` als `Time (UTC)` wordt ondersteund voor handmatige CSV en API-rapporten.
+API-deelrapporten mogen verschillende datumkolomnamen en aanvullende belastingkolommen
+hebben; originele veldwaarden blijven behouden. Als beide datumkolommen op één regel
+gevuld zijn en verschillende tijden bevatten, wordt de regel geblokkeerd.
+Bestaande bron-ID's blijven behouden; hetzelfde record met een andere datumkolomnaam
+wordt bij de gebruikelijke tijdnotatie niet opnieuw geboekt.
+
+Na de fout `csv_columns_missing` met een aanwezige kolom `Time (UTC)` hoef je geen
+nieuw rapport aan te vragen: werk bij en klik **Rapportstatus controleren en ophalen**.
+Reeds opgeslagen deelrapporten worden lokaal opnieuw verwerkt, ook als alle delen al
+waren opgehaald. Wis de lopende aanvraag hiervoor niet. Schema blijft 7.

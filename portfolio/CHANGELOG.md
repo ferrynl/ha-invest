@@ -1,3 +1,11 @@
+# 0.5.4
+
+- Trading 212 CSV en API ondersteunen de datumkolom Time (UTC), naast Time.
+- Reeds opgeslagen deelrapporten na deze fout lokaal hervatten zonder nieuwe API-aanvraag.
+- Deelrapporten met verschillende datum- en aanvullende belastingkolommen combineren.
+- Dubbele kolomnamen en tegenstrijdige tijdvelden blokkeren in plaats van gegevens te gokken.
+- Bron-ID's en deduplicatie behouden bij de gebruikelijke tijdnotatie; schema blijft 7.
+
 # 0.5.3
 
 - Concrete lokale foutreden in de logmelding en details, in plaats van alleen ValueError.

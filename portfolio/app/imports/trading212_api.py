@@ -15,6 +15,7 @@ from urllib.error import HTTPError,URLError
 from cryptography.fernet import Fernet,InvalidToken
 from persistent_cache import cached_json
 from .service import preview
+from .trading212 import history_reader
 from diagnostics import operation,current_record,auth_secrets,DiagnosticError,ActionError,action_context
 
 _lock=threading.RLock()
@@ -179,19 +180,26 @@ def start(store,account_id,start_day,end_day,dividends=True):
 
 def combined_report(store,value):
     report_context(value,'combine_reports')
-    output=io.StringIO();writer=None;columns=None;count=0
+    output=io.StringIO();columns=[];readers=[];size=0;count=0
     for report_id in value['plan']['completed']:
         key=value['identity']+':csv:'+str(report_id)
         with store.connect() as db:cached=db.execute("SELECT payload FROM api_cache WHERE namespace='trading212' AND cache_key=?",(key,)).fetchone()
         if not cached:raise ActionError('Een deelrapport ontbreekt in de lokale cache. Wis de aanvraag en probeer opnieuw.')
-        reader=csv.DictReader(io.StringIO(json.loads(cached['payload']).lstrip('\ufeff')))
-        if not reader.fieldnames or not {'Action','Time','Ticker','Name'}.issubset(reader.fieldnames):raise ActionError('Trading 212 gaf een niet-ondersteund CSV-rapport. De verwachte kolommen Action, Time, Ticker en Name ontbreken.','csv_columns_missing',{'received_columns':reader.fieldnames or []})
-        if writer is None:
-            columns=reader.fieldnames;writer=csv.DictWriter(output,fieldnames=columns);writer.writeheader()
-        if set(reader.fieldnames)!=set(columns):raise ActionError('Trading 212-deelrapporten hebben verschillende kolommen. Importeer deze apart via CSV.','csv_columns_differ',{'missing_columns':sorted(set(columns)-set(reader.fieldnames)),'extra_columns':sorted(set(reader.fieldnames)-set(columns))})
+        text=json.loads(cached['payload']);size+=len(text)
+        if size>5*1024*1024:raise ActionError('Gecombineerd rapport is groter dan 5 MB. Kies een kortere periode.')
+        try:reader=history_reader(text)
+        except ValueError:
+            fields=csv.DictReader(io.StringIO(text.lstrip('\ufeff'))).fieldnames or []
+            raise ActionError('Trading 212 gaf een niet-ondersteund CSV-rapport. Verwacht Action, Time of Time (UTC), Ticker en Name, zonder dubbele kolommen.','csv_columns_missing',{'received_columns':fields}) from None
+        for column in reader.fieldnames:
+            if column not in columns:columns.append(column)
+        readers.append(reader)
+    writer=csv.DictWriter(output,fieldnames=columns);writer.writeheader()
+    for reader in readers:
         for row in reader:
             count+=1
             if count>10000:raise ActionError('Meer dan 10.000 transacties. Wis de aanvraag en kies een kortere periode.')
+            if None in row:raise ActionError('Trading 212 CSV bevat meer waarden dan kolommen.','csv_row_invalid')
             writer.writerow(row)
         if output.tell()>5*1024*1024:raise ActionError('Gecombineerd rapport is groter dan 5 MB. Kies een kortere periode.')
     return output.getvalue() if count else None

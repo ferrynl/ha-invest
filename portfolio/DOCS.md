@@ -1,5 +1,10 @@
 # Home Invest — Gebruik
 
+**Nieuw in 0.5.4:** CSV- en API-import ondersteunen `Time` en `Time (UTC)`.
+Opgeslagen deelrapporten met de nieuwe kolomnaam kun je na bijwerken opnieuw laten
+verwerken met **Rapportstatus controleren en ophalen**. Je hoeft geen nieuw rapport
+aan te vragen of de lokale aanvraag te wissen. Bestaande transacties blijven behouden.
+
 **Nieuw in 0.5.3:** lokale importmeldingen tonen nu de echte reden in Logs, met
 `reason`, `code` en waar beschikbaar de stap, rapportvoortgang en resterende wachttijd.
 Herhaal na de update de betreffende actie; oude regels met alleen ValueError kunnen
