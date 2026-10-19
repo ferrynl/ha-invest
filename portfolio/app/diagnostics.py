@@ -50,6 +50,17 @@ def current_record(level,event,message,details=None,secrets=()):
 
 class DiagnosticError(ValueError):pass
 
+class ActionError(ValueError):
+    """An application-authored explanation, safe to log; never wrap raw provider text."""
+    def __init__(self,message,code='action_rejected',details=None):
+        super().__init__(message)
+        self.code=code
+        self.details=details or {}
+
+def action_context(**details):
+    current=context.get()
+    if current:current['details'].update(details)
+
 def operation(source,event):
     def decorate(function):
         @wraps(function)
@@ -62,8 +73,13 @@ def operation(source,event):
                 return result
             except DiagnosticError:raise
             except Exception as exc:
-                # Arguments and exception text may contain credentials; never log them here.
-                reference=current_record('WARNING' if isinstance(exc,ValueError) else 'ERROR',event,'Actie niet afgerond.',{'error_type':type(exc).__name__,'duration_ms':round((time.monotonic()-started)*1000)})
+                # Only application-authored ActionError text is safe. Third-party
+                # exception messages and call arguments may contain credentials.
+                details={'error_type':type(exc).__name__,'duration_ms':round((time.monotonic()-started)*1000)}
+                message='Actie niet afgerond.'
+                if isinstance(exc,ActionError):
+                    message=str(exc);details.update(reason=str(exc),code=exc.code,**exc.details)
+                reference=current_record('WARNING' if isinstance(exc,ValueError) else 'ERROR',event,message,details)
                 if isinstance(exc,ValueError):raise DiagnosticError(str(exc)+(f' · Log-ID {reference}' if reference else '')) from None
                 raise
             finally:context.reset(token)

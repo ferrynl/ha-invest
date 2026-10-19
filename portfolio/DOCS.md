@@ -1,5 +1,10 @@
 # Home Invest — Gebruik
 
+**Nieuw in 0.5.3:** lokale importmeldingen tonen nu de echte reden in Logs, met
+`reason`, `code` en waar beschikbaar de stap, rapportvoortgang en resterende wachttijd.
+Herhaal na de update de betreffende actie; oude regels met alleen ValueError kunnen
+niet worden gereconstrueerd. Verbindingen en lopende aanvragen blijven behouden.
+
 **Nieuw in 0.5.2:** Trading 212 accepteert maximaal één jaar per rapport. De app
 splitst langere perioden automatisch in delen van maximaal 364 dagen. Controleer
 ongeveer iedere minuut de rapportstatus: gereedstaande delen worden opgehaald en

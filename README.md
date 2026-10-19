@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.5.2). Draait volledig als Home Assistant-app
+Experimentele versie (0.5.3). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -429,3 +429,18 @@ regels geldt voor het gecombineerde rapport; kies bij overschrijding kortere per
 De begindatum staat standaard op 1 januari van het huidige jaar. Kies voor de eerste
 import zelf de datum van je eerste transactie, zodat ook de kostprijs volledig is.
 Bestaande API-verbindingen, lopende oude rapporten en schema 7 blijven behouden.
+
+### Concrete lokale foutredenen (0.5.3)
+
+Lokale Trading 212-controles tonen nu hun concrete melding in de logkolom en
+`reason`/`code` in details, bijvoorbeeld `request_already_pending`, `request_missing`,
+`poll_cooldown`, `download_host_rejected` of `csv_columns_missing`. Waar bekend staan
+ook de importstap, omgeving, rapportnummer, opgehaalde/totale delen, actieve periode
+en resterende wachttijd erbij. Een geweigerd downloadadres toont alleen het domein,
+nooit het volledige of ondertekende adres.
+
+Alleen expliciet veilige, door de app geschreven `ActionError`-meldingen worden
+als reden gelogd. Tekst van onbekende externe exceptions en aanroepargumenten blijft
+weggelaten. Een bestaande log met alleen `ValueError` kan niet achteraf worden
+hersteld: voer de actie na bijwerken opnieuw uit. Schema blijft 7; verbindingen en
+lopende importplannen blijven behouden.

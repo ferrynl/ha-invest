@@ -15,7 +15,7 @@ from urllib.error import HTTPError,URLError
 from cryptography.fernet import Fernet,InvalidToken
 from persistent_cache import cached_json
 from .service import preview
-from diagnostics import operation,current_record,auth_secrets,DiagnosticError
+from diagnostics import operation,current_record,auth_secrets,DiagnosticError,ActionError,action_context
 
 _lock=threading.RLock()
 EXPORT='/api/v0/equity/history/exports'
@@ -36,7 +36,7 @@ def request(url,authorization=None,data=None,csv=False):
     try:
         with build_opener(ProxyHandler({}),NoRedirect()).open(Request(url,data=body,headers=headers),timeout=25) as response:
             raw=response.read(5*1024*1024+1)
-            if len(raw)>5*1024*1024:raise ValueError('Trading 212-rapport is groter dan 5 MB. Kies een kortere periode.')
+            if len(raw)>5*1024*1024:raise ActionError('Trading 212-rapport is groter dan 5 MB. Kies een kortere periode.')
             result=raw.decode('utf-8-sig') if csv else json.loads(raw)
             current_record('INFO','http_response','Trading 212-aanvraag geslaagd.',{**details,'http_status':getattr(response,'status',200),'duration_ms':round((time.monotonic()-started)*1000),'response_bytes':len(raw)},hidden)
             return result
@@ -75,22 +75,30 @@ def account(store,account_id):
     with store.connect() as db:
         store.require_account(db,account_id)
         result=dict(db.execute('SELECT * FROM broker_accounts WHERE id=?',(account_id,)).fetchone())
-    if result['broker']!='Trading 212':raise ValueError('Kies een Trading 212-brokeraccount.')
+    if result['broker']!='Trading 212':raise ActionError('Kies een Trading 212-brokeraccount.')
     return result
 
 def read_connection(store,account_id):
     owner=account(store,account_id);folder,cipher=vault(store);path=folder/f'{account_id}.encrypted'
     if not path.exists():return None
     try:result=json.loads(cipher.decrypt(path.read_bytes()))
-    except (InvalidToken,ValueError):raise ValueError('Verbinding kan niet worden gelezen. Sla de API-sleutels opnieuw op.') from None
-    if result['owner']!=owner['created_at']:raise ValueError('Brokeraccount is gewijzigd. Verbind opnieuw.')
+    except (InvalidToken,ValueError):raise ActionError('Verbinding kan niet worden gelezen. Sla de API-sleutels opnieuw op.') from None
+    report_context(result,'connection_loaded')
+    if result['owner']!=owner['created_at']:raise ActionError('Brokeraccount is gewijzigd. Verbind opnieuw.')
     return result
+
+def report_context(value,stage):
+    plan=value.get('plan') or {}
+    parts=plan.get('parts',[]);completed=len(plan.get('completed',[]))
+    details={'stage':stage,'environment':value.get('environment'),'report_id':value.get('job'),'completed':completed,'total':len(parts),'has_pending_request':bool(value.get('job') or value.get('plan'))}
+    if completed<len(parts):details['period']=parts[completed]
+    action_context(**details)
 
 @operation('trading212','connection_save')
 def save_connection(store,account_id,key,secret,environment):
     owner=account(store,account_id)
-    if environment not in ('live','demo'):raise ValueError('Kies Live of Demo.')
-    if not all(isinstance(v,str) and 1<=len(v)<=1024 and not re.search(r'[\s:]',v) for v in (key,secret)):raise ValueError('Vul een geldige API-sleutel en secret in.')
+    if environment not in ('live','demo'):raise ActionError('Kies Live of Demo.')
+    if not all(isinstance(v,str) and 1<=len(v)<=1024 and not re.search(r'[\s:]',v) for v in (key,secret)):raise ActionError('Vul een geldige API-sleutel en secret in.')
     with _lock:
         folder,cipher=vault(store)
         value=dict(owner=owner['created_at'],key=key,secret=secret,environment=environment,identity=secrets.token_hex(16))
@@ -114,7 +122,7 @@ def forget(store,account_id):
 def cancel(store,account_id):
     with _lock:
         value=read_connection(store,account_id)
-        if not value:raise ValueError('Geen verbinding opgeslagen.')
+        if not value:raise ActionError('Geen verbinding opgeslagen.')
         value.pop('job',None);value.pop('plan',None);persist(store,account_id,value)
     return {'message':'Lokale rapportaanvraag gewist. Je kunt een nieuwe periode aanvragen.'}
 
@@ -135,7 +143,7 @@ def report_periods(first,end):
         stop=min(cursor+timedelta(days=364),end)
         parts.append({'start':cursor.isoformat(),'end':stop.isoformat()})
         cursor=stop
-    if len(parts)>100:raise ValueError('Kies een periode van maximaal 100 jaar.')
+    if len(parts)>100:raise ActionError('Kies een periode van maximaal 100 jaar.')
     return parts
 
 def progress(value,message):
@@ -145,11 +153,12 @@ def progress(value,message):
 def submit_part(store,account_id,value):
     if time.time()-value.get('requested',0)<30:
         return progress(value,'De volgende aanvraag volgt bij de volgende statuscontrole; wacht minstens 30 seconden.')
+    report_context(value,'request_part')
     plan=value['plan'];part=plan['parts'][len(plan['completed'])]
     payload={'timeFrom':part['start'],'timeTo':part['end'],'dataIncluded':{'includeOrders':True,'includeDividends':plan['dividends'],'includeInterest':False,'includeTransactions':False}}
     value['requested']=time.time();persist(store,account_id,value)
     result=api(value,payload)
-    if not isinstance(result,dict) or not isinstance(result.get('reportId'),int):raise ValueError('Trading 212 gaf geen geldig rapportnummer.')
+    if not isinstance(result,dict) or not isinstance(result.get('reportId'),int):raise ActionError('Trading 212 gaf geen geldig rapportnummer.')
     value['job']=result['reportId'];persist(store,account_id,value)
     cached_json(store,'trading212',value['identity']+':request:'+str(result['reportId']),86400,lambda:result)
     return progress(value,'Rapport aangevraagd. Controleer over een minuut de status.')
@@ -157,33 +166,34 @@ def submit_part(store,account_id,value):
 @operation('trading212','report_request')
 def start(store,account_id,start_day,end_day,dividends=True):
     first,last=date.fromisoformat(start_day),date.fromisoformat(end_day)
-    if first>last or last>date.today():raise ValueError('Kies een geldige periode tot en met vandaag.')
+    if first>last or last>date.today():raise ActionError('Kies een geldige periode tot en met vandaag.')
     with _lock:
         value=read_connection(store,account_id)
-        if not value:raise ValueError('Sla eerst een API-verbinding op.')
-        if value.get('job') or value.get('plan'):raise ValueError('Er staat al een rapportaanvraag klaar of in behandeling. Controleer de status of wis de lokale aanvraag.')
-        if time.time()-value.get('requested',0)<30:raise ValueError('Wacht 30 seconden voor een nieuw rapport.')
+        if not value:raise ActionError('Sla eerst een API-verbinding op.','connection_missing')
+        if value.get('job') or value.get('plan'):raise ActionError('Er staat al een rapportaanvraag klaar of in behandeling. Gebruik Rapportstatus controleren en ophalen om verder te gaan.','request_already_pending')
+        if time.time()-value.get('requested',0)<30:raise ActionError('Wacht 30 seconden voor een nieuw rapport.','request_cooldown',{'retry_after_seconds':max(1,round(30-(time.time()-value.get('requested',0))))})
         end=min(datetime.combine(last,datetime.max.time(),tzinfo=timezone.utc),datetime.now(timezone.utc))
         value['plan']={'parts':report_periods(first,end),'completed':[],'dividends':bool(dividends)}
         persist(store,account_id,value)
         return submit_part(store,account_id,value)
 
 def combined_report(store,value):
+    report_context(value,'combine_reports')
     output=io.StringIO();writer=None;columns=None;count=0
     for report_id in value['plan']['completed']:
         key=value['identity']+':csv:'+str(report_id)
         with store.connect() as db:cached=db.execute("SELECT payload FROM api_cache WHERE namespace='trading212' AND cache_key=?",(key,)).fetchone()
-        if not cached:raise ValueError('Een deelrapport ontbreekt in de lokale cache. Wis de aanvraag en probeer opnieuw.')
+        if not cached:raise ActionError('Een deelrapport ontbreekt in de lokale cache. Wis de aanvraag en probeer opnieuw.')
         reader=csv.DictReader(io.StringIO(json.loads(cached['payload']).lstrip('\ufeff')))
-        if not reader.fieldnames or not {'Action','Time','Ticker','Name'}.issubset(reader.fieldnames):raise ValueError('Trading 212 gaf een niet-ondersteund CSV-rapport.')
+        if not reader.fieldnames or not {'Action','Time','Ticker','Name'}.issubset(reader.fieldnames):raise ActionError('Trading 212 gaf een niet-ondersteund CSV-rapport. De verwachte kolommen Action, Time, Ticker en Name ontbreken.','csv_columns_missing',{'received_columns':reader.fieldnames or []})
         if writer is None:
             columns=reader.fieldnames;writer=csv.DictWriter(output,fieldnames=columns);writer.writeheader()
-        if set(reader.fieldnames)!=set(columns):raise ValueError('Trading 212-deelrapporten hebben verschillende kolommen. Importeer deze apart via CSV.')
+        if set(reader.fieldnames)!=set(columns):raise ActionError('Trading 212-deelrapporten hebben verschillende kolommen. Importeer deze apart via CSV.','csv_columns_differ',{'missing_columns':sorted(set(columns)-set(reader.fieldnames)),'extra_columns':sorted(set(reader.fieldnames)-set(columns))})
         for row in reader:
             count+=1
-            if count>10000:raise ValueError('Meer dan 10.000 transacties. Wis de aanvraag en kies een kortere periode.')
+            if count>10000:raise ActionError('Meer dan 10.000 transacties. Wis de aanvraag en kies een kortere periode.')
             writer.writerow(row)
-        if output.tell()>5*1024*1024:raise ValueError('Gecombineerd rapport is groter dan 5 MB. Kies een kortere periode.')
+        if output.tell()>5*1024*1024:raise ActionError('Gecombineerd rapport is groter dan 5 MB. Kies een kortere periode.')
     return output.getvalue() if count else None
 
 
@@ -191,33 +201,35 @@ def download_url(url):
     parsed=urlsplit(url)
     host=parsed.hostname or ''
     approved=host.endswith('.trading212.com') or host.endswith('.cloudfront.net') or (host.endswith('.amazonaws.com') and '.s3' in host)
-    if parsed.scheme!='https' or not approved or parsed.username or parsed.password or parsed.port not in (None,443):raise ValueError('Trading 212 gaf een niet-ondersteund downloadadres. Gebruik voorlopig CSV.')
+    if parsed.scheme!='https' or not approved or parsed.username or parsed.password or parsed.port not in (None,443):raise ActionError('Trading 212 gaf een niet-ondersteund downloadadres. Gebruik voorlopig CSV.','download_host_rejected',{'download_host':host,'scheme':parsed.scheme})
     return url
 
 @operation('trading212','report_poll')
 def poll(store,account_id):
     with _lock:
         value=read_connection(store,account_id)
-        if not value or not (value.get('job') or value.get('plan')):raise ValueError('Vraag eerst een rapport aan.')
+        if not value or not (value.get('job') or value.get('plan')):raise ActionError('Vraag eerst een rapport aan. Er is geen lopende lokale rapportaanvraag.','request_missing')
         if value.get('plan') and not value.get('job'):
             if len(value['plan']['completed'])<len(value['plan']['parts']):return submit_part(store,account_id,value)
             return finish_plan(store,account_id,value)
+        report_context(value,'poll_report')
         key=value['identity']+':reports'
         def load_reports():
-            if time.time()-value.get('polled',0)<60:raise ValueError('Wacht een minuut voor de volgende statuscontrole.')
+            if time.time()-value.get('polled',0)<60:raise ActionError('Wacht een minuut voor de volgende statuscontrole.','poll_cooldown',{'retry_after_seconds':max(1,round(60-(time.time()-value.get('polled',0))))})
             value['polled']=time.time();persist(store,account_id,value)
             return api(value)
         reports=cached_json(store,'trading212',key,60,load_reports)
-        if not isinstance(reports,list) or any(not isinstance(r,dict) for r in reports):raise ValueError('Ongeldig Trading 212-rapportoverzicht.')
+        if not isinstance(reports,list) or any(not isinstance(r,dict) for r in reports):raise ActionError('Ongeldig Trading 212-rapportoverzicht.')
         report=next((r for r in reports if r.get('reportId')==value['job']),None)
         if not report or report.get('status') in ('Queued','Processing','Running'):
             return progress(value,'Rapport wordt gemaakt. Controleer over een minuut opnieuw.') if value.get('plan') else {'pending':True,'message':'Rapport wordt gemaakt. Controleer over een minuut opnieuw.'}
         if report.get('status')!='Finished':
             value.pop('job',None);persist(store,account_id,value)
-            raise ValueError('Trading 212 kon dit rapport niet maken. Controleer opnieuw om dit deel opnieuw aan te vragen, of wis de lokale aanvraag.')
+            raise ActionError('Trading 212 kon dit rapport niet maken. Controleer opnieuw om dit deel opnieuw aan te vragen, of wis de lokale aanvraag.','report_failed',{'report_status':report.get('status')})
+        report_context(value,'download_report')
         url=download_url(str(report.get('downloadLink','')))
         text=cached_json(store,'trading212',value['identity']+':csv:'+str(value['job']),86400,lambda:request(url,csv=True))
-        if account(store,account_id)['created_at']!=value['owner']:raise ValueError('Brokeraccount is tijdens het ophalen gewijzigd. Verbind opnieuw.')
+        if account(store,account_id)['created_at']!=value['owner']:raise ActionError('Brokeraccount is tijdens het ophalen gewijzigd. Verbind opnieuw.')
         if value.get('plan'):
             value['plan']['completed'].append(value.pop('job'));persist(store,account_id,value)
             if len(value['plan']['completed'])<len(value['plan']['parts']):return submit_part(store,account_id,value)
@@ -228,6 +240,7 @@ def poll(store,account_id):
 
 def finish_plan(store,account_id,value):
     text=combined_report(store,value)
+    report_context(value,'create_preview')
     result=preview(store,account_id,'trading212','Trading 212 API gecombineerde periode.csv',text) if text else None
     total=len(value['plan']['parts'])
     value.pop('plan',None);persist(store,account_id,value)

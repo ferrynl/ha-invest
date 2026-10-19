@@ -35,6 +35,46 @@ class DiagnosticTests(unittest.TestCase):
   result=scrub({'nested':{'api_key':'hidden','secret':'hidden'},'message':'private-key private-secret Basic '+encoded+' https://host.test/file?signed=yes foo@example.com'},auth_secrets('Basic '+encoded))
   text=json.dumps(result)
   for secret in ['private-key','private-secret',encoded,'signed=yes','foo@example.com','hidden']:self.assertNotIn(secret,text)
+ def test_local_action_errors_show_reason_code_and_pending_report_context(self):
+  self.store.add_account({'name':'Broker','broker':'Trading 212'})
+  api.save_connection(self.store,2,'private-key','private-secret','demo')
+  with self.assertRaises(ValueError):api.poll(self.store,2)
+  entry=read_logs(self.store,level='WARNING')['entries'][0]
+  self.assertEqual(entry['details']['code'],'request_missing');self.assertIn('geen lopende',entry['message'])
+  with patch.object(api,'request',return_value={'reportId':42}):api.start(self.store,2,'2026-01-01','2026-01-02')
+  with self.assertRaises(ValueError):api.start(self.store,2,'2026-01-01','2026-01-02')
+  entry=read_logs(self.store,level='WARNING')['entries'][0]
+  self.assertEqual(entry['details']['code'],'request_already_pending');self.assertEqual(entry['details']['report_id'],42)
+  self.assertEqual(entry['details']['completed'],0);self.assertEqual(entry['details']['total'],1)
+  self.assertIn('Rapportstatus controleren',entry['message']);self.assertEqual(entry['message'],entry['details']['reason'])
+ def test_rejected_download_host_has_safe_domain_and_exact_stage(self):
+  self.store.add_account({'name':'Broker','broker':'Trading 212'})
+  api.save_connection(self.store,2,'private-key','private-secret','demo')
+  with patch.object(api,'request',return_value={'reportId':42}):api.start(self.store,2,'2026-01-01','2026-01-02')
+  with patch.object(api,'request',return_value=[{'reportId':42,'status':'Finished','downloadLink':'https://unsupported.example.test/report?signature=private-secret'}]):
+   with self.assertRaises(ValueError):api.poll(self.store,2)
+  entry=read_logs(self.store,level='WARNING')['entries'][0]
+  self.assertEqual(entry['details']['code'],'download_host_rejected')
+  self.assertEqual(entry['details']['stage'],'download_report')
+  self.assertEqual(entry['details']['download_host'],'unsupported.example.test')
+  self.assertNotIn('private-secret',json.dumps(entry));self.assertNotIn('signature=',json.dumps(entry))
+ def test_unknown_third_party_exception_text_is_not_logged(self):
+  from diagnostics import operation
+  @operation('test','unsafe_exception')
+  def fail(store,account_id):raise ValueError('opaque-provider-private-value')
+  with self.assertRaises(ValueError):fail(self.store,1)
+  entries=read_logs(self.store)['entries'];self.assertNotIn('opaque-provider-private-value',json.dumps(entries))
+  self.assertEqual(entries[0]['details']['error_type'],'ValueError')
+ def test_poll_cooldown_log_contains_remaining_seconds(self):
+  self.store.add_account({'name':'Broker','broker':'Trading 212'})
+  api.save_connection(self.store,2,'private-key','private-secret','demo')
+  value=api.read_connection(self.store,2);value['job']=42
+  import time
+  value['polled']=time.time();api.persist(self.store,2,value)
+  with self.assertRaises(ValueError):api.poll(self.store,2)
+  entry=read_logs(self.store,level='WARNING')['entries'][0]
+  self.assertEqual(entry['details']['code'],'poll_cooldown')
+  self.assertGreater(entry['details']['retry_after_seconds'],0);self.assertLessEqual(entry['details']['retry_after_seconds'],60)
  def test_portfolio_restore_keeps_local_logs_without_importing_uploaded_logs(self):
   from restore import restore_backup
   local=record(self.store,'INFO','system','local','Lokale log')

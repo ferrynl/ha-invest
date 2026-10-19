@@ -1,3 +1,11 @@
+# 0.5.3
+
+- Concrete lokale foutreden in de logmelding en details, in plaats van alleen ValueError.
+- Herkenbare codes voor lopende/ontbrekende aanvragen, wachttijden, geweigerde downloadhosts en CSV-kolommen.
+- Context met importstap, omgeving, rapportnummer, periode, voortgang en resterende wachttijd.
+- Alleen expliciet veilige appmeldingen loggen; onbekende externe foutteksten blijven afgeschermd.
+- Schema blijft 7; API-verbindingen en lopende meerjarige importplannen blijven behouden.
+
 # 0.5.2
 
 - Oplossing voor Trading 212 HTTP 400: rapportperioden mogen maximaal één jaar beslaan.
