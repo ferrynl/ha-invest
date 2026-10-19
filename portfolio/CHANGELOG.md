@@ -1,3 +1,13 @@
+# 0.3.0
+
+- Back-up downloaden alleen onder Instellingen; gevalideerd terugzetten met veiligheidskopie vooraf.
+- Gebruikersbeveiliging inschakelbaar onder Instellingen; eigen eerste admin, geen standaardwachtwoorden.
+- Admin- en basicrollen, servercontrole, gebruikersbeheer, accountdeactivering en wachtwoordwijziging.
+- PBKDF2-wachtwoordhashes, HttpOnly-sessies, sessieverloop, CSRF-controle en inlogbegrenzing.
+- Herstel behoudt huidige accounts en rollen en meldt actieve sessies af.
+- Servercache, ETags, versiegebonden assetcache en hergebruik van recente koersen.
+- Schema 5 voegt accounts en de beveiligingsoptie toe; bestaande gegevens blijven behouden.
+
 # 0.2.1
 
 - De app heet overal Home Invest: app store, HA-zijbalk, menu, browsertitels en documentatie.

@@ -15,3 +15,8 @@ Bij iedere wijziging aan dit project:
   rollback bij fouten. Voeg regressietests toe voor elke nieuwe migratie.
 - Controleer de betrokken pagina's in de browser en voer passende bestaande tests uit.
 - Werk README, DOCS en CHANGELOG bij wanneer gebruik of installatie verandert.
+- Dwing accountrollen en CSRF op de server af; verborgen menu's zijn geen toegangscontrole.
+- Importeer bij portefeuilleherstel nooit gebruikers, beveiligingsopties of uitvoerbaar
+  schema uit een upload. Behoud de huidige accounts en maak vooraf een veiligheidskopie.
+- Maak de overzichtcache ongeldig na mutaties, koersupdates en herstel. Cache geen
+  sessies of financiële antwoorden in browseropslag; gebruik versiegebonden asset-URL's.

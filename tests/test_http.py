@@ -6,6 +6,7 @@ import threading
 import unittest
 import http.client
 import importlib
+from datetime import date,timedelta
 from pathlib import Path
 from unittest.mock import patch
 
@@ -42,7 +43,7 @@ class HttpTests(unittest.TestCase):
             status, body, headers = self.request('GET', path)
             self.assertEqual(status, 200)
             self.assertGreater(len(body), 0)
-            self.assertEqual(headers['Cache-Control'], 'no-store')
+            self.assertEqual(headers['Cache-Control'], 'no-store' if path in ('/','/api/state') else 'private, max-age=86400, immutable')
 
     def test_persistent_settings_and_version_information(self):
         headers={'Content-Type':'application/json','X-Portfolio-Request':'1'}
@@ -50,18 +51,19 @@ class HttpTests(unittest.TestCase):
         status,data,_=self.request('GET','/api/state')
         state=json.loads(data)
         self.assertEqual(state['settings']['default_range'],'3M')
-        self.assertEqual(state['database_version'],4)
-        self.assertEqual(state['app_version'],self.module.APP_VERSION)
+        self.assertEqual(state['database_version'],5)
+        from version import APP_VERSION
+        self.assertEqual(state['app_version'],APP_VERSION)
         self.assertEqual(self.request('POST','/api/settings',json.dumps({'default_range':'bad'}),headers)[0],400)
 
     def test_purchase_backup_and_reject_cross_site_write(self):
-        body = json.dumps(dict(name='Apple', symbol='AAPL', exchange='NASDAQ', quantity='2', price='200', currency='USD', purchased_on='2025-01-01'))
+        body = json.dumps(dict(name='Apple', symbol='AAPL', exchange='NASDAQ', quantity='2', price='200', currency='USD', purchased_on=(date.today()-timedelta(days=7)).isoformat()))
         self.assertEqual(self.request('POST', '/api/purchases', body)[0], 403)
         headers = {'Content-Type': 'application/json', 'X-Portfolio-Request': '1'}
         self.assertEqual(self.request('POST', '/api/purchases', body, headers)[0], 201)
         status, data, _ = self.request('GET', '/api/state')
         self.assertEqual(json.loads(data)['positions'][0]['cost'], '400')
-        payment=json.dumps(dict(symbol='AAPL',exchange='NASDAQ',currency='USD',amount='3.25',paid_on='2025-01-02'))
+        payment=json.dumps(dict(symbol='AAPL',exchange='NASDAQ',currency='USD',amount='3.25',paid_on=(date.today()-timedelta(days=6)).isoformat()))
         self.assertEqual(self.request('POST','/api/dividends',payment,headers)[0],201)
         status,data,_=self.request('GET','/api/state')
         self.assertEqual(json.loads(data)['positions'][0]['dividend'],'3.25')
@@ -74,10 +76,10 @@ class HttpTests(unittest.TestCase):
 
     def test_search_validation_and_provider_failure(self):
         self.assertEqual(self.request('GET', '/api/search?q=a')[0], 400)
-        with patch.object(self.module, 'search_stocks', return_value=[dict(name='Apple', symbol='AAPL', exchange='NASDAQ', currency='USD')]) as search:
+        with patch('web.search_stocks', return_value=[dict(name='Apple', symbol='AAPL', exchange='NASDAQ', currency='USD')]) as search:
             status, body, _ = self.request('GET', '/api/search?q=ap')
             self.assertEqual(status, 200)
             self.assertEqual(json.loads(body)['results'][0]['symbol'], 'AAPL')
             search.assert_called_once_with('ap')
-        with patch.object(self.module, 'search_stocks', side_effect=TimeoutError):
+        with patch('web.search_stocks', side_effect=TimeoutError):
             self.assertEqual(self.request('GET', '/api/search?q=ap')[0], 502)

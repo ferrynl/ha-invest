@@ -4,14 +4,18 @@ import os
 import threading
 import time
 from pathlib import Path
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit, parse_qs
+from http.server import ThreadingHTTPServer
 from storage import Store
 from provider import fetch_quote, search_stocks, fetch_history
-from version import APP_VERSION
+from security import Auth
+from cache import StateCache
+from web import make_handler
+from datetime import datetime, timezone
 
 ROOT = Path(__file__).parent
 store = Store(os.environ.get('DATA_DIR', './data'))
+auth = Auth(store)
+state_cache = StateCache(30)
 options_path = store.root / 'options.json'
 options = json.loads(options_path.read_text()) if options_path.exists() else {}
 interval = max(5, int(options.get('refresh_minutes', 15))) * 60
@@ -35,8 +39,10 @@ def refresh():
             except Exception:
                 history_errors += 1
             try:
-                price, stamp = fetch_quote('', p['symbol'], p['exchange'], p['currency'])
-                store.quote(p['symbol'], p['exchange'], p['currency'], price, stamp, 'Yahoo Finance (mogelijk vertraagd)')
+                fresh = p['quote'] and (datetime.now(timezone.utc)-datetime.fromisoformat(p['quote']['fetched_at'])).total_seconds()<interval
+                if not fresh:
+                    price, stamp = fetch_quote('', p['symbol'], p['exchange'], p['currency'])
+                    store.quote(p['symbol'], p['exchange'], p['currency'], price, stamp, 'Yahoo Finance (mogelijk vertraagd)')
             except Exception:
                 errors += 1
             # Space requests to avoid bursts; plan limits still apply.
@@ -45,6 +51,7 @@ def refresh():
         status.update(message=f'{errors} koersaanvragen mislukt. Vorige koersen blijven zichtbaar met hun oorspronkelijke tijd.' if errors else 'Yahoo-koersen bijgewerkt; mogelijk vertraagd. Buiten beurstijden zie je de laatst beschikbare koers.', last_attempt=now())
         if history_errors:
             status['message'] += f' Historie van {history_errors} aandeel/aandelen kon niet worden opgehaald; volgt bij de volgende controle.'
+        state_cache.invalidate()
     finally:
         refresh_lock.release()
 
@@ -61,70 +68,7 @@ def background():
         refresh_requested.wait(interval)
         refresh_requested.clear()
 
-class Handler(BaseHTTPRequestHandler):
-    def log_message(self, *_):
-        pass
-
-    def respond(self, content, code=200, kind='application/json', filename=None):
-        if kind == 'application/json':
-            content = json.dumps(content).encode()
-        self.send_response(code)
-        self.send_header('Content-Type', kind)
-        self.send_header('Content-Length', str(len(content)))
-        self.send_header('Cache-Control', 'no-store')
-        self.send_header('X-Content-Type-Options', 'nosniff')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'self'")
-        if filename:
-            self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
-        self.end_headers()
-        self.wfile.write(content)
-
-    def do_GET(self):
-        path = urlsplit(self.path).path
-        if path == '/api/search':
-            query = parse_qs(urlsplit(self.path).query).get('q', [''])[0]
-            if not 2 <= len(query.strip()) <= 80:
-                return self.respond({'error': 'Typ minimaal twee en maximaal 80 tekens.'}, 400)
-            try:
-                return self.respond({'results': search_stocks(query)})
-            except Exception:
-                return self.respond({'error': 'Zoeken bij Yahoo lukt nu niet. Probeer het opnieuw.'}, 502)
-        if path == '/api/state':
-            return self.respond({**store.state(), 'status': status, 'refresh_minutes': interval // 60, 'app_version': APP_VERSION})
-        if path == '/api/backup':
-            backup = store.backup()
-            return self.respond(backup.read_bytes(), kind='application/vnd.sqlite3', filename=backup.name)
-        files = {'/': ('index.html', 'text/html; charset=utf-8'), '/app.js': ('app.js', 'text/javascript'), '/pages.js': ('pages.js', 'text/javascript'), '/chart.js': ('chart.js', 'text/javascript'), '/chart-view.js': ('chart-view.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
-        if path in files:
-            name, kind = files[path]
-            return self.respond((ROOT / 'static' / name).read_bytes(), kind=kind)
-        self.respond({'error': 'Niet gevonden'}, 404)
-
-    def do_POST(self):
-        # JSON-only, custom header and no CORS prevent cross-site form writes.
-        if self.headers.get('X-Portfolio-Request') != '1' or self.headers.get('Content-Type') != 'application/json':
-            return self.respond({'error': 'Ongeldige aanvraag'}, 403)
-        try:
-            length = int(self.headers.get('Content-Length', '0'))
-            if not 0 < length <= 16384:
-                raise ValueError('Aanvraag te groot of leeg.')
-            data = json.loads(self.rfile.read(length))
-            if not isinstance(data, dict):
-                raise ValueError('Object verwacht.')
-            path = urlsplit(self.path).path
-            if path == '/api/settings':
-                store.save_settings(data)
-                return self.respond({'ok': True}, 200)
-            if path == '/api/dividends':
-                store.add_dividend(data)
-                return self.respond({'ok': True}, 201)
-            if path != '/api/purchases':
-                return self.respond({'error': 'Niet gevonden'}, 404)
-            store.add(data)
-            refresh_requested.set()
-            self.respond({'ok': True}, 201)
-        except (ValueError, KeyError, TypeError):
-            self.respond({'error': 'Controleer alle velden en positieve bedragen. De datum moet tussen de eerste aankoop en vandaag liggen bij dividend.'}, 400)
+Handler = make_handler(store, auth, state_cache, status, interval, refresh_lock, refresh_requested)
 
 if __name__ == '__main__':
     threading.Thread(target=background, daemon=True).start()

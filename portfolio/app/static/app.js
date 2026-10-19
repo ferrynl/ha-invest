@@ -4,7 +4,7 @@ const money = (n,c) => n === null ? 'Nog geen koers' : new Intl.NumberFormat('nl
 function cell(row,value){const td=document.createElement('td');td.textContent=value;row.append(td);return td;}
 async function load(){
  try{
- const response=await fetch('api/state');if(!response.ok)throw Error();state=await response.json();
+ const response=await apiFetch('api/state');if(response.status===304)return;if(!response.ok)throw Error();state=await response.json();
  $('status').textContent=state.status.message+' Automatische controle elke '+state.refresh_minutes+' minuten.';
  $('positions').replaceChildren();$('purchases').replaceChildren();$('totals').replaceChildren();
  const totals={};
@@ -53,7 +53,7 @@ $('stock-search').addEventListener('input',()=>{
  searchTimer=setTimeout(async()=>{
   searchController=new AbortController();
   try{
-   const response=await fetch('api/search?q='+encodeURIComponent(query),{signal:searchController.signal});const data=await response.json();
+   const response=await apiFetch('api/search?q='+encodeURIComponent(query),{signal:searchController.signal});const data=await response.json();
    if(version!==searchVersion)return;if(!response.ok)throw Error(data.error);
    for(const stock of data.results){const button=document.createElement('button');button.type='button';button.setAttribute('role','option');button.setAttribute('aria-selected','false');button.textContent=stock.name+' · '+stock.symbol+' · '+stock.exchange+' · '+stock.currency;button.addEventListener('click',()=>chooseStock(stock));$('search-results').append(button);}
    $('search-results').hidden=!data.results.length;$('stock-search').setAttribute('aria-expanded',String(Boolean(data.results.length)));
@@ -63,9 +63,9 @@ $('stock-search').addEventListener('input',()=>{
 });
 $('stock-search').addEventListener('keydown',event=>{if(event.key==='ArrowDown'){const first=$('search-results').querySelector('button');if(first){event.preventDefault();first.focus();}}if(event.key==='Escape'){clearTimeout(searchTimer);searchController?.abort();searchVersion++;closeSearch();}if(event.key==='Enter'){event.preventDefault();$('search-results').querySelector('button')?.focus();}});
 $('search-results').addEventListener('keydown',event=>{const buttons=[...$('search-results').querySelectorAll('button')],index=buttons.indexOf(document.activeElement);if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();buttons[(index+(event.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length]?.focus();}if(event.key==='Escape'){closeSearch();$('stock-search').focus();}});
-$('purchase').addEventListener('submit',async event=>{event.preventDefault();if(!selectedStock){$('feedback').textContent='Zoek en selecteer eerst een aandeel.';$('stock-search').focus();return;}const button=event.target.querySelector('button[type="submit"]');button.disabled=true;try{const response=await fetch('api/purchases',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(Object.fromEntries(new FormData(event.target)))});const result=await response.json();if(!response.ok)throw Error(result.error);$('feedback').textContent='Aankoop opgeslagen. De koers wordt opgehaald; het overzicht ververst automatisch.';event.target.reset();clearSelection();closeSearch();$('search-status').textContent='Zoek op bedrijfsnaam of symbool. Amsterdam, Nasdaq en NYSE.';await load();}catch(error){$('feedback').textContent=error.message;}finally{button.disabled=false;}});
+$('purchase').addEventListener('submit',async event=>{event.preventDefault();if(!selectedStock){$('feedback').textContent='Zoek en selecteer eerst een aandeel.';$('stock-search').focus();return;}const button=event.target.querySelector('button[type="submit"]');button.disabled=true;try{const response=await apiFetch('api/purchases',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(Object.fromEntries(new FormData(event.target)))});const result=await response.json();if(!response.ok)throw Error(result.error);$('feedback').textContent='Aankoop opgeslagen. De koers wordt opgehaald; het overzicht ververst automatisch.';event.target.reset();clearSelection();closeSearch();$('search-status').textContent='Zoek op bedrijfsnaam of symbool. Amsterdam, Nasdaq en NYSE.';await load();}catch(error){$('feedback').textContent=error.message;}finally{button.disabled=false;}});
 $('dividend-form').addEventListener('submit',async event=>{
  event.preventDefault();const selected=$('dividend-stock').value;if(!selected){$('dividend-feedback').textContent='Voeg eerst een aankoop toe.';return;}
  const [symbol,exchange,currency]=JSON.parse(selected);const button=event.target.querySelector('button');button.disabled=true;
- try{const response=await fetch('api/dividends',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify({...Object.fromEntries(new FormData(event.target)),symbol,exchange,currency})});const result=await response.json();if(!response.ok)throw Error(result.error);$('dividend-feedback').textContent='Dividend apart opgeslagen en opgeteld bij je totale winst.';event.target.reset();await load();}catch(error){$('dividend-feedback').textContent=error.message;}finally{button.disabled=!state?.positions.length;}
+ try{const response=await apiFetch('api/dividends',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify({...Object.fromEntries(new FormData(event.target)),symbol,exchange,currency})});const result=await response.json();if(!response.ok)throw Error(result.error);$('dividend-feedback').textContent='Dividend apart opgeslagen en opgeteld bij je totale winst.';event.target.reset();await load();}catch(error){$('dividend-feedback').textContent=error.message;}finally{button.disabled=!state?.positions.length;}
 });

@@ -1,5 +1,19 @@
 # Home Invest — Gebruik
 
+**Nieuw in 0.3.0:** back-up downloaden en terugzetten staan alleen onder
+**Instellingen**. Bij terugzetten maak je een bevestigde keuze voor een SQLite-bestand
+van maximaal 25 MB. Eerst wordt een veiligheidsback-up gemaakt. Accounts en rollen
+blijven behouden; na herstel meld je je opnieuw aan.
+
+Onder Instellingen kun je **Gebruikersbeveiliging** inschakelen met je eerste eigen
+adminaccount (wachtwoord: 12–128 tekens). Admin heeft volledige toegang. Basic kan
+de portefeuille, aankopen, dividend en rapporten gebruiken, maar geen instellingen,
+accounts of back-ups. Accounts zijn voor dezelfde gedeelde portefeuille. Gebruik HA
+via HTTPS en bewaar back-ups vertrouwelijk, want ze bevatten ook accountgegevens.
+
+De app gebruikt nu servercache, ETags en versiegebonden browsercache. Koersen worden
+niet bij iedere paginawisseling of invoer opnieuw bij Yahoo opgevraagd.
+
 Gebruik het menu links: **Home**, **Aandelen**, **Dividend**, **Rapporten** en
 **Instellingen**. Op een klein scherm verschijnt een menuknop. Home toont het
 overzicht en de grafiek; invoer staat op de eigen pagina. Rapporten toont dividend

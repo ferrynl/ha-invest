@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.2.1). Draait volledig als Home Assistant-app
+Experimentele versie (0.3.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -26,7 +26,8 @@ De app heeft een linkerzijbalk zoals Home Assistant, met vijf afzonderlijke pagi
 - **Aandelen**: posities, een aankoop toevoegen en het aankoopregister.
 - **Dividend**: ontvangen dividend boeken en het dividendregister bekijken.
 - **Rapporten**: ontvangen dividend per maand met jaarfilter en de actuele stand per valuta.
-- **Instellingen**: standaard grafiekperiode, versiegegevens en back-ups.
+- **Instellingen** (admin): gebruikersbeveiliging, accounts, standaard grafiekperiode,
+  versiegegevens, back-up downloaden en terugzetten.
 
 Op een klein scherm opent het menu via de menuknop. De pagina staat in het
 URL-fragment, zodat herladen en de terugknop blijven werken binnen HA ingress.
@@ -99,6 +100,59 @@ je bestaande aankopen en koershistorie blijven behouden.
 
 ## Opslag en back-ups
 
+### Gebruikers en rollen
+
+Onder **Instellingen → Gebruikersbeveiliging** kun je accounts inschakelen.
+Bij de eerste keer maak je zelf een adminaccount met een wachtwoord van minimaal
+12 en maximaal 128 tekens. Er zijn geen standaardaccounts of standaardwachtwoorden.
+Bij uitgeschakelde gebruikersbeveiliging blijft de bestaande Home Assistant-ingress
+de toegang verzorgen. Schakel de optie in voordat je de portefeuille met andere
+HA-gebruikers deelt.
+
+- **Admin**: alle pagina's, invoer, instellingen, gebruikersbeheer en back-ups/herstel.
+- **Basic**: Home, Aandelen, Dividend en Rapporten, inclusief aankopen en dividend
+  invoeren. Geen instellingen, gebruikersbeheer, back-updownload of herstel.
+
+Dit is één gedeelde portefeuille, niet een aparte portefeuille per gebruiker.
+Rechten worden op iedere API-aanvraag op de server afgedwongen. Een rechtstreeks
+API-verzoek omzeilt de rol niet. Admins kunnen accounts aanmaken, rollen wijzigen,
+wachtwoorden resetten en accounts deactiveren. De laatste actieve admin kan niet
+worden gedeactiveerd of tot basic worden teruggezet. Maak bij voorkeur een tweede
+admin aan voor herstel bij een vergeten wachtwoord; er is geen verborgen herstelaccount.
+Alle gebruikers kunnen hun eigen wachtwoord wijzigen. Gewijzigde accounts moeten
+opnieuw aanmelden. Alleen een admin met het huidige adminwachtwoord kan beveiliging
+uitschakelen. Bij opnieuw inschakelen zijn bestaande admingegevens vereist.
+
+Wachtwoorden worden met een unieke salt en PBKDF2-HMAC-SHA256 (600.000 iteraties)
+opgeslagen. Sessies gebruiken willekeurige tokens in HttpOnly/SameSite=Strict-cookies;
+de server bewaart alleen de tokenhash. Cookies krijgen Secure bij HTTPS-toegang.
+Gebruik Home Assistant via HTTPS; de app publiceert geen eigen hostpoort. Schrijfacties
+hebben CSRF-controle. Een sessie verloopt na 30 minuten zonder aanvragen of uiterlijk
+na 8 uur, en vervalt bij uitloggen, accountwijziging of serverherstart. Er is een
+limiet van 10 mislukte pogingen per gebruikersnaam en verbindingsadres in 15 minuten.
+Via ingress kan het verbindingsadres gedeeld zijn; de limiet kan dan meerdere
+gebruikers raken. Sessies en pogingstellers zijn bewust alleen in het geheugen.
+
+### Downloaden en terugzetten
+
+De downloadknop staat alleen op **Instellingen**. Daar kan een admin ook een
+SQLite-back-up van maximaal 25 MB selecteren en na bevestiging terugzetten.
+De app controleert het bestandsformaat, de integriteit, schemaversie en waarden.
+Alleen portefeuillegegevens en de standaard grafiekperiode worden geïmporteerd;
+tabellen, triggers en uitvoerbaar schema uit het bestand worden nooit overgenomen.
+Oudere ondersteunde back-ups worden in het huidige schema ingelezen.
+
+Vóór herstel maakt de app een veiligheidskopie in `/data/backups/restores/`.
+Het vervangen van de portefeuille is transactioneel: een mislukte import draait
+terug. **Huidige gebruikers, wachtwoorden, rollen en de beveiligingsoptie blijven
+behouden**, zodat een oude back-up de beveiliging niet kan uitschakelen. Alle
+sessies vervallen na succesvol herstel. Voor volledig systeemherstel inclusief
+accounts gebruik je een Home Assistant-back-up van de app.
+
+Een gedownloade volledige SQLite-kopie bevat ook accountnamen en wachtwoordhashes.
+Behandel back-ups als vertrouwelijk en bewaar ze veilig; SQLite-bestanden zijn
+niet zelfstandig versleuteld.
+
 Alle gebruikersgegevens blijven buiten de broncode, in de persistente app-map:
 
 ```
@@ -114,7 +168,8 @@ Neem de app op in de automatische Home Assistant-back-ups en bewaar die ook elde
 Herstel bij voorkeur de volledige app via Home Assistant **Instellingen → Systeem
 → Back-ups**. Een losse SQLite-kopie kun je met bestandstoegang naar de app-container
 herstellen: stop eerst de app, bewaar de huidige database apart, plaats de kopie als
-`/data/portfolio.sqlite3` en start opnieuw. Er is nog geen herstelknop in het dashboard.
+`/data/portfolio.sqlite3` en start opnieuw. Bij deze volledige handmatige vervanging
+worden ook de accounts uit die kopie gebruikt.
 
 De download bevat de volledige privéportefeuille. Upload databases, opties en
 back-ups nooit naar GitHub. `.gitignore` sluit lokale gegevens uit, maar geldt niet
@@ -124,7 +179,7 @@ voor handmatige uploads via de GitHub-website.
 
 ### Databaseversies en migraties
 
-Appversie en databaseschema hebben elk een eigen versienummer. Schema **4** gebruikt
+Appversie en databaseschema hebben elk een eigen versienummer. Schema **5** gebruikt
 `PRAGMA user_version` als opgeslagen versie. De migratierunner in `migrations.py`
 voert uitsluitend ontbrekende stappen op volgorde uit:
 
@@ -132,6 +187,7 @@ voert uitsluitend ontbrekende stappen op volgorde uit:
 2. Historische dagkoersen en synchronisatiegegevens.
 3. Ontvangen dividend.
 4. Dashboardinstellingen.
+5. Gebruikers, rollen en de optie voor gebruikersbeveiliging.
 
 Vóór het aanpassen van een bestaande database wordt een consistente kopie in
 `/data/backups/migrations/before-vN-to-vM-*.sqlite3` gemaakt. Deze kopieën vallen
@@ -150,8 +206,8 @@ cd portfolio/app
 python server.py
 ```
 
-Open `http://localhost:8099/`. Gebruik lokaal `BIND=127.0.0.1`; de ontwikkelserver
-heeft geen eigen login. In Home Assistant loopt toegang via authenticated ingress;
+Open `http://localhost:8099/`. Gebruik lokaal `BIND=127.0.0.1` en schakel accounts
+in als je de ontwikkelserver met anderen deelt. In Home Assistant loopt toegang via authenticated ingress;
 er is geen hostpoort gepubliceerd. Stel deze server niet rechtstreeks bloot.
 
 ```
@@ -162,6 +218,10 @@ python -m unittest discover -s tests -v
 
 - `portfolio/app/storage.py`: schema, validatie, berekeningen, back-ups.
 - `portfolio/app/migrations.py`: geversioneerde, transactionele database-updates.
+- `portfolio/app/security.py`: wachtwoorden, sessies en accountbeheer.
+- `portfolio/app/web.py`: API, authenticatie, rollen en CSRF-controles.
+- `portfolio/app/restore.py`: gevalideerd, transactioneel portefeuilleherstel.
+- `portfolio/app/cache.py`: tijdelijke cache van het portefeuilleoverzicht.
 - `portfolio/app/provider.py`: vervangbare Yahoo-koerskoppeling.
 - `portfolio/app/history.py`: dagelijkse waardes met aankopen en kalenderdagen.
 - `portfolio/app/server.py`: lokale HTTP-API en geplande taken.
@@ -172,6 +232,23 @@ python -m unittest discover -s tests -v
 - `.github/workflows/check.yml`: controles bij GitHub-wijzigingen.
 
 ## Grenzen van deze eerste versie
+
+### Caching
+
+Het berekende portefeuilleoverzicht wordt 30 seconden in het servergeheugen bewaard.
+Elke wijziging, koersupdate en herstelactie maakt die cache ongeldig. De browser
+gebruikt ETags om identieke overzichten niet opnieuw te downloaden. Financiële en
+accountantwoorden krijgen `no-store`; er staat geen portefeuillecache in localStorage.
+Het scherm controleert maximaal elke twee minuten zolang het tabblad zichtbaar is.
+Terugkeren naar het tabblad controleert de lokale stand opnieuw. Dat start geen
+Yahoo-koersaanvraag.
+
+Yahoo-koersen worden alleen via de achtergrondtaak gecontroleerd. Een recent in
+SQLite opgeslagen koers wordt gedurende het ingestelde interval hergebruikt, ook
+na een nieuwe aankoop van hetzelfde aandeel. Dagkoersen blijven dagelijks gecachet;
+zoeken gebruikt een korte cache en een typevertraging. Statische bestanden gebruiken
+een appversie in de URL, ETags en maximaal één dag browsercache. Een app-update
+verandert de asset-URL's automatisch.
 
 Alleen aankopen en handmatig geboekt netto dividend; nog geen verkopen, splitsingen, bewerkingsinterface,
 transactiekosten of automatische valutawissel.

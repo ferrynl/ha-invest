@@ -5,6 +5,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
 import re
 from uuid import uuid4
+from threading import RLock
 from contextlib import contextmanager, closing
 from history import daily_values, with_dividends, portfolio_values
 from migrations import migrate, SCHEMA_VERSION
@@ -26,10 +27,17 @@ class Store:
         self.root = Path(root)
         self.root.mkdir(parents=True, exist_ok=True)
         self.path = self.root / 'portfolio.sqlite3'
+        self.lock = RLock()
         migrate(self.path)
 
     @contextmanager
     def connect(self):
+        with self.lock:
+            with self._connect() as db:
+                yield db
+
+    @contextmanager
+    def _connect(self):
         db = sqlite3.connect(self.path, timeout=30)
         db.row_factory = sqlite3.Row
         try:
