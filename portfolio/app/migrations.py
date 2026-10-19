@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from contextlib import closing
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 MIGRATIONS = {
     1: (
         'CREATE TABLE IF NOT EXISTS purchases (id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL, name TEXT NOT NULL, quantity TEXT NOT NULL, price TEXT NOT NULL, currency TEXT NOT NULL, purchased_on TEXT NOT NULL, created_at TEXT NOT NULL)',
@@ -25,6 +25,17 @@ MIGRATIONS = {
     5: (
         "CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE COLLATE NOCASE, password_hash TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','basic')), active INTEGER NOT NULL DEFAULT 1, revision INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL)",
         "INSERT INTO app_settings VALUES('auth_enabled','false')",
+    ),
+    6: (
+        "CREATE TABLE broker_accounts (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, broker TEXT NOT NULL, created_at TEXT NOT NULL)",
+        "INSERT INTO broker_accounts VALUES(1,'Handmatig','Handmatig',strftime('%Y-%m-%dT%H:%M:%fZ','now'))",
+        'ALTER TABLE purchases ADD COLUMN account_id INTEGER NOT NULL DEFAULT 1 REFERENCES broker_accounts(id)',
+        "ALTER TABLE purchases ADD COLUMN side TEXT NOT NULL DEFAULT 'BUY' CHECK(side IN ('BUY','SELL'))",
+        "ALTER TABLE purchases ADD COLUMN trade_time TEXT NOT NULL DEFAULT ''",
+        'ALTER TABLE dividends ADD COLUMN account_id INTEGER NOT NULL DEFAULT 1 REFERENCES broker_accounts(id)',
+        'CREATE TABLE api_cache (namespace TEXT NOT NULL, cache_key TEXT NOT NULL, payload TEXT NOT NULL, fetched_at REAL NOT NULL, expires_at REAL NOT NULL, PRIMARY KEY(namespace,cache_key))',
+        "CREATE TABLE import_batches (id INTEGER PRIMARY KEY, account_id INTEGER NOT NULL REFERENCES broker_accounts(id), provider TEXT NOT NULL, filename TEXT NOT NULL, digest TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'preview', created_at TEXT NOT NULL)",
+        'CREATE TABLE import_records (id INTEGER PRIMARY KEY, batch_id INTEGER NOT NULL REFERENCES import_batches(id), account_id INTEGER NOT NULL REFERENCES broker_accounts(id), provider TEXT NOT NULL, external_id TEXT NOT NULL, digest TEXT NOT NULL, raw TEXT NOT NULL, UNIQUE(account_id,provider,external_id))',
     ),
 }
 

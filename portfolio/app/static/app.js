@@ -4,31 +4,31 @@ const money = (n,c) => n === null ? 'Nog geen koers' : new Intl.NumberFormat('nl
 function cell(row,value){const td=document.createElement('td');td.textContent=value;row.append(td);return td;}
 async function load(){
  try{
- const response=await apiFetch('api/state');if(response.status===304)return;if(!response.ok)throw Error();state=await response.json();
+ const response=await apiFetch('api/state?account_id='+encodeURIComponent(currentBroker));if(response.status===304)return;if(!response.ok)throw Error();state=await response.json();
  $('status').textContent=state.status.message+' Automatische controle elke '+state.refresh_minutes+' minuten.';
  $('positions').replaceChildren();$('purchases').replaceChildren();$('totals').replaceChildren();
  const totals={};
  for(const p of state.positions){
-  const row=document.createElement('tr');cell(row,p.name+' · '+p.symbol);cell(row,p.quantity);cell(row,money(p.cost,p.currency));cell(row,p.quote?money(p.quote.price,p.currency):'—');cell(row,money(p.value,p.currency));cell(row,p.gain===null?'—':money(p.gain,p.currency)).className=Number(p.gain)>=0?'positive':'negative';cell(row,money(p.dividend,p.currency));cell(row,p.total_gain===null?'—':money(p.total_gain,p.currency)).className=Number(p.total_gain)>=0?'positive':'negative';cell(row,p.quote?new Date(p.quote.quoted_at).toLocaleString('nl-NL'):'Wacht op koers');$('positions').append(row);
-  const t=totals[p.currency]??={cost:0,value:0,dividend:0,missing:0};t.cost+=Number(p.cost);t.dividend+=Number(p.dividend);if(p.value===null)t.missing++;else t.value+=Number(p.value);
+  const row=document.createElement('tr');cell(row,p.name+' · '+p.symbol+' · '+p.account_name);cell(row,p.quantity);cell(row,money(p.cost,p.currency));cell(row,p.quote?money(p.quote.price,p.currency):'—');cell(row,money(p.value,p.currency));cell(row,p.gain===null?'—':money(p.gain,p.currency)).className=Number(p.gain)>=0?'positive':'negative';cell(row,money(p.dividend,p.currency));cell(row,p.total_gain===null?'—':money(p.total_gain,p.currency)).className=Number(p.total_gain)>=0?'positive':'negative';cell(row,p.quote?new Date(p.quote.quoted_at).toLocaleString('nl-NL'):'Wacht op koers');$('positions').append(row);
+  const t=totals[p.currency]??={cost:0,value:0,dividend:0,realised:0,missing:0};t.cost+=Number(p.cost);t.dividend+=Number(p.dividend);t.realised+=Number(p.realised??0);if(p.value===null)t.missing++;else t.value+=Number(p.value);
  }
- for(const [currency,t] of Object.entries(totals)){const box=document.createElement('article');box.className='total';const label=document.createElement('small');label.textContent='PORTEFEUILLE · '+currency;const amount=document.createElement('strong');amount.textContent=t.missing?'Waarde onvolledig':money(t.value,currency);const detail=document.createElement('div');detail.textContent='Inleg '+money(t.cost,currency)+(t.missing?' · '+t.missing+' zonder koers':' · Koerswinst '+money(t.value-t.cost,currency));const income=document.createElement('p');income.textContent='Ontvangen dividend '+money(t.dividend,currency);const gain=document.createElement('div');gain.textContent='Totale winst '+(t.missing?'onbekend':money(t.value-t.cost+t.dividend,currency));box.append(label,amount,detail,income,gain);$('totals').append(box);}
- for(const p of state.purchases){const row=document.createElement('tr');for(const v of [p.purchased_on,p.name+' · '+p.symbol,p.exchange,p.quantity,money(p.price,p.currency)])cell(row,v);$('purchases').append(row);}
+ for(const [currency,t] of Object.entries(totals)){const box=document.createElement('article');box.className='total';const label=document.createElement('small');label.textContent='PORTEFEUILLE · '+currency;const amount=document.createElement('strong');amount.textContent=t.missing?'Waarde onvolledig':money(t.value,currency);const detail=document.createElement('div');detail.textContent='Inleg '+money(t.cost,currency)+(t.missing?' · '+t.missing+' zonder koers':' · Koerswinst '+money(t.value-t.cost+t.realised,currency));const income=document.createElement('p');income.textContent='Ontvangen dividend '+money(t.dividend,currency);const gain=document.createElement('div');gain.textContent='Totale winst '+(t.missing?'onbekend':money(t.value-t.cost+t.realised+t.dividend,currency));box.append(label,amount,detail,income,gain);$('totals').append(box);}
+ for(const p of state.purchases){const row=document.createElement('tr');for(const v of [p.purchased_on,p.name+' · '+p.symbol+' · '+p.account_name,p.side,p.exchange,p.quantity,money(p.price,p.currency)])cell(row,v);$('purchases').append(row);}
  $('empty').textContent=state.positions.length?'':'Voeg je eerste aankoop toe. Er worden geen voorbeeldbedragen als echte gegevens opgeslagen.';
  const selected=$('instrument').value;$('instrument').replaceChildren();
  function option(value,label){const o=document.createElement('option');o.value=value;o.textContent=label;$('instrument').append(o);}
  option('all','Alle aandelen · winst % incl. dividend');
  for(const p of state.portfolios)option('portfolio:'+p.currency,'Totaal portefeuille · '+p.currency);
- state.positions.forEach((p,i)=>option(String(i),p.name+' · '+p.exchange+' · '+p.currency));
+ state.positions.forEach((p,i)=>option(String(i),p.name+' · '+p.account_name+' · '+p.currency));
  if([...$('instrument').options].some(o=>o.value===selected))$('instrument').value=selected;
  const dividendSelected=$('dividend-stock').value;$('dividend-stock').replaceChildren();
- for(const p of state.positions){const o=document.createElement('option');o.value=JSON.stringify([p.symbol,p.exchange,p.currency]);o.textContent=p.name+' · '+p.symbol+' · '+p.currency;$('dividend-stock').append(o);}
+ for(const p of state.positions){const o=document.createElement('option');o.value=JSON.stringify([p.symbol,p.exchange,p.currency,p.account_id]);o.textContent=p.name+' · '+p.symbol+' · '+p.account_name+' · '+p.currency;$('dividend-stock').append(o);}
  if([...$('dividend-stock').options].some(o=>o.value===dividendSelected))$('dividend-stock').value=dividendSelected;
  $('dividend-form').querySelector('button').disabled=!state.positions.length;
- $('dividends').replaceChildren();for(const d of state.dividends){const row=document.createElement('tr');for(const v of [dayLabel(d.paid_on),d.symbol+' · '+d.exchange,money(d.amount,d.currency),d.note])cell(row,v);$('dividends').append(row);}
+ $('dividends').replaceChildren();for(const d of state.dividends){const row=document.createElement('tr');for(const v of [dayLabel(d.paid_on),d.symbol+' · '+d.exchange+' · '+(state.accounts.find(a=>a.id===d.account_id)?.name??''),money(d.amount,d.currency),d.note])cell(row,v);$('dividends').append(row);}
  $('dividend-empty').textContent=state.dividends.length?'':'Nog geen ontvangen dividend geboekt.';
  if(!rangeInitialized){chartRange=state.settings.default_range;rangeInitialized=true;syncRangeButtons();}
- renderPages();draw();
+ renderPages();renderBrokerAccounts();draw();
  }catch{$('status').textContent='Gegevens laden mislukt. Probeer de pagina opnieuw te openen.';}
 }
 let chartRange='1M',rangeInitialized=false;
@@ -66,6 +66,6 @@ $('search-results').addEventListener('keydown',event=>{const buttons=[...$('sear
 $('purchase').addEventListener('submit',async event=>{event.preventDefault();if(!selectedStock){$('feedback').textContent='Zoek en selecteer eerst een aandeel.';$('stock-search').focus();return;}const button=event.target.querySelector('button[type="submit"]');button.disabled=true;try{const response=await apiFetch('api/purchases',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(Object.fromEntries(new FormData(event.target)))});const result=await response.json();if(!response.ok)throw Error(result.error);$('feedback').textContent='Aankoop opgeslagen. De koers wordt opgehaald; het overzicht ververst automatisch.';event.target.reset();clearSelection();closeSearch();$('search-status').textContent='Zoek op bedrijfsnaam of symbool. Amsterdam, Nasdaq en NYSE.';await load();}catch(error){$('feedback').textContent=error.message;}finally{button.disabled=false;}});
 $('dividend-form').addEventListener('submit',async event=>{
  event.preventDefault();const selected=$('dividend-stock').value;if(!selected){$('dividend-feedback').textContent='Voeg eerst een aankoop toe.';return;}
- const [symbol,exchange,currency]=JSON.parse(selected);const button=event.target.querySelector('button');button.disabled=true;
- try{const response=await apiFetch('api/dividends',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify({...Object.fromEntries(new FormData(event.target)),symbol,exchange,currency})});const result=await response.json();if(!response.ok)throw Error(result.error);$('dividend-feedback').textContent='Dividend apart opgeslagen en opgeteld bij je totale winst.';event.target.reset();await load();}catch(error){$('dividend-feedback').textContent=error.message;}finally{button.disabled=!state?.positions.length;}
+ const [symbol,exchange,currency,account_id]=JSON.parse(selected);const button=event.target.querySelector('button');button.disabled=true;
+ try{const response=await apiFetch('api/dividends',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify({...Object.fromEntries(new FormData(event.target)),symbol,exchange,currency,account_id})});const result=await response.json();if(!response.ok)throw Error(result.error);$('dividend-feedback').textContent='Dividend apart opgeslagen en opgeteld bij je totale winst.';event.target.reset();await load();}catch(error){$('dividend-feedback').textContent=error.message;}finally{button.disabled=!state?.positions.length;}
 });

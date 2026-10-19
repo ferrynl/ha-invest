@@ -59,8 +59,26 @@ class Store:
         if day > date.today():
             raise ValueError('Aankoopdatum mag niet in de toekomst liggen.')
         with self.connect() as db:
-            db.execute('INSERT INTO purchases VALUES(NULL,?,?,?,?,?,?,?,?)',
-                       (symbol, exchange, name, positive(data['quantity']), positive(data['price']), currency, day.isoformat(), now()))
+            account_id=int(data.get('account_id',1));self.require_account(db,account_id)
+            side=data.get('side','BUY')
+            if side not in ('BUY','SELL'):raise ValueError('Ongeldig transactietype.')
+            trade_time=str(data.get('trade_time',''))
+            if trade_time:datetime.fromisoformat(trade_time.replace('Z','+00:00'))
+            db.execute('INSERT INTO purchases(symbol,exchange,name,quantity,price,currency,purchased_on,created_at,account_id,side,trade_time) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
+                       (symbol, exchange, name, positive(data['quantity']), positive(data['price']), currency, day.isoformat(), now(),account_id,side,trade_time))
+            if side=='SELL':
+                lots=[dict(r) for r in db.execute('SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',(account_id,symbol,exchange,currency))]
+                daily_values(lots,[],[])
+
+    @staticmethod
+    def require_account(db,account_id):
+        if not db.execute('SELECT 1 FROM broker_accounts WHERE id=?',(account_id,)).fetchone():raise ValueError('Brokeraccount niet gevonden.')
+
+    def add_account(self,data):
+        name=str(data.get('name','')).strip();broker=str(data.get('broker','')).strip()
+        if not 1<=len(name)<=80 or not 1<=len(broker)<=80:raise ValueError('Vul een accountnaam en bedrijf in (maximaal 80 tekens).')
+        with self.connect() as db:
+            db.execute('INSERT INTO broker_accounts(name,broker,created_at) VALUES(?,?,?)',(name,broker,now()))
 
     def quote(self, symbol, exchange, currency, price, timestamp, source):
         stamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
@@ -78,12 +96,13 @@ class Store:
         if day > date.today() or len(note) > 200:
             raise ValueError('Controleer betaaldatum en notitie.')
         with self.connect() as db:
-            lot = db.execute('SELECT MIN(purchased_on) AS first FROM purchases WHERE symbol=? AND exchange=? AND currency=?',
-                             (symbol, exchange, currency)).fetchone()
+            account_id=int(data.get('account_id',1));self.require_account(db,account_id)
+            lot = db.execute('SELECT MIN(purchased_on) AS first FROM purchases WHERE symbol=? AND exchange=? AND currency=? AND account_id=?',
+                             (symbol, exchange, currency,account_id)).fetchone()
             if not lot['first'] or day.isoformat() < lot['first']:
                 raise ValueError('Kies een bestaand aandeel en een betaaldatum vanaf de eerste aankoop.')
-            db.execute('INSERT INTO dividends VALUES(NULL,?,?,?,?,?,?,?)',
-                       (symbol, exchange, currency, amount, day.isoformat(), note, now()))
+            db.execute('INSERT INTO dividends(symbol,exchange,currency,amount,paid_on,note,created_at,account_id) VALUES(?,?,?,?,?,?,?,?)',
+                       (symbol, exchange, currency, amount, day.isoformat(), note, now(),account_id))
 
     def state(self):
         with self.connect() as db:
@@ -91,31 +110,41 @@ class Store:
             quotes = [dict(row) for row in db.execute('SELECT * FROM quotes ORDER BY quoted_at,id')]
             daily = [dict(row) for row in db.execute('SELECT * FROM daily_prices ORDER BY day')]
             dividends = [dict(row) for row in db.execute('SELECT * FROM dividends ORDER BY paid_on,id')]
+            accounts=[dict(r) for r in db.execute('SELECT * FROM broker_accounts ORDER BY id')]
+        account_names={a['id']:a for a in accounts}
+        for row in purchases:row['account_name']=account_names[row['account_id']]['name']
         groups = {}
         for p in purchases:
-            key = (p['symbol'], p['exchange'], p['currency'])
-            group = groups.setdefault(key, dict(symbol=key[0], exchange=key[1], currency=key[2], name=p['name'], quantity=Decimal(0), cost=Decimal(0), quote=None))
-            group['quantity'] += Decimal(p['quantity'])
-            group['cost'] += Decimal(p['quantity']) * Decimal(p['price'])
+            key = (p['account_id'],p['symbol'], p['exchange'], p['currency'])
+            account=account_names[p['account_id']]
+            groups.setdefault(key,dict(account_id=key[0],symbol=key[1],exchange=key[2],currency=key[3],name=p['name'],account_name=account['name'],broker=account['broker'],quote=None))
         for q in quotes:
-            key = (q['symbol'], q['exchange'], q['currency'])
-            if key in groups:
-                groups[key]['quote'] = q
+            for group in groups.values():
+                if all(q[k]==group[k] for k in ('symbol','exchange','currency')):group['quote']=q
         positions = []
         for group in groups.values():
             def matches(row):
                 return all(row[k] == group[k] for k in ('symbol', 'exchange', 'currency'))
-            chart = daily_values([p for p in purchases if matches(p)], [d for d in daily if matches(d)], [q for q in quotes if matches(q)])
-            income = [d for d in dividends if matches(d)]
+            chart = daily_values([p for p in purchases if matches(p) and p['account_id']==group['account_id']], [d for d in daily if matches(d)], [q for q in quotes if matches(q)])
+            income = [d for d in dividends if matches(d) and d['account_id']==group['account_id']]
             chart = with_dividends(chart, income)
             received = sum((Decimal(d['amount']) for d in income), Decimal(0))
-            value = group['quantity'] * Decimal(group['quote']['price']) if group['quote'] else None
-            positions.append({**group, 'dividend': str(received), 'total_gain': str(value - group['cost'] + received) if value is not None else None,
-                              'history': chart, 'quantity': str(group['quantity']), 'cost': str(group['cost']),
+            last=chart[-1];quantity,cost,realised=Decimal(last['quantity']),Decimal(last['cost']),Decimal(last['realised'])
+            value = quantity * Decimal(group['quote']['price']) if group['quote'] else (Decimal(0) if not quantity else None)
+            positions.append({**group, 'dividend': str(received), 'realised':str(realised),'total_gain': str(value - cost +realised+ received) if value is not None else None,
+                              'history': chart, 'quantity': str(quantity), 'cost': str(cost),
                               'value': str(value) if value is not None else None,
-                              'gain': str(value - group['cost']) if value is not None else None})
+                              'gain': str(value - cost+realised) if value is not None else None})
         return dict(purchases=purchases, positions=positions, quotes=quotes, dividends=dividends, portfolios=portfolio_values(positions),
-                    settings=self.settings(), database_version=SCHEMA_VERSION)
+                    accounts=accounts,settings=self.settings(), database_version=SCHEMA_VERSION)
+
+    def history_start(self,symbol,exchange,currency,start):
+        with self.connect() as db:
+            sync=db.execute('SELECT start FROM history_sync WHERE symbol=? AND exchange=? AND currency=?',(symbol,exchange,currency)).fetchone()
+            last=db.execute('SELECT MAX(day) FROM daily_prices WHERE symbol=? AND exchange=? AND currency=?',(symbol,exchange,currency)).fetchone()[0]
+        if not sync or sync['start']>start or not last:return start
+        from datetime import timedelta
+        return max(start,(date.fromisoformat(last)-timedelta(days=7)).isoformat())
 
     def settings(self):
         with self.connect() as db:
@@ -139,7 +168,7 @@ class Store:
         with self.connect() as db:
             db.executemany('INSERT OR REPLACE INTO daily_prices VALUES(?,?,?,?,?)', validated)
             db.execute('INSERT OR REPLACE INTO history_sync VALUES(?,?,?,?,?)',
-                       (symbol, exchange, currency, start, date.today().isoformat()))
+                       (symbol, exchange, currency, min(start,db.execute('SELECT COALESCE(MIN(start),?) FROM history_sync WHERE symbol=? AND exchange=? AND currency=?',(start,symbol,exchange,currency)).fetchone()[0]), date.today().isoformat()))
 
     def backup(self):
         folder = self.root / 'backups'

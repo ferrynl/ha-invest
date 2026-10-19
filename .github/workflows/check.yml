@@ -17,5 +17,6 @@ jobs:
       - run: node --check portfolio/app/static/chart-view.js
       - run: node --check portfolio/app/static/pages.js
       - run: node --check portfolio/app/static/access.js
+      - run: node --check portfolio/app/static/imports.js
       - run: node tests/test_chart.cjs
       - run: docker build portfolio -t aandelen-dashboard:test

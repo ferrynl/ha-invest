@@ -1,12 +1,13 @@
-const pageNames={home:'Home',aandelen:'Aandelen',dividend:'Dividend',rapporten:'Rapporten',instellingen:'Instellingen'};
+const pageNames={home:'Home',aandelen:'Aandelen',dividend:'Dividend',rapporten:'Rapporten',instellingen:'Instellingen',imports:'Imports'};
 function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches&&!document.body.classList.contains('locked');$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label','Menu openen');}
 function showPage(){
  const requested=location.hash.slice(1);let page=Object.hasOwn(pageNames,requested)?requested:'home';
- if(page==='instellingen'&&accessSession?.user?.role!=='admin')page='home';
+ if((page==='instellingen'||page==='imports')&&accessSession?.user?.role!=='admin')page='home';
  for(const view of document.querySelectorAll('[data-page]'))view.hidden=view.dataset.page!==page;
  for(const link of document.querySelectorAll('[data-route]')){if(link.dataset.route===page)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  $('page-title').textContent=pageNames[page];document.title=pageNames[page]+' · Home Invest';closeMenu();
  if(page==='home'&&state)requestAnimationFrame(draw);
+ if(page==='imports'&&state&&accessSession?.user?.role==='admin')loadImportHistory().catch(error=>{$('import-feedback').textContent=error.message;});
  window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',showPage);
@@ -29,14 +30,14 @@ function renderReports(){
  for(const d of state.dividends){if(d.paid_on.slice(0,4)!==year)continue;const key=d.paid_on.slice(0,7)+'|'+d.currency;const item=groups[key]??={month:d.paid_on.slice(0,7),currency:d.currency,count:0,amount:0};item.count++;item.amount+=Number(d.amount);}
  $('report-dividends').replaceChildren();for(const key of Object.keys(groups).sort()){const item=groups[key],row=document.createElement('tr');for(const value of [new Date(item.month+'-01T00:00:00Z').toLocaleDateString('nl-NL',{month:'long',year:'numeric',timeZone:'UTC'}),item.currency,item.count,money(item.amount,item.currency)])cell(row,value);$('report-dividends').append(row);}
  $('report-empty').textContent=Object.keys(groups).length?'':'Geen dividend geboekt in '+year+'.';
- const totals={};for(const p of state.positions){const t=totals[p.currency]??={cost:0,value:0,dividend:0,count:0,complete:true};t.cost+=Number(p.cost);t.dividend+=Number(p.dividend);t.count++;if(p.value===null)t.complete=false;else t.value+=Number(p.value);}
- $('report-portfolio').replaceChildren();for(const [currency,t] of Object.entries(totals)){const row=document.createElement('tr');for(const value of [currency,t.count,money(t.cost,currency),t.complete?money(t.value,currency):'Onvolledig',t.complete?money(t.value-t.cost,currency):'Onbekend',money(t.dividend,currency),t.complete?money(t.value-t.cost+t.dividend,currency):'Onbekend'])cell(row,value);$('report-portfolio').append(row);}
+ const totals={};for(const p of state.positions){const t=totals[p.currency]??={cost:0,value:0,dividend:0,realised:0,count:0,complete:true};t.cost+=Number(p.cost);t.dividend+=Number(p.dividend);t.realised+=Number(p.realised??0);t.count++;if(p.value===null)t.complete=false;else t.value+=Number(p.value);}
+ $('report-portfolio').replaceChildren();for(const [currency,t] of Object.entries(totals)){const row=document.createElement('tr');for(const value of [currency,t.count,money(t.cost,currency),t.complete?money(t.value,currency):'Onvolledig',t.complete?money(t.value-t.cost+t.realised,currency):'Onbekend',money(t.dividend,currency),t.complete?money(t.value-t.cost+t.realised+t.dividend,currency):'Onbekend'])cell(row,value);$('report-portfolio').append(row);}
 }
 let settingsDirty=false;
 $('settings-form').addEventListener('input',()=>{settingsDirty=true;});
 $('report-year').addEventListener('change',renderReports);
 $('settings-form').addEventListener('submit',async event=>{event.preventDefault();const button=event.target.querySelector('button');button.disabled=true;try{const response=await apiFetch('api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(Object.fromEntries(new FormData(event.target)))});if(!response.ok)throw Error('Instellingen opslaan mislukt.');settingsDirty=false;chartRange=event.target.elements.namedItem('default_range').value;syncRangeButtons();await load();$('settings-feedback').textContent='Instellingen opgeslagen.';}catch(error){$('settings-feedback').textContent=error.message;}finally{button.disabled=false;}});
 showPage();
-bindAccess();startSession().catch(()=>{$('status').textContent='Verbinding mislukt. Herlaad de pagina.';document.body.classList.remove('booting');});
+bindImports();bindAccess();startSession().catch(()=>{$('status').textContent='Verbinding mislukt. Herlaad de pagina.';document.body.classList.remove('booting');});
 setInterval(()=>{if(!document.hidden&&accessSession?.user)load();},120000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&accessSession?.user)load();});

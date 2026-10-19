@@ -13,22 +13,28 @@ def daily_values(purchases, daily, quotes, today=None):
             prices[key] = quote_price
     previous = [day for day in prices if day < start.isoformat()]
     price = prices[max(previous)] if previous else None
-    lots = sorted(purchases, key=lambda p: p['purchased_on'])
-    quantity, cost, cursor = Decimal(0), Decimal(0), 0
+    lots = sorted(purchases, key=lambda p: (p['purchased_on'],p.get('trade_time',''),p.get('id',0)))
+    quantity, cost, realised, invested, cursor = Decimal(0), Decimal(0), Decimal(0), Decimal(0), 0
     points = []
     day = start
     while day <= end:
         key = day.isoformat()
         while cursor < len(lots) and lots[cursor]['purchased_on'] <= key:
             lot = lots[cursor]
-            quantity += Decimal(lot['quantity'])
-            cost += Decimal(lot['quantity']) * Decimal(lot['price'])
+            units,price_at_trade=Decimal(lot['quantity']),Decimal(lot['price'])
+            if lot.get('side','BUY')=='SELL':
+                if units>quantity:raise ValueError('Verkoop groter dan het bezit. Importeer de volledige aankoopgeschiedenis.')
+                removed=cost*units/quantity
+                realised+=units*price_at_trade-removed;quantity-=units;cost-=removed
+                if not quantity:cost=Decimal(0)
+            else:
+                quantity+=units;cost+=units*price_at_trade;invested+=units*price_at_trade
             cursor += 1
         observed = key in prices
         if observed:
             price = prices[key]
-        points.append(dict(day=key, cost=str(cost), value=str(quantity * Decimal(price)) if price is not None else None,
-                           price=price, carried=not observed))
+        points.append(dict(day=key, cost=str(cost), value=str(quantity * Decimal(price)) if price is not None else ('0' if not quantity else None),
+                           quantity=str(quantity),realised=str(realised),invested=str(invested),price=price, carried=not observed))
         day += timedelta(days=1)
     return points
 
@@ -41,7 +47,7 @@ def with_dividends(points, dividends):
             cursor += 1
         point['dividend'] = str(received)
         value = Decimal(point['value']) if point['value'] is not None else None
-        point['total_gain'] = str(value - Decimal(point['cost']) + received) if value is not None else None
+        point['total_gain'] = str(value - Decimal(point['cost']) + Decimal(point.get('realised','0')) + received) if value is not None else None
         point['with_dividends'] = str(value + received) if value is not None else None
     return points
 
@@ -61,7 +67,7 @@ def portfolio_values(positions):
             value = sum((Decimal(p['value']) for p in active), Decimal(0)) if complete else None
             points.append(dict(day=day, cost=str(cost), value=str(value) if complete else None,
                                dividend=str(income), with_dividends=str(value + income) if complete else None,
-                               total_gain=str(value - cost + income) if complete else None, price=None,
+                               total_gain=str(value - cost + income+sum((Decimal(p.get('realised','0')) for p in active),Decimal(0))) if complete else None, price=None,
                                carried=any(p['carried'] for p in active)))
         result.append(dict(name='Portefeuille', currency=currency, history=points))
     return result

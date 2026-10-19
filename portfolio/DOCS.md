@@ -1,5 +1,22 @@
 # Home Invest — Gebruik
 
+**Nieuw in 0.4.0:** maak bij Instellingen een brokeraccount aan, bijvoorbeeld met
+bedrijf **Trading 212**. De rekeningkeuze bovenaan filtert je portefeuille.
+Bestaande gegevens blijven onder **Handmatig** staan. Koersen worden gedeeld;
+bezit, aankopen, verkopen en dividend blijven per rekening gescheiden.
+
+Open als admin **Imports**, kies het brokeraccount en upload een Engelstalige
+Trading 212 History CSV. Controleer het voorbeeld en koppel de tickers aan de juiste
+beursnotering vóór bevestigen. Kooporders, verkooporders en dividend worden
+ondersteund; dubbele brontransacties worden overgeslagen. Onbekende transactietypen,
+ontbrekende aankopen of afwijkende dividendvaluta blokkeren de import. Kosten en
+valutawissels worden nog niet meegenomen. Raadpleeg de README voor de precieze grenzen.
+Deze eerste adapter gebruikt CSV; een live API-koppeling volgt niet automatisch.
+
+Succesvolle API-antwoorden staan nu blijvend in SQLite. Zoekresultaten worden een
+week hergebruikt en oudere dagkoersen blijven lokaal staan. Via **Instellingen →
+Versiecontrole** controleer je de nieuwste GitHub-versie (één dag cache).
+
 Linksonder in het zijmenu staat je gebruikershoek. Daar kun je je account aanpassen
 (gebruikersnaam en/of wachtwoord), inloggen en uitloggen. Voor wijzigingen vul je
 altijd je huidige wachtwoord in. Rechtsboven staan geen accountknoppen meer.
@@ -18,8 +35,8 @@ via HTTPS en bewaar back-ups vertrouwelijk, want ze bevatten ook accountgegevens
 De app gebruikt nu servercache, ETags en versiegebonden browsercache. Koersen worden
 niet bij iedere paginawisseling of invoer opnieuw bij Yahoo opgevraagd.
 
-Gebruik het menu links: **Home**, **Aandelen**, **Dividend**, **Rapporten** en
-**Instellingen**. Op een klein scherm verschijnt een menuknop. Home toont het
+Gebruik het menu links: **Home**, **Aandelen**, **Dividend**, **Rapporten**, **Imports** en
+**Instellingen**. Imports en Instellingen zijn voor admins. Op een klein scherm verschijnt een menuknop. Home toont het
 overzicht en de grafiek; invoer staat op de eigen pagina. Rapporten toont dividend
 per maand en de huidige stand per valuta. Bij Instellingen kun je de standaard
 grafiekperiode bewaren en de app- en databaseversie bekijken.

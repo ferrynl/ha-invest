@@ -1,3 +1,14 @@
+# 0.4.0
+
+- Blijvende API-cache in SQLite, zoekdata een week en versiecontrole een dag gecachet.
+- Historie incrementeel aanvullen; beurskoersen delen tussen brokeraccounts.
+- Meerdere brokeraccounts, rekeningfilter en accountkoppeling bij transacties/dividend.
+- Nieuwe uitbreidbare importmodule met Trading 212 History CSV-adapter.
+- Preview, expliciete beurskoppeling, transactiecontrole en deduplicatie per rekening.
+- Geïmporteerde verkopen verwerken met gemiddelde kostprijs en gerealiseerde winst.
+- Versiecontrole onder Instellingen; installeren blijft via Home Assistant lopen.
+- Schema 6; bestaande invoer blijft behouden onder Handmatig. Back-ups bevatten ook accounts, importregister en API-cache.
+
 # 0.3.1
 
 - Gebruikershoek linksonder in het zijmenu; accountbediening rechtsboven verwijderd.

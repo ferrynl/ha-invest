@@ -4,9 +4,9 @@ const nativeFetch=window.fetch.bind(window);
 async function apiFetch(url,options={}){
  const headers=new Headers(options.headers??{});
  if(options.method==='POST'&&accessSession?.user?.csrf)headers.set('X-CSRF-Token',accessSession.user.csrf);
- if(url==='api/state'&&stateETag)headers.set('If-None-Match',stateETag);
+ if(url.startsWith('api/state')&&stateETag)headers.set('If-None-Match',stateETag);
  const response=await nativeFetch(url,{...options,headers,cache:'no-store'});
- if(url==='api/state'&&response.ok)stateETag=response.headers.get('ETag');
+ if(url.startsWith('api/state')&&response.ok)stateETag=response.headers.get('ETag');
  if(response.status===401){lockApp();throw Error('Je sessie is verlopen. Meld je opnieuw aan.');}
  return response;
 }
@@ -16,6 +16,7 @@ function lockApp(){
  document.getElementById('sidebar').inert=false;
  document.body.classList.add('locked');document.body.classList.remove('booting');document.getElementById('login-panel').hidden=false;
  for(const id of ['totals','positions','purchases','dividends','chart','chart-days','users-list','report-dividends','report-portfolio'])document.getElementById(id).replaceChildren();
+ if(typeof importPreview!=='undefined'){importPreview=null;document.getElementById('import-preview').hidden=true;for(const id of ['import-rows','import-mappings','import-history'])document.getElementById(id).replaceChildren();}
  document.querySelectorAll('input[type="password"]').forEach(input=>{input.value='';});
  const passwordDialog=document.getElementById('password-dialog');if(passwordDialog.open)passwordDialog.close();
  document.getElementById('login-form').reset();
@@ -29,7 +30,7 @@ async function startSession(){
  if(!accessSession.user){lockApp();return;}
  document.body.classList.remove('booting','locked');document.getElementById('login-panel').hidden=true;
  const admin=accessSession.user.role==='admin';
- document.querySelector('[data-route="instellingen"]').hidden=!admin;
+ document.querySelector('[data-route="instellingen"]').hidden=!admin;document.querySelector('[data-route="imports"]').hidden=!admin;
  document.getElementById('password-open').hidden=!accessSession.enabled;document.getElementById('logout').hidden=!accessSession.enabled;
  document.getElementById('login-open').hidden=true;
  document.getElementById('account-hint').textContent=accessSession.enabled?'':'Aanmelding via Home Assistant. Accounts inschakelen bij Instellingen.';

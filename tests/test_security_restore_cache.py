@@ -48,8 +48,8 @@ class AccessTests(unittest.TestCase):
   self.assertEqual(self.request('POST','/api/settings',{'default_range':'1Y'},admin)[0],403)
   self.assertEqual(self.request('POST','/api/users',{'username':'reader','password':self.password,'role':'basic'},admin,csrf)[0],200)
   basic=self.auth.login('reader',self.password,'test');basic_csrf=self.auth.user(basic)['csrf']
-  for path in ('/api/users','/api/backup'):self.assertEqual(self.request('GET',path,token=basic)[0],403)
-  for path in ('/api/settings','/api/users','/api/restore'):
+  for path in ('/api/users','/api/backup','/api/imports'):self.assertEqual(self.request('GET',path,token=basic)[0],403)
+  for path in ('/api/settings','/api/users','/api/restore','/api/accounts','/api/imports/commit','/api/updates'):
    self.assertEqual(self.request('POST',path,{},basic,basic_csrf,{'Content-Type':'application/octet-stream'} if path.endswith('restore') else None)[0],403)
   self.assertEqual(self.request('GET','/api/state',token=basic)[0],200)
   self.assertEqual(self.request('POST','/api/users',{'id':1,'role':'basic','active':True},admin,csrf)[0],400)
@@ -83,6 +83,15 @@ class AccessTests(unittest.TestCase):
   self.assertEqual(self.request('GET','/api/state',extra={'If-None-Match':headers['ETag']})[0],304)
   self.request('POST','/api/settings',{'default_range':'1Y'})
   self.assertEqual(self.request('GET','/api/state',extra={'If-None-Match':headers['ETag']})[0],200)
+ def test_broker_filter_keeps_financial_rows_in_the_correct_account(self):
+  self.assertEqual(self.request('POST','/api/accounts',{'name':'Tweede rekening','broker':'Trading 212'})[0],201)
+  lot=dict(name='Apple',symbol='AAPL',exchange='NASDAQ',currency='USD',quantity='1',price='100',purchased_on='2026-10-12')
+  self.request('POST','/api/purchases',{**lot,'account_id':1})
+  self.request('POST','/api/purchases',{**lot,'quantity':'2','account_id':2})
+  code,data,_=self.request('GET','/api/state?account_id=2');self.assertEqual(code,200)
+  state=json.loads(data);self.assertEqual(len(state['positions']),1);self.assertEqual(state['positions'][0]['quantity'],'2')
+  self.assertEqual(state['purchases'][0]['account_id'],2)
+  self.assertEqual(self.request('GET','/api/state?account_id=999')[0],404)
  def test_recent_quotes_and_daily_history_are_not_refetched(self):
   import server
   from datetime import date

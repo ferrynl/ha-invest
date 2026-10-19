@@ -30,18 +30,23 @@ def refresh():
         errors = 0
         snapshot = store.state()
         history_errors = 0
+        seen=set()
         for p in snapshot['positions']:
+            instrument=(p['symbol'],p['exchange'],p['currency'])
+            if instrument in seen:continue
+            seen.add(instrument)
             start = min(l['purchased_on'] for l in snapshot['purchases'] if all(l[k] == p[k] for k in ('symbol', 'exchange', 'currency')))
             try:
                 if store.history_needed(p['symbol'], p['exchange'], p['currency'], start):
-                    rows = fetch_history(p['symbol'], p['exchange'], p['currency'], start)
+                    requested=store.history_start(p['symbol'],p['exchange'],p['currency'],start)
+                    rows = fetch_history(p['symbol'], p['exchange'], p['currency'], requested,store=store)
                     store.save_history(p['symbol'], p['exchange'], p['currency'], start, rows)
             except Exception:
                 history_errors += 1
             try:
                 fresh = p['quote'] and (datetime.now(timezone.utc)-datetime.fromisoformat(p['quote']['fetched_at'])).total_seconds()<interval
                 if not fresh:
-                    price, stamp = fetch_quote('', p['symbol'], p['exchange'], p['currency'])
+                    price, stamp = fetch_quote('', p['symbol'], p['exchange'], p['currency'],store=store,ttl=interval)
                     store.quote(p['symbol'], p['exchange'], p['currency'], price, stamp, 'Yahoo Finance (mogelijk vertraagd)')
             except Exception:
                 errors += 1

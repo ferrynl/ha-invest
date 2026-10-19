@@ -11,7 +11,7 @@ function drawDashboardChart(state, range, selection){
  const palette=['#4de0b3','#70b7ff','#ffce6b','#e89cff','#ff9090','#b2d96b','#72dce9','#ffaf73'];
  const lines=[];
  if(comparison){
-  members.forEach((p,i)=>{const byDay=new Map(p.history.map(point=>[point.day,point]));lines.push({name:p.name+' · '+p.symbol+' · '+p.currency,color:palette[i]??`hsl(${(i*137.5)%360} 70% 65%)`,values:days.map(day=>{const point=byDay.get(day);return !point||point.total_gain===null||Number(point.cost)<=0?null:Number(point.total_gain)/Number(point.cost)*100;})});});
+  members.forEach((p,i)=>{const byDay=new Map(p.history.map(point=>[point.day,point]));lines.push({name:p.name+' · '+p.symbol+' · '+p.account_name+' · '+p.currency,color:palette[i]??`hsl(${(i*137.5)%360} 70% 65%)`,values:days.map(day=>{const point=byDay.get(day);return !point||point.total_gain===null||Number(point.invested??point.cost)<=0?null:Number(point.total_gain)/Number(point.invested??point.cost)*100;})});});
  }else{
   const byDay=new Map(holding.history.map(point=>[point.day,point]));
   for(const [field,name,color] of [['cost','Inleg','#8694ac'],['value','Marktwaarde','#4de0b3'],['with_dividends','Waarde + ontvangen dividend','#70b7ff']])lines.push({name,color,values:days.map(day=>{const value=byDay.get(day)?.[field];return value==null?null:Number(value);})});

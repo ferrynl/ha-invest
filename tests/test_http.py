@@ -51,7 +51,7 @@ class HttpTests(unittest.TestCase):
         status,data,_=self.request('GET','/api/state')
         state=json.loads(data)
         self.assertEqual(state['settings']['default_range'],'3M')
-        self.assertEqual(state['database_version'],5)
+        self.assertEqual(state['database_version'],6)
         from version import APP_VERSION
         self.assertEqual(state['app_version'],APP_VERSION)
         self.assertEqual(self.request('POST','/api/settings',json.dumps({'default_range':'bad'}),headers)[0],400)
@@ -80,6 +80,6 @@ class HttpTests(unittest.TestCase):
             status, body, _ = self.request('GET', '/api/search?q=ap')
             self.assertEqual(status, 200)
             self.assertEqual(json.loads(body)['results'][0]['symbol'], 'AAPL')
-            search.assert_called_once_with('ap')
+            search.assert_called_once_with('ap',store=self.module.store)
         with patch('web.search_stocks', side_effect=TimeoutError):
             self.assertEqual(self.request('GET', '/api/search?q=ap')[0], 502)

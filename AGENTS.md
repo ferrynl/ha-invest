@@ -20,3 +20,10 @@ Bij iedere wijziging aan dit project:
   schema uit een upload. Behoud de huidige accounts en maak vooraf een veiligheidskopie.
 - Maak de overzichtcache ongeldig na mutaties, koersupdates en herstel. Cache geen
   sessies of financiële antwoorden in browseropslag; gebruik versiegebonden asset-URL's.
+- Brokeraccounts zijn geen loginaccounts. Boek transacties en dividend per brokeraccount;
+  deel marktdata alleen per instrument/beurs/valuta. Bestaande gegevens niet stilzwijgend
+  aan een specifieke broker toeschrijven.
+- Nieuwe importaanbieders krijgen een aparte adapter. Behoud previews, atomair importeren,
+  bron-ID's en deduplicatie per account. Onbekende acties of ontbrekende kostprijs niet gokken.
+- Bewaar succesvolle providerantwoorden in de SQLite-cache met passende TTL en haal oude
+  historie incrementeel op. Sla geen API-sleutels of wachtwoorden op in providerpayloads.

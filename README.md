@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.3.1). Draait volledig als Home Assistant-app
+Experimentele versie (0.4.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -20,13 +20,14 @@ De app bouwt uit de bron op het apparaat; er is geen containerregister nodig.
 
 ## Gebruik
 
-De app heeft een linkerzijbalk zoals Home Assistant, met vijf afzonderlijke pagina's:
+De app heeft een linkerzijbalk zoals Home Assistant, met zes afzonderlijke pagina's:
 
 - **Home**: portefeuilletotalen en de grafiek met alle aandelen.
 - **Aandelen**: posities, een aankoop toevoegen en het aankoopregister.
 - **Dividend**: ontvangen dividend boeken en het dividendregister bekijken.
 - **Rapporten**: ontvangen dividend per maand met jaarfilter en de actuele stand per valuta.
-- **Instellingen** (admin): gebruikersbeveiliging, accounts, standaard grafiekperiode,
+- **Imports** (admin): Trading 212 CSV controleren, beursnoteringen koppelen en importeren.
+- **Instellingen** (admin): gebruikersbeveiliging, brokeraccounts, versiecontrole, standaard grafiekperiode,
   versiegegevens, back-up downloaden en terugzetten.
 
 Op een klein scherm opent het menu via de menuknop. De pagina staat in het
@@ -39,7 +40,7 @@ Vul daarna alleen aantal, aankoopprijs per aandeel en aankoopdatum in.
 De lijst toont de passende aandelen die Yahoo teruggeeft (maximaal 50 aangevraagd),
 gefilterd op Amsterdam, Nasdaq en NYSE. Dit is geen volledige beurscatalogus;
 typ meer letters om je zoekopdracht te verfijnen. Verschillende beursnoteringen
-worden afzonderlijk getoond. Zoekresultaten worden kort gecachet en kunnen bij
+worden afzonderlijk getoond. Zoekresultaten worden een week in SQLite gecachet en kunnen bij
 een storing tijdelijk ontbreken. Een aankoopprijs wordt bewust niet ingevuld met
 de huidige koers: die kan afwijken van wat je hebt betaald.
 Voorbeelden: `ASML.AS` / AMSTERDAM / EUR; `AAPL` / NASDAQ / USD;
@@ -99,6 +100,76 @@ SQLite- en Home Assistant-back-ups. De database wordt bij de update uitgebreid;
 je bestaande aankopen en koershistorie blijven behouden.
 
 ## Opslag en back-ups
+
+### Brokeraccounts en Trading 212-import
+
+Maak onder **Instellingen → Brokeraccounts** een rekening aan met een eigen naam
+en het bedrijf, bijvoorbeeld `Trading 212`. Dit is los van je loginaccount.
+Meerdere rekeningen bij hetzelfde bedrijf zijn toegestaan. Bestaande gegevens gaan
+bij de update naar **Handmatig**; de app gokt niet bij welke broker je ze bezit.
+Kies bovenaan een rekening of **Alle accounts**. Nieuwe handmatige aankopen en
+dividend krijgen ook een brokeraccount. Koersen worden per beursnotering gedeeld,
+maar aantallen, kostprijs en dividend worden per rekening berekend.
+
+De eerste importadapter gebruikt de **Engelstalige Trading 212 Invest/ISA History
+CSV**. Trading 212 biedt ook een publieke API voor Invest en Stocks ISA, maar die
+is beta en ondersteunt geen volledige multi-currency-rekeningwaarden. Voor deze
+eerste import is CSV gekozen: geen API-sleutels nodig en iedere boeking is vooraf
+controleerbaar. Er is nog geen live Trading 212 API-koppeling.
+
+1. Exporteer bij Trading 212 via **History → Export** je orders en dividend.
+2. Maak in Home Invest een rekening met bedrijf **Trading 212**.
+3. Open **Imports**, kies rekening en CSV en klik **Voorbeeld controleren**.
+4. Controleer alle regels en koppel tickers aan de juiste Yahoo-beursnotering.
+   De app kiest geen onduidelijke notering of wisselkoers automatisch.
+5. Bevestig het voorbeeld en klik **Import definitief opslaan**.
+
+Ondersteund: kooporders, verkooporders en ontvangen cashdividend. Verkopen gebruiken
+een voortschrijdende gemiddelde kostprijs. Resterend bezit en gerealiseerde winst
+blijven per rekening gescheiden; de koerswinst bevat gerealiseerde en ongerealiseerde
+winst. **Totale winst = marktwaarde − resterende kostprijs + gerealiseerde winst +
+ontvangen dividend**. Bij verkopen kan de getoonde resterende inleg dalen. De
+procentuele aandeellijn gebruikt de totale historische aankoopinleg als noemer.
+Dit is een praktisch portefeuilleoverzicht, geen fiscale berekening.
+
+Importeer de volledige relevante aankoopgeschiedenis. Een verkoop die groter is
+dan het beschikbare bezit blokkeert de hele import. Ook onbekende acties zoals
+splitsingen blokkeren de import; er worden dan geen gedeeltelijke boekingen gemaakt.
+Bekende stortingen, opnames en renteregels worden zichtbaar overgeslagen omdat de
+app geen bank-/cashsaldo bijhoudt. Transactiekosten, bronbelastingberekeningen,
+valutawissels en CFD's worden niet verwerkt. Voor dividend moet `Currency (Total)`
+overeenkomen met de noteringsvaluta. Exporteer bij een afwijkende dividendvaluta
+eerst alleen de orders; omzetting van dat dividend moet je apart controleren.
+
+Bron-ID's en inhoudscontroles voorkomen dubbele import per brokeraccount, ook bij
+overlappende exports en na back-upherstel. Een gewijzigde bestaande bron-ID wordt
+geweigerd. Bij ontbrekende ID's wordt een inhoudsvingerafdruk gebruikt; onduidelijke
+identieke regels worden geweigerd. De originele regels en previews blijven in SQLite
+bewaard. Handmatig geboekte transacties hebben geen brokerbron-ID: importeer dezelfde
+werkelijke transacties niet nogmaals naast je handmatige kopie.
+
+Nieuwe aanbieders krijgen een eigen adapter in `portfolio/app/imports/` en een
+registratie in `ADAPTERS`. Preview, accountkoppeling, bevestiging, bronregistratie en
+deduplicatie zitten in de gemeenschappelijke importservice. Alleen admins kunnen
+brokeraccounts aanmaken of importeren; Basic kan rekeningen bekijken en de bestaande
+handmatige portefeuillefuncties gebruiken.
+
+### Duurzame API-cache en versiecontrole
+
+Succesvolle Yahoo-antwoorden worden volledig als JSON opgeslagen in `api_cache`,
+naast de afzonderlijke koersen en daghistorie. De cache overleeft herstarten en
+zit in back-ups. Zoek-/instrumentresultaten worden **7 dagen** hergebruikt,
+actuele koersen gedurende het ingestelde koersinterval en historieaanvragen één dag.
+Historische dagwaarden blijven in `daily_prices` staan; na de eerste import worden
+alleen ontbrekende/recent overlappende dagen opgehaald, niet steeds de hele historie.
+Een eerder gedateerde aankoop kan wel een extra historische aanvraag vereisen.
+Gelijke beursnoteringen bij verschillende brokers worden maar één keer ververst.
+Foutantwoorden worden niet als succesvolle API-cache bewaard.
+
+Onder **Instellingen → Versiecontrole** controleer je de nieuwste gepubliceerde
+appconfiguratie op GitHub. Het resultaat staat één dag in SQLite, met controletijd.
+De app vergelijkt versienummers numeriek. Deze knop installeert niets; bijwerken
+blijft via de Home Assistant app store lopen.
 
 ### Gebruikers en rollen
 
@@ -183,7 +254,7 @@ voor handmatige uploads via de GitHub-website.
 
 ### Databaseversies en migraties
 
-Appversie en databaseschema hebben elk een eigen versienummer. Schema **5** gebruikt
+Appversie en databaseschema hebben elk een eigen versienummer. Schema **6** gebruikt
 `PRAGMA user_version` als opgeslagen versie. De migratierunner in `migrations.py`
 voert uitsluitend ontbrekende stappen op volgorde uit:
 
@@ -192,6 +263,7 @@ voert uitsluitend ontbrekende stappen op volgorde uit:
 3. Ontvangen dividend.
 4. Dashboardinstellingen.
 5. Gebruikers, rollen en de optie voor gebruikersbeveiliging.
+6. Brokeraccounts, aankoop/verkooptype, importbatches, bronregels en blijvende API-cache.
 
 Vóór het aanpassen van een bestaande database wordt een consistente kopie in
 `/data/backups/migrations/before-vN-to-vM-*.sqlite3` gemaakt. Deze kopieën vallen
@@ -226,6 +298,9 @@ python -m unittest discover -s tests -v
 - `portfolio/app/web.py`: API, authenticatie, rollen en CSRF-controles.
 - `portfolio/app/restore.py`: gevalideerd, transactioneel portefeuilleherstel.
 - `portfolio/app/cache.py`: tijdelijke cache van het portefeuilleoverzicht.
+- `portfolio/app/persistent_cache.py`: blijvende cache voor providerantwoorden.
+- `portfolio/app/imports/`: uitbreidbare brokeradapters en importservice.
+- `portfolio/app/updates.py`: gecachete, alleen-lezen GitHub-versiecontrole.
 - `portfolio/app/provider.py`: vervangbare Yahoo-koerskoppeling.
 - `portfolio/app/history.py`: dagelijkse waardes met aankopen en kalenderdagen.
 - `portfolio/app/server.py`: lokale HTTP-API en geplande taken.
@@ -254,7 +329,7 @@ zoeken gebruikt een korte cache en een typevertraging. Statische bestanden gebru
 een appversie in de URL, ETags en maximaal één dag browsercache. Een app-update
 verandert de asset-URL's automatisch.
 
-Alleen aankopen en handmatig geboekt netto dividend; nog geen verkopen, splitsingen, bewerkingsinterface,
+Aankopen, geïmporteerde verkopen en netto dividend; nog geen splitsingen, bewerkingsinterface,
 transactiekosten of automatische valutawissel.
 Geen HACS-integratie: installatie gaat via een HA app-repository.
 Voor publieke distributie moet de geschiktheid van de koersdienst voor die toepassing
@@ -266,3 +341,5 @@ centrale verzameling van portefeuilles of doorlevering van koersen.
 - [Home Assistant app-configuratie](https://contributors.home-assistant.io/apps/reference/configuration/)
 - [Home Assistant ingress](https://developers.home-assistant.io/docs/apps/presentation/)
 - [Yahoo beursdekking en vertraging](https://help.yahoo.com/kb/finance/article-exchanges-data-delays-sln2310.html)
+- [Trading 212 publieke API](https://docs.trading212.com/api)
+- [Trading 212 CSV exporteren](https://helpcentre.trading212.com/hc/en-us/articles/360016898917-Can-I-export-the-trading-data-from-my-account)

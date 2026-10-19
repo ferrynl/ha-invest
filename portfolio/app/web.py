@@ -12,11 +12,15 @@ from provider import search_stocks
 from restore import restore_backup
 from security import verify_password
 from version import APP_VERSION
+from updates import check_updates
+from imports import ADAPTERS
+from imports.service import preview as import_preview,commit as import_commit
+from history import portfolio_values
 
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested):
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css')}
-    for name in ('app','pages','chart','chart-view','access'):
+    for name in ('app','pages','chart','chart-view','access','imports'):
         assets['/'+name+'.js']=(name+'.js','text/javascript')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass
@@ -58,10 +62,20 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 return self.respond(content,kind=kind,etag=path!='/',public=path!='/')
             user=auth.user(self.token())
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
-            if not self.allowed(user,admin=path in ('/api/users','/api/backup')):return
+            if not self.allowed(user,admin=path in ('/api/users','/api/backup','/api/imports')):return
             if path=='/api/users':return self.respond({'users':auth.list_users()})
+            if path=='/api/imports':
+                with store.connect() as db:batches=[dict(r) for r in db.execute('SELECT id,account_id,provider,filename,status,created_at FROM import_batches ORDER BY id DESC LIMIT 50')]
+                return self.respond({'providers':[{'id':key,'name':value['name'],'formats':value['formats']} for key,value in ADAPTERS.items()],'batches':batches})
             if path=='/api/state':
                 state=cache.get(store.state)
+                account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
+                if account!='all':
+                    try:account_id=int(account)
+                    except ValueError:return self.respond({'error':'Ongeldig brokeraccount.'},400)
+                    if not any(a['id']==account_id for a in state['accounts']):return self.respond({'error':'Brokeraccount niet gevonden.'},404)
+                    state={**state,**{key:[r for r in state[key] if r['account_id']==account_id] for key in ('purchases','dividends','positions')}}
+                    state['portfolios']=portfolio_values(state['positions'])
                 # Raw quote observations are used internally; daily histories and
                 # the latest quote are enough for the dashboard.
                 return self.respond({**{k:v for k,v in state.items() if k!='quotes'},'status':status,'refresh_minutes':interval//60,'app_version':APP_VERSION},etag=True)
@@ -70,7 +84,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if path=='/api/search':
                 query=parse_qs(urlsplit(self.path).query).get('q',[''])[0]
                 if not 2<=len(query.strip())<=80:return self.respond({'error':'Typ minimaal twee en maximaal 80 tekens.'},400)
-                try:return self.respond({'results':search_stocks(query)})
+                try:return self.respond({'results':search_stocks(query,store=store)})
                 except Exception:return self.respond({'error':'Zoeken bij Yahoo lukt nu niet. Probeer het opnieuw.'},502)
             self.respond({'error':'Niet gevonden'},404)
         def do_POST(self):
@@ -79,7 +93,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             # requests. Closing with unread bytes can reset browser connections.
             try:
                 length=int(self.headers.get('Content-Length','0'))
-                limit=25*1024*1024 if path=='/api/restore' else 16384
+                limit=25*1024*1024 if path=='/api/restore' else 8*1024*1024 if path=='/api/imports/preview' else 65536
                 if not 0<length<=limit:raise ValueError('Bestand of aanvraag is te groot of leeg.')
                 self.connection.settimeout(30)
                 body=self.rfile.read(length)
@@ -91,7 +105,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 return self.respond({'error':'Ongeldige aanvraag.'},403)
             user=auth.user(self.token())
             if path!='/api/auth/login':
-                if not self.allowed(user,admin=path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable')):return
+                if not self.allowed(user,admin=path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/')):return
                 if auth.enabled() and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),user['csrf'] or ''):
                     return self.respond({'error':'Ongeldige sessiebeveiliging. Meld je opnieuw aan.'},403)
             try:
@@ -104,6 +118,16 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))
                 data=json.loads(body)
                 if not isinstance(data,dict):raise ValueError('Ongeldige aanvraag.')
+                if path=='/api/updates':
+                    try:return self.respond(check_updates(store))
+                    except Exception:return self.respond({'error':'Versiecontrole niet beschikbaar. Probeer later opnieuw of bekijk GitHub.'},502)
+                if path=='/api/accounts':
+                    store.add_account(data);cache.invalidate();return self.respond({'ok':True},201)
+                if path=='/api/imports/preview':
+                    result=import_preview(store,int(data['account_id']),str(data['provider']),str(data['filename']),str(data['csv']))
+                    return self.respond(result)
+                if path=='/api/imports/commit':
+                    result=import_commit(store,int(data['batch_id']),data['mappings']);cache.invalidate();refresh_requested.set();return self.respond(result)
                 if path=='/api/auth/login':
                     if not auth.enabled():raise ValueError('Gebruikersbeveiliging is niet ingeschakeld.')
                     token=auth.login(data.get('username',''),data.get('password',''),self.client_address[0])
