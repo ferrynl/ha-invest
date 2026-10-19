@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.5.1). Draait volledig als Home Assistant-app
+Experimentele versie (0.5.2). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -128,8 +128,12 @@ CSV-imports per rekening gecontroleerd op dubbele transacties.
 4. Ga naar **Imports → Trading 212 API**, kies brokeraccount en Live/Demo en sla
    de sleutel en secret op. Opgeslagen betekent nog niet dat de API ze heeft geaccepteerd.
 5. Kies de volledige relevante transactieperiode en klik **Rapport via API aanvragen**.
-6. Controleer na circa een minuut **Rapportstatus controleren en ophalen**. Het rapport
-   blijft bij Trading 212 soms langer in behandeling. De taak overleeft een app-herstart.
+6. Controleer na circa een minuut **Rapportstatus controleren en ophalen**. Langere
+   perioden worden in delen van maximaal 364 dagen aangevraagd (Trading 212 staat
+   maximaal één jaar per rapport toe). Iedere statuscontrole haalt een gereed deel op
+   en vraagt zo nodig het volgende aan. De teller toont de voortgang; de taak en
+   deelrapporten overleven een app-herstart. Herhaal de statuscontrole ongeveer iedere
+   minuut totdat het complete importvoorbeeld verschijnt. Je hoeft niet per deel te boeken.
 7. Controleer het opgehaalde voorbeeld, koppel de noteringen en bevestig de import.
 
 De app gebruikt alleen de officiële rapport-endpoints; er worden geen orders geplaatst.
@@ -410,3 +414,18 @@ pagina als JSON. Er wordt niets in browseropslag bewaard. Logs horen bij de loka
 installatie: een SQLite-back-up bevat ze, maar portefeuilleherstel importeert geen
 oude logregels en behoudt de huidige logs. Schema 7 voegt de logtabel toe met de
 bestaande migratie- en veiligheidsback-upprocedure.
+
+### Meerjarige Trading 212-rapporten (0.5.2)
+
+De fout `Time range requested cannot exceed 1 year` wordt voorkomen door de
+rapportperiode op te splitsen. Deelrapporten overlappen op hun tijdgrens om gaten
+te voorkomen; bestaande bron-ID-controle voorkomt dubbele boekingen. De volledige
+preview wordt pas aangemaakt als alle delen zijn opgehaald. Lege jaren worden
+meegenomen zonder boekingen; een volledig lege periode meldt dat er geen transacties zijn.
+Bij een fout blijven opgehaalde delen behouden; gebruik opnieuw de statusknop om
+verder te gaan. **Lokale rapportaanvraag wissen** verwijdert de wachtrij, niet eerder
+geïmporteerde transacties of de API-verbinding. De bestaande grens van 5 MB en 10.000
+regels geldt voor het gecombineerde rapport; kies bij overschrijding kortere perioden.
+De begindatum staat standaard op 1 januari van het huidige jaar. Kies voor de eerste
+import zelf de datum van je eerste transactie, zodat ook de kostprijs volledig is.
+Bestaande API-verbindingen, lopende oude rapporten en schema 7 blijven behouden.

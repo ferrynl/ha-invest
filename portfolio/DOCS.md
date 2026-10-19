@@ -1,5 +1,13 @@
 # Home Invest — Gebruik
 
+**Nieuw in 0.5.2:** Trading 212 accepteert maximaal één jaar per rapport. De app
+splitst langere perioden automatisch in delen van maximaal 364 dagen. Controleer
+ongeveer iedere minuut de rapportstatus: gereedstaande delen worden opgehaald en
+het volgende deel wordt aangevraagd. Je ziet hoeveel rapporten al binnen zijn.
+Pas na het laatste deel verschijnt één compleet importvoorbeeld. Voortgang blijft
+bewaard na een fout of herstart. Kies als begindatum je eerste echte transactie.
+De database blijft schema 7; bestaande verbindingen blijven bewaard.
+
 **Nieuw in 0.5.1:** ingelogde admins krijgen de pagina **Logs**. Herhaal de mislukte
 Trading 212-aanvraag na de update en zoek de Log-ID uit de foutmelding. Open details
 voor HTTP-status, afgeschermde providerfout, omgeving en periode. Je kunt filteren,

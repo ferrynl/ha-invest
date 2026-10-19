@@ -1,3 +1,13 @@
+# 0.5.2
+
+- Oplossing voor Trading 212 HTTP 400: rapportperioden mogen maximaal één jaar beslaan.
+- Lange perioden automatisch opsplitsen in delen van maximaal 364 dagen, ook rond schrikkeljaren.
+- Delen via statuscontrole na elkaar aanvragen en samenvoegen tot één volledig importvoorbeeld.
+- Voortgang en opgehaalde rapporten blijven behouden na fouten en herstarten.
+- Lege rapportperioden afhandelen zonder onnodige boekingen; bestaande bron-ID-deduplicatie blijft actief.
+- Begindatum standaard 1 januari van het huidige jaar; kies voor volledige historie je eerste transactie.
+- Schema blijft 7; geen databasemigratie of nieuwe API-sleutels nodig.
+
 # 0.5.1
 
 - Nieuwe pagina Logs voor ingelogde admins; servercontrole op bekijken en downloaden.
