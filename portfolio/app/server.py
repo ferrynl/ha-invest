@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit, parse_qs
 from storage import Store
 from provider import fetch_quote, search_stocks, fetch_history
+from version import APP_VERSION
 
 ROOT = Path(__file__).parent
 store = Store(os.environ.get('DATA_DIR', './data'))
@@ -89,11 +90,11 @@ class Handler(BaseHTTPRequestHandler):
             except Exception:
                 return self.respond({'error': 'Zoeken bij Yahoo lukt nu niet. Probeer het opnieuw.'}, 502)
         if path == '/api/state':
-            return self.respond({**store.state(), 'status': status, 'refresh_minutes': interval // 60})
+            return self.respond({**store.state(), 'status': status, 'refresh_minutes': interval // 60, 'app_version': APP_VERSION})
         if path == '/api/backup':
             backup = store.backup()
             return self.respond(backup.read_bytes(), kind='application/vnd.sqlite3', filename=backup.name)
-        files = {'/': ('index.html', 'text/html; charset=utf-8'), '/app.js': ('app.js', 'text/javascript'), '/chart.js': ('chart.js', 'text/javascript'), '/chart-view.js': ('chart-view.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
+        files = {'/': ('index.html', 'text/html; charset=utf-8'), '/app.js': ('app.js', 'text/javascript'), '/pages.js': ('pages.js', 'text/javascript'), '/chart.js': ('chart.js', 'text/javascript'), '/chart-view.js': ('chart-view.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
         if path in files:
             name, kind = files[path]
             return self.respond((ROOT / 'static' / name).read_bytes(), kind=kind)
@@ -111,6 +112,9 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(data, dict):
                 raise ValueError('Object verwacht.')
             path = urlsplit(self.path).path
+            if path == '/api/settings':
+                store.save_settings(data)
+                return self.respond({'ok': True}, 200)
             if path == '/api/dividends':
                 store.add_dividend(data)
                 return self.respond({'ok': True}, 201)

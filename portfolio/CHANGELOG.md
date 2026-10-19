@@ -1,3 +1,13 @@
+# 0.2.0
+
+- Linkerzijbalk met Home, Aandelen, Dividend, Rapporten en Instellingen.
+- Afzonderlijke paginaweergaven met directe links en ondersteuning voor terug/herladen.
+- Inklapbaar menu op kleine schermen.
+- Maandrapport voor dividend met jaarfilter en actuele portefeuilletotalen.
+- Standaard grafiekperiode blijvend instelbaar.
+- Geversioneerde databasemigraties met back-up vooraf en transactionele rollback.
+- Schema 4 voegt dashboardinstellingen toe; bestaande schema's 1, 2 en 3 worden automatisch bijgewerkt.
+
 # 0.1.3
 
 - Alle aandelen samen zichtbaar met een eigen procentuele winstlijn per aandeel.

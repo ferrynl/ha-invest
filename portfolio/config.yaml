@@ -1,6 +1,6 @@
 name: Aandelen Dashboard
 url: https://github.com/ferrynl/ha-invest
-version: "0.1.3"
+version: "0.2.0"
 slug: aandelen_dashboard
 description: Persoonlijke aandelenportefeuille met SQLite en koershistorie
 arch: [amd64, aarch64]

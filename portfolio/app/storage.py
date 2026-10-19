@@ -4,8 +4,10 @@ from pathlib import Path
 from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
 import re
+from uuid import uuid4
 from contextlib import contextmanager, closing
 from history import daily_values, with_dividends, portfolio_values
+from migrations import migrate, SCHEMA_VERSION
 
 def now():
     return datetime.now(timezone.utc).isoformat()
@@ -24,31 +26,7 @@ class Store:
         self.root = Path(root)
         self.root.mkdir(parents=True, exist_ok=True)
         self.path = self.root / 'portfolio.sqlite3'
-        with self.connect() as db:
-            db.executescript('''
-                CREATE TABLE IF NOT EXISTS purchases (
-                    id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL,
-                    name TEXT NOT NULL, quantity TEXT NOT NULL, price TEXT NOT NULL,
-                    currency TEXT NOT NULL, purchased_on TEXT NOT NULL, created_at TEXT NOT NULL);
-                CREATE TABLE IF NOT EXISTS quotes (
-                    id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL,
-                    currency TEXT NOT NULL, price TEXT NOT NULL, quoted_at TEXT NOT NULL,
-                    fetched_at TEXT NOT NULL, source TEXT NOT NULL);
-                CREATE INDEX IF NOT EXISTS quote_instrument ON quotes(symbol,exchange,currency,id);
-                CREATE TABLE IF NOT EXISTS daily_prices (
-                    symbol TEXT NOT NULL, exchange TEXT NOT NULL, currency TEXT NOT NULL,
-                    day TEXT NOT NULL, price TEXT NOT NULL,
-                    PRIMARY KEY(symbol,exchange,currency,day));
-                CREATE TABLE IF NOT EXISTS history_sync (
-                    symbol TEXT NOT NULL, exchange TEXT NOT NULL, currency TEXT NOT NULL,
-                    start TEXT NOT NULL, synced_on TEXT NOT NULL,
-                    PRIMARY KEY(symbol,exchange,currency));
-                CREATE TABLE IF NOT EXISTS dividends (
-                    id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL,
-                    currency TEXT NOT NULL, amount TEXT NOT NULL, paid_on TEXT NOT NULL,
-                    note TEXT NOT NULL, created_at TEXT NOT NULL);
-                PRAGMA user_version=3;
-            ''')
+        migrate(self.path)
 
     @contextmanager
     def connect(self):
@@ -128,7 +106,19 @@ class Store:
                               'history': chart, 'quantity': str(group['quantity']), 'cost': str(group['cost']),
                               'value': str(value) if value is not None else None,
                               'gain': str(value - group['cost']) if value is not None else None})
-        return dict(purchases=purchases, positions=positions, quotes=quotes, dividends=dividends, portfolios=portfolio_values(positions))
+        return dict(purchases=purchases, positions=positions, quotes=quotes, dividends=dividends, portfolios=portfolio_values(positions),
+                    settings=self.settings(), database_version=SCHEMA_VERSION)
+
+    def settings(self):
+        with self.connect() as db:
+            return dict(db.execute('SELECT key,value FROM app_settings').fetchall())
+
+    def save_settings(self, data):
+        value = data.get('default_range')
+        if value not in ('1W','1M','3M','6M','YTD','1Y','ALL'):
+            raise ValueError('Ongeldige standaardperiode.')
+        with self.connect() as db:
+            db.execute("UPDATE app_settings SET value=? WHERE key='default_range'", (value,))
 
     def history_needed(self, symbol, exchange, currency, start):
         with self.connect() as db:
@@ -146,7 +136,7 @@ class Store:
     def backup(self):
         folder = self.root / 'backups'
         folder.mkdir(exist_ok=True)
-        path = folder / ('portfolio-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f') + '.sqlite3')
+        path = folder / ('portfolio-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f') + '-' + uuid4().hex[:8] + '.sqlite3')
         with self.connect() as source, closing(sqlite3.connect(path)) as target:
             source.backup(target)
         for old in sorted(folder.glob('portfolio-*.sqlite3'))[:-30]:

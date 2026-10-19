@@ -1,5 +1,16 @@
 # Gebruik
 
+Gebruik het menu links: **Home**, **Aandelen**, **Dividend**, **Rapporten** en
+**Instellingen**. Op een klein scherm verschijnt een menuknop. Home toont het
+overzicht en de grafiek; invoer staat op de eigen pagina. Rapporten toont dividend
+per maand en de huidige stand per valuta. Bij Instellingen kun je de standaard
+grafiekperiode bewaren en de app- en databaseversie bekijken.
+
+Database-updates worden op basis van de opgeslagen schemaversie uitgevoerd.
+Alleen ontbrekende migraties worden toegepast. Vooraf wordt een extra back-up
+gemaakt; bij fouten wordt de volledige migratie teruggedraaid. Bestaande aankopen,
+dividend en koershistorie blijven behouden.
+
 Open de webinterface of schakel de zijbalk in. Typ minimaal twee letters in
 **Zoek een aandeel** en kies een resultaat uit Amsterdam, Nasdaq of NYSE.
 Naam, symbool, beurs en valuta worden automatisch ingevuld. Vul zelf aantal,

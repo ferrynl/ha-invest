@@ -26,10 +26,13 @@ async function load(){
  if([...$('dividend-stock').options].some(o=>o.value===dividendSelected))$('dividend-stock').value=dividendSelected;
  $('dividend-form').querySelector('button').disabled=!state.positions.length;
  $('dividends').replaceChildren();for(const d of state.dividends){const row=document.createElement('tr');for(const v of [dayLabel(d.paid_on),d.symbol+' · '+d.exchange,money(d.amount,d.currency),d.note])cell(row,v);$('dividends').append(row);}
- $('dividend-empty').textContent=state.dividends.length?'':'Nog geen ontvangen dividend geboekt.';draw();
+ $('dividend-empty').textContent=state.dividends.length?'':'Nog geen ontvangen dividend geboekt.';
+ if(!rangeInitialized){chartRange=state.settings.default_range;rangeInitialized=true;syncRangeButtons();}
+ renderPages();draw();
  }catch{$('status').textContent='Gegevens laden mislukt. Probeer de pagina opnieuw te openen.';}
 }
-let chartRange='1M';
+let chartRange='1M',rangeInitialized=false;
+function syncRangeButtons(){for(const button of $('chart-ranges').querySelectorAll('button'))button.setAttribute('aria-pressed',String(button.dataset.range===chartRange));}
 const dayLabel=day=>new Date(day+'T00:00:00Z').toLocaleDateString('nl-NL',{timeZone:'UTC'});
 function draw(){drawDashboardChart(state,chartRange,$("instrument").value);}
 $('chart-ranges').addEventListener('click',event=>{const button=event.target.closest('button[data-range]');if(!button)return;chartRange=button.dataset.range;for(const choice of $('chart-ranges').querySelectorAll('button'))choice.setAttribute('aria-pressed',String(choice===button));draw();});
@@ -66,4 +69,3 @@ $('dividend-form').addEventListener('submit',async event=>{
  const [symbol,exchange,currency]=JSON.parse(selected);const button=event.target.querySelector('button');button.disabled=true;
  try{const response=await fetch('api/dividends',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify({...Object.fromEntries(new FormData(event.target)),symbol,exchange,currency})});const result=await response.json();if(!response.ok)throw Error(result.error);$('dividend-feedback').textContent='Dividend apart opgeslagen en opgeteld bij je totale winst.';event.target.reset();await load();}catch(error){$('dividend-feedback').textContent=error.message;}finally{button.disabled=!state?.positions.length;}
 });
-load();setInterval(load,60000);

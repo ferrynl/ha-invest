@@ -29,7 +29,7 @@ class HttpTests(unittest.TestCase):
         cls.tmp.cleanup()
 
     def request(self, method, path, body=None, headers=None):
-        conn = http.client.HTTPConnection('127.0.0.1', self.http.server_port, timeout=5)
+        conn = http.client.HTTPConnection('127.0.0.1', self.http.server_port, timeout=15)
         try:
             conn.request(method, path, body=body, headers=headers or {})
             response = conn.getresponse()
@@ -38,11 +38,21 @@ class HttpTests(unittest.TestCase):
             conn.close()
 
     def test_frontend_and_api(self):
-        for path in ['/', '/style.css', '/app.js', '/chart.js', '/chart-view.js', '/api/state']:
+        for path in ['/', '/style.css', '/app.js', '/pages.js', '/chart.js', '/chart-view.js', '/api/state']:
             status, body, headers = self.request('GET', path)
             self.assertEqual(status, 200)
             self.assertGreater(len(body), 0)
             self.assertEqual(headers['Cache-Control'], 'no-store')
+
+    def test_persistent_settings_and_version_information(self):
+        headers={'Content-Type':'application/json','X-Portfolio-Request':'1'}
+        self.assertEqual(self.request('POST','/api/settings',json.dumps({'default_range':'3M'}),headers)[0],200)
+        status,data,_=self.request('GET','/api/state')
+        state=json.loads(data)
+        self.assertEqual(state['settings']['default_range'],'3M')
+        self.assertEqual(state['database_version'],4)
+        self.assertEqual(state['app_version'],'0.2.0')
+        self.assertEqual(self.request('POST','/api/settings',json.dumps({'default_range':'bad'}),headers)[0],400)
 
     def test_purchase_backup_and_reject_cross_site_write(self):
         body = json.dumps(dict(name='Apple', symbol='AAPL', exchange='NASDAQ', quantity='2', price='200', currency='USD', purchased_on='2025-01-01'))

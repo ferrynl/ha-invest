@@ -1,6 +1,6 @@
 # Aandelen Dashboard voor Home Assistant
 
-Experimentele versie (0.1.3). Draait volledig als Home Assistant-app
+Experimentele versie (0.2.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -19,6 +19,18 @@ heeft geen app store. De app is nog niet op een echte Supervisor-installatie get
 De app bouwt uit de bron op het apparaat; er is geen containerregister nodig.
 
 ## Gebruik
+
+De app heeft een linkerzijbalk zoals Home Assistant, met vijf afzonderlijke pagina's:
+
+- **Home**: portefeuilletotalen en de grafiek met alle aandelen.
+- **Aandelen**: posities, een aankoop toevoegen en het aankoopregister.
+- **Dividend**: ontvangen dividend boeken en het dividendregister bekijken.
+- **Rapporten**: ontvangen dividend per maand met jaarfilter en de actuele stand per valuta.
+- **Instellingen**: standaard grafiekperiode, versiegegevens en back-ups.
+
+Op een klein scherm opent het menu via de menuknop. De pagina staat in het
+URL-fragment, zodat herladen en de terugknop blijven werken binnen HA ingress.
+De standaard grafiekperiode wordt in SQLite opgeslagen en blijft na herstart behouden.
 
 Typ minimaal twee tekens in **Zoek een aandeel**, op bedrijfsnaam of symbool.
 Kies een resultaat: naam, symbool, beurs en valuta worden automatisch ingevuld.
@@ -110,6 +122,27 @@ voor handmatige uploads via de GitHub-website.
 
 ## Ontwikkeling
 
+### Databaseversies en migraties
+
+Appversie en databaseschema hebben elk een eigen versienummer. Schema **4** gebruikt
+`PRAGMA user_version` als opgeslagen versie. De migratierunner in `migrations.py`
+voert uitsluitend ontbrekende stappen op volgorde uit:
+
+1. Aankopen, koersen en koersindex.
+2. Historische dagkoersen en synchronisatiegegevens.
+3. Ontvangen dividend.
+4. Dashboardinstellingen.
+
+Vóór het aanpassen van een bestaande database wordt een consistente kopie in
+`/data/backups/migrations/before-vN-to-vM-*.sqlite3` gemaakt. Deze kopieën vallen
+buiten de rotatie van de 30 gewone back-ups. De volledige upgrade draait in één
+transactie; bij een fout worden schema én versienummer teruggedraaid en stopt de
+app. Een database uit een nieuwere app wordt geweigerd zonder downgrade. Herhaald
+starten met het actuele schema voert geen migraties opnieuw uit.
+
+Voeg bij toekomstige schemawijzigingen een nieuwe migratie en bijbehorende tests
+toe; verander oude migraties niet. De projectafspraken staan ook in `AGENTS.md`.
+
 Python 3.13, zonder externe Python-pakketten:
 
 ```
@@ -128,10 +161,12 @@ python -m unittest discover -s tests -v
 ## Structuur
 
 - `portfolio/app/storage.py`: schema, validatie, berekeningen, back-ups.
+- `portfolio/app/migrations.py`: geversioneerde, transactionele database-updates.
 - `portfolio/app/provider.py`: vervangbare Yahoo-koerskoppeling.
 - `portfolio/app/history.py`: dagelijkse waardes met aankopen en kalenderdagen.
 - `portfolio/app/server.py`: lokale HTTP-API en geplande taken.
 - `portfolio/app/static/`: afzonderlijke HTML-, CSS- en JavaScript-bestanden.
+- `portfolio/app/static/pages.js`: paginanavigatie, rapporten en dashboardinstellingen.
 - `portfolio/config.yaml` en `Dockerfile`: HA-installatie en container.
 - `tests/`: opslag- en providercontroles, zonder echte privégegevens.
 - `.github/workflows/check.yml`: controles bij GitHub-wijzigingen.
