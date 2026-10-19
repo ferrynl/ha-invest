@@ -1,5 +1,9 @@
 # Home Invest — Gebruik
 
+Linksonder in het zijmenu staat je gebruikershoek. Daar kun je je account aanpassen
+(gebruikersnaam en/of wachtwoord), inloggen en uitloggen. Voor wijzigingen vul je
+altijd je huidige wachtwoord in. Rechtsboven staan geen accountknoppen meer.
+
 **Nieuw in 0.3.0:** back-up downloaden en terugzetten staan alleen onder
 **Instellingen**. Bij terugzetten maak je een bevestigde keuze voor een SQLite-bestand
 van maximaal 25 MB. Eerst wordt een veiligheidsback-up gemaakt. Accounts en rollen

@@ -1,5 +1,5 @@
 const pageNames={home:'Home',aandelen:'Aandelen',dividend:'Dividend',rapporten:'Rapporten',instellingen:'Instellingen'};
-function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches;$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label','Menu openen');}
+function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches&&!document.body.classList.contains('locked');$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label','Menu openen');}
 function showPage(){
  const requested=location.hash.slice(1);let page=Object.hasOwn(pageNames,requested)?requested:'home';
  if(page==='instellingen'&&accessSession?.user?.role!=='admin')page='home';

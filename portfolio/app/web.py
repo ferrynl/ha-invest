@@ -123,7 +123,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     auth.logout(self.token());return self.respond({'ok':True},cookie=self.cookie(''))
                 if path=='/api/auth/password':
                     if user['id'] is None:raise ValueError('Schakel gebruikers eerst in.')
-                    auth.change_password(user['id'],data.get('current',''),data.get('password',''))
+                    auth.change_password(user['id'],data.get('current',''),data.get('password',''),data.get('username'))
                     return self.respond({'ok':True},cookie=self.cookie(''))
                 if path=='/api/users':
                     if not auth.enabled():raise ValueError('Schakel gebruikers eerst in.')

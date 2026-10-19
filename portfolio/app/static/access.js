@@ -13,11 +13,15 @@ async function apiFetch(url,options={}){
 function lockApp(){
  accessSession=null;stateETag=null;state=null;
  if(typeof closeMenu==='function')closeMenu();
+ document.getElementById('sidebar').inert=false;
  document.body.classList.add('locked');document.body.classList.remove('booting');document.getElementById('login-panel').hidden=false;
  for(const id of ['totals','positions','purchases','dividends','chart','chart-days','users-list','report-dividends','report-portfolio'])document.getElementById(id).replaceChildren();
  document.querySelectorAll('input[type="password"]').forEach(input=>{input.value='';});
  const passwordDialog=document.getElementById('password-dialog');if(passwordDialog.open)passwordDialog.close();
  document.getElementById('login-form').reset();
+ document.getElementById('account-name').textContent='Niet ingelogd';
+ document.getElementById('password-open').hidden=true;document.getElementById('logout').hidden=true;
+ document.getElementById('login-open').hidden=false;document.getElementById('account-hint').textContent='Meld je aan om je portefeuille te openen.';
 }
 async function startSession(){
  const response=await nativeFetch('api/session',{cache:'no-store'});if(!response.ok)throw Error('Verbinding mislukt.');
@@ -26,7 +30,9 @@ async function startSession(){
  document.body.classList.remove('booting','locked');document.getElementById('login-panel').hidden=true;
  const admin=accessSession.user.role==='admin';
  document.querySelector('[data-route="instellingen"]').hidden=!admin;
- document.getElementById('account-controls').hidden=!accessSession.enabled;
+ document.getElementById('password-open').hidden=!accessSession.enabled;document.getElementById('logout').hidden=!accessSession.enabled;
+ document.getElementById('login-open').hidden=true;
+ document.getElementById('account-hint').textContent=accessSession.enabled?'':'Aanmelding via Home Assistant. Accounts inschakelen bij Instellingen.';
  document.getElementById('account-name').textContent=accessSession.user.username+' · '+accessSession.user.role;
  document.getElementById('enable-auth').hidden=accessSession.enabled;
  document.getElementById('disable-auth').hidden=!accessSession.enabled;
@@ -52,9 +58,10 @@ function bindAccess(){
  formAction('user-form',async form=>{const data=Object.fromEntries(new FormData(form));data.active=form.elements.namedItem('active').checked;if(data.id)data.id=Number(data.id);else delete data.id;await jsonAction('api/users',data);newUser();await loadUsers();$('users-feedback').textContent='Gebruiker opgeslagen. Gewijzigde accounts moeten opnieuw aanmelden.';},'users-feedback');
  $('user-cancel').addEventListener('click',newUser);
  $('logout').addEventListener('click',async()=>{try{await jsonAction('api/auth/logout',{});}finally{lockApp();}});
- $('password-open').addEventListener('click',()=>{$('password-form').reset();$('password-feedback').textContent='';$('password-dialog').showModal();});
+ $('login-open').addEventListener('click',()=>$('login-form').elements.namedItem('username').focus());
+ $('password-open').addEventListener('click',()=>{$('password-form').reset();$('password-form').elements.namedItem('username').value=accessSession.user.username;$('password-feedback').textContent='';$('password-dialog').showModal();});
  $('password-cancel').addEventListener('click',()=>$('password-dialog').close());
- formAction('password-form',async form=>{await jsonAction('api/auth/password',Object.fromEntries(new FormData(form)));form.reset();$('password-dialog').close();lockApp();$('login-feedback').textContent='Wachtwoord gewijzigd. Meld je opnieuw aan.';},'password-feedback');
+ formAction('password-form',async form=>{await jsonAction('api/auth/password',Object.fromEntries(new FormData(form)));form.reset();$('password-dialog').close();lockApp();$('login-feedback').textContent='Account aangepast. Meld je opnieuw aan.';},'password-feedback');
  formAction('restore-form',async form=>{
   const file=$('restore-file').files[0];if(!file||file.size>25*1024*1024)throw Error('Kies een SQLite-back-up van maximaal 25 MB.');
   if(!$('restore-confirm').checked)throw Error('Bevestig het terugzetten.');

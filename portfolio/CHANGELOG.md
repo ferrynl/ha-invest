@@ -1,3 +1,10 @@
+# 0.3.1
+
+- Gebruikershoek linksonder in het zijmenu; accountbediening rechtsboven verwijderd.
+- Account aanpassen met eigen gebruikersnaam en optioneel nieuw wachtwoord.
+- Huidig wachtwoord verplicht, rol blijft behouden en na wijziging opnieuw aanmelden.
+- Inlogknop in de gebruikershoek wanneer je bent uitgelogd.
+
 # 0.3.0
 
 - Back-up downloaden alleen onder Instellingen; gevalideerd terugzetten met veiligheidskopie vooraf.

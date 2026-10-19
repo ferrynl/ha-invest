@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.3.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.3.1). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -119,7 +119,11 @@ API-verzoek omzeilt de rol niet. Admins kunnen accounts aanmaken, rollen wijzige
 wachtwoorden resetten en accounts deactiveren. De laatste actieve admin kan niet
 worden gedeactiveerd of tot basic worden teruggezet. Maak bij voorkeur een tweede
 admin aan voor herstel bij een vergeten wachtwoord; er is geen verborgen herstelaccount.
-Alle gebruikers kunnen hun eigen wachtwoord wijzigen. Gewijzigde accounts moeten
+Linksonder in het zijmenu staat de gebruikershoek met naam, rol, **Account aanpassen**
+en **Uitloggen**. Als je bent uitgelogd staat daar **Inloggen**. Via Account aanpassen
+wijzig je je eigen gebruikersnaam en eventueel je wachtwoord; je huidige wachtwoord
+is altijd vereist. Laat het nieuwe wachtwoord leeg om het bestaande te behouden.
+Gewijzigde accounts moeten
 opnieuw aanmelden. Alleen een admin met het huidige adminwachtwoord kan beveiliging
 uitschakelen. Bij opnieuw inschakelen zijn bestaande admingegevens vereist.
 

@@ -68,6 +68,14 @@ class AccessTests(unittest.TestCase):
    for _ in range(10):
     with self.assertRaises(ValueError):self.auth.login('missing','wrong','one-peer')
    with self.assertRaises(PermissionError):self.auth.login('missing','wrong','one-peer')
+ def test_own_account_name_change_keeps_password_and_role(self):
+  token,csrf=self.activate()
+  code,_,_=self.request('POST','/api/auth/password',{'current':self.password,'password':'','username':'newowner','role':'basic'},token,csrf)
+  self.assertEqual(code,200);self.assertIsNone(self.auth.user(token))
+  fresh=self.auth.login('newowner',self.password,'test')
+  self.assertEqual(self.auth.user(fresh)['role'],'admin')
+  self.auth.save_user(dict(username='otheruser',password=self.password,role='basic'))
+  with self.assertRaises(ValueError):self.auth.change_password(1,self.password,'','otheruser')
  def test_cache_etag_and_invalidation(self):
   loader=Mock(return_value={'one':1});cache=StateCache(30)
   cache.get(loader);cache.get(loader);loader.assert_called_once();cache.invalidate();cache.get(loader);self.assertEqual(loader.call_count,2)

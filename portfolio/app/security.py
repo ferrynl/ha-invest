@@ -108,8 +108,13 @@ class Auth:
                     if db.execute("SELECT COUNT(*) FROM users WHERE role='admin' AND active=1").fetchone()[0]<=1:raise ValueError('De laatste actieve admin moet behouden blijven.')
                 db.execute('UPDATE users SET role=?,active=?,password_hash=?,revision=revision+1 WHERE id=?',(role,int(active),encoded or row['password_hash'],row['id']))
 
-    def change_password(self,user_id,current,new):
+    def change_password(self,user_id,current,new,username=None):
         with self.store.connect() as db:row=db.execute('SELECT password_hash FROM users WHERE id=?',(user_id,)).fetchone()
         if not row or not verify_password(current,row['password_hash']):raise ValueError('Huidig wachtwoord onjuist.')
-        encoded=password_hash(new)
-        with self.store.connect() as db:db.execute('UPDATE users SET password_hash=?,revision=revision+1 WHERE id=?',(encoded,user_id))
+        encoded=password_hash(new) if new else row['password_hash']
+        with self.store.connect() as db:
+            if username is not None:
+                name=username_value(username)
+                if db.execute('SELECT 1 FROM users WHERE username=? AND id!=?',(name,user_id)).fetchone():raise ValueError('Gebruikersnaam bestaat al.')
+                db.execute('UPDATE users SET username=?,password_hash=?,revision=revision+1 WHERE id=?',(name,encoded,user_id))
+            else:db.execute('UPDATE users SET password_hash=?,revision=revision+1 WHERE id=?',(encoded,user_id))
