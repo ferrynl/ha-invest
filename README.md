@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.4.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.5.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -111,11 +111,49 @@ Kies bovenaan een rekening of **Alle accounts**. Nieuwe handmatige aankopen en
 dividend krijgen ook een brokeraccount. Koersen worden per beursnotering gedeeld,
 maar aantallen, kostprijs en dividend worden per rekening berekend.
 
-De eerste importadapter gebruikt de **Engelstalige Trading 212 Invest/ISA History
-CSV**. Trading 212 biedt ook een publieke API voor Invest en Stocks ISA, maar die
-is beta en ondersteunt geen volledige multi-currency-rekeningwaarden. Voor deze
-eerste import is CSV gekozen: geen API-sleutels nodig en iedere boeking is vooraf
-controleerbaar. Er is nog geen live Trading 212 API-koppeling.
+Trading 212 ondersteunt zowel **History CSV** als een **API-verbinding**. De API
+haalt een officieel CSV-rapport op en gebruikt dezelfde preview, beurskoppeling en
+bron-ID-controles als een handmatige upload. Hierdoor worden overlappende API- en
+CSV-imports per rekening gecontroleerd op dubbele transacties.
+
+#### Verbinden via de API
+
+1. Schakel gebruikersbeveiliging in bij Instellingen en meld je aan als admin.
+2. Maak een brokeraccount aan met bedrijf **Trading 212**. Gebruik aparte rekeningen
+   voor Live en Demo; verbind nooit verschillende werkelijke rekeningen aan één brokeraccount.
+3. Maak in Trading 212 een API key en secret met uitsluitend toegang tot historische
+   rapporten/exports. Schakel geen handelsrechten in. Eventuele IP-beperking moet
+   het uitgaande IP-adres van je HA-installatie toestaan.
+4. Ga naar **Imports → Trading 212 API**, kies brokeraccount en Live/Demo en sla
+   de sleutel en secret op. Opgeslagen betekent nog niet dat de API ze heeft geaccepteerd.
+5. Kies de volledige relevante transactieperiode en klik **Rapport via API aanvragen**.
+6. Controleer na circa een minuut **Rapportstatus controleren en ophalen**. Het rapport
+   blijft bij Trading 212 soms langer in behandeling. De taak overleeft een app-herstart.
+7. Controleer het opgehaalde voorbeeld, koppel de noteringen en bevestig de import.
+
+De app gebruikt alleen de officiële rapport-endpoints; er worden geen orders geplaatst.
+Statusantwoorden worden 60 seconden gecachet; het rapport en originele transacties
+blijven in SQLite. Ook mislukte verzoeken worden lokaal begrensd. Een volgende import
+start je zelf; er is nog geen geplande automatische brokersynchronisatie.
+Downloaden van het rapport verstuurt nooit de API-credentials naar de downloadhost.
+Alleen HTTPS-downloads vanaf Trading 212, CloudFront en S3 worden geaccepteerd;
+redirects worden geweigerd. Bij een ander downloadadres blijft handmatige CSV beschikbaar.
+
+API-sleutels staan versleuteld met Fernet in `/data/connections/`, met een aparte
+lokale encryptiesleutel en beperkte Linux-bestandsrechten. Ze gaan niet naar de browser,
+provider-cache of de downloadbare SQLite-back-up. De encryptiesleutel staat op hetzelfde
+HA-apparaat: versleuteling beschermt niet tegen volledige toegang tot dat apparaat.
+Neem de volledige appdata op in een Home Assistant-back-up om verbindingen mee te nemen.
+Bij alleen SQLite-herstel blijven lokale verbindingen behouden als het brokeraccount
+hetzelfde is; anders moet je opnieuw verbinden. **Verbinding verwijderen** verwijdert
+alleen de opgeslagen toegang; geïmporteerde gegevens blijven staan. Trek voor definitieve
+intrekking ook de sleutel in bij Trading 212. Deel sleutels nooit via GitHub of chat.
+
+De [officiële API-documentatie](https://docs.trading212.com/api) beschrijft Basic-auth
+met key/secret, Invest/Stocks ISA, de asynchrone rapporten en aanvraaglimieten.
+Dezelfde importbeperkingen voor kosten, acties en dividendvaluta gelden voor API en CSV.
+
+#### CSV handmatig uploaden
 
 1. Exporteer bij Trading 212 via **History → Export** je orders en dividend.
 2. Maak in Home Invest een rekening met bedrijf **Trading 212**.

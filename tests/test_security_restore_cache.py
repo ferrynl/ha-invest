@@ -41,6 +41,17 @@ class AccessTests(unittest.TestCase):
   cookie=headers['Set-Cookie'];self.assertIn('HttpOnly',cookie);self.assertIn('SameSite=Strict',cookie)
   token=cookie.split(';')[0].split('=',1)[1]
   return token,self.auth.user(token)['csrf']
+ def test_api_connection_requires_login_security_and_csrf_and_never_returns_secrets(self):
+  self.store.add_account({'name':'API broker','broker':'Trading 212'})
+  data={'account_id':2,'environment':'demo','key':'private-key','secret':'private-secret'}
+  self.assertEqual(self.request('POST','/api/imports/trading212/save',data)[0],400)
+  token,csrf=self.activate()
+  self.assertEqual(self.request('POST','/api/imports/trading212/save',data,token)[0],403)
+  code,body,_=self.request('POST','/api/imports/trading212/save',data,token,csrf)
+  self.assertEqual(code,200);self.assertNotIn(b'private',body)
+  code,body,_=self.request('POST','/api/imports/trading212/status',{'account_id':2},token,csrf)
+  self.assertEqual(code,200);self.assertTrue(json.loads(body)['saved']);self.assertNotIn(b'private',body)
+  self.assertEqual(self.request('POST','/api/imports/trading212/forget',{'account_id':2},token,csrf)[0],200)
  def test_roles_csrf_direct_access_and_last_admin(self):
   admin,csrf=self.activate()
   self.assertEqual(self.request('GET','/api/state')[0],401)
@@ -49,7 +60,7 @@ class AccessTests(unittest.TestCase):
   self.assertEqual(self.request('POST','/api/users',{'username':'reader','password':self.password,'role':'basic'},admin,csrf)[0],200)
   basic=self.auth.login('reader',self.password,'test');basic_csrf=self.auth.user(basic)['csrf']
   for path in ('/api/users','/api/backup','/api/imports'):self.assertEqual(self.request('GET',path,token=basic)[0],403)
-  for path in ('/api/settings','/api/users','/api/restore','/api/accounts','/api/imports/commit','/api/updates'):
+  for path in ('/api/settings','/api/users','/api/restore','/api/accounts','/api/imports/commit','/api/updates','/api/imports/trading212/save','/api/imports/trading212/status','/api/imports/trading212/start','/api/imports/trading212/poll','/api/imports/trading212/forget','/api/imports/trading212/cancel'):
    self.assertEqual(self.request('POST',path,{},basic,basic_csrf,{'Content-Type':'application/octet-stream'} if path.endswith('restore') else None)[0],403)
   self.assertEqual(self.request('GET','/api/state',token=basic)[0],200)
   self.assertEqual(self.request('POST','/api/users',{'id':1,'role':'basic','active':True},admin,csrf)[0],400)

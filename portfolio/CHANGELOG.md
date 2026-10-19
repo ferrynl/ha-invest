@@ -1,3 +1,14 @@
+# 0.5.0
+
+- Trading 212 API-verbinding per brokeraccount, voor Live en Demo.
+- Rapport aanvragen, later ophalen en controleren via dezelfde importpreview als CSV.
+- Alleen admin met ingeschakelde gebruikersbeveiliging; CSRF op iedere actie.
+- Sleutels versleuteld buiten SQLite, lokale encryptiesleutel en beperkte bestandsrechten.
+- Rapportstatus en downloads in SQLite-cache, aanvraagbegrenzing en taakbehoud na herstart.
+- Credentials nooit naar downloadhosts; vaste API-hosts, HTTPS-downloadcontrole en geen redirects.
+- API- en CSV-imports delen bron-ID-controle; bestaande importbeperkingen blijven gelden.
+- Database blijft schema 6; geen migratie nodig. Nieuwe cryptography-afhankelijkheid.
+
 # 0.4.0
 
 - Blijvende API-cache in SQLite, zoekdata een week en versiecontrole een dag gecachet.

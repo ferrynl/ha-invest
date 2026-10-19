@@ -15,6 +15,7 @@ from version import APP_VERSION
 from updates import check_updates
 from imports import ADAPTERS
 from imports.service import preview as import_preview,commit as import_commit
+from imports import trading212_api
 from history import portfolio_values
 
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested):
@@ -118,6 +119,20 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))
                 data=json.loads(body)
                 if not isinstance(data,dict):raise ValueError('Ongeldige aanvraag.')
+                if path.startswith('/api/imports/trading212/'):
+                    if not auth.enabled():raise ValueError('Schakel eerst gebruikersbeveiliging in bij Instellingen om API-sleutels te beheren.')
+                    account_id=int(data['account_id'])
+                    action=path.rsplit('/',1)[-1]
+                    try:
+                        if action=='save':result=trading212_api.save_connection(store,account_id,data.get('key'),data.get('secret'),data.get('environment'))
+                        elif action=='status':result=trading212_api.connection_status(store,account_id)
+                        elif action=='forget':result=trading212_api.forget(store,account_id)
+                        elif action=='cancel':result=trading212_api.cancel(store,account_id)
+                        elif action=='start':result=trading212_api.start(store,account_id,data['start'],data['end'],data.get('dividends',True))
+                        elif action=='poll':result=trading212_api.poll(store,account_id)
+                        else:return self.respond({'error':'Niet gevonden'},404)
+                    except OSError:return self.respond({'error':'Verbinding kon niet veilig worden opgeslagen of gelezen.'},500)
+                    return self.respond(result)
                 if path=='/api/updates':
                     try:return self.respond(check_updates(store))
                     except Exception:return self.respond({'error':'Versiecontrole niet beschikbaar. Probeer later opnieuw of bekijk GitHub.'},502)

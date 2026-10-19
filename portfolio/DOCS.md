@@ -11,7 +11,7 @@ beursnotering vóór bevestigen. Kooporders, verkooporders en dividend worden
 ondersteund; dubbele brontransacties worden overgeslagen. Onbekende transactietypen,
 ontbrekende aankopen of afwijkende dividendvaluta blokkeren de import. Kosten en
 valutawissels worden nog niet meegenomen. Raadpleeg de README voor de precieze grenzen.
-Deze eerste adapter gebruikt CSV; een live API-koppeling volgt niet automatisch.
+Vanaf 0.5.0 kun je ook via de Trading 212-API een rapport ophalen. Schakel gebruikersbeveiliging in en sla onder Imports de API key en secret op (alleen admin). Gebruik alleen rapportrechten. Kies de periode, vraag het rapport aan en controleer na een minuut de status. Daarna controleer en bevestig je hetzelfde importvoorbeeld. Sleutels staan versleuteld buiten SQLite; neem voor verbindingen de volledige app op in een HA-back-up. Er is nog geen automatische brokersynchronisatie.
 
 Succesvolle API-antwoorden staan nu blijvend in SQLite. Zoekresultaten worden een
 week hergebruikt en oudere dagkoersen blijven lokaal staan. Via **Instellingen →
