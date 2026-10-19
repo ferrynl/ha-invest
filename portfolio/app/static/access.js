@@ -12,6 +12,7 @@ async function apiFetch(url,options={}){
 }
 function lockApp(){
  accessSession=null;stateETag=null;state=null;
+ if(typeof clearLogs==='function')clearLogs();
  if(typeof closeMenu==='function')closeMenu();
  document.getElementById('sidebar').inert=false;
  document.body.classList.add('locked');document.body.classList.remove('booting');document.getElementById('login-panel').hidden=false;
@@ -31,6 +32,7 @@ async function startSession(){
  document.body.classList.remove('booting','locked');document.getElementById('login-panel').hidden=true;
  const admin=accessSession.user.role==='admin';
  document.querySelector('[data-route="instellingen"]').hidden=!admin;document.querySelector('[data-route="imports"]').hidden=!admin;
+ document.querySelector('[data-route="logs"]').hidden=!admin||!accessSession.enabled;
  document.getElementById('password-open').hidden=!accessSession.enabled;document.getElementById('logout').hidden=!accessSession.enabled;
  document.getElementById('login-open').hidden=true;
  document.getElementById('account-hint').textContent=accessSession.enabled?'':'Aanmelding via Home Assistant. Accounts inschakelen bij Instellingen.';

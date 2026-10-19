@@ -1,13 +1,15 @@
-const pageNames={home:'Home',aandelen:'Aandelen',dividend:'Dividend',rapporten:'Rapporten',instellingen:'Instellingen',imports:'Imports'};
+const pageNames={home:'Home',aandelen:'Aandelen',dividend:'Dividend',rapporten:'Rapporten',instellingen:'Instellingen',imports:'Imports',logs:'Logs'};
 function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches&&!document.body.classList.contains('locked');$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label','Menu openen');}
 function showPage(){
  const requested=location.hash.slice(1);let page=Object.hasOwn(pageNames,requested)?requested:'home';
  if((page==='instellingen'||page==='imports')&&accessSession?.user?.role!=='admin')page='home';
+ if(page==='logs'&&(accessSession?.user?.role!=='admin'||!accessSession?.enabled))page='home';
  for(const view of document.querySelectorAll('[data-page]'))view.hidden=view.dataset.page!==page;
  for(const link of document.querySelectorAll('[data-route]')){if(link.dataset.route===page)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  $('page-title').textContent=pageNames[page];document.title=pageNames[page]+' · Home Invest';closeMenu();
  if(page==='home'&&state)requestAnimationFrame(draw);
  if(page==='imports'&&state&&accessSession?.user?.role==='admin')loadImportHistory().catch(error=>{$('import-feedback').textContent=error.message;});
+ if(page==='logs')loadLogs().catch(error=>{$('logs-feedback').textContent=error.message;});
  window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',showPage);
@@ -38,6 +40,6 @@ $('settings-form').addEventListener('input',()=>{settingsDirty=true;});
 $('report-year').addEventListener('change',renderReports);
 $('settings-form').addEventListener('submit',async event=>{event.preventDefault();const button=event.target.querySelector('button');button.disabled=true;try{const response=await apiFetch('api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(Object.fromEntries(new FormData(event.target)))});if(!response.ok)throw Error('Instellingen opslaan mislukt.');settingsDirty=false;chartRange=event.target.elements.namedItem('default_range').value;syncRangeButtons();await load();$('settings-feedback').textContent='Instellingen opgeslagen.';}catch(error){$('settings-feedback').textContent=error.message;}finally{button.disabled=false;}});
 showPage();
-bindImports();bindAccess();startSession().catch(()=>{$('status').textContent='Verbinding mislukt. Herlaad de pagina.';document.body.classList.remove('booting');});
+bindImports();bindAccess();bindLogs();startSession().catch(()=>{$('status').textContent='Verbinding mislukt. Herlaad de pagina.';document.body.classList.remove('booting');});
 setInterval(()=>{if(!document.hidden&&accessSession?.user)load();},120000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&accessSession?.user)load();});

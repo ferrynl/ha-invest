@@ -27,3 +27,6 @@ Bij iedere wijziging aan dit project:
   bron-ID's en deduplicatie per account. Onbekende acties of ontbrekende kostprijs niet gokken.
 - Bewaar succesvolle providerantwoorden in de SQLite-cache met passende TTL en haal oude
   historie incrementeel op. Sla geen API-sleutels of wachtwoorden op in providerpayloads.
+
+- Gebruik diagnostics.py voor diagnostiek; sla nooit credentials, volledige headers, CSV-inhoud
+  of ongefilterde responsebodies/tracebacks op. Logs en exports vereisen een ingelogde admin.

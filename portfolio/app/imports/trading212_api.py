@@ -13,6 +13,7 @@ from urllib.error import HTTPError,URLError
 from cryptography.fernet import Fernet,InvalidToken
 from persistent_cache import cached_json
 from .service import preview
+from diagnostics import operation,current_record,auth_secrets,DiagnosticError
 
 _lock=threading.RLock()
 EXPORT='/api/v0/equity/history/exports'
@@ -21,6 +22,11 @@ class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self,*args,**kwargs):return None
 
 def request(url,authorization=None,data=None,csv=False):
+    started=time.monotonic()
+    parsed=urlsplit(url)
+    details={'method':'POST' if data is not None else 'GET','endpoint':'report_download' if csv else parsed.path,'environment':'demo' if parsed.hostname=='demo.trading212.com' else 'live' if parsed.hostname=='live.trading212.com' else 'download'}
+    if data is not None:details['period']={key:data.get(key) for key in ('timeFrom','timeTo')}
+    hidden=auth_secrets(authorization)
     headers={'User-Agent':'Home-Invest','Accept':'text/csv' if csv else 'application/json'}
     if authorization:headers['Authorization']=authorization
     body=None if data is None else json.dumps(data).encode()
@@ -29,12 +35,23 @@ def request(url,authorization=None,data=None,csv=False):
         with build_opener(ProxyHandler({}),NoRedirect()).open(Request(url,data=body,headers=headers),timeout=25) as response:
             raw=response.read(5*1024*1024+1)
             if len(raw)>5*1024*1024:raise ValueError('Trading 212-rapport is groter dan 5 MB. Kies een kortere periode.')
-            return raw.decode('utf-8-sig') if csv else json.loads(raw)
+            result=raw.decode('utf-8-sig') if csv else json.loads(raw)
+            current_record('INFO','http_response','Trading 212-aanvraag geslaagd.',{**details,'http_status':getattr(response,'status',200),'duration_ms':round((time.monotonic()-started)*1000),'response_bytes':len(raw)},hidden)
+            return result
     except HTTPError as exc:
-        messages={401:'API-sleutel of secret onjuist.',403:'API mist rapportrechten of je IP-adres is niet toegestaan.',429:'Trading 212-aanvraaglimiet bereikt. Wacht minstens een minuut.'}
-        raise ValueError(messages.get(exc.code,'Trading 212-aanvraag mislukt. Probeer later opnieuw.')) from None
-    except (URLError,TimeoutError,UnicodeError,json.JSONDecodeError):
-        raise ValueError('Trading 212 is niet bereikbaar of gaf een ongeldig antwoord.') from None
+        messages={400:'Trading 212 wijst de rapportaanvraag af. Controleer periode en rapportinstellingen.',401:'API-sleutel of secret onjuist.',403:'API mist rapportrechten of je IP-adres is niet toegestaan.',404:'Trading 212-endpoint niet gevonden. Controleer Live/Demo en bekijk de logs.',408:'Trading 212-aanvraag duurde te lang.',422:'Trading 212 accepteert de aanvraagvelden niet.',429:'Trading 212-aanvraaglimiet bereikt. Wacht minstens een minuut.'}
+        provider={};response_format='json'
+        try:
+            payload=json.loads(exc.read(16384))
+            if isinstance(payload,dict):provider={key:payload[key] for key in ('code','errorCode','message','error','detail','errors') if key in payload}
+        except (ValueError,OSError,TypeError):response_format='non_json'
+        reference=current_record('ERROR','http_error','Trading 212 gaf een HTTP-fout.',{**details,'http_status':exc.code,'duration_ms':round((time.monotonic()-started)*1000),'provider':provider,'response_format':response_format,'request_id':exc.headers.get('x-request-id') if exc.headers else None,'edge_request_id':exc.headers.get('cf-ray') if exc.headers else None,'retry_after':exc.headers.get('Retry-After') if exc.headers else None},hidden)
+        hint=messages.get(exc.code,'Trading 212-aanvraag mislukt. Bekijk de logs voor details.')
+        raise DiagnosticError(f'{hint} (HTTP {exc.code})'+(f' · Log-ID {reference}' if reference else '')) from None
+    except (URLError,TimeoutError,UnicodeError,json.JSONDecodeError) as exc:
+        reason='timeout' if isinstance(exc,TimeoutError) else 'invalid_response' if isinstance(exc,(UnicodeError,json.JSONDecodeError)) else 'network'
+        reference=current_record('ERROR','connection_error','Trading 212 is niet bereikbaar of gaf een ongeldig antwoord.',{**details,'reason':reason,'error_type':type(exc).__name__,'network_reason':str(exc.reason) if isinstance(exc,URLError) else None,'duration_ms':round((time.monotonic()-started)*1000)},hidden)
+        raise DiagnosticError('Trading 212-verbindingsfout: '+reason+(f' · Log-ID {reference}' if reference else '')) from None
 
 def write_private(path,content):
     temporary=path.with_suffix('.tmp')
@@ -67,6 +84,7 @@ def read_connection(store,account_id):
     if result['owner']!=owner['created_at']:raise ValueError('Brokeraccount is gewijzigd. Verbind opnieuw.')
     return result
 
+@operation('trading212','connection_save')
 def save_connection(store,account_id,key,secret,environment):
     owner=account(store,account_id)
     if environment not in ('live','demo'):raise ValueError('Kies Live of Demo.')
@@ -82,11 +100,13 @@ def connection_status(store,account_id):
         value=read_connection(store,account_id)
         return {'saved':bool(value),'environment':value['environment'] if value else None,'pending':bool(value and value.get('job'))}
 
+@operation('trading212','connection_remove')
 def forget(store,account_id):
     with _lock:
         account(store,account_id);folder,_=vault(store);(folder/f'{account_id}.encrypted').unlink(missing_ok=True)
     return {'saved':False}
 
+@operation('trading212','report_cancel')
 def cancel(store,account_id):
     with _lock:
         value=read_connection(store,account_id)
@@ -102,6 +122,7 @@ def api(value,data=None):
 def persist(store,account_id,value):
     folder,cipher=vault(store);write_private(folder/f'{account_id}.encrypted',cipher.encrypt(json.dumps(value).encode()))
 
+@operation('trading212','report_request')
 def start(store,account_id,start_day,end_day,dividends=True):
     first,last=date.fromisoformat(start_day),date.fromisoformat(end_day)
     if first>last or last>date.today():raise ValueError('Kies een geldige periode tot en met vandaag.')
@@ -128,6 +149,7 @@ def download_url(url):
     if parsed.scheme!='https' or not approved or parsed.username or parsed.password or parsed.port not in (None,443):raise ValueError('Trading 212 gaf een niet-ondersteund downloadadres. Gebruik voorlopig CSV.')
     return url
 
+@operation('trading212','report_poll')
 def poll(store,account_id):
     with _lock:
         value=read_connection(store,account_id)

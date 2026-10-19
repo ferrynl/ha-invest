@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from contextlib import closing
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 MIGRATIONS = {
     1: (
         'CREATE TABLE IF NOT EXISTS purchases (id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL, name TEXT NOT NULL, quantity TEXT NOT NULL, price TEXT NOT NULL, currency TEXT NOT NULL, purchased_on TEXT NOT NULL, created_at TEXT NOT NULL)',
@@ -36,6 +36,10 @@ MIGRATIONS = {
         'CREATE TABLE api_cache (namespace TEXT NOT NULL, cache_key TEXT NOT NULL, payload TEXT NOT NULL, fetched_at REAL NOT NULL, expires_at REAL NOT NULL, PRIMARY KEY(namespace,cache_key))',
         "CREATE TABLE import_batches (id INTEGER PRIMARY KEY, account_id INTEGER NOT NULL REFERENCES broker_accounts(id), provider TEXT NOT NULL, filename TEXT NOT NULL, digest TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'preview', created_at TEXT NOT NULL)",
         'CREATE TABLE import_records (id INTEGER PRIMARY KEY, batch_id INTEGER NOT NULL REFERENCES import_batches(id), account_id INTEGER NOT NULL REFERENCES broker_accounts(id), provider TEXT NOT NULL, external_id TEXT NOT NULL, digest TEXT NOT NULL, raw TEXT NOT NULL, UNIQUE(account_id,provider,external_id))',
+    ),
+    7: (
+        'CREATE TABLE app_logs (id INTEGER PRIMARY KEY, created_at TEXT NOT NULL, level TEXT NOT NULL, source TEXT NOT NULL, event TEXT NOT NULL, message TEXT NOT NULL, details TEXT NOT NULL, reference TEXT NOT NULL)',
+        'CREATE INDEX app_logs_time ON app_logs(created_at)',
     ),
 }
 

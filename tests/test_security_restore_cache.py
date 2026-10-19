@@ -41,6 +41,21 @@ class AccessTests(unittest.TestCase):
   cookie=headers['Set-Cookie'];self.assertIn('HttpOnly',cookie);self.assertIn('SameSite=Strict',cookie)
   token=cookie.split(';')[0].split('=',1)[1]
   return token,self.auth.user(token)['csrf']
+ def test_logs_are_admin_only_with_filters_and_safe_export(self):
+  from diagnostics import record
+  self.assertEqual(self.request('GET','/api/logs')[0],403)
+  token,csrf=self.activate()
+  reference=record(self.store,'ERROR','trading212','http_error','Test fout',{'http_status':400})
+  code,body,headers=self.request('GET','/api/logs?level=ERROR&q='+reference,token=token)
+  self.assertEqual(code,200);self.assertEqual(json.loads(body)['entries'][0]['reference'],reference);self.assertEqual(headers['Cache-Control'],'no-store')
+  code,body,headers=self.request('GET','/api/logs?download=1',token=token)
+  self.assertEqual(code,200);self.assertIn('home-invest-logs.json',headers['Content-Disposition'])
+  self.assertEqual(self.request('GET','/api/logs?before=bad',token=token)[0],400)
+  self.assertEqual(self.request('GET','/api/logs?level=bad',token=token)[0],400)
+  self.auth.save_user({'username':'viewer','password':self.password,'role':'basic'})
+  basic=self.auth.login('viewer',self.password,'test')
+  self.assertEqual(self.request('GET','/api/logs',token=basic)[0],403)
+  self.assertEqual(self.request('GET','/api/logs?download=1',token=basic)[0],403)
  def test_api_connection_requires_login_security_and_csrf_and_never_returns_secrets(self):
   self.store.add_account({'name':'API broker','broker':'Trading 212'})
   data={'account_id':2,'environment':'demo','key':'private-key','secret':'private-secret'}

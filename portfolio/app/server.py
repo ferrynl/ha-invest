@@ -11,6 +11,7 @@ from security import Auth
 from cache import StateCache
 from web import make_handler
 from datetime import datetime, timezone
+from diagnostics import record
 
 ROOT = Path(__file__).parent
 store = Store(os.environ.get('DATA_DIR', './data'))
@@ -41,14 +42,16 @@ def refresh():
                     requested=store.history_start(p['symbol'],p['exchange'],p['currency'],start)
                     rows = fetch_history(p['symbol'], p['exchange'], p['currency'], requested,store=store)
                     store.save_history(p['symbol'], p['exchange'], p['currency'], start, rows)
-            except Exception:
+            except Exception as error:
+                record(store,'WARNING','market','history_failed','Koershistorie ophalen mislukt.',{'symbol':p['symbol'],'error_type':type(error).__name__})
                 history_errors += 1
             try:
                 fresh = p['quote'] and (datetime.now(timezone.utc)-datetime.fromisoformat(p['quote']['fetched_at'])).total_seconds()<interval
                 if not fresh:
                     price, stamp = fetch_quote('', p['symbol'], p['exchange'], p['currency'],store=store,ttl=interval)
                     store.quote(p['symbol'], p['exchange'], p['currency'], price, stamp, 'Yahoo Finance (mogelijk vertraagd)')
-            except Exception:
+            except Exception as error:
+                record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'error_type':type(error).__name__})
                 errors += 1
             # Space requests to avoid bursts; plan limits still apply.
             time.sleep(1)
@@ -68,7 +71,8 @@ def background():
                 store.backup()
                 last_backup = time.time()
             refresh()
-        except Exception:
+        except Exception as error:
+            record(store,'ERROR','system','background_failed','Achtergrondtaak mislukt.',{'error_type':type(error).__name__})
             logging.exception('Achtergrondtaak mislukt')
         refresh_requested.wait(interval)
         refresh_requested.clear()

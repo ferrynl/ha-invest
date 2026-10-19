@@ -1,5 +1,12 @@
 # Home Invest — Gebruik
 
+**Nieuw in 0.5.1:** ingelogde admins krijgen de pagina **Logs**. Herhaal de mislukte
+Trading 212-aanvraag na de update en zoek de Log-ID uit de foutmelding. Open details
+voor HTTP-status, afgeschermde providerfout, omgeving en periode. Je kunt filteren,
+oudere regels bekijken en de getoonde pagina downloaden. Logs blijven maximaal
+7 dagen en 5.000 regels bewaard. API-sleutels en downloadadressen worden gefilterd.
+De database gaat automatisch naar schema 7 met vooraf een veiligheidsback-up.
+
 **Nieuw in 0.4.0:** maak bij Instellingen een brokeraccount aan, bijvoorbeeld met
 bedrijf **Trading 212**. De rekeningkeuze bovenaan filtert je portefeuille.
 Bestaande gegevens blijven onder **Handmatig** staan. Koersen worden gedeeld;
@@ -36,7 +43,7 @@ De app gebruikt nu servercache, ETags en versiegebonden browsercache. Koersen wo
 niet bij iedere paginawisseling of invoer opnieuw bij Yahoo opgevraagd.
 
 Gebruik het menu links: **Home**, **Aandelen**, **Dividend**, **Rapporten**, **Imports** en
-**Instellingen**. Imports en Instellingen zijn voor admins. Op een klein scherm verschijnt een menuknop. Home toont het
+**Instellingen** en **Logs**. Imports en Instellingen zijn voor admins; Logs vereist ook ingeschakelde gebruikersbeveiliging. Op een klein scherm verschijnt een menuknop. Home toont het
 overzicht en de grafiek; invoer staat op de eigen pagina. Rapporten toont dividend
 per maand en de huidige stand per valuta. Bij Instellingen kun je de standaard
 grafiekperiode bewaren en de app- en databaseversie bekijken.

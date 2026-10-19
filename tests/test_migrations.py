@@ -22,13 +22,13 @@ class MigrationTests(unittest.TestCase):
                 for statement in MIGRATIONS[number]:
                     db.execute(statement)
             db.execute(f'PRAGMA user_version={version}')
-            db.execute("INSERT INTO purchases VALUES(1,'ASML.AS','AMSTERDAM','ASML','1','999','EUR','2026-10-12','2026-10-12T00:00:00Z')")
+            db.execute("INSERT INTO purchases(id,symbol,exchange,name,quantity,price,currency,purchased_on,created_at) VALUES(1,'ASML.AS','AMSTERDAM','ASML','1','999','EUR','2026-10-12','2026-10-12T00:00:00Z')")
             if version >= 3:
-                db.execute("INSERT INTO dividends VALUES(1,'ASML.AS','AMSTERDAM','EUR','5.25','2026-10-15','netto','2026-10-15T00:00:00Z')")
+                db.execute("INSERT INTO dividends(id,symbol,exchange,currency,amount,paid_on,note,created_at) VALUES(1,'ASML.AS','AMSTERDAM','EUR','5.25','2026-10-15','netto','2026-10-15T00:00:00Z')")
             db.commit()
 
     def test_all_previously_released_versions_upgrade_without_losing_data(self):
-        for version in (1,2,3,4,5):
+        for version in (1,2,3,4,5,6):
             with self.subTest(version=version), tempfile.TemporaryDirectory() as directory:
                 self.path=Path(directory)/'portfolio.sqlite3'
                 self.create_old(version)
@@ -53,6 +53,16 @@ class MigrationTests(unittest.TestCase):
             self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],1)
             self.assertIsNone(db.execute("SELECT name FROM sqlite_master WHERE name='dividends'").fetchone())
             self.assertEqual(db.execute('SELECT COUNT(*) FROM purchases').fetchone()[0],1)
+
+    def test_logging_migration_from_six_rolls_back_without_losing_portfolio(self):
+        self.create_old(6)
+        broken={**MIGRATIONS,7:MIGRATIONS[7]+('INVALID SQL',)}
+        with patch.dict('migrations.MIGRATIONS',broken,clear=True),self.assertRaises(sqlite3.Error):migrate(self.path)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],6)
+            self.assertIsNone(db.execute("SELECT name FROM sqlite_master WHERE name='app_logs'").fetchone())
+            self.assertEqual(db.execute('SELECT price FROM purchases').fetchone()[0],'999')
+            self.assertEqual(db.execute('SELECT name FROM broker_accounts').fetchone()[0],'Handmatig')
 
     def test_newer_database_is_refused_without_downgrading(self):
         self.create_old(3)

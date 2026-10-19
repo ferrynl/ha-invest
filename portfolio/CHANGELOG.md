@@ -1,3 +1,13 @@
+# 0.5.1
+
+- Nieuwe pagina Logs voor ingelogde admins; servercontrole op bekijken en downloaden.
+- Gedeelde loggingmodule, opgeslagen in SQLite met maximaal 7 dagen en 5.000 regels.
+- Trading 212-fouten met HTTP-status en Log-ID; providerfout, periode, omgeving en requestdetails afgeschermd terugvinden.
+- Zoeken op Log-ID/melding, filters, paginering en JSON-download van de getoonde pagina.
+- Centrale filtering van credentials, geheime velden, autorisatie, e-mailadressen en URL's.
+- Ook logging voor marktdatafouten, achtergrondtaken en afgewezen app-aanvragen.
+- Schema 7 voegt de logtabel toe; transactionele migratie met veiligheidsback-up.
+
 # 0.5.0
 
 - Trading 212 API-verbinding per brokeraccount, voor Live en Demo.

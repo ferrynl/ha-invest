@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.5.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.5.1). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -20,12 +20,13 @@ De app bouwt uit de bron op het apparaat; er is geen containerregister nodig.
 
 ## Gebruik
 
-De app heeft een linkerzijbalk zoals Home Assistant, met zes afzonderlijke pagina's:
+De app heeft een linkerzijbalk zoals Home Assistant, met zeven afzonderlijke pagina's:
 
 - **Home**: portefeuilletotalen en de grafiek met alle aandelen.
 - **Aandelen**: posities, een aankoop toevoegen en het aankoopregister.
 - **Dividend**: ontvangen dividend boeken en het dividendregister bekijken.
 - **Rapporten**: ontvangen dividend per maand met jaarfilter en de actuele stand per valuta.
+- **Logs** (ingelogde admin): foutdetails, Log-ID zoeken, niveau-/bronfilters en JSON-download.
 - **Imports** (admin): Trading 212 CSV controleren, beursnoteringen koppelen en importeren.
 - **Instellingen** (admin): gebruikersbeveiliging, brokeraccounts, versiecontrole, standaard grafiekperiode,
   versiegegevens, back-up downloaden en terugzetten.
@@ -381,3 +382,31 @@ centrale verzameling van portefeuilles of doorlevering van koersen.
 - [Yahoo beursdekking en vertraging](https://help.yahoo.com/kb/finance/article-exchanges-data-delays-sln2310.html)
 - [Trading 212 publieke API](https://docs.trading212.com/api)
 - [Trading 212 CSV exporteren](https://helpcentre.trading212.com/hc/en-us/articles/360016898917-Can-I-export-the-trading-data-from-my-account)
+
+### Diagnostische logs (0.5.1)
+
+Open **Logs** in het zijmenu als ingelogde admin. Gebruikersbeveiliging moet
+hiervoor ingeschakeld zijn. Basic-gebruikers, uitgelogde bezoekers en toegang zonder
+gebruikersbeveiliging krijgen ook via de API geen logs.
+
+Trading 212-fouten tonen nu de HTTP-status en een Log-ID. Voer een mislukte aanvraag
+na de update opnieuw uit: de eerdere algemene foutmeldingen zijn niet achteraf
+te reconstrueren. Zoek de Log-ID, kies eventueel **Fouten** en **trading212**, en
+open **details**. Daar staan methode, endpoint, Live/Demo, rapportperiode,
+HTTP-status, providerfoutcode/-melding, request-ID, Retry-After en duur voor zover
+beschikbaar. Netwerkfouten tonen de foutsoort en afgeschermde netwerkreden.
+Geen volledige responsebody, CSV-inhoud, aanvraagheaders of traceback wordt opgeslagen.
+
+De gedeelde module `diagnostics.py` bewaart maximaal 5.000 regels en 7 dagen
+in SQLite. Zij logt ook fouten bij marktdata, achtergrondtaken en afgewezen
+app-aanvragen. Nieuwe modules gebruiken `record`, `operation` of `current_record`;
+voer nooit onbewerkte credentials of volledige financiële payloads als details in.
+Bekende credentials, geheime velden, autorisatie, e-mailadressen en URL's worden
+centraal afgeschermd. De pagina gebruikt uitsluitend tekstweergave voor logdetails.
+
+Logs verversen op aanvraag en tonen 100 regels per pagina. Filter op niveau en bron,
+zoek een Log-ID of melding, blader naar oudere regels of download de getoonde
+pagina als JSON. Er wordt niets in browseropslag bewaard. Logs horen bij de lokale
+installatie: een SQLite-back-up bevat ze, maar portefeuilleherstel importeert geen
+oude logregels en behoudt de huidige logs. Schema 7 voegt de logtabel toe met de
+bestaande migratie- en veiligheidsback-upprocedure.

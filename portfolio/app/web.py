@@ -17,11 +17,12 @@ from imports import ADAPTERS
 from imports.service import preview as import_preview,commit as import_commit
 from imports import trading212_api
 from history import portfolio_values
+from diagnostics import read_logs,record,DiagnosticError
 
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested):
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css')}
-    for name in ('app','pages','chart','chart-view','access','imports'):
+    for name in ('app','pages','chart','chart-view','access','imports','logs'):
         assets['/'+name+'.js']=(name+'.js','text/javascript')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass
@@ -63,7 +64,13 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 return self.respond(content,kind=kind,etag=path!='/',public=path!='/')
             user=auth.user(self.token())
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
-            if not self.allowed(user,admin=path in ('/api/users','/api/backup','/api/imports')):return
+            if not self.allowed(user,admin=path in ('/api/users','/api/backup','/api/imports','/api/logs')):return
+            if path=='/api/logs':
+                if not auth.enabled():return self.respond({'error':'Schakel gebruikersbeveiliging in en meld je aan als admin om logs te bekijken.'},403)
+                query=parse_qs(urlsplit(self.path).query)
+                try:result=read_logs(store,query.get('level',[''])[0],query.get('source',[''])[0],int(query.get('before',['0'])[0]),query.get('q',[''])[0])
+                except ValueError:return self.respond({'error':'Ongeldig logfilter.'},400)
+                return self.respond(result,filename='home-invest-logs.json' if query.get('download')==['1'] else None)
             if path=='/api/users':return self.respond({'users':auth.list_users()})
             if path=='/api/imports':
                 with store.connect() as db:batches=[dict(r) for r in db.execute('SELECT id,account_id,provider,filename,status,created_at FROM import_batches ORDER BY id DESC LIMIT 50')]
@@ -173,7 +180,10 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 else:return self.respond({'error':'Niet gevonden'},404)
                 cache.invalidate();self.respond({'ok':True},201 if path!='/api/settings' else 200)
             except PermissionError as error:self.respond({'error':str(error)},429)
-            except ValueError as error:self.respond({'error':str(error)},400)
+            except ValueError as error:
+                if not isinstance(error,DiagnosticError):record(store,'WARNING','web','request_rejected','Aanvraag afgewezen.',{'endpoint':path,'error_type':type(error).__name__})
+                self.respond({'error':str(error)},400)
             except (KeyError,TypeError,sqlite3.Error):
+                record(store,'ERROR','web','request_failed','Aanvraag kon niet worden verwerkt.',{'endpoint':path})
                 self.respond({'error':'Aanvraag mislukt. Controleer velden, wachtwoord (12–128 tekens), rollen of het back-upbestand.'},400)
     return Handler
