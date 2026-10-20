@@ -1,3 +1,12 @@
+# 0.8.0
+
+- Admin-subpagina onder Imports voor blijvend opgeslagen en openstaande aandelenkoppelingen.
+- Per brokeraccount, ISIN/bronticker en bronvaluta; bekende noteringen zonder nieuwe zoekaanvraag hergebruiken.
+- Koersticker, beurs en valuta corrigeren met providercontrole; openstaande en volgende imports gebruiken de correctie, eerdere boekingen blijven behouden.
+- Bestaande previewkoppelingen lokaal overnemen; register opnemen in back-up/herstel.
+- Yahoo-aanvraaglimieten (429/503) laten koppelen pauzeren in plaats van alle instrumenten blijven proberen.
+- Schema 9 met automatische veiligheidsback-up en transactionele migratie.
+
 # 0.7.3
 
 - Dividendontvangsten zonder lokale voorafgaande aankoop apart importeren met expliciete melding over ontbrekende aankoophistorie.

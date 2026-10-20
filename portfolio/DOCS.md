@@ -129,3 +129,15 @@ Euronext Brussel wordt nu ondersteund. Gecontroleerde ISIN-koppelingen voor Altr
 ### Dividend zonder aankoophistorie (0.7.3)
 
 Een gecontroleerde dividendontvangst kan worden geimporteerd als de voorafgaande aankoop niet in de gekozen periode of lokale historie staat. De ontvangst blijft bij het gekozen brokeraccount, met een melding bij Dividend en in het importresultaat. Er wordt geen aankoop, aantal of kostprijs aangemaakt. De ontvangst staat in Dividend en Rapporten; een totaalrendement op een positie vereist aankoophistorie. Automatische beurskoppeling, historische valutaomrekening, deduplicatie en volledige rollback blijven gelden. Bestaande voorbeelden kunnen opnieuw worden opgeslagen. Schema blijft 8.
+
+### Blijvende aandelenkoppelingen (0.8.0)
+
+Open **Imports > Aandelenkoppelingen beheren** (alleen admin). De subpagina toont alle bekende en openstaande instrumenten uit eerdere importvoorbeelden, per brokeraccount, ISIN/bronticker en bronvaluta. De lijst en lokaal zoeken gebruiken geen koersdienst. Bekende koppelingen blijven in SQLite zonder vervaldatum bewaard, ook na herstart. Bestaande opgeslagen previewkoppelingen worden lokaal overgenomen.
+
+Kies **Corrigeren** of **Koppelen**, vul de juiste Yahoo-koersticker in en klik **Notering controleren**. Beurs en noteringsvaluta worden opgehaald; **Koppeling opslaan** controleert dat ze bij die notering horen. Controleer zelf ook de identiteit/ISIN van het gekozen aandeel. Een foutieve beurs of valuta wordt niet opgeslagen. Een manuele correctie wordt niet overschreven door automatisch koppelen. Open je importvoorbeeld daarna opnieuw.
+
+Correcties gelden voor openstaande en volgende imports. Eerder geboekte transacties, oorspronkelijke CSV-regels en de gebruikte omrekeningen blijven als administratie behouden; bestaande boekingen worden niet stilzwijgend van aandeel of valuta veranderd. Het register is geen functie om oude boekingen opnieuw te waarderen.
+
+Dezelfde eenduidige ISIN-koppeling kan voor een andere bronvaluta worden hergebruikt; de historische omrekening blijft gelden. Bij een Yahoo 429/503 stopt het automatisch koppelen en geldt een opgeslagen wachttijd (Retry-After, minimaal 60 seconden). Reeds opgeslagen koppelingen blijven bruikbaar. Nieuwe instrumenten kunnen nog koersaanvragen nodig hebben.
+
+Schema 9 voegt het koppelingenregister toe, met automatische migratie-back-up en ondersteuning in back-up/herstel. De regels met **Dividend (Return of capital manufactured payment)** blijven expliciet geblokkeerd: kapitaalterugbetaling is geen gewoon dividend en wordt niet stilzwijgend als winst geboekt. Dit is een apart probleem, geen API-limiet. Een oudere importperiode of beheer van beurskoppelingen lost dat transactietype niet op.

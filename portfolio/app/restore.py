@@ -16,6 +16,7 @@ TABLES={
  'history_sync':(2,('symbol','exchange','currency','start','synced_on')),
  'dividends':(3,('id','symbol','exchange','currency','amount','paid_on','note','created_at','account_id')),
  'import_batches':(6,('id','account_id','provider','filename','digest','payload','status','created_at')),
+ 'instrument_mappings':(9,('id','account_id','provider','identity','ticker','isin','source_currency','symbol','exchange','currency','name','origin','updated_at')),
  'import_records':(6,('id','batch_id','account_id','provider','external_id','digest','raw')),
  'api_cache':(6,('namespace','cache_key','payload','fetched_at','expires_at')),
  'fx_currencies':(8,('code','name','updated_at')),
@@ -49,9 +50,13 @@ def restore_backup(store,content):
                 if len(data)>250000:raise ValueError('Te veel regels in deze back-up.')
                 for values in data:
                     row=dict(zip(columns,values))
+                    if table=='instrument_mappings':
+                        if row['origin'] not in ('pending','automatic','manual') or row['provider']!='trading212':raise ValueError('Ongeldige instrumentkoppeling in back-up.')
+                        if row['identity']!=('isin:'+row['isin'] if row['isin'] else 'ticker:'+row['ticker'].strip().upper()):raise ValueError('Ongeldige instrumentidentiteit in back-up.')
+                        if not row['symbol'] and (row['exchange'] or row['currency'] or row['origin']!='pending'):raise ValueError('Onvolledige instrumentkoppeling in back-up.')
                     for key in ('code','base','quote','currency','source_currency','target_currency'):
-                        if key in row and not re.fullmatch('[A-Z]{3}',str(row[key])):raise ValueError('Ongeldige valutacode in back-up.')
-                    if 'symbol' in row and (not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',str(row['symbol'])) or not re.fullmatch(r'[A-Z0-9 _-]{1,40}',str(row['exchange'])) or not re.fullmatch(r'[A-Z]{3}',str(row['currency']))):raise ValueError('Ongeldige beursnotering in back-up.')
+                        if key in row and not (table=='instrument_mappings' and key=='currency' and row[key]=='') and not re.fullmatch('[A-Z]{3}',str(row[key])):raise ValueError('Ongeldige valutacode in back-up.')
+                    if 'symbol' in row and not (table=='instrument_mappings' and row['symbol']=='') and (not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',str(row['symbol'])) or not re.fullmatch(r'[A-Z0-9 _-]{1,40}',str(row['exchange'])) or not re.fullmatch(r'[A-Z]{3}',str(row['currency']))):raise ValueError('Ongeldige beursnotering in back-up.')
                     for key in ('quantity','price','amount','rate','original_amount','converted_amount'):
                         if key in row:positive(row[key])
                     for key in ('purchased_on','paid_on','day','start','end','synced_on','requested_on','rate_on'):
@@ -87,4 +92,5 @@ def restore_backup(store,content):
                 for key in target.execute('SELECT DISTINCT account_id,symbol,exchange,currency FROM purchases').fetchall():
                     lots=[dict(row) for row in target.execute('SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',tuple(key))]
                     daily_values(lots,[],[])
+        store._mapping_discovered=False
         return {table:len(data) for table,data in rows.items()}

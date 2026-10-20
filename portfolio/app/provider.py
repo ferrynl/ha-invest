@@ -5,12 +5,28 @@ from urllib.parse import quote, urlencode
 from datetime import datetime, timezone, date, timedelta
 from functools import lru_cache
 import time
+from urllib.error import HTTPError
 from persistent_cache import cached_json
 from forex import code as currency_code
 
+class ProviderBusy(ValueError):
+    pass
+
 def _payload(request,timeout,store,namespace,key,ttl):
     def load():
-        with urlopen(request,timeout=timeout) as response:result=json.load(response)
+        if store:
+            with store.connect() as db:pause=db.execute("SELECT expires_at FROM api_cache WHERE namespace='provider-cooldown' AND cache_key='yahoo'").fetchone()
+            if pause and pause[0]>time.time():raise ProviderBusy('Yahoo heeft tijdelijk een aanvraaglimiet. Automatisch koppelen is gepauzeerd; probeer over enkele minuten opnieuw. Opgeslagen koppelingen blijven bruikbaar.')
+        try:
+            with urlopen(request,timeout=timeout) as response:result=json.load(response)
+        except HTTPError as error:
+            if error.code not in (429,503):raise
+            try:delay=min(3600,max(60,int(error.headers.get('Retry-After','120'))))
+            except (ValueError,TypeError):delay=120
+            if store:
+                stamp=time.time()
+                with store.connect() as db:db.execute('INSERT OR REPLACE INTO api_cache VALUES(?,?,?,?,?)',('provider-cooldown','yahoo','{}',stamp,stamp+delay))
+            raise ProviderBusy('Yahoo heeft tijdelijk een aanvraaglimiet. Automatisch koppelen is gepauzeerd; probeer over enkele minuten opnieuw. Opgeslagen koppelingen blijven bruikbaar.') from error
         if result.get('status')=='error' or (isinstance(result.get('chart'),dict) and result['chart'].get('error')):raise ValueError('Koersdienst retourneerde een fout.')
         return result
     return cached_json(store,namespace,key,ttl,load)

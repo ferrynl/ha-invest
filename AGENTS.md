@@ -34,3 +34,7 @@ Bij iedere wijziging aan dit project:
 - Valuta: gebruik Decimal en de transactiedatum; gebruik geen toekomstige koers of een 1:1-fallback.
   GBX/GBp is pence (0,01 GBP). Behoud originele bedragen en de omrekenfactor/koersdatum.
   Ontbrekende FX blokkeert de hele import; nieuwe FX-tabellen moeten in back-upherstel worden gevalideerd.
+
+- Bewaar importkoppelingen blijvend per brokeraccount/aanbieder en ISIN of bronticker plus bronvaluta.
+  Handmatige correcties winnen van automatische resultaten; herschrijf nooit stilzwijgend geboekte transacties.
+  De beheerpagina mag geen provider oproepen bij het laden of lokaal zoeken. Respecteer provider-wachttijden.

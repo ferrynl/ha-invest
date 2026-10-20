@@ -1,10 +1,11 @@
 """Automatic listing resolution. Never guess exchange rates or select a fuzzy hit."""
 import json
 import re
-from provider import search_stocks,fetch_quote,listing
+from provider import search_stocks,fetch_quote,listing,ProviderBusy
 from persistent_cache import cached_json
 from diagnostics import record
 from .listings import CATALOGUE
+from .registry import remember,lookup,discover
 
 def ticker_base(value):
     value=re.sub(r'_(US|NL|UK|DE|FR|IT|CH)_EQ$','',value.upper())
@@ -31,6 +32,7 @@ def resolve(store,rows,provider,preferred=None):
             verified=[]
             for symbol in catalogue:
                 try:stock=listing(symbol,store=store)
+                except ProviderBusy:raise
                 except Exception:continue
                 verified.append(stock)
                 if stock['currency']==(preferred or currency):return {'mapping':stock,'via':'Gecontroleerde ISIN-notering'}
@@ -41,6 +43,7 @@ def resolve(store,rows,provider,preferred=None):
         observed=set();failures=False;convertible=[]
         for query in queries:
             try:candidates=search_stocks(query,store=store)
+            except ProviderBusy:raise
             except Exception:failures=True;continue
             observed.update(c['currency'] for c in candidates)
             exact=[c for c in candidates if ticker_base(c['symbol'])==base]
@@ -52,9 +55,11 @@ def resolve(store,rows,provider,preferred=None):
                 # Search results often omit currency. Check chart metadata instead
                 # of excluding USD listings merely because their exchange is in Europe.
                 try:fetch_quote('',stock['symbol'],stock['exchange'],target,store=store)
+                except ProviderBusy:raise
                 except Exception:
                     failures=True
                     try:actual=listing(stock['symbol'],store=store)
+                    except ProviderBusy:raise
                     except Exception:continue
                     convertible.append(actual);continue
                 verified[(stock['symbol'],stock['exchange'])]={**stock,'currency':target}
@@ -80,6 +85,9 @@ def resolve_instrument(store,batch_id,key):
     if not selected:raise ValueError('Instrument niet gevonden in dit importvoorbeeld.')
     # Dividend settlement currency may differ from the listing currency. Reuse
     # the quote currency of purchases of the same instrument in this batch.
+    if len({r.get('raw',{}).get('ISIN','').strip().upper() for r in selected}-{''})>1:return {'error':'Meerdere ISIN-codes bij deze bronticker; koppeling kan niet veilig worden gekozen.'}
+    discover(store)
+    saved=lookup(store,batch['account_id'],batch['provider'],selected[0])
     isin=selected[0].get('raw',{}).get('ISIN','')
     related=[r for r in rows if r.get('kind') in ('BUY','SELL') and ((isin and r.get('raw',{}).get('ISIN')==isin) or r.get('ticker')==selected[0]['ticker'])]
     preferred=None
@@ -95,9 +103,14 @@ def resolve_instrument(store,batch_id,key):
         for item in mappings:held[(item['symbol'],item['exchange'],item['currency'])]=item
         if mappings:preferred=mappings[0]['currency']
         elif related:preferred=related[0]['currency']
-    if len(held)==1:result={'mapping':next(iter(held.values())),'via':'Bestaande aankoop in dit brokeraccount'}
+    if saved:result={'mapping':saved,'via':'Bewaarde instrumentkoppeling'}
+    elif len(held)==1:result={'mapping':next(iter(held.values())),'via':'Bestaande aankoop in dit brokeraccount'}
     elif len(held)>1:result={'error':'Dividend hoort bij meerdere bestaande noteringen. Deze ontvangst kan niet veilig aan één positie worden toegewezen.'}
-    else:result=resolve(store,selected,batch['provider'],preferred)
+    else:
+        try:result=resolve(store,selected,batch['provider'],preferred)
+        except ProviderBusy as error:return {'error':str(error),'retry_later':True}
+    if result.get('mapping'):
+        remember(store,batch['account_id'],batch['provider'],selected[0],result['mapping'])
     with store.connect() as db:
         # Re-read after network I/O to preserve other resolved instruments.
         current=db.execute("SELECT payload FROM import_batches WHERE id=? AND status='preview'",(batch_id,)).fetchone()

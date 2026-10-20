@@ -56,6 +56,18 @@ class AccessTests(unittest.TestCase):
   basic=self.auth.login('viewer',self.password,'test')
   self.assertEqual(self.request('GET','/api/logs',token=basic)[0],403)
   self.assertEqual(self.request('GET','/api/logs?download=1',token=basic)[0],403)
+ def test_mapping_registry_is_admin_only_and_csrf_protected(self):
+  admin,csrf=self.activate()
+  self.auth.save_user({'username':'mappingviewer','password':self.password,'role':'basic'})
+  basic=self.auth.login('mappingviewer',self.password,'test')
+  self.assertEqual(self.request('GET','/api/imports/mappings')[0],401)
+  self.assertEqual(self.request('GET','/api/imports/mappings',token=basic)[0],403)
+  self.assertEqual(self.request('GET','/api/imports/mappings',token=admin)[0],200)
+  with patch('web.mapping_edit',return_value={'ok':True}) as edit:
+   self.assertEqual(self.request('POST','/api/imports/mappings',{},basic,self.auth.user(basic)['csrf'])[0],403)
+   self.assertEqual(self.request('POST','/api/imports/mappings',{},admin)[0],403)
+   edit.assert_not_called()
+   self.assertEqual(self.request('POST','/api/imports/mappings',{},admin,csrf)[0],200)
  def test_currency_page_api_is_available_to_authenticated_basic_with_csrf(self):
   admin,csrf=self.activate()
   self.auth.save_user({'username':'currencyreader','password':self.password,'role':'basic'})

@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from contextlib import closing
 
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 MIGRATIONS = {
     1: (
         'CREATE TABLE IF NOT EXISTS purchases (id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL, name TEXT NOT NULL, quantity TEXT NOT NULL, price TEXT NOT NULL, currency TEXT NOT NULL, purchased_on TEXT NOT NULL, created_at TEXT NOT NULL)',
@@ -46,6 +46,9 @@ MIGRATIONS = {
         'CREATE TABLE fx_rates (base TEXT NOT NULL, quote TEXT NOT NULL, day TEXT NOT NULL, rate TEXT NOT NULL, source TEXT NOT NULL, fetched_at TEXT NOT NULL, PRIMARY KEY(base,quote,day))',
         'CREATE TABLE fx_coverage (currency TEXT NOT NULL, start TEXT NOT NULL, end TEXT NOT NULL, checked_at TEXT NOT NULL, PRIMARY KEY(currency,start,end))',
         'CREATE TABLE import_fx (id INTEGER PRIMARY KEY, batch_id INTEGER NOT NULL REFERENCES import_batches(id), external_id TEXT NOT NULL, kind TEXT NOT NULL, source_currency TEXT NOT NULL, target_currency TEXT NOT NULL, original_amount TEXT NOT NULL, converted_amount TEXT NOT NULL, rate TEXT NOT NULL, requested_on TEXT NOT NULL, rate_on TEXT NOT NULL, source TEXT NOT NULL, UNIQUE(batch_id,external_id))',
+    ),
+    9: (
+        "CREATE TABLE instrument_mappings (id INTEGER PRIMARY KEY, account_id INTEGER NOT NULL REFERENCES broker_accounts(id), provider TEXT NOT NULL, identity TEXT NOT NULL, ticker TEXT NOT NULL, isin TEXT NOT NULL, source_currency TEXT NOT NULL, symbol TEXT NOT NULL DEFAULT '', exchange TEXT NOT NULL DEFAULT '', currency TEXT NOT NULL DEFAULT '', name TEXT NOT NULL DEFAULT '', origin TEXT NOT NULL DEFAULT 'pending', updated_at TEXT NOT NULL, UNIQUE(account_id,provider,identity,source_currency))",
     ),
 }
 

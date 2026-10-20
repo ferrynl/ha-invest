@@ -5,6 +5,7 @@ from . import ADAPTERS
 from storage import now
 from provider import EXCHANGES
 from forex import convert,prepare_rates
+from .registry import remember,lookup,discover,identity
 
 def preview(store,account_id,provider,filename,text):
     adapter=ADAPTERS.get(provider)
@@ -29,6 +30,11 @@ def preview(store,account_id,provider,filename,text):
                 if existing and not row['duplicate']:row['error']='Deze bron-ID is eerder geïmporteerd met andere gegevens.'
         payload=json.dumps(rows)
         cursor=db.execute('INSERT INTO import_batches(account_id,provider,filename,digest,payload,created_at) VALUES(?,?,?,?,?,?)',(account_id,provider,str(filename)[:180],hashlib.sha256(text.encode()).hexdigest(),payload,now()))
+    registered=set()
+    for row in rows:
+        if row.get('kind') in ('BUY','SELL','DIVIDEND') and row.get('currency'):
+            key=(identity(row)[0],row['currency'])
+            if key not in registered:remember(store,account_id,provider,row);registered.add(key)
     instruments=sorted({(r['ticker'],r.get('currency','')) for r in rows if r.get('kind') not in (None,'SKIP') and not r.get('duplicate')})
     return dict(batch_id=cursor.lastrowid,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Dividend zonder voorafgaande aankoop wordt apart opgeslagen met een melding over ontbrekende aankoophistorie; er wordt geen positie of kostprijs aangemaakt.', 'Prijzen worden in de noteringsvaluta geïmporteerd; transactiekosten, rente en valutawissels worden niet in de winst verwerkt.','Afwijkende prijs- of dividendvaluta wordt op transactiedatum omgerekend met opgeslagen dagreferentiekoersen. Het bronbedrag en de omrekening blijven bewaard.'])
 
@@ -40,12 +46,14 @@ def commit(store,batch_id,mappings):
         if batch['status']=='imported':return dict(imported=0,duplicate=True)
         rows=json.loads(batch['payload'])
         if any(r.get('error') for r in rows):raise ValueError('Deze CSV bevat fouten of niet-ondersteunde transacties. Los deze eerst op; er is niets geïmporteerd.')
+        discover(store)
         pending=[];seen=set()
         for row in rows:
             if row['kind']=='SKIP':continue
             if row['external_id'] in seen:continue
             seen.add(row['external_id'])
-            key=row['ticker']+'|'+row['currency'];mapping=row.get('mapping') or mappings.get(key)
+            key=row['ticker']+'|'+row['currency'];mapping=lookup(store,batch['account_id'],batch['provider'],row) or row.get('mapping') or mappings.get(key)
+            if mapping and lookup(store,batch['account_id'],batch['provider'],row):row['mapping']=mapping
             with store.connect() as db:existing=db.execute('SELECT digest FROM import_records WHERE account_id=? AND provider=? AND external_id=?',(batch['account_id'],batch['provider'],row['external_id'])).fetchone()
             if existing:
                 if existing[0]!=row['digest']:raise ValueError('Een eerder geïmporteerde transactie is gewijzigd.')
@@ -90,7 +98,7 @@ def commit(store,batch_id,mappings):
             for key in keys:
                 lots=[dict(r) for r in db.execute('SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',(batch['account_id'],*tuple(key)))]
                 daily_values(lots,[],[])
-            db.execute("UPDATE import_batches SET status='imported' WHERE id=?",(batch_id,))
+            db.execute("UPDATE import_batches SET status='imported',payload=? WHERE id=?",(json.dumps(rows),batch_id))
         return dict(imported=len(pending),standalone_dividends=standalone_dividends,skipped=sum(r['kind']=='SKIP' for r in rows))
 
 def open_preview(store,batch_id):
@@ -98,6 +106,11 @@ def open_preview(store,batch_id):
         batch=db.execute("SELECT * FROM import_batches WHERE id=? AND status='preview'",(batch_id,)).fetchone()
         if not batch:raise ValueError('Importvoorbeeld niet gevonden.')
         account=dict(db.execute('SELECT * FROM broker_accounts WHERE id=?',(batch['account_id'],)).fetchone())
+    discover(store)
     rows=json.loads(batch['payload'])
+    for row in rows:
+        if row.get('kind') in ('BUY','SELL','DIVIDEND') and row.get('currency'):
+            saved=lookup(store,batch['account_id'],batch['provider'],row)
+            if saved:row['mapping']=saved
     instruments=sorted({(r['ticker'],r['currency']) for r in rows if r.get('kind') not in (None,'SKIP') and not r.get('duplicate')})
     return dict(batch_id=batch_id,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Dividend zonder voorafgaande aankoop wordt apart opgeslagen met een melding over ontbrekende aankoophistorie; er wordt geen positie of kostprijs aangemaakt.', 'Beursnoteringen worden automatisch gekoppeld. Bronbedragen blijven bewaard; afwijkende noteringsvaluta wordt met historische dagreferentiekoersen omgerekend.'])

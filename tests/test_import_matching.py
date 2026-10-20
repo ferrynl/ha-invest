@@ -33,6 +33,7 @@ class MatchingTests(unittest.TestCase):
   with patch('imports.matching.search_stocks',return_value=[STOCK,{**STOCK,'symbol':'OTHER.AS'}]),patch('imports.matching.fetch_quote',return_value=(100,'')):
    # Exact ticker wins over unrelated hits.
    self.assertEqual(resolve_instrument(self.store,self.batch,'ASML|EUR')['mapping'],STOCK)
+  with self.store.connect() as db:db.execute('DELETE FROM instrument_mappings')
   batch=preview(self.store,2,'trading212','wrong.csv',CSV.replace(',EUR',',USD'))['batch_id']
   with patch('imports.matching.search_stocks',return_value=[STOCK]),patch('imports.matching.fetch_quote',side_effect=ValueError('currency')):
    result=resolve_instrument(self.store,batch,'ASML|USD');self.assertIn('Bronvaluta',result['error'])
