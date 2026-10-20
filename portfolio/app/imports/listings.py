@@ -5,6 +5,8 @@ Invesco/LSE: IE00BYVTMV98, EQGB on London Stock Exchange.
 These are share-class identities, never fuzzy fund-name substitutions.
 """
 CATALOGUE={
+ 'US02209S1033':['MO'],
+ 'BE0003717312':['SOF.BR'],
  'IE00BK5BQT80':['VWCE.AS','VWCE.DE','VWCE.MI','VWRA.L','VWRP.L'],
  'IE00B3XXRP09':['VUSA.AS','VUSA.DE','VUSA.MI','VUSA.L','VUSD.L'],
  'IE00BK5BR733':['VFEA.DE','VFEA.MI','VFEA.L'],

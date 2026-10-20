@@ -90,7 +90,7 @@ class ImportTests(unittest.TestCase):
    request.return_value.__enter__.return_value.read.return_value=json.dumps(payload).encode()
    search_stocks('asml',store=self.store);_search_stocks.cache_clear()
    search_stocks('asml',store=Store(self.temp.name));request.assert_called_once()
-  with self.store.connect() as db:raw=db.execute("SELECT payload FROM api_cache WHERE namespace='yahoo-search-v2'").fetchone()[0]
+  with self.store.connect() as db:raw=db.execute("SELECT payload FROM api_cache WHERE namespace='yahoo-search-v3'").fetchone()[0]
   self.assertEqual(json.loads(raw),payload)
  def test_update_check_is_read_only_and_cached_for_one_day(self):
   with patch('updates.urlopen') as request:

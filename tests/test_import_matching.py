@@ -64,3 +64,17 @@ class MatchingTests(unittest.TestCase):
   stock={'symbol':'AAPL','currency':'USD','exchange':'NASDAQ','name':'Apple'}
   with patch('imports.matching.search_stocks',return_value=[stock]),patch('imports.matching.fetch_quote',side_effect=ValueError('currency')),patch('imports.matching.listing',return_value=stock):
    result=resolve_instrument(self.store,batch,'AAPL|EUR');self.assertEqual(result['mapping']['currency'],'USD')
+
+ def test_altria_and_sofina_isin_resolve_when_search_is_incomplete(self):
+  for isin,ticker,symbol,currency,exchange in [('US02209S1033','MO','MO','USD','NYSE'),('BE0003717312','SOF','SOF.BR','EUR','BRUSSELS')]:
+   batch=preview(self.store,2,'trading212','equity.csv',CSV.replace('NL0010273215,ASML,ASML',isin+','+ticker+','+ticker))['batch_id']
+   stock=dict(symbol=symbol,currency=currency,exchange=exchange,name=ticker)
+   with patch('imports.matching.listing',return_value=stock),patch('imports.matching.search_stocks') as search:
+    self.assertEqual(resolve_instrument(self.store,batch,ticker+'|EUR')['mapping'],stock);search.assert_not_called()
+ def test_brussels_listing_metadata_and_search_are_supported(self):
+  from provider import listing,search_stocks
+  meta=dict(symbol='SOF.BR',exchangeName='BRU',currency='EUR',longName='Sofina')
+  with patch('provider._payload',return_value={'chart':{'result':[{'meta':meta}]}}):
+   self.assertEqual(listing('SOF.BR')['exchange'],'BRUSSELS')
+  with patch('provider._payload',return_value={'quotes':[dict(symbol='SOF.BR',exchange='BRU',quoteType='EQUITY')]}):
+   self.assertEqual(search_stocks('Sofina Brussels regression')[0]['symbol'],'SOF.BR')

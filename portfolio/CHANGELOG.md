@@ -1,3 +1,9 @@
+# 0.7.2
+
+- Euronext Brussel en automatische ISIN-koppelingen voor Altria/MO en Sofina/SOF.
+- Zoekcache vernieuwd voor nieuwe beursondersteuning; concrete koppelfouten ook naast de opslagknop.
+- UTF-8-codering hersteld voor importmeldingen; expliciete charset voor JavaScript. Schema blijft 8.
+
 # 0.7.1
 
 - Importknop blijft na automatische koppeling bedienbaar; fouten per bronregel en ontbrekende koppelingen staan direct bij de knop.

@@ -15,7 +15,7 @@ def _payload(request,timeout,store,namespace,key,ttl):
         return result
     return cached_json(store,namespace,key,ttl,load)
 
-EXCHANGES = {'AMS': ('AMSTERDAM', 'EUR'), 'NMS': ('NASDAQ', 'USD'),
+EXCHANGES = {'AMS': ('AMSTERDAM', 'EUR'), 'BRU': ('BRUSSELS', 'EUR'), 'NMS': ('NASDAQ', 'USD'),
              'NGM': ('NASDAQ', 'USD'), 'NCM': ('NASDAQ', 'USD'),
              'NASDAQ': ('NASDAQ', 'USD'), 'NYQ': ('NYSE', 'USD'), 'NYSE': ('NYSE', 'USD'),
              'PCX': ('NYSEARCA','USD'), 'ASE': ('AMEX','USD'),
@@ -33,7 +33,7 @@ def _search_stocks(query, minute,store=None):
     params = urlencode({'q': query, 'quotesCount': 50, 'newsCount': 0, 'listsCount': 0, 'enableFuzzyQuery': 'false'})
     request = Request('https://query1.finance.yahoo.com/v1/finance/search?' + params,
                       headers={'User-Agent': 'Mozilla/5.0'})
-    payload=_payload(request,10,store,'yahoo-search-v2',query,7*86400)
+    payload=_payload(request,10,store,'yahoo-search-v3',query,7*86400)
     matches, seen = [], set()
     for item in payload.get('quotes', []):
         market = EXCHANGES.get(item.get('exchange', '').upper())

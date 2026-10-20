@@ -8,7 +8,7 @@ from .listings import CATALOGUE
 
 def ticker_base(value):
     value=re.sub(r'_(US|NL|UK|DE|FR|IT|CH)_EQ$','',value.upper())
-    return re.sub(r'\.(AS|PA|DE|MI|L|SW|F)$','',value)
+    return re.sub(r'\.(AS|PA|DE|MI|L|SW|F|BR)$','',value)
 
 def resolve(store,rows,provider,preferred=None):
     first=rows[0];ticker=first['ticker'];currency=first['currency'];target=preferred or currency
@@ -66,10 +66,10 @@ def resolve(store,rows,provider,preferred=None):
         elif failures:reason='Koersdienst tijdelijk niet beschikbaar of de gevonden notering kon niet worden gecontroleerd. Probeer de automatische koppeling opnieuw.'
         else:reason='Geen eenduidige ondersteunde notering gevonden voor '+ticker+((' · ISIN '+isin) if isin else '')+'.'
         return {'error':reason}
-    result=cached_json(store,'import-listing-v3',identity,7*86400,find)
+    result=cached_json(store,'import-listing-v4',identity,7*86400,find)
     # Do not keep transient failures for a week.
     if result.get('error'):
-        with store.connect() as db:db.execute("DELETE FROM api_cache WHERE namespace='import-listing-v3' AND cache_key=?",(identity,))
+        with store.connect() as db:db.execute("DELETE FROM api_cache WHERE namespace='import-listing-v4' AND cache_key=?",(identity,))
     return result
 
 def resolve_instrument(store,batch_id,key):

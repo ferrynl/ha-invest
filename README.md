@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.7.1). Draait volledig als Home Assistant-app
+Experimentele versie (0.7.2). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -533,3 +533,9 @@ en [London Stock Exchange EQGB](https://www.londonstockexchange.com/stock/EQGB/i
 ### Importknop (0.7.1)
 
 Na de automatische koppeling is de opslagknop bedienbaar. Eventuele fouten per bronregel of ontbrekende koppelingen staan direct bij de knop. De bevestiging slaat deze controles niet over; corrigeer gemelde bronfouten voordat je opnieuw importeert. Fouten bij het opslaan verschijnen ook naast de knop. Schema blijft 8.
+
+### Automatische koppeling MO en SOF (0.7.2)
+
+Euronext Brussel wordt nu ondersteund. Gecontroleerde ISIN-koppelingen voor Altria (US02209S1033, MO in USD) en Sofina (BE0003717312, SOF.BR in EUR) werken ook bij onvolledige zoekresultaten. Afwijkende bronvaluta wordt via de bestaande historische omrekening verwerkt. Open je bestaande importvoorbeeld en klik Automatisch opnieuw koppelen. Schema blijft 8.
+
+Noteringsbronnen: [Altria NYSE MO](https://investor.altria.com/stock-performance/default.aspx), [Altria ISIN](https://live.euronext.com/nl/product/equities/US02209S1033-BGEM/market-information), [Sofina ISIN en Brussel](https://live.euronext.com/en/product/equities/BE0003717312-XBRU).

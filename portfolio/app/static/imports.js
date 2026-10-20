@@ -21,8 +21,8 @@ async function loadImportHistory(){
  $('import-history').replaceChildren();for(const batch of result.batches){const row=document.createElement('tr');for(const value of [new Date(batch.created_at).toLocaleString('nl-NL'),batch.filename,state?.accounts.find(a=>a.id===batch.account_id)?.name??batch.account_id,batch.status==='imported'?'Geïmporteerd':'Voorbeeld'])cell(row,value);const action=cell(row,'');if(batch.status==='preview'){const button=document.createElement('button');button.type='button';button.textContent='Voorbeeld openen';button.addEventListener('click',async()=>{button.disabled=true;try{showImportPreview(await jsonAction('api/imports/open',{batch_id:batch.id}));$('import-feedback').textContent='Opgeslagen voorbeeld geopend; noteringen worden automatisch gekoppeld.';}catch(error){$('import-feedback').textContent=error.message;}finally{button.disabled=false;}});action.append(button);}$('import-history').append(row);}
 }
 function importProblems(result){
- const problems=result.rows.filter(row=>row.error).map(row=>'Regel '+row.line+' � '+(row.ticker||row.kind||'Transactie')+': '+row.error);
- for(const instrument of result.instruments){const key=instrument.ticker+'|'+instrument.currency;if(!result.rows.some(row=>row.ticker+'|'+row.currency===key&&row.mapping))problems.push(instrument.ticker+' � '+instrument.currency+': beurskoppeling ontbreekt. Gebruik Automatisch opnieuw koppelen.');}
+ const problems=result.rows.filter(row=>row.error).map(row=>'Regel '+row.line+' - '+(row.ticker||row.kind||'Transactie')+': '+row.error);
+ for(const instrument of result.instruments){const key=instrument.ticker+'|'+instrument.currency;if(!result.rows.some(row=>row.ticker+'|'+row.currency===key&&row.mapping))problems.push(instrument.ticker+' - '+instrument.currency+': '+(instrument.error||'Beurskoppeling ontbreekt. Gebruik Automatisch opnieuw koppelen.'));}
  return problems;
 }
 function showImportProblems(problems){
@@ -43,8 +43,8 @@ function showImportPreview(result){
   try{for(const instrument of result.instruments){
    if(importPreview!==result||accessSession?.user?.role!=='admin')return;
    const key=instrument.ticker+'|'+instrument.currency;const rows=result.rows.filter(r=>r.ticker+'|'+r.currency===key);let mapping=rows.find(r=>r.mapping)?.mapping;
-   if(!mapping){try{const found=await jsonAction('api/imports/resolve',{batch_id:result.batch_id,key});if(importPreview!==result)return;mapping=found.mapping;if(!mapping){statuses.get(key).textContent=found.error;continue;}for(const row of rows)row.mapping=mapping;}catch(error){if(importPreview!==result)return;statuses.get(key).textContent=error.message;continue;}}
-   statuses.get(key).textContent='Automatisch gekoppeld: '+mapping.name+' · '+mapping.symbol+' · '+mapping.exchange+' · '+mapping.currency+(instrument.currency!==mapping.currency?' · Bij import historisch omrekenen: '+instrument.currency+' → '+mapping.currency:'');
+   if(!mapping){try{const found=await jsonAction('api/imports/resolve',{batch_id:result.batch_id,key});if(importPreview!==result)return;mapping=found.mapping;if(!mapping){instrument.error=found.error;statuses.get(key).textContent=found.error;continue;}for(const row of rows)row.mapping=mapping;}catch(error){if(importPreview!==result)return;instrument.error=error.message;statuses.get(key).textContent=error.message;continue;}}
+   delete instrument.error;statuses.get(key).textContent='Automatisch gekoppeld: '+mapping.name+' · '+mapping.symbol+' · '+mapping.exchange+' · '+mapping.currency+(instrument.currency!==mapping.currency?' · Bij import historisch omrekenen: '+instrument.currency+' → '+mapping.currency:'');
   }}finally{if(importPreview===result){retry.disabled=false;$('import-commit').disabled=false;showImportProblems(importProblems(result));}}
  }
  $('import-rematch').onclick=matchAll;matchAll();
