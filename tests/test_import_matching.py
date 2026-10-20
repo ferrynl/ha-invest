@@ -79,3 +79,10 @@ class MatchingTests(unittest.TestCase):
    self.assertEqual(listing('SOF.BR')['exchange'],'BRUSSELS')
   with patch('provider._payload',return_value={'quotes':[dict(symbol='SOF.BR',exchange='BRU',quoteType='EQUITY')]}):
    self.assertEqual(search_stocks('Sofina Brussels regression')[0]['symbol'],'SOF.BR')
+
+ def test_spanish_and_otc_isin_catalogue_resolves_reported_instruments(self):
+  for isin,ticker,symbol,currency,exchange in [('ES0113860A34','SAB','SAB.MC','EUR','MADRID'),('ES0180907000','UNI','UNI.MC','EUR','MADRID'),('US88032Q1094','TCEHY','TCEHY','USD','OTC')]:
+   batch=preview(self.store,2,'trading212','reported.csv',CSV.replace('NL0010273215,ASML,ASML',isin+','+ticker+','+ticker).replace(',EUR',','+currency))['batch_id']
+   stock=dict(symbol=symbol,currency=currency,exchange=exchange,name=ticker)
+   with patch('imports.matching.listing',return_value=stock),patch('imports.matching.search_stocks') as search:
+    self.assertEqual(resolve_instrument(self.store,batch,ticker+'|'+currency)['mapping'],stock);search.assert_not_called()

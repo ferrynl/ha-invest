@@ -33,6 +33,13 @@ def number(value):
         return format(parsed.normalize(),'f')
     except InvalidOperation as error:raise ValueError('Gebruik een Trading 212 CSV met punt als decimaalteken.') from error
 
+def unclassified_identity(raw):
+    canonical={k:v for k,v in raw.items() if k not in ('Time','Time (UTC)')}
+    try:canonical['time']=transaction_time(raw).isoformat()
+    except ValueError:canonical['time']=raw.get('Time (UTC)',raw.get('Time',''))
+    digest=hashlib.sha256(json.dumps(canonical,sort_keys=True).encode()).hexdigest()
+    return digest,('id:'+raw['ID']+':UNCLASSIFIED') if raw.get('ID') else 'raw:'+digest
+
 def parse_csv(text):
     if len(text)>5*1024*1024:raise ValueError('CSV is te groot (maximaal 5 MB).')
     reader=history_reader(text)
@@ -67,6 +74,9 @@ def parse_csv(text):
                 row.update(digest=digest,external_id=('id:'+raw['ID']+':'+str(kind)) if raw.get('ID') else 'row:'+digest)
                 if len(row['currency'])!=3:raise ValueError('Valutacode ontbreekt.')
             except (ValueError,KeyError) as exc:row['error']=str(exc)
+        if not row.get('external_id'):
+            digest,external_id=unclassified_identity(raw)
+            row.update(digest=digest,external_id=external_id)
         rows.append(row)
     if not rows:raise ValueError('CSV bevat geen gegevens.')
     return rows

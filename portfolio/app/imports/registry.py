@@ -58,11 +58,11 @@ def edit(store,data):
     with store.lock,store.connect() as db:
         db.execute("UPDATE instrument_mappings SET symbol=?,exchange=?,currency=?,name=?,origin='manual',updated_at=? WHERE id=?",(actual['symbol'],actual['exchange'],actual['currency'],actual['name'],now(),record_id))
         # Persist the override in every open preview. Imported payloads are audit records.
-        batches=db.execute("SELECT id,payload FROM import_batches WHERE account_id=? AND provider=? AND status='preview'",(entry['account_id'],entry['provider'])).fetchall()
+        batches=db.execute("SELECT id,payload FROM import_batches WHERE account_id=? AND provider=? AND status IN ('preview','partial')",(entry['account_id'],entry['provider'])).fetchall()
         for batch in batches:
             rows=json.loads(batch['payload']);changed=False
             for row in rows:
-                if row.get('currency')==entry['source_currency'] and row.get('ticker') and identity(row)[0]==entry['identity']:
+                if not row.get('duplicate') and row.get('currency')==entry['source_currency'] and row.get('ticker') and identity(row)[0]==entry['identity']:
                     row['mapping']=actual;changed=True
             if changed:db.execute('UPDATE import_batches SET payload=? WHERE id=?',(json.dumps(rows),batch['id']))
     return dict(mapping=actual,message='Koppeling opgeslagen voor openstaande en volgende imports. Eerder geboekte transacties zijn behouden.')

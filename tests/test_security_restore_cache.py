@@ -68,6 +68,18 @@ class AccessTests(unittest.TestCase):
    self.assertEqual(self.request('POST','/api/imports/mappings',{},admin)[0],403)
    edit.assert_not_called()
    self.assertEqual(self.request('POST','/api/imports/mappings',{},admin,csrf)[0],200)
+ def test_import_review_requires_admin_and_csrf(self):
+  admin,csrf=self.activate()
+  self.auth.save_user({'username':'reviewviewer','password':self.password,'role':'basic'})
+  basic=self.auth.login('reviewviewer',self.password,'test')
+  self.assertEqual(self.request('GET','/api/imports/issues')[0],401)
+  self.assertEqual(self.request('GET','/api/imports/issues',token=basic)[0],403)
+  self.assertEqual(self.request('GET','/api/imports/issues',token=admin)[0],200)
+  with patch('web.resolve_issue',return_value={'imported':0,'pending':0}) as resolve:
+   self.assertEqual(self.request('POST','/api/imports/issues/resolve',{},basic,self.auth.user(basic)['csrf'])[0],403)
+   self.assertEqual(self.request('POST','/api/imports/issues/resolve',{},admin)[0],403)
+   resolve.assert_not_called()
+   self.assertEqual(self.request('POST','/api/imports/issues/resolve',{},admin,csrf)[0],200)
  def test_currency_page_api_is_available_to_authenticated_basic_with_csrf(self):
   admin,csrf=self.activate()
   self.auth.save_user({'username':'currencyreader','password':self.password,'role':'basic'})

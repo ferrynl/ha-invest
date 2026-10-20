@@ -35,7 +35,7 @@ def preview(store,account_id,provider,filename,text):
         if row.get('kind') in ('BUY','SELL','DIVIDEND') and row.get('currency'):
             key=(identity(row)[0],row['currency'])
             if key not in registered:remember(store,account_id,provider,row);registered.add(key)
-    instruments=sorted({(r['ticker'],r.get('currency','')) for r in rows if r.get('kind') not in (None,'SKIP') and not r.get('duplicate')})
+    instruments=sorted({(r['ticker'],r.get('currency','')) for r in rows if r.get('kind') in ('BUY','SELL','DIVIDEND') and not r.get('duplicate')})
     return dict(batch_id=cursor.lastrowid,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Dividend zonder voorafgaande aankoop wordt apart opgeslagen met een melding over ontbrekende aankoophistorie; er wordt geen positie of kostprijs aangemaakt.', 'Prijzen worden in de noteringsvaluta geïmporteerd; transactiekosten, rente en valutawissels worden niet in de winst verwerkt.','Afwijkende prijs- of dividendvaluta wordt op transactiedatum omgerekend met opgeslagen dagreferentiekoersen. Het bronbedrag en de omrekening blijven bewaard.'])
 
 def commit(store,batch_id,mappings):
@@ -75,24 +75,7 @@ def commit(store,batch_id,mappings):
         with store.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             for row,mapping,trace in sorted(converted,key=lambda pair:(pair[0]['trade_time'],0 if pair[0]['kind']=='BUY' else 1 if pair[0]['kind']=='SELL' else 2)):
-                base=dict(account_id=batch['account_id'],symbol=mapping.get('symbol'),exchange=mapping.get('exchange'),currency=mapping.get('currency'))
-                # The connection-scoped import helpers below avoid nested SQLite writers.
-                if row['kind']=='DIVIDEND':
-                    lot=db.execute("SELECT 1 FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=? AND side='BUY' AND purchased_on<=?",(base['account_id'],base['symbol'],base['exchange'],base['currency'],row['day'])).fetchone()
-                    note='Trading 212 import'
-                    if not lot:
-                        standalone_dividends+=1
-                        note+=' - bij import geen voorafgaande aankoop in dit brokeraccount gevonden; aankoophistorie kan ontbreken.'
-                    from storage import positive
-                    db.execute('INSERT INTO dividends(symbol,exchange,currency,amount,paid_on,note,created_at,account_id) VALUES(?,?,?,?,?,?,?,?)',(base['symbol'],base['exchange'],base['currency'],positive(row['amount']),row['day'],note,now(),base['account_id']))
-                else:
-                    from storage import positive
-                    import re
-                    if not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',str(base['symbol'])) or base['exchange'] not in {market[0] for market in EXCHANGES.values()}:raise ValueError('Ongeldige beurskoppeling.')
-                    db.execute('INSERT INTO purchases(symbol,exchange,name,quantity,price,currency,purchased_on,created_at,account_id,side,trade_time) VALUES(?,?,?,?,?,?,?,?,?,?,?)',(base['symbol'],base['exchange'],str(mapping.get('name') or row['name'])[:100],positive(row['quantity']),positive(row['price']),base['currency'],row['day'],now(),base['account_id'],row['kind'],row['trade_time']))
-                db.execute('INSERT INTO import_records(batch_id,account_id,provider,external_id,digest,raw) VALUES(?,?,?,?,?,?)',(batch_id,batch['account_id'],batch['provider'],row['external_id'],row['digest'],json.dumps(row['raw'])))
-                if trace:
-                    db.execute('INSERT INTO import_fx(batch_id,external_id,kind,source_currency,target_currency,original_amount,converted_amount,rate,requested_on,rate_on,source) VALUES(?,?,?,?,?,?,?,?,?,?,?)',(batch_id,row['external_id'],row['kind'],trace['from'],trace['to'],trace['amount'],trace['converted'],trace['rate'],trace['requested_on'],trace['rate_on'],trace['source']))
+                standalone_dividends+=book_row(db,batch_id,batch['account_id'],batch['provider'],row,mapping,trace)
             from history import daily_values
             keys=db.execute('SELECT DISTINCT symbol,exchange,currency FROM purchases WHERE account_id=?',(batch['account_id'],)).fetchall()
             for key in keys:
@@ -103,14 +86,43 @@ def commit(store,batch_id,mappings):
 
 def open_preview(store,batch_id):
     with store.connect() as db:
-        batch=db.execute("SELECT * FROM import_batches WHERE id=? AND status='preview'",(batch_id,)).fetchone()
+        batch=db.execute("SELECT * FROM import_batches WHERE id=? AND status IN ('preview','partial')",(batch_id,)).fetchone()
         if not batch:raise ValueError('Importvoorbeeld niet gevonden.')
         account=dict(db.execute('SELECT * FROM broker_accounts WHERE id=?',(batch['account_id'],)).fetchone())
     discover(store)
     rows=json.loads(batch['payload'])
     for row in rows:
+        if row.get('external_id'):
+            with store.connect() as db:previous=db.execute('SELECT digest FROM import_records WHERE account_id=? AND provider=? AND external_id=?',(batch['account_id'],batch['provider'],row['external_id'])).fetchone()
+            if previous and previous[0]==row.get('digest'):row['duplicate']=True
         if row.get('kind') in ('BUY','SELL','DIVIDEND') and row.get('currency'):
             saved=lookup(store,batch['account_id'],batch['provider'],row)
             if saved:row['mapping']=saved
-    instruments=sorted({(r['ticker'],r['currency']) for r in rows if r.get('kind') not in (None,'SKIP') and not r.get('duplicate')})
+    instruments=sorted({(r['ticker'],r['currency']) for r in rows if r.get('kind') in ('BUY','SELL','DIVIDEND') and not r.get('duplicate')})
     return dict(batch_id=batch_id,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Dividend zonder voorafgaande aankoop wordt apart opgeslagen met een melding over ontbrekende aankoophistorie; er wordt geen positie of kostprijs aangemaakt.', 'Beursnoteringen worden automatisch gekoppeld. Bronbedragen blijven bewaard; afwijkende noteringsvaluta wordt met historische dagreferentiekoersen omgerekend.'])
+
+def book_row(db,batch_id,account_id,provider,row,mapping,trace):
+    standalone_dividends=0
+    base=dict(account_id=account_id,symbol=mapping.get('symbol'),exchange=mapping.get('exchange'),currency=mapping.get('currency'))
+    # The connection-scoped import helpers below avoid nested SQLite writers.
+    if row['kind']=='DIVIDEND':
+        lot=db.execute("SELECT 1 FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=? AND side='BUY' AND purchased_on<=?",(base['account_id'],base['symbol'],base['exchange'],base['currency'],row['day'])).fetchone()
+        note='Trading 212 import'
+        if not lot:
+            standalone_dividends=1
+            note+=' - bij import geen voorafgaande aankoop in dit brokeraccount gevonden; aankoophistorie kan ontbreken.'
+        from storage import positive
+        db.execute('INSERT INTO dividends(symbol,exchange,currency,amount,paid_on,note,created_at,account_id) VALUES(?,?,?,?,?,?,?,?)',(base['symbol'],base['exchange'],base['currency'],positive(row['amount']),row['day'],note,now(),base['account_id']))
+    else:
+        from storage import positive
+        import re
+        if not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',str(base['symbol'])) or base['exchange'] not in {market[0] for market in EXCHANGES.values()}:raise ValueError('Ongeldige beurskoppeling.')
+        db.execute('INSERT INTO purchases(symbol,exchange,name,quantity,price,currency,purchased_on,created_at,account_id,side,trade_time) VALUES(?,?,?,?,?,?,?,?,?,?,?)',(base['symbol'],base['exchange'],str(mapping.get('name') or row['name'])[:100],positive(row['quantity']),positive(row['price']),base['currency'],row['day'],now(),base['account_id'],row['kind'],row['trade_time']))
+    db.execute('INSERT INTO import_records(batch_id,account_id,provider,external_id,digest,raw) VALUES(?,?,?,?,?,?)',(batch_id,account_id,provider,row['external_id'],row['digest'],json.dumps(row['raw'])))
+    if trace:
+        db.execute('INSERT INTO import_fx(batch_id,external_id,kind,source_currency,target_currency,original_amount,converted_amount,rate,requested_on,rate_on,source) VALUES(?,?,?,?,?,?,?,?,?,?,?)',(batch_id,row['external_id'],row['kind'],trace['from'],trace['to'],trace['amount'],trace['converted'],trace['rate'],trace['requested_on'],trace['rate_on'],trace['source']))
+    if row['kind'] in ('BUY','SELL'):
+        from history import daily_values
+        lots=[dict(r) for r in db.execute('SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',(account_id,base['symbol'],base['exchange'],base['currency']))]
+        daily_values(lots,[],[])
+    return standalone_dividends

@@ -14,7 +14,8 @@ from security import verify_password
 from version import APP_VERSION
 from updates import check_updates
 from imports import ADAPTERS
-from imports.service import preview as import_preview,commit as import_commit,open_preview
+from imports.service import preview as import_preview,open_preview
+from imports.partial import commit_partial,list_issues,resolve_issue
 from imports.matching import resolve_instrument
 from imports.registry import discover as mapping_list,edit as mapping_edit
 from imports import trading212_api
@@ -25,7 +26,7 @@ from forex import overview as fx_overview,convert as fx_convert,history as fx_hi
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested):
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css')}
-    for name in ('app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings'):
+    for name in ('app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass
@@ -67,7 +68,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 return self.respond(content,kind=kind,etag=path!='/',public=path!='/')
             user=auth.user(self.token())
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
-            if not self.allowed(user,admin=path in ('/api/users','/api/backup','/api/imports','/api/imports/mappings','/api/logs')):return
+            if not self.allowed(user,admin=path in ('/api/users','/api/backup','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
             if path=='/api/logs':
                 if not auth.enabled():return self.respond({'error':'Schakel gebruikersbeveiliging in en meld je aan als admin om logs te bekijken.'},403)
                 query=parse_qs(urlsplit(self.path).query)
@@ -84,6 +85,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 day=parse_qs(urlsplit(self.path).query).get('day',[date.today().isoformat()])[0]
                 try:return self.respond(fx_overview(store,day))
                 except ValueError as error:return self.respond({'error':str(error)},400)
+            if path=='/api/imports/issues':return self.respond(list_issues(store))
             if path=='/api/imports/mappings':return self.respond({'mappings':mapping_list(store)})
             if path=='/api/imports':
                 with store.connect() as db:batches=[dict(r) for r in db.execute('SELECT id,account_id,provider,filename,status,created_at FROM import_batches ORDER BY id DESC LIMIT 50')]
@@ -169,7 +171,9 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     result=import_preview(store,int(data['account_id']),str(data['provider']),str(data['filename']),str(data['csv']))
                     return self.respond(result)
                 if path=='/api/imports/commit':
-                    result=import_commit(store,int(data['batch_id']),data.get('mappings',{}));cache.invalidate();refresh_requested.set();return self.respond(result)
+                    result=commit_partial(store,int(data['batch_id']));cache.invalidate();refresh_requested.set();return self.respond(result)
+                if path=='/api/imports/issues/resolve':
+                    result=resolve_issue(store,data);cache.invalidate();refresh_requested.set();return self.respond(result)
                 if path=='/api/imports/resolve':return self.respond(resolve_instrument(store,int(data['batch_id']),str(data['key'])))
                 if path=='/api/imports/open':return self.respond(open_preview(store,int(data['batch_id'])))
                 if path=='/api/auth/login':

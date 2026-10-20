@@ -16,6 +16,8 @@ TABLES={
  'history_sync':(2,('symbol','exchange','currency','start','synced_on')),
  'dividends':(3,('id','symbol','exchange','currency','amount','paid_on','note','created_at','account_id')),
  'import_batches':(6,('id','account_id','provider','filename','digest','payload','status','created_at')),
+ 'import_issues':(10,('id','batch_id','line','state','reason','payload','resolution','updated_at')),
+ 'capital_returns':(10,('id','batch_id','account_id','provider','external_id','ticker','isin','amount','currency','paid_on','created_at')),
  'instrument_mappings':(9,('id','account_id','provider','identity','ticker','isin','source_currency','symbol','exchange','currency','name','origin','updated_at')),
  'import_records':(6,('id','batch_id','account_id','provider','external_id','digest','raw')),
  'api_cache':(6,('namespace','cache_key','payload','fetched_at','expires_at')),
@@ -50,6 +52,7 @@ def restore_backup(store,content):
                 if len(data)>250000:raise ValueError('Te veel regels in deze back-up.')
                 for values in data:
                     row=dict(zip(columns,values))
+                    if table=='import_issues' and row['state'] not in ('pending','resolved','ignored'):raise ValueError('Ongeldige importstatus in back-up.')
                     if table=='instrument_mappings':
                         if row['origin'] not in ('pending','automatic','manual') or row['provider']!='trading212':raise ValueError('Ongeldige instrumentkoppeling in back-up.')
                         if row['identity']!=('isin:'+row['isin'] if row['isin'] else 'ticker:'+row['ticker'].strip().upper()):raise ValueError('Ongeldige instrumentidentiteit in back-up.')
@@ -68,7 +71,7 @@ def restore_backup(store,content):
                             stamp=datetime.fromisoformat(row[key].replace('Z','+00:00'))
                             if stamp.tzinfo is None:raise ValueError('Ongeldige tijdzone in back-up.')
                     for key,value in row.items():
-                        if key in ('id','account_id','batch_id'):
+                        if key in ('id','account_id','batch_id','line'):
                             if not isinstance(value,int) or value<1:raise ValueError('Ongeldig recordnummer in back-up.')
                         elif key in ('fetched_at','expires_at') and table=='api_cache':
                             if not isinstance(value,(int,float)):raise ValueError('Ongeldige cachetijd.')

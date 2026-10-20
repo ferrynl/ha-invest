@@ -1,3 +1,12 @@
+# 0.9.0
+
+- Geldige importregels verwerken terwijl fouten duurzaam apart worden gehouden voor beoordeling.
+- Admin-subpagina Te beoordelen met classificatie, opnieuw proberen en bewust overslaan; brondata en keuzes bewaren.
+- Kapitaalterugbetalingen na expliciete keuze apart opslaan, zonder dividendwinst of automatische fiscale kostprijscorrectie.
+- Savepoints per regel, idempotent opnieuw proberen en bescherming van eerder geboekte regels in gedeeltelijke imports.
+- Madrid/OTC en gecontroleerde ISIN-koppelingen voor SAB, UNI en TCEHY.
+- Schema 10 met automatische migratie-back-up en gevalideerd herstel van beoordelingen en kapitaalterugbetalingen.
+
 # 0.8.0
 
 - Admin-subpagina onder Imports voor blijvend opgeslagen en openstaande aandelenkoppelingen.

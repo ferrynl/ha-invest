@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.8.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.9.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -555,3 +555,19 @@ Correcties gelden voor openstaande en volgende imports. Eerder geboekte transact
 Dezelfde eenduidige ISIN-koppeling kan voor een andere bronvaluta worden hergebruikt; de historische omrekening blijft gelden. Bij een Yahoo 429/503 stopt het automatisch koppelen en geldt een opgeslagen wachttijd (Retry-After, minimaal 60 seconden). Reeds opgeslagen koppelingen blijven bruikbaar. Nieuwe instrumenten kunnen nog koersaanvragen nodig hebben.
 
 Schema 9 voegt het koppelingenregister toe, met automatische migratie-back-up en ondersteuning in back-up/herstel. De regels met **Dividend (Return of capital manufactured payment)** blijven expliciet geblokkeerd: kapitaalterugbetaling is geen gewoon dividend en wordt niet stilzwijgend als winst geboekt. Dit is een apart probleem, geen API-limiet. Een oudere importperiode of beheer van beurskoppelingen lost dat transactietype niet op.
+
+### Importeren met beoordeling achteraf (0.9.0)
+
+Klik **Import definitief opslaan**, ook als sommige noteringen of bronregels nog niet kloppen. Geldige regels worden opgeslagen. Ontbrekende koppelingen, onbekende acties, ontbrekende wisselkoersen, ongeldige verkopen en bron-ID-conflicten komen duurzaam in **Imports > Te beoordelen**. Een import met uitsluitend fouten wordt ook gestart en levert een beoordelingslijst op. Het bestand moet wel een leesbare Trading 212 CSV zijn.
+
+Per regel kies je **Opnieuw proberen**, **Kapitaalterugbetaling**, **Ontvangen dividend**, **Aankoop**, **Verkoop** of **Bewust overslaan**. Er wordt niets geschat: de gekozen classificatie gebruikt de oorspronkelijke bedragen en datum; ontbreken noodzakelijke waarden, dan blijft de regel apart staan. Herstel ontbrekende noteringen bij Aandelenkoppelingen en probeer de regels daarna opnieuw. Een keuze verwerkt ook andere inmiddels opgeloste regels in dezelfde import opnieuw. Reeds geboekte regels worden herkend en niet dubbel opgeslagen.
+
+Kapitaalterugbetalingen (zoals Return of capital manufactured payment) worden pas na jouw keuze apart opgeslagen, in de bronvaluta. Ze staan onder Te beoordelen in een afzonderlijk overzicht en tellen niet als dividendwinst. Er wordt geen automatische fiscale kostprijscorrectie gedaan. De oorspronkelijke bronregel en keuze blijven bewaard. Bewust overslaan bewaart de bronregel eveneens; bestaande boekingen worden nooit overschreven.
+
+De import is per regel transactioneel: een mislukte regel laat geen aankoop, dividend, omrekening of importregistratie achter. Andere geldige regels mogen wel slagen. Imports met resterende regels staan in de geschiedenis als **Deels verwerkt - beoordeling nodig**. De beheerpagina toont maximaal 2.000 beoordelingen (openstaande eerst) en 500 kapitaalterugbetalingen; alle gegevens blijven in SQLite bewaard. Alleen admins hebben toegang.
+
+Schema 10 voegt de beoordelingslijst en kapitaalterugbetalingen toe, met automatische migratie-back-up, herstelvalidatie en ondersteuning voor oudere back-ups. Bestaande openstaande importvoorbeelden kunnen opnieuw worden gestart zonder nieuwe brokerexport.
+
+Madrid en Amerikaanse OTC-noteringen worden nu ondersteund. De ISIN-koppelingen voor SAB (ES0113860A34), UNI (ES0180907000) en TCEHY (US88032Q1094) worden via actuele koersmetadata gecontroleerd.
+
+Noteringsbronnen: [Banco Sabadell bij BME](https://www.bolsasymercados.es/en/bme-exchange/prices-and-markets/shares/detail.banco-de-sabadell-es0113860a34.html), [Unicaja ISIN](https://www.unicajabanco.com/content/dam/unicaja/unicaja-corporacion/documentos-corporacion/junta-general-de-accionistas/2021-extraordinaria/2021-extraordinaria-documento-conforme-reglamento-ue-en.pdf), [Tencent ADR bij Citi](https://depositaryreceipts.citi.com/adr/notices/pgm_dispCA.aspx?cusip=88032Q109&pageId=15&subpageID=112).

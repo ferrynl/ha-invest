@@ -28,7 +28,7 @@ class MigrationTests(unittest.TestCase):
             db.commit()
 
     def test_all_previously_released_versions_upgrade_without_losing_data(self):
-        for version in (1,2,3,4,5,6,7,8):
+        for version in (1,2,3,4,5,6,7,8,9):
             with self.subTest(version=version), tempfile.TemporaryDirectory() as directory:
                 self.path=Path(directory)/'portfolio.sqlite3'
                 self.create_old(version)
@@ -80,6 +80,15 @@ class MigrationTests(unittest.TestCase):
         with closing(sqlite3.connect(self.path)) as db:
             self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],8)
             self.assertIsNone(db.execute("SELECT name FROM sqlite_master WHERE name='instrument_mappings'").fetchone())
+            self.assertEqual(db.execute('SELECT price FROM purchases').fetchone()[0],'999')
+
+    def test_partial_import_migration_rolls_back_to_nine_on_failure(self):
+        self.create_old(9)
+        broken={**MIGRATIONS,10:MIGRATIONS[10]+('INVALID SQL',)}
+        with patch.dict('migrations.MIGRATIONS',broken,clear=True),self.assertRaises(sqlite3.Error):migrate(self.path)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],9)
+            self.assertIsNone(db.execute("SELECT name FROM sqlite_master WHERE name='import_issues'").fetchone())
             self.assertEqual(db.execute('SELECT price FROM purchases').fetchone()[0],'999')
 
     def test_newer_database_is_refused_without_downgrading(self):

@@ -33,8 +33,12 @@ Bij iedere wijziging aan dit project:
 
 - Valuta: gebruik Decimal en de transactiedatum; gebruik geen toekomstige koers of een 1:1-fallback.
   GBX/GBp is pence (0,01 GBP). Behoud originele bedragen en de omrekenfactor/koersdatum.
-  Ontbrekende FX blokkeert de hele import; nieuwe FX-tabellen moeten in back-upherstel worden gevalideerd.
+  Ontbrekende FX houdt de betrokken regel apart; nieuwe FX-tabellen moeten in back-upherstel worden gevalideerd.
 
 - Bewaar importkoppelingen blijvend per brokeraccount/aanbieder en ISIN of bronticker plus bronvaluta.
   Handmatige correcties winnen van automatische resultaten; herschrijf nooit stilzwijgend geboekte transacties.
   De beheerpagina mag geen provider oproepen bij het laden of lokaal zoeken. Respecteer provider-wachttijden.
+
+- De gebruikersimport boekt geldige regels en bewaart fouten duurzaam in import_issues.
+  Gebruik een savepoint per regel; ongeldige verkopen en ontbrekende FX mogen geen half geboekte regel achterlaten.
+  Vraag om classificatie bij onbekende acties; kapitaalterugbetalingen zijn geen dividendwinst.
