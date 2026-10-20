@@ -57,6 +57,32 @@ class ImportTests(unittest.TestCase):
   result=preview(self.store,2,'trading212','split.csv',CSV+'Stock split,2026-10-15 10:00:00,ASML,ASML,2,0,EUR,0,EUR,split-1\n')
   with self.assertRaises(ValueError):commit(self.store,result['batch_id'],MAPPING)
   self.assertEqual(self.store.state()['dividends'],[])
+ def test_dividend_without_purchase_is_saved_separately_and_idempotently(self):
+  csv=HEADER+CSV.splitlines()[3]+'\n'
+  result=preview(self.store,2,'trading212','dividend-only.csv',csv)
+  saved=commit(self.store,result['batch_id'],MAPPING)
+  self.assertEqual(saved['standalone_dividends'],1)
+  state=Store(self.temp.name).state()
+  self.assertEqual(state['purchases'],[]);self.assertEqual(state['positions'],[])
+  self.assertEqual(state['dividends'][0]['account_id'],2)
+  self.assertIn('geen voorafgaande aankoop',state['dividends'][0]['note'])
+  self.assertEqual(state['dividends'][0]['amount'],'2')
+  repeated=preview(self.store,2,'trading212','again.csv',csv)
+  self.assertEqual(commit(self.store,repeated['batch_id'],{})['imported'],0)
+  self.assertEqual(len(self.store.state()['dividends']),1)
+ def test_unrelated_account_purchase_does_not_hide_missing_history(self):
+  self.store.add_account(dict(name='Other',broker='Trading 212'))
+  buy=preview(self.store,3,'trading212','buy.csv',HEADER+CSV.splitlines()[1]+'\n')
+  commit(self.store,buy['batch_id'],MAPPING)
+  dividend=preview(self.store,2,'trading212','dividend.csv',HEADER+CSV.splitlines()[3]+'\n')
+  self.assertEqual(commit(self.store,dividend['batch_id'],MAPPING)['standalone_dividends'],1)
+  self.assertEqual(self.store.state()['dividends'][0]['account_id'],2)
+ def test_standalone_dividend_rolls_back_when_sale_is_invalid(self):
+  csv=HEADER+CSV.splitlines()[3]+'\n'+CSV.splitlines()[2]+'\n'
+  batch=preview(self.store,2,'trading212','bad.csv',csv)
+  with self.assertRaises(ValueError):commit(self.store,batch['batch_id'],MAPPING)
+  self.assertEqual(self.store.state()['dividends'],[])
+  with self.store.connect() as db:self.assertEqual(db.execute('SELECT COUNT(*) FROM import_records').fetchone()[0],0)
  def test_wrong_currency_and_conflicting_source_ids_are_rejected(self):
   result=preview(self.store,2,'trading212','history.csv',CSV)
   with self.assertRaises(ValueError):commit(self.store,result['batch_id'],{'ASML|EUR':{**MAPPING['ASML|EUR'],'currency':'USD'}})

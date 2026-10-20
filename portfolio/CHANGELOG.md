@@ -1,3 +1,9 @@
+# 0.7.3
+
+- Dividendontvangsten zonder lokale voorafgaande aankoop apart importeren met expliciete melding over ontbrekende aankoophistorie.
+- Geen fictieve aankoop of kostprijs; brokeraccount, brongegevens, valutaomrekening en deduplicatie blijven behouden.
+- Aantal van deze ontvangsten tonen na import. Schema blijft 8.
+
 # 0.7.2
 
 - Euronext Brussel en automatische ISIN-koppelingen voor Altria/MO en Sofina/SOF.

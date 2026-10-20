@@ -30,7 +30,7 @@ def preview(store,account_id,provider,filename,text):
         payload=json.dumps(rows)
         cursor=db.execute('INSERT INTO import_batches(account_id,provider,filename,digest,payload,created_at) VALUES(?,?,?,?,?,?)',(account_id,provider,str(filename)[:180],hashlib.sha256(text.encode()).hexdigest(),payload,now()))
     instruments=sorted({(r['ticker'],r.get('currency','')) for r in rows if r.get('kind') not in (None,'SKIP') and not r.get('duplicate')})
-    return dict(batch_id=cursor.lastrowid,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Prijzen worden in de noteringsvaluta geïmporteerd; transactiekosten, rente en valutawissels worden niet in de winst verwerkt.','Afwijkende prijs- of dividendvaluta wordt op transactiedatum omgerekend met opgeslagen dagreferentiekoersen. Het bronbedrag en de omrekening blijven bewaard.'])
+    return dict(batch_id=cursor.lastrowid,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Dividend zonder voorafgaande aankoop wordt apart opgeslagen met een melding over ontbrekende aankoophistorie; er wordt geen positie of kostprijs aangemaakt.', 'Prijzen worden in de noteringsvaluta geïmporteerd; transactiekosten, rente en valutawissels worden niet in de winst verwerkt.','Afwijkende prijs- of dividendvaluta wordt op transactiedatum omgerekend met opgeslagen dagreferentiekoersen. Het bronbedrag en de omrekening blijven bewaard.'])
 
 def commit(store,batch_id,mappings):
     with store.lock:
@@ -55,7 +55,7 @@ def commit(store,batch_id,mappings):
             pending.append((row,mapping))
         requests=[(row['currency'],mapping['currency'],row['day']) for row,mapping in pending if row['currency']!=mapping['currency']]
         prepare_rates(store,requests)
-        converted=[]
+        converted=[];standalone_dividends=0
         for row,mapping in pending:
             trace=None
             if row['currency']!=mapping['currency']:
@@ -70,10 +70,13 @@ def commit(store,batch_id,mappings):
                 base=dict(account_id=batch['account_id'],symbol=mapping.get('symbol'),exchange=mapping.get('exchange'),currency=mapping.get('currency'))
                 # The connection-scoped import helpers below avoid nested SQLite writers.
                 if row['kind']=='DIVIDEND':
-                    lot=db.execute('SELECT 1 FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=? AND purchased_on<=?',(base['account_id'],base['symbol'],base['exchange'],base['currency'],row['day'])).fetchone()
-                    if not lot:raise ValueError('Dividend zonder voorafgaande aankoop in dit brokeraccount.')
+                    lot=db.execute("SELECT 1 FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=? AND side='BUY' AND purchased_on<=?",(base['account_id'],base['symbol'],base['exchange'],base['currency'],row['day'])).fetchone()
+                    note='Trading 212 import'
+                    if not lot:
+                        standalone_dividends+=1
+                        note+=' - bij import geen voorafgaande aankoop in dit brokeraccount gevonden; aankoophistorie kan ontbreken.'
                     from storage import positive
-                    db.execute('INSERT INTO dividends(symbol,exchange,currency,amount,paid_on,note,created_at,account_id) VALUES(?,?,?,?,?,?,?,?)',(base['symbol'],base['exchange'],base['currency'],positive(row['amount']),row['day'],'Trading 212 import',now(),base['account_id']))
+                    db.execute('INSERT INTO dividends(symbol,exchange,currency,amount,paid_on,note,created_at,account_id) VALUES(?,?,?,?,?,?,?,?)',(base['symbol'],base['exchange'],base['currency'],positive(row['amount']),row['day'],note,now(),base['account_id']))
                 else:
                     from storage import positive
                     import re
@@ -88,7 +91,7 @@ def commit(store,batch_id,mappings):
                 lots=[dict(r) for r in db.execute('SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',(batch['account_id'],*tuple(key)))]
                 daily_values(lots,[],[])
             db.execute("UPDATE import_batches SET status='imported' WHERE id=?",(batch_id,))
-        return dict(imported=len(pending),skipped=sum(r['kind']=='SKIP' for r in rows))
+        return dict(imported=len(pending),standalone_dividends=standalone_dividends,skipped=sum(r['kind']=='SKIP' for r in rows))
 
 def open_preview(store,batch_id):
     with store.connect() as db:
@@ -97,4 +100,4 @@ def open_preview(store,batch_id):
         account=dict(db.execute('SELECT * FROM broker_accounts WHERE id=?',(batch['account_id'],)).fetchone())
     rows=json.loads(batch['payload'])
     instruments=sorted({(r['ticker'],r['currency']) for r in rows if r.get('kind') not in (None,'SKIP') and not r.get('duplicate')})
-    return dict(batch_id=batch_id,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Beursnoteringen worden automatisch gekoppeld. Bronbedragen blijven bewaard; afwijkende noteringsvaluta wordt met historische dagreferentiekoersen omgerekend.'])
+    return dict(batch_id=batch_id,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Dividend zonder voorafgaande aankoop wordt apart opgeslagen met een melding over ontbrekende aankoophistorie; er wordt geen positie of kostprijs aangemaakt.', 'Beursnoteringen worden automatisch gekoppeld. Bronbedragen blijven bewaard; afwijkende noteringsvaluta wordt met historische dagreferentiekoersen omgerekend.'])
