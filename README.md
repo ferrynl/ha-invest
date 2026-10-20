@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.6.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.7.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -20,11 +20,12 @@ De app bouwt uit de bron op het apparaat; er is geen containerregister nodig.
 
 ## Gebruik
 
-De app heeft een linkerzijbalk zoals Home Assistant, met zeven afzonderlijke pagina's:
+De app heeft een linkerzijbalk zoals Home Assistant, met acht afzonderlijke pagina's:
 
 - **Home**: portefeuilletotalen en de grafiek met alle aandelen.
 - **Aandelen**: posities, een aankoop toevoegen en het aankoopregister.
 - **Dividend**: ontvangen dividend boeken en het dividendregister bekijken.
+- **Valuta**: alle beschikbare valuta, historische omrekening, opgeslagen dagkoersen en importomrekeningen.
 - **Rapporten**: ontvangen dividend per maand met jaarfilter en de actuele stand per valuta.
 - **Logs** (ingelogde admin): foutdetails, Log-ID zoeken, niveau-/bronfilters en JSON-download.
 - **Imports** (admin): Trading 212 CSV/API controleren, beursnoteringen automatisch koppelen en importeren.
@@ -478,3 +479,53 @@ Met **Automatisch opnieuw koppelen** probeer je openstaande koppelingen opnieuw.
 Onder **Importgeschiedenis → Voorbeeld openen** kun je ook bestaande previews
 hervatten; een nieuwe CSV of API-download is niet nodig. Alles blijft admin-only.
 Schema blijft 7; mappinggegevens gebruiken de bestaande preview- en cacheopslag.
+
+### Valuta en uitgebreidere import (0.7.0)
+
+**Valuta** is beschikbaar voor admin en basic. Je kunt een bedrag, bronvaluta,
+doelvaluta (bijvoorbeeld EUR) en datum kiezen. De pagina toont de berekende waarde,
+factor, gevraagde datum en werkelijke koersdatum. Het overzicht toont alle valuta
+die de dienst levert plus GBX; niet iedere valuta heeft op iedere historische datum
+een koers. De historie is per valuta te bekijken (laatste 500 opgeslagen observaties).
+
+De [Frankfurter v2-API](https://frankfurter.dev/) levert dagelijkse referentiekoersen
+uit officiële bronnen, standaard gecombineerd over providers. Dit zijn **geen live
+FX-koersen of gegarandeerde Trading 212-afrekenkoersen**. Spread, brokerkosten en
+belasting worden niet alsnog verwerkt. De bron staat bij de koers en omrekening.
+Bij niet-handelsdagen kan een eerdere observatie nodig zijn; die datum wordt expliciet
+getoond. De app gebruikt geen toekomstige koers of een ongemerkte 1:1-verhouding.
+
+Alle positieve API-antwoorden en dagobservaties worden in SQLite bewaard. Koersen
+worden met Decimal berekend; bestaande dagobservaties worden niet stilzwijgend
+vervangen. De achtergrondtaak controleert elke 6 uur op nieuwe daggegevens. De
+valutalijst heeft 7 dagen cache; historische gegevens blijven lokaal beschikbaar.
+Importen halen ontbrekende historie per jaar en alleen voor benodigde valuta op.
+Ontbrekende of ongeldige koersantwoorden worden niet langdurig als succes gecachet.
+
+**GBX is Britse pence: 100 GBX = 1 GBP.** Yahoo's `GBp` en Trading 212 `GBX` worden
+als pence behandeld, inclusief aandelenkoersen en historie. London en Swiss zijn
+nu ondersteund. Voor VWCE, VUSA, VFEA en EQGB gebruikt de resolver daarnaast
+ISIN-tabellen uit de issuerdocumentatie. De actuele beurs en valuta worden nog
+steeds bij Yahoo gecontroleerd. Dit voorkomt afhankelijkheid van onvolledige
+zoekresultaten of een willekeurige keuze uit verschillende fondsen.
+
+Bij een gecontroleerde notering met een andere valuta worden prijs per aandeel
+en/of dividend op de transactiedatum naar de noteringsvaluta omgerekend. De originele
+CSV-regel, bronvaluta, origineel bedrag, omgerekend bedrag, factor, koersdatum en bron
+blijven bewaard. **Valuta → Omrekeningen bij imports** toont deze registratie.
+Een dividend dat in EUR is ontvangen kan zo bij een USD-positie worden geboekt.
+Een ontbrekende historische koers blokkeert de hele import; er wordt niets half geboekt.
+Bestaande bron-ID's blijven de deduplicatie bepalen, ook na herstart en herstel.
+
+Na bijwerken: open bij **Imports → Importgeschiedenis** je bestaande voorbeeld en
+laat de automatische koppeling opnieuw lopen. Er is geen nieuwe brokerexport nodig.
+Bestaande financiële boekingen worden niet automatisch opnieuw omgerekend.
+Schema **8** voegt valutametadata, dagkoersen, historische dekking en importomrekeningen
+toe. De normale transactionele migratie maakt vooraf een veiligheidsback-up; de
+nieuwe tabellen zitten in SQLite-back-ups en gevalideerd herstel. Gebruikers en
+API-sleutels blijven behouden.
+
+Bronnen voor de ISIN-hints: [Vanguard All-World](https://fund-docs.vanguard.com/FTSE_All-World_UCITS_ETF_USD_Accumulating_9679_NETH_INT_DU.pdf),
+[Vanguard S&P 500](https://fund-docs.vanguard.com/SandP_500_UCITS_ETF_USD_Distributing_9503_EU_INT_EN.pdf),
+[Vanguard Emerging Markets](https://fund-docs.vanguard.com/FTSE_Emerging_Markets_UCITS_ETF_USD_Accumulating_9678_EU_INT_UK_EN.pdf)
+en [London Stock Exchange EQGB](https://www.londonstockexchange.com/stock/EQGB/invesco/company-page).

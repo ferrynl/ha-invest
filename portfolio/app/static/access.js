@@ -13,6 +13,7 @@ async function apiFetch(url,options={}){
 function lockApp(){
  accessSession=null;stateETag=null;state=null;
  if(typeof clearLogs==='function')clearLogs();
+ if(typeof clearCurrencies==='function')clearCurrencies();
  if(typeof closeMenu==='function')closeMenu();
  document.getElementById('sidebar').inert=false;
  document.body.classList.add('locked');document.body.classList.remove('booting');document.getElementById('login-panel').hidden=false;

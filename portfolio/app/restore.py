@@ -18,6 +18,10 @@ TABLES={
  'import_batches':(6,('id','account_id','provider','filename','digest','payload','status','created_at')),
  'import_records':(6,('id','batch_id','account_id','provider','external_id','digest','raw')),
  'api_cache':(6,('namespace','cache_key','payload','fetched_at','expires_at')),
+ 'fx_currencies':(8,('code','name','updated_at')),
+ 'fx_rates':(8,('base','quote','day','rate','source','fetched_at')),
+ 'fx_coverage':(8,('currency','start','end','checked_at')),
+ 'import_fx':(8,('id','batch_id','external_id','kind','source_currency','target_currency','original_amount','converted_amount','rate','requested_on','rate_on','source')),
 }
 
 def restore_backup(store,content):
@@ -45,14 +49,16 @@ def restore_backup(store,content):
                 if len(data)>250000:raise ValueError('Te veel regels in deze back-up.')
                 for values in data:
                     row=dict(zip(columns,values))
+                    for key in ('code','base','quote','currency','source_currency','target_currency'):
+                        if key in row and not re.fullmatch('[A-Z]{3}',str(row[key])):raise ValueError('Ongeldige valutacode in back-up.')
                     if 'symbol' in row and (not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',str(row['symbol'])) or not re.fullmatch(r'[A-Z0-9 _-]{1,40}',str(row['exchange'])) or not re.fullmatch(r'[A-Z]{3}',str(row['currency']))):raise ValueError('Ongeldige beursnotering in back-up.')
-                    for key in ('quantity','price','amount'):
+                    for key in ('quantity','price','amount','rate','original_amount','converted_amount'):
                         if key in row:positive(row[key])
-                    for key in ('purchased_on','paid_on','day','start','synced_on'):
+                    for key in ('purchased_on','paid_on','day','start','end','synced_on','requested_on','rate_on'):
                         if key in row:
                             day=date.fromisoformat(row[key])
                             if day>date.today():raise ValueError('De back-up bevat toekomstige datums.')
-                    for key in ('quoted_at','fetched_at','created_at'):
+                    for key in ('quoted_at','fetched_at','created_at','updated_at','checked_at'):
                         if key in row and not (table=='api_cache' and key=='fetched_at'):
                             stamp=datetime.fromisoformat(row[key].replace('Z','+00:00'))
                             if stamp.tzinfo is None:raise ValueError('Ongeldige tijdzone in back-up.')

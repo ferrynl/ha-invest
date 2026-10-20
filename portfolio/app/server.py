@@ -12,6 +12,7 @@ from cache import StateCache
 from web import make_handler
 from datetime import datetime, timezone
 from diagnostics import record
+from forex import snapshot as fx_snapshot,currencies as fx_currencies
 
 ROOT = Path(__file__).parent
 store = Store(os.environ.get('DATA_DIR', './data'))
@@ -65,11 +66,18 @@ def refresh():
 
 def background():
     last_backup = 0
+    last_fx=0
     while True:
         try:
             if time.time() - last_backup >= 86400:
                 store.backup()
                 last_backup = time.time()
+            if time.time()-last_fx>=21600:
+                try:
+                    fx_currencies(store);fx_snapshot(store,datetime.now(timezone.utc).date().isoformat())
+                    record(store,'INFO','fx','daily_rates','Dagreferentiekoersen opgeslagen.')
+                except ValueError as error:record(store,'WARNING','fx','daily_rates_failed',str(error))
+                last_fx=time.time()
             refresh()
         except Exception as error:
             record(store,'ERROR','system','background_failed','Achtergrondtaak mislukt.',{'error_type':type(error).__name__})

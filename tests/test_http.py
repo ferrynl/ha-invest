@@ -51,7 +51,7 @@ class HttpTests(unittest.TestCase):
         status,data,_=self.request('GET','/api/state')
         state=json.loads(data)
         self.assertEqual(state['settings']['default_range'],'3M')
-        self.assertEqual(state['database_version'],7)
+        self.assertEqual(state['database_version'],8)
         from version import APP_VERSION
         self.assertEqual(state['app_version'],APP_VERSION)
         self.assertEqual(self.request('POST','/api/settings',json.dumps({'default_range':'bad'}),headers)[0],400)
@@ -76,6 +76,9 @@ class HttpTests(unittest.TestCase):
 
     def test_search_validation_and_provider_failure(self):
         self.assertEqual(self.request('GET', '/api/search?q=a')[0], 400)
+        self.assertEqual(self.request('GET', '/api/listing?symbol=bad%20symbol')[0],400)
+        with patch('web.resolve_listing',return_value={'symbol':'EQGB.L','exchange':'LONDON','currency':'GBX','name':'Example'}):
+            status,body,_=self.request('GET','/api/listing?symbol=EQGB.L');self.assertEqual(status,200);self.assertEqual(json.loads(body)['currency'],'GBX')
         with patch('web.search_stocks', return_value=[dict(name='Apple', symbol='AAPL', exchange='NASDAQ', currency='USD')]) as search:
             status, body, _ = self.request('GET', '/api/search?q=ap')
             self.assertEqual(status, 200)

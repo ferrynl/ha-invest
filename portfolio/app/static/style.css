@@ -10,3 +10,5 @@
 .logs-toolbar{display:flex;align-items:end;gap:14px;flex-wrap:wrap}.logs-toolbar label{min-width:160px}.logs-table{white-space:normal;min-width:850px}.logs-table td{vertical-align:top}.logs-table td:first-child{min-width:155px}.logs-table pre{white-space:pre-wrap;overflow-wrap:anywhere;min-width:240px;max-width:540px;font-size:12px;line-height:1.6}.logs-table details{margin:0}.log-error td:nth-child(2){color:#ff929d}.log-warning td:nth-child(2){color:#ffcf87}.logs-paging{display:flex;gap:12px;margin-top:20px}
 
 .auto-mapping-row{padding:14px 16px;border:1px solid #26344b;border-radius:9px;margin:12px 0}.auto-mapping-row p{margin:8px 0 0;overflow-wrap:anywhere}
+
+.fx-scroll{max-height:460px;overflow:auto}.fx-scroll thead{position:sticky;top:0;background:#131e30}#fx-result{overflow-wrap:anywhere;color:#4de0b3}#fx-feedback{overflow-wrap:anywhere}

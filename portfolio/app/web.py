@@ -8,7 +8,7 @@ from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlsplit,parse_qs
 from pathlib import Path
-from provider import search_stocks
+from provider import search_stocks,listing as resolve_listing
 from restore import restore_backup
 from security import verify_password
 from version import APP_VERSION
@@ -18,12 +18,13 @@ from imports.service import preview as import_preview,commit as import_commit,op
 from imports.matching import resolve_instrument
 from imports import trading212_api
 from history import portfolio_values
-from diagnostics import read_logs,record,DiagnosticError
+from diagnostics import read_logs,record,DiagnosticError,ActionError
+from forex import overview as fx_overview,convert as fx_convert,history as fx_history
 
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested):
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css')}
-    for name in ('app','pages','chart','chart-view','access','imports','logs'):
+    for name in ('app','pages','chart','chart-view','access','imports','logs','currencies'):
         assets['/'+name+'.js']=(name+'.js','text/javascript')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass
@@ -73,6 +74,15 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 except ValueError:return self.respond({'error':'Ongeldig logfilter.'},400)
                 return self.respond(result,filename='home-invest-logs.json' if query.get('download')==['1'] else None)
             if path=='/api/users':return self.respond({'users':auth.list_users()})
+            if path=='/api/fx/history':
+                currency=parse_qs(urlsplit(self.path).query).get('currency',['USD'])[0]
+                try:return self.respond(fx_history(store,currency))
+                except ValueError as error:return self.respond({'error':str(error)},400)
+            if path=='/api/fx':
+                from datetime import date
+                day=parse_qs(urlsplit(self.path).query).get('day',[date.today().isoformat()])[0]
+                try:return self.respond(fx_overview(store,day))
+                except ValueError as error:return self.respond({'error':str(error)},400)
             if path=='/api/imports':
                 with store.connect() as db:batches=[dict(r) for r in db.execute('SELECT id,account_id,provider,filename,status,created_at FROM import_batches ORDER BY id DESC LIMIT 50')]
                 return self.respond({'providers':[{'id':key,'name':value['name'],'formats':value['formats']} for key,value in ADAPTERS.items()],'batches':batches})
@@ -90,6 +100,11 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 return self.respond({**{k:v for k,v in state.items() if k!='quotes'},'status':status,'refresh_minutes':interval//60,'app_version':APP_VERSION},etag=True)
             if path=='/api/backup':
                 backup=store.backup();return self.respond(backup.read_bytes(),kind='application/vnd.sqlite3',filename=backup.name)
+            if path=='/api/listing':
+                symbol=parse_qs(urlsplit(self.path).query).get('symbol',[''])[0].upper()
+                if not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',symbol):return self.respond({'error':'Ongeldig symbool.'},400)
+                try:return self.respond(resolve_listing(symbol,store=store))
+                except Exception:return self.respond({'error':'De notering of koersvaluta kon niet worden gecontroleerd. Probeer later opnieuw.'},502)
             if path=='/api/search':
                 query=parse_qs(urlsplit(self.path).query).get('q',[''])[0]
                 if not 2<=len(query.strip())<=80:return self.respond({'error':'Typ minimaal twee en maximaal 80 tekens.'},400)
@@ -127,6 +142,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))
                 data=json.loads(body)
                 if not isinstance(data,dict):raise ValueError('Ongeldige aanvraag.')
+                if path=='/api/fx/convert':return self.respond(fx_convert(store,data['amount'],data['from'],data['to'],data['day']))
                 if path.startswith('/api/imports/trading212/'):
                     if not auth.enabled():raise ValueError('Schakel eerst gebruikersbeveiliging in bij Instellingen om API-sleutels te beheren.')
                     account_id=int(data['account_id'])
@@ -184,7 +200,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 cache.invalidate();self.respond({'ok':True},201 if path!='/api/settings' else 200)
             except PermissionError as error:self.respond({'error':str(error)},429)
             except ValueError as error:
-                if not isinstance(error,DiagnosticError):record(store,'WARNING','web','request_rejected','Aanvraag afgewezen.',{'endpoint':path,'error_type':type(error).__name__})
+                if not isinstance(error,DiagnosticError):record(store,'WARNING','fx' if path.startswith('/api/fx') else 'web','request_rejected',str(error) if isinstance(error,ActionError) else 'Aanvraag afgewezen.',{'endpoint':path,'error_type':type(error).__name__,'code':error.code if isinstance(error,ActionError) else None})
                 self.respond({'error':str(error)},400)
             except (KeyError,TypeError,sqlite3.Error):
                 record(store,'ERROR','web','request_failed','Aanvraag kon niet worden verwerkt.',{'endpoint':path})

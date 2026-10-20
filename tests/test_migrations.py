@@ -28,7 +28,7 @@ class MigrationTests(unittest.TestCase):
             db.commit()
 
     def test_all_previously_released_versions_upgrade_without_losing_data(self):
-        for version in (1,2,3,4,5,6):
+        for version in (1,2,3,4,5,6,7):
             with self.subTest(version=version), tempfile.TemporaryDirectory() as directory:
                 self.path=Path(directory)/'portfolio.sqlite3'
                 self.create_old(version)
@@ -63,6 +63,15 @@ class MigrationTests(unittest.TestCase):
             self.assertIsNone(db.execute("SELECT name FROM sqlite_master WHERE name='app_logs'").fetchone())
             self.assertEqual(db.execute('SELECT price FROM purchases').fetchone()[0],'999')
             self.assertEqual(db.execute('SELECT name FROM broker_accounts').fetchone()[0],'Handmatig')
+
+    def test_fx_migration_failure_preserves_schema_seven_and_existing_data(self):
+        self.create_old(7)
+        broken={**MIGRATIONS,8:MIGRATIONS[8]+('INVALID SQL',)}
+        with patch.dict('migrations.MIGRATIONS',broken,clear=True),self.assertRaises(sqlite3.Error):migrate(self.path)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],7)
+            self.assertIsNone(db.execute("SELECT name FROM sqlite_master WHERE name='fx_rates'").fetchone())
+            self.assertEqual(db.execute('SELECT price FROM purchases').fetchone()[0],'999')
 
     def test_newer_database_is_refused_without_downgrading(self):
         self.create_old(3)

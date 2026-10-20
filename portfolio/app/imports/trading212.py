@@ -5,6 +5,7 @@ import hashlib
 import json
 from decimal import Decimal,InvalidOperation
 from datetime import datetime,date,timezone
+from forex import code as currency_code
 
 def history_reader(text):
     reader=csv.DictReader(io.StringIO(text.lstrip('\ufeff')))
@@ -56,11 +57,11 @@ def parse_csv(text):
                 if kind=='DIVIDEND':
                     amount=Decimal(number(raw.get('Total')))
                     if amount<=0:raise ValueError('Netto dividend moet positief zijn.')
-                    row.update(amount=str(amount),currency=raw.get('Currency (Total)','').upper())
+                    row.update(amount=str(amount),currency=currency_code(raw.get('Currency (Total)','')))
                 else:
                     quantity,price=Decimal(number(raw.get('No. of shares'))),Decimal(number(raw.get('Price / share')))
                     if quantity<=0 or price<=0:raise ValueError('Aantal of prijs ontbreekt.')
-                    row.update(quantity=str(quantity),price=str(price),currency=raw.get('Currency (Price / share)','').upper())
+                    row.update(quantity=str(quantity),price=str(price),currency=currency_code(raw.get('Currency (Price / share)','')))
                 canonical={k:row.get(k) for k in ('kind','ticker','day','trade_time','quantity','price','amount','currency')}
                 digest=hashlib.sha256(json.dumps(canonical,sort_keys=True).encode()).hexdigest()
                 row.update(digest=digest,external_id=('id:'+raw['ID']+':'+str(kind)) if raw.get('ID') else 'row:'+digest)

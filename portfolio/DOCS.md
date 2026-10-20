@@ -1,5 +1,17 @@
 # Home Invest — Gebruik
 
+**Nieuw in 0.7.0:** open **Valuta** voor omrekenen op datum naar bijvoorbeeld EUR,
+het valutaoverzicht, opgeslagen koershistorie en importomrekeningen. Dagreferentiekoersen
+worden in SQLite bewaard en iedere 6 uur gecontroleerd. GBX/GBp zijn Britse pence,
+met exact 100 pence per GBP. Dit zijn dagreferentiekoersen, geen live brokerkoersen.
+
+De automatische import herkent nu ook de ISIN-noteringen van VWCE, VUSA, VFEA en
+EQGB en Londen/Zwitserland. Afwijkende aankoop- of dividendvaluta wordt met een
+historische koers naar de gecontroleerde noteringsvaluta omgerekend, met behoud
+van het origineel en de volledige omrekening. Ontbrekende koersen blokkeren de import.
+Open je bestaande voorbeeld opnieuw; je hoeft geen nieuwe export te maken.
+Database-upgrade naar schema 8 gebeurt met vooraf een veiligheidsback-up.
+
 **Nieuw in 0.6.0:** beursnoteringen worden in de import automatisch gekoppeld op
 basis van ISIN, ticker en valuta. Je hoeft niet per aandeel te zoeken of te kiezen.
 Onder Importgeschiedenis kun je een opgeslagen voorbeeld openen en automatisch

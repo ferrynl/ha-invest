@@ -6,6 +6,7 @@ from datetime import datetime, timezone, date, timedelta
 from functools import lru_cache
 import time
 from persistent_cache import cached_json
+from forex import code as currency_code
 
 def _payload(request,timeout,store,namespace,key,ttl):
     def load():
@@ -18,7 +19,8 @@ EXCHANGES = {'AMS': ('AMSTERDAM', 'EUR'), 'NMS': ('NASDAQ', 'USD'),
              'NGM': ('NASDAQ', 'USD'), 'NCM': ('NASDAQ', 'USD'),
              'NASDAQ': ('NASDAQ', 'USD'), 'NYQ': ('NYSE', 'USD'), 'NYSE': ('NYSE', 'USD'),
              'PCX': ('NYSEARCA','USD'), 'ASE': ('AMEX','USD'),
-             'GER': ('XETRA','EUR'), 'PAR': ('PARIS','EUR'), 'MIL': ('MILAN','EUR')}
+             'GER': ('XETRA','EUR'), 'PAR': ('PARIS','EUR'), 'MIL': ('MILAN','EUR'),
+             'LSE': ('LONDON','GBP'), 'EBS': ('SWISS','CHF'), 'FRA': ('FRANKFURT','EUR')}
 
 def search_stocks(query,store=None):
     query = query.strip()
@@ -31,7 +33,7 @@ def _search_stocks(query, minute,store=None):
     params = urlencode({'q': query, 'quotesCount': 50, 'newsCount': 0, 'listsCount': 0, 'enableFuzzyQuery': 'false'})
     request = Request('https://query1.finance.yahoo.com/v1/finance/search?' + params,
                       headers={'User-Agent': 'Mozilla/5.0'})
-    payload=_payload(request,10,store,'yahoo-search',query,7*86400)
+    payload=_payload(request,10,store,'yahoo-search-v2',query,7*86400)
     matches, seen = [], set()
     for item in payload.get('quotes', []):
         market = EXCHANGES.get(item.get('exchange', '').upper())
@@ -44,10 +46,17 @@ def _search_stocks(query, minute,store=None):
                             exchange=exchange, currency=currency))
     return matches
 
+def listing(symbol,store=None):
+    request=Request('https://query1.finance.yahoo.com/v8/finance/chart/'+quote(symbol,safe='')+'?interval=1d&range=1d',headers={'User-Agent':'Mozilla/5.0'})
+    meta=_payload(request,20,store,'yahoo-listing-v2',symbol,7*86400)['chart']['result'][0]['meta']
+    market=EXCHANGES.get(meta.get('exchangeName','').upper())
+    if not market or meta.get('symbol','').upper()!=symbol.upper():raise ValueError('Notering of beurs kon niet worden gecontroleerd.')
+    return {'symbol':symbol.upper(),'exchange':market[0],'currency':currency_code(meta['currency']),'name':str(meta.get('longName') or meta.get('shortName') or symbol)[:100]}
+
 def fetch_quote(key, symbol, exchange, currency,store=None,ttl=900):
     request = Request('https://query1.finance.yahoo.com/v8/finance/chart/' + quote(symbol, safe='') + '?interval=1d&range=1d', headers={'User-Agent': 'Mozilla/5.0'})
     result=_payload(request,20,store,'yahoo-quote','|'.join((symbol,exchange,currency)),ttl)['chart']['result'][0]['meta']
-    if result.get('currency') != currency:
+    if currency_code(result.get('currency','')) != currency_code(currency):
         raise ValueError('Koersvaluta wijkt af van de aankoop; koers niet opgeslagen.')
     market=EXCHANGES.get(result.get('exchangeName','').upper())
     if result.get('symbol', '').upper() != symbol or not market or market[0]!=exchange:
@@ -65,7 +74,7 @@ def fetch_history(symbol, exchange, currency, start,store=None):
     result=_payload(request,30,store,'yahoo-history','|'.join((symbol,exchange,currency,start,date.today().isoformat())),86400)['chart']['result'][0]
     meta = result['meta']
     market = EXCHANGES.get(meta.get('exchangeName', '').upper())
-    if meta.get('symbol', '').upper() != symbol or meta.get('currency') != currency or not market or market[0] != exchange:
+    if meta.get('symbol', '').upper() != symbol or currency_code(meta.get('currency','')) != currency_code(currency) or not market or market[0] != exchange:
         raise ValueError('Historische notering of valuta wijkt af.')
     closes = result['indicators']['quote'][0]['close']
     rows = []

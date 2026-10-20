@@ -112,7 +112,7 @@ class PortfolioTests(unittest.TestCase):
             {'symbol': '^AEX', 'exchange': 'AMS', 'quoteType': 'INDEX'},
         ]}).encode()
         results = search_stocks('AS')
-        self.assertEqual([item['symbol'] for item in results], ['ASML.AS', 'ASML', 'IBM'])
+        self.assertEqual([item['symbol'] for item in results], ['ASML.AS', 'ASML', 'IBM','ASX.L'])
         self.assertEqual(results[0]['currency'], 'EUR')
         self.assertEqual(results[1]['currency'], 'USD')
         self.assertEqual(results[2]['exchange'], 'NYSE')

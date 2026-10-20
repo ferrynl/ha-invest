@@ -1,3 +1,12 @@
+# 0.7.0
+
+- Nieuwe pagina Valuta met beschikbaar valutaoverzicht, historische rekenmachine en opgeslagen koershistorie.
+- Frankfurter dagreferentiekoersen blijvend opslaan; 6-uurlijkse controle en historische import per jaar.
+- Correcte GBX/GBp-eenheid (pence), London/Swiss-beurzen en issuer-gebaseerde ISIN-hints voor VWCE, VUSA, VFEA en EQGB.
+- Historische prijs- en dividendomrekening naar de gecontroleerde noteringsvaluta; brondata en omrekenregistratie behouden.
+- Geen half geboekte import bij ontbrekende koersen; Decimal-berekeningen en expliciete koersdatums.
+- Schema 8 met valutametadata, koersen, dekking en importomrekeningen; migratieback-up en gevalideerd herstel.
+
 # 0.6.0
 
 - Automatische importkoppeling via ISIN, ticker en gecontroleerde koersvaluta; geen keuze per aandeel meer.

@@ -30,3 +30,7 @@ Bij iedere wijziging aan dit project:
 
 - Gebruik diagnostics.py voor diagnostiek; sla nooit credentials, volledige headers, CSV-inhoud
   of ongefilterde responsebodies/tracebacks op. Logs en exports vereisen een ingelogde admin.
+
+- Valuta: gebruik Decimal en de transactiedatum; gebruik geen toekomstige koers of een 1:1-fallback.
+  GBX/GBp is pence (0,01 GBP). Behoud originele bedragen en de omrekenfactor/koersdatum.
+  Ontbrekende FX blokkeert de hele import; nieuwe FX-tabellen moeten in back-upherstel worden gevalideerd.

@@ -56,6 +56,17 @@ class AccessTests(unittest.TestCase):
   basic=self.auth.login('viewer',self.password,'test')
   self.assertEqual(self.request('GET','/api/logs',token=basic)[0],403)
   self.assertEqual(self.request('GET','/api/logs?download=1',token=basic)[0],403)
+ def test_currency_page_api_is_available_to_authenticated_basic_with_csrf(self):
+  admin,csrf=self.activate()
+  self.auth.save_user({'username':'currencyreader','password':self.password,'role':'basic'})
+  basic=self.auth.login('currencyreader',self.password,'test');token=self.auth.user(basic)['csrf']
+  with patch('web.fx_overview',return_value={'currencies':[],'history':[],'conversions':[]}):
+   self.assertEqual(self.request('GET','/api/fx?day=2026-10-12')[0],401)
+   self.assertEqual(self.request('GET','/api/fx?day=2026-10-12',token=basic)[0],200)
+  data={'amount':'10','from':'USD','to':'EUR','day':'2026-10-12'}
+  with patch('web.fx_convert',return_value={'converted':'9','rate':'0.9'}):
+   self.assertEqual(self.request('POST','/api/fx/convert',data,basic)[0],403)
+   self.assertEqual(self.request('POST','/api/fx/convert',data,basic,token)[0],200)
  def test_api_connection_requires_login_security_and_csrf_and_never_returns_secrets(self):
   self.store.add_account({'name':'API broker','broker':'Trading 212'})
   data={'account_id':2,'environment':'demo','key':'private-key','secret':'private-secret'}

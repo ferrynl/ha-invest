@@ -4,6 +4,7 @@ import json
 from . import ADAPTERS
 from storage import now
 from provider import EXCHANGES
+from forex import convert,prepare_rates
 
 def preview(store,account_id,provider,filename,text):
     adapter=ADAPTERS.get(provider)
@@ -29,7 +30,7 @@ def preview(store,account_id,provider,filename,text):
         payload=json.dumps(rows)
         cursor=db.execute('INSERT INTO import_batches(account_id,provider,filename,digest,payload,created_at) VALUES(?,?,?,?,?,?)',(account_id,provider,str(filename)[:180],hashlib.sha256(text.encode()).hexdigest(),payload,now()))
     instruments=sorted({(r['ticker'],r.get('currency','')) for r in rows if r.get('kind') not in (None,'SKIP') and not r.get('duplicate')})
-    return dict(batch_id=cursor.lastrowid,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Prijzen worden in de noteringsvaluta geïmporteerd; transactiekosten, rente en valutawissels worden niet in de winst verwerkt.','Dividend vereist dezelfde valuta als de gekoppelde beursnotering. Er wordt geen wisselkoers gegokt.'])
+    return dict(batch_id=cursor.lastrowid,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Prijzen worden in de noteringsvaluta geïmporteerd; transactiekosten, rente en valutawissels worden niet in de winst verwerkt.','Afwijkende prijs- of dividendvaluta wordt op transactiedatum omgerekend met opgeslagen dagreferentiekoersen. Het bronbedrag en de omrekening blijven bewaard.'])
 
 def commit(store,batch_id,mappings):
     with store.lock:
@@ -49,12 +50,23 @@ def commit(store,batch_id,mappings):
             if existing:
                 if existing[0]!=row['digest']:raise ValueError('Een eerder geïmporteerde transactie is gewijzigd.')
                 continue
-            if not isinstance(mapping,dict) or mapping.get('currency')!=row['currency']:raise ValueError('Koppel iedere ticker aan een beursnotering met dezelfde valuta.')
+            if not isinstance(mapping,dict):raise ValueError('Automatische beurskoppeling ontbreekt.')
+            if mapping.get('currency')!=row['currency'] and not row.get('mapping'):raise ValueError('Valutaomrekening vereist een opgeslagen, gecontroleerde automatische koppeling.')
             pending.append((row,mapping))
+        requests=[(row['currency'],mapping['currency'],row['day']) for row,mapping in pending if row['currency']!=mapping['currency']]
+        prepare_rates(store,requests)
+        converted=[]
+        for row,mapping in pending:
+            trace=None
+            if row['currency']!=mapping['currency']:
+                key='amount' if row['kind']=='DIVIDEND' else 'price'
+                trace=convert(store,row[key],row['currency'],mapping['currency'],row['day'])
+                row={**row,key:trace['converted']}
+            converted.append((row,mapping,trace))
         # Reuse validation and rollback the complete batch, including prior rows.
         with store.connect() as db:
             db.execute('BEGIN IMMEDIATE')
-            for row,mapping in sorted(pending,key=lambda pair:(pair[0]['trade_time'],0 if pair[0]['kind']=='BUY' else 1 if pair[0]['kind']=='SELL' else 2)):
+            for row,mapping,trace in sorted(converted,key=lambda pair:(pair[0]['trade_time'],0 if pair[0]['kind']=='BUY' else 1 if pair[0]['kind']=='SELL' else 2)):
                 base=dict(account_id=batch['account_id'],symbol=mapping.get('symbol'),exchange=mapping.get('exchange'),currency=mapping.get('currency'))
                 # The connection-scoped import helpers below avoid nested SQLite writers.
                 if row['kind']=='DIVIDEND':
@@ -68,6 +80,8 @@ def commit(store,batch_id,mappings):
                     if not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',str(base['symbol'])) or base['exchange'] not in {market[0] for market in EXCHANGES.values()}:raise ValueError('Ongeldige beurskoppeling.')
                     db.execute('INSERT INTO purchases(symbol,exchange,name,quantity,price,currency,purchased_on,created_at,account_id,side,trade_time) VALUES(?,?,?,?,?,?,?,?,?,?,?)',(base['symbol'],base['exchange'],str(mapping.get('name') or row['name'])[:100],positive(row['quantity']),positive(row['price']),base['currency'],row['day'],now(),base['account_id'],row['kind'],row['trade_time']))
                 db.execute('INSERT INTO import_records(batch_id,account_id,provider,external_id,digest,raw) VALUES(?,?,?,?,?,?)',(batch_id,batch['account_id'],batch['provider'],row['external_id'],row['digest'],json.dumps(row['raw'])))
+                if trace:
+                    db.execute('INSERT INTO import_fx(batch_id,external_id,kind,source_currency,target_currency,original_amount,converted_amount,rate,requested_on,rate_on,source) VALUES(?,?,?,?,?,?,?,?,?,?,?)',(batch_id,row['external_id'],row['kind'],trace['from'],trace['to'],trace['amount'],trace['converted'],trace['rate'],trace['requested_on'],trace['rate_on'],trace['source']))
             from history import daily_values
             keys=db.execute('SELECT DISTINCT symbol,exchange,currency FROM purchases WHERE account_id=?',(batch['account_id'],)).fetchall()
             for key in keys:
@@ -83,4 +97,4 @@ def open_preview(store,batch_id):
         account=dict(db.execute('SELECT * FROM broker_accounts WHERE id=?',(batch['account_id'],)).fetchone())
     rows=json.loads(batch['payload'])
     instruments=sorted({(r['ticker'],r['currency']) for r in rows if r.get('kind') not in (None,'SKIP') and not r.get('duplicate')})
-    return dict(batch_id=batch_id,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Beursnoteringen worden automatisch gekoppeld. Bedragen blijven in de oorspronkelijke valuta; er wordt geen wisselkoers gegokt.'])
+    return dict(batch_id=batch_id,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Beursnoteringen worden automatisch gekoppeld. Bronbedragen blijven bewaard; afwijkende noteringsvaluta wordt met historische dagreferentiekoersen omgerekend.'])

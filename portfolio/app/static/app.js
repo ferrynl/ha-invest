@@ -41,9 +41,12 @@ let selectedStock=null,searchTimer,searchController,searchVersion=0;
 const stockFields=['name','symbol','exchange','currency'];
 function closeSearch(){ $('search-results').replaceChildren();$('search-results').hidden=true;$('stock-search').setAttribute('aria-expanded','false'); }
 function clearSelection(){selectedStock=null;for(const field of stockFields)$('purchase').elements.namedItem(field).value='';}
-function chooseStock(stock){
- selectedStock=stock;for(const field of stockFields)$('purchase').elements.namedItem(field).value=stock[field];
- $('stock-search').value=stock.name;closeSearch();$('search-status').textContent=stock.symbol+' · '+stock.exchange+' · '+stock.currency+' geselecteerd.';$('purchase').elements.namedItem('quantity').focus();
+async function chooseStock(stock){
+ const version=++searchVersion;clearSelection();closeSearch();$('search-status').textContent='Notering en werkelijke koersvaluta controleren…';
+ try{const response=await apiFetch('api/listing?symbol='+encodeURIComponent(stock.symbol));const result=await response.json();if(!response.ok)throw Error(result.error);if(version!==searchVersion||!accessSession?.user)return;
+ selectedStock=result;for(const field of stockFields)$('purchase').elements.namedItem(field).value=result[field];
+ $('stock-search').value=result.name;$('search-status').textContent=result.symbol+' · '+result.exchange+' · '+result.currency+' geselecteerd.';$('purchase').elements.namedItem('quantity').focus();
+ }catch(error){if(version===searchVersion)$('search-status').textContent=error.message;}
 }
 $('stock-search').addEventListener('input',()=>{
  clearTimeout(searchTimer);searchController?.abort();const version=++searchVersion;clearSelection();closeSearch();

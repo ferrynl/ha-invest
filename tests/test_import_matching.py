@@ -13,6 +13,7 @@ class MatchingTests(unittest.TestCase):
   self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.store=Store(self.tmp.name)
   self.store.add_account({'name':'Broker','broker':'Trading 212'})
   self.batch=preview(self.store,2,'trading212','test.csv',CSV)['batch_id']
+  blocker=patch('imports.matching.listing',side_effect=ValueError('not available'));blocker.start();self.addCleanup(blocker.stop)
  def test_isin_auto_resolution_is_saved_and_commits_without_user_mappings(self):
   with patch('imports.matching.search_stocks',return_value=[STOCK]) as search,patch('imports.matching.fetch_quote',return_value=(100,'2026-01-01T00:00:00Z')):
    result=resolve_instrument(self.store,self.batch,'ASML|EUR')
@@ -52,3 +53,14 @@ class MatchingTests(unittest.TestCase):
   with patch('provider._payload',return_value={'quotes':[{'symbol':'VOO','exchange':'PCX','quoteType':'ETF','longname':'Vanguard S&P 500'}]}):
    results=search_stocks('ETF automatic matching test',store=self.store)
    self.assertEqual(results[0]['exchange'],'NYSEARCA');self.assertEqual(results[0]['currency'],'USD')
+ def test_issuer_isin_catalogue_resolves_named_etfs_without_search_index(self):
+  for isin,ticker,symbol,currency,exchange in [('IE00BK5BQT80','VWCE','VWCE.AS','EUR','AMSTERDAM'),('IE00B3XXRP09','VUSA','VUSA.AS','EUR','AMSTERDAM'),('IE00BK5BR733','VFEA','VFEA.DE','EUR','XETRA'),('IE00BYVTMV98','EQGB','EQGB.L','GBX','LONDON')]:
+   batch=preview(self.store,2,'trading212','etf.csv',CSV.replace('NL0010273215,ASML,ASML',isin+','+ticker+','+ticker).replace(',EUR',','+currency))['batch_id']
+   stock={'symbol':symbol,'currency':currency,'exchange':exchange,'name':ticker}
+   with patch('imports.matching.listing',return_value=stock),patch('imports.matching.search_stocks') as search:
+    result=resolve_instrument(self.store,batch,ticker+'|'+currency);self.assertEqual(result['mapping'],stock);search.assert_not_called()
+ def test_foreign_settlement_currency_resolves_to_verified_quote_for_conversion(self):
+  batch=preview(self.store,2,'trading212','foreign.csv',CSV.replace('NL0010273215,ASML,ASML','US0378331005,AAPL,Apple'))['batch_id']
+  stock={'symbol':'AAPL','currency':'USD','exchange':'NASDAQ','name':'Apple'}
+  with patch('imports.matching.search_stocks',return_value=[stock]),patch('imports.matching.fetch_quote',side_effect=ValueError('currency')),patch('imports.matching.listing',return_value=stock):
+   result=resolve_instrument(self.store,batch,'AAPL|EUR');self.assertEqual(result['mapping']['currency'],'USD')
