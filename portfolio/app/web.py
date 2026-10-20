@@ -14,7 +14,8 @@ from security import verify_password
 from version import APP_VERSION
 from updates import check_updates
 from imports import ADAPTERS
-from imports.service import preview as import_preview,commit as import_commit
+from imports.service import preview as import_preview,commit as import_commit,open_preview
+from imports.matching import resolve_instrument
 from imports import trading212_api
 from history import portfolio_values
 from diagnostics import read_logs,record,DiagnosticError
@@ -149,7 +150,9 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     result=import_preview(store,int(data['account_id']),str(data['provider']),str(data['filename']),str(data['csv']))
                     return self.respond(result)
                 if path=='/api/imports/commit':
-                    result=import_commit(store,int(data['batch_id']),data['mappings']);cache.invalidate();refresh_requested.set();return self.respond(result)
+                    result=import_commit(store,int(data['batch_id']),data.get('mappings',{}));cache.invalidate();refresh_requested.set();return self.respond(result)
+                if path=='/api/imports/resolve':return self.respond(resolve_instrument(store,int(data['batch_id']),str(data['key'])))
+                if path=='/api/imports/open':return self.respond(open_preview(store,int(data['batch_id'])))
                 if path=='/api/auth/login':
                     if not auth.enabled():raise ValueError('Gebruikersbeveiliging is niet ingeschakeld.')
                     token=auth.login(data.get('username',''),data.get('password',''),self.client_address[0])

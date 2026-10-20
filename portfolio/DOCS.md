@@ -1,5 +1,13 @@
 # Home Invest — Gebruik
 
+**Nieuw in 0.6.0:** beursnoteringen worden in de import automatisch gekoppeld op
+basis van ISIN, ticker en valuta. Je hoeft niet per aandeel te zoeken of te kiezen.
+Onder Importgeschiedenis kun je een opgeslagen voorbeeld openen en automatisch
+laten koppelen. ETF's worden nu ook meegenomen. Een niet-eenduidige notering of
+valutaverschil krijgt een concrete melding; bedragen worden niet omgerekend.
+Controleer het complete voorbeeld en bevestig daarna één keer de import.
+
+
 **Nieuw in 0.5.4:** CSV- en API-import ondersteunen `Time` en `Time (UTC)`.
 Opgeslagen deelrapporten met de nieuwe kolomnaam kun je na bijwerken opnieuw laten
 verwerken met **Rapportstatus controleren en ophalen**. Je hoeft geen nieuw rapport
@@ -31,8 +39,8 @@ Bestaande gegevens blijven onder **Handmatig** staan. Koersen worden gedeeld;
 bezit, aankopen, verkopen en dividend blijven per rekening gescheiden.
 
 Open als admin **Imports**, kies het brokeraccount en upload een Engelstalige
-Trading 212 History CSV. Controleer het voorbeeld en koppel de tickers aan de juiste
-beursnotering vóór bevestigen. Kooporders, verkooporders en dividend worden
+Trading 212 History CSV. Controleer het voorbeeld en de automatisch gekoppelde
+beursnoteringen vóór bevestigen. Kooporders, verkooporders en dividend worden
 ondersteund; dubbele brontransacties worden overgeslagen. Onbekende transactietypen,
 ontbrekende aankopen of afwijkende dividendvaluta blokkeren de import. Kosten en
 valutawissels worden nog niet meegenomen. Raadpleeg de README voor de precieze grenzen.

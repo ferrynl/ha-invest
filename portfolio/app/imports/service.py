@@ -1,8 +1,9 @@
-"""Durable previews, explicit instrument mapping and atomic idempotent imports."""
+"""Durable previews, persisted instrument mappings and atomic idempotent imports."""
 import hashlib
 import json
 from . import ADAPTERS
 from storage import now
+from provider import EXCHANGES
 
 def preview(store,account_id,provider,filename,text):
     adapter=ADAPTERS.get(provider)
@@ -43,7 +44,7 @@ def commit(store,batch_id,mappings):
             if row['kind']=='SKIP':continue
             if row['external_id'] in seen:continue
             seen.add(row['external_id'])
-            key=row['ticker']+'|'+row['currency'];mapping=mappings.get(key)
+            key=row['ticker']+'|'+row['currency'];mapping=row.get('mapping') or mappings.get(key)
             with store.connect() as db:existing=db.execute('SELECT digest FROM import_records WHERE account_id=? AND provider=? AND external_id=?',(batch['account_id'],batch['provider'],row['external_id'])).fetchone()
             if existing:
                 if existing[0]!=row['digest']:raise ValueError('Een eerder geïmporteerde transactie is gewijzigd.')
@@ -64,7 +65,7 @@ def commit(store,batch_id,mappings):
                 else:
                     from storage import positive
                     import re
-                    if not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',str(base['symbol'])) or base['exchange'] not in ('AMSTERDAM','NASDAQ','NYSE'):raise ValueError('Ongeldige beurskoppeling.')
+                    if not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',str(base['symbol'])) or base['exchange'] not in {market[0] for market in EXCHANGES.values()}:raise ValueError('Ongeldige beurskoppeling.')
                     db.execute('INSERT INTO purchases(symbol,exchange,name,quantity,price,currency,purchased_on,created_at,account_id,side,trade_time) VALUES(?,?,?,?,?,?,?,?,?,?,?)',(base['symbol'],base['exchange'],str(mapping.get('name') or row['name'])[:100],positive(row['quantity']),positive(row['price']),base['currency'],row['day'],now(),base['account_id'],row['kind'],row['trade_time']))
                 db.execute('INSERT INTO import_records(batch_id,account_id,provider,external_id,digest,raw) VALUES(?,?,?,?,?,?)',(batch_id,batch['account_id'],batch['provider'],row['external_id'],row['digest'],json.dumps(row['raw'])))
             from history import daily_values
@@ -74,3 +75,12 @@ def commit(store,batch_id,mappings):
                 daily_values(lots,[],[])
             db.execute("UPDATE import_batches SET status='imported' WHERE id=?",(batch_id,))
         return dict(imported=len(pending),skipped=sum(r['kind']=='SKIP' for r in rows))
+
+def open_preview(store,batch_id):
+    with store.connect() as db:
+        batch=db.execute("SELECT * FROM import_batches WHERE id=? AND status='preview'",(batch_id,)).fetchone()
+        if not batch:raise ValueError('Importvoorbeeld niet gevonden.')
+        account=dict(db.execute('SELECT * FROM broker_accounts WHERE id=?',(batch['account_id'],)).fetchone())
+    rows=json.loads(batch['payload'])
+    instruments=sorted({(r['ticker'],r['currency']) for r in rows if r.get('kind') not in (None,'SKIP') and not r.get('duplicate')})
+    return dict(batch_id=batch_id,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Beursnoteringen worden automatisch gekoppeld. Bedragen blijven in de oorspronkelijke valuta; er wordt geen wisselkoers gegokt.'])

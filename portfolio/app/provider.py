@@ -16,7 +16,9 @@ def _payload(request,timeout,store,namespace,key,ttl):
 
 EXCHANGES = {'AMS': ('AMSTERDAM', 'EUR'), 'NMS': ('NASDAQ', 'USD'),
              'NGM': ('NASDAQ', 'USD'), 'NCM': ('NASDAQ', 'USD'),
-             'NASDAQ': ('NASDAQ', 'USD'), 'NYQ': ('NYSE', 'USD'), 'NYSE': ('NYSE', 'USD')}
+             'NASDAQ': ('NASDAQ', 'USD'), 'NYQ': ('NYSE', 'USD'), 'NYSE': ('NYSE', 'USD'),
+             'PCX': ('NYSEARCA','USD'), 'ASE': ('AMEX','USD'),
+             'GER': ('XETRA','EUR'), 'PAR': ('PARIS','EUR'), 'MIL': ('MILAN','EUR')}
 
 def search_stocks(query,store=None):
     query = query.strip()
@@ -34,7 +36,7 @@ def _search_stocks(query, minute,store=None):
     for item in payload.get('quotes', []):
         market = EXCHANGES.get(item.get('exchange', '').upper())
         symbol = item.get('symbol')
-        if not market or item.get('quoteType') != 'EQUITY' or not symbol or symbol in seen:
+        if not market or item.get('quoteType') not in ('EQUITY','ETF') or not symbol or symbol in seen:
             continue
         seen.add(symbol)
         exchange, currency = market
@@ -47,8 +49,8 @@ def fetch_quote(key, symbol, exchange, currency,store=None,ttl=900):
     result=_payload(request,20,store,'yahoo-quote','|'.join((symbol,exchange,currency)),ttl)['chart']['result'][0]['meta']
     if result.get('currency') != currency:
         raise ValueError('Koersvaluta wijkt af van de aankoop; koers niet opgeslagen.')
-    allowed = {'AMSTERDAM': {'AMS'}, 'NASDAQ': {'NMS', 'NGM', 'NCM', 'NASDAQ'}, 'NYSE': {'NYQ', 'NYSE'}}
-    if result.get('symbol', '').upper() != symbol or result.get('exchangeName', '').upper() not in allowed.get(exchange, set()):
+    market=EXCHANGES.get(result.get('exchangeName','').upper())
+    if result.get('symbol', '').upper() != symbol or not market or market[0]!=exchange:
         raise ValueError('Koersdienst retourneerde een ander symbool of andere beurs.')
     timestamp = datetime.fromtimestamp(int(result['regularMarketTime']), timezone.utc).isoformat()
     return result['regularMarketPrice'], timestamp

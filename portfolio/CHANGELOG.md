@@ -1,3 +1,12 @@
+# 0.6.0
+
+- Automatische importkoppeling via ISIN, ticker en gecontroleerde koersvaluta; geen keuze per aandeel meer.
+- Broker-tickers normaliseren, ETF's meenemen en extra beurscodes ondersteunen.
+- Koppelingen bewaren in SQLite en hergebruiken; onzekere resultaten en valuta-afwijkingen niet gokken.
+- Opgeslagen importvoorbeelden opnieuw openen en automatisch laten koppelen.
+- Nieuwe resolver- en open-endpoints alleen voor admins; bevestiging van volledige import blijft verplicht.
+- Schema blijft 7; bestaande previews en API-verbindingen blijven behouden.
+
 # 0.5.4
 
 - Trading 212 CSV en API ondersteunen de datumkolom Time (UTC), naast Time.

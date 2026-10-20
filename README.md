@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.5.4). Draait volledig als Home Assistant-app
+Experimentele versie (0.6.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -27,7 +27,7 @@ De app heeft een linkerzijbalk zoals Home Assistant, met zeven afzonderlijke pag
 - **Dividend**: ontvangen dividend boeken en het dividendregister bekijken.
 - **Rapporten**: ontvangen dividend per maand met jaarfilter en de actuele stand per valuta.
 - **Logs** (ingelogde admin): foutdetails, Log-ID zoeken, niveau-/bronfilters en JSON-download.
-- **Imports** (admin): Trading 212 CSV controleren, beursnoteringen koppelen en importeren.
+- **Imports** (admin): Trading 212 CSV/API controleren, beursnoteringen automatisch koppelen en importeren.
 - **Instellingen** (admin): gebruikersbeveiliging, brokeraccounts, versiecontrole, standaard grafiekperiode,
   versiegegevens, back-up downloaden en terugzetten.
 
@@ -134,7 +134,7 @@ CSV-imports per rekening gecontroleerd op dubbele transacties.
    en vraagt zo nodig het volgende aan. De teller toont de voortgang; de taak en
    deelrapporten overleven een app-herstart. Herhaal de statuscontrole ongeveer iedere
    minuut totdat het complete importvoorbeeld verschijnt. Je hoeft niet per deel te boeken.
-7. Controleer het opgehaalde voorbeeld, koppel de noteringen en bevestig de import.
+7. Controleer het opgehaalde voorbeeld en de automatische koppelingen en bevestig de import.
 
 De app gebruikt alleen de officiële rapport-endpoints; er worden geen orders geplaatst.
 Statusantwoorden worden 60 seconden gecachet; het rapport en originele transacties
@@ -163,7 +163,7 @@ Dezelfde importbeperkingen voor kosten, acties en dividendvaluta gelden voor API
 1. Exporteer bij Trading 212 via **History → Export** je orders en dividend.
 2. Maak in Home Invest een rekening met bedrijf **Trading 212**.
 3. Open **Imports**, kies rekening en CSV en klik **Voorbeeld controleren**.
-4. Controleer alle regels en koppel tickers aan de juiste Yahoo-beursnotering.
+4. Controleer alle regels; de app koppelt tickers automatisch aan de Yahoo-beursnotering.
    De app kiest geen onduidelijke notering of wisselkoers automatisch.
 5. Bevestig het voorbeeld en klik **Import definitief opslaan**.
 
@@ -458,3 +458,23 @@ Na de fout `csv_columns_missing` met een aanwezige kolom `Time (UTC)` hoef je ge
 nieuw rapport aan te vragen: werk bij en klik **Rapportstatus controleren en ophalen**.
 Reeds opgeslagen deelrapporten worden lokaal opnieuw verwerkt, ook als alle delen al
 waren opgehaald. Wis de lopende aanvraag hiervoor niet. Schema blijft 7.
+
+### Automatische beurskoppeling (0.6.0)
+
+Importvoorbeelden zoeken en controleren beursnoteringen automatisch. Er is geen
+zoekknop of keuzelijst per aandeel meer: controleer het overzicht en bevestig de
+import één keer. ISIN (indien aanwezig), broker-ticker, bronvaluta en actuele
+koersmetadata bepalen de koppeling. Broker-suffixen zoals `_US_EQ` worden herkend.
+De zoekdienst ondersteunt nu ook ETF's en onder meer NYSE Arca/AMEX, Xetra, Parijs
+en Milaan naast Amsterdam, Nasdaq en NYSE.
+
+Geslaagde koppelingen staan op de previewregels en in de SQLite-cache (7 dagen);
+bewezen eerdere importkoppelingen worden hergebruikt. Geen passende notering,
+meerdere mogelijke noteringen, een koersdienststoring of een afwijkende valuta
+blijft zichtbaar met de concrete reden. Een dergelijk instrument wordt niet
+stilzwijgend aan een willekeurig aandeel gekoppeld. Automatische valutaomrekening
+is nog niet beschikbaar; bronbedragen worden niet als een andere valuta geboekt.
+Met **Automatisch opnieuw koppelen** probeer je openstaande koppelingen opnieuw.
+Onder **Importgeschiedenis → Voorbeeld openen** kun je ook bestaande previews
+hervatten; een nieuwe CSV of API-download is niet nodig. Alles blijft admin-only.
+Schema blijft 7; mappinggegevens gebruiken de bestaande preview- en cacheopslag.
