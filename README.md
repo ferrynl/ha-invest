@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.7.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.7.1). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -529,3 +529,7 @@ Bronnen voor de ISIN-hints: [Vanguard All-World](https://fund-docs.vanguard.com/
 [Vanguard S&P 500](https://fund-docs.vanguard.com/SandP_500_UCITS_ETF_USD_Distributing_9503_EU_INT_EN.pdf),
 [Vanguard Emerging Markets](https://fund-docs.vanguard.com/FTSE_Emerging_Markets_UCITS_ETF_USD_Accumulating_9678_EU_INT_UK_EN.pdf)
 en [London Stock Exchange EQGB](https://www.londonstockexchange.com/stock/EQGB/invesco/company-page).
+
+### Importknop (0.7.1)
+
+Na de automatische koppeling is de opslagknop bedienbaar. Eventuele fouten per bronregel of ontbrekende koppelingen staan direct bij de knop. De bevestiging slaat deze controles niet over; corrigeer gemelde bronfouten voordat je opnieuw importeert. Fouten bij het opslaan verschijnen ook naast de knop. Schema blijft 8.

@@ -117,3 +117,7 @@ kopieën op hetzelfde apparaat. Herstel de volledige app via Home Assistant Back
 
 Deze eerste versie ondersteunt alleen aankopen. De uitgebreide installatie-,
 opslag- en ontwikkelinstructies staan in de README van de repository.
+
+### Importknop (0.7.1)
+
+Na de automatische koppeling is de opslagknop bedienbaar. Eventuele fouten per bronregel of ontbrekende koppelingen staan direct bij de knop. De bevestiging slaat deze controles niet over; corrigeer gemelde bronfouten voordat je opnieuw importeert. Fouten bij het opslaan verschijnen ook naast de knop. Schema blijft 8.

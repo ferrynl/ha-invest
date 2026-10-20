@@ -1,3 +1,9 @@
+# 0.7.1
+
+- Importknop blijft na automatische koppeling bedienbaar; fouten per bronregel en ontbrekende koppelingen staan direct bij de knop.
+- Bevestiging, voortgang en fouten bij opslaan worden naast de importknop getoond. Ongeldige batches blijven veilig geblokkeerd.
+- Schema blijft 8.
+
 # 0.7.0
 
 - Nieuwe pagina Valuta met beschikbaar valutaoverzicht, historische rekenmachine en opgeslagen koershistorie.
