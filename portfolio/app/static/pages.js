@@ -7,6 +7,8 @@ function showPage(){
  for(const view of document.querySelectorAll('[data-page]'))view.hidden=view.dataset.page!==page;
  for(const link of document.querySelectorAll('[data-route]')){if(link.dataset.route===page||((page==='import-koppelingen'||page==='import-beoordeling')&&link.dataset.route==='imports'))link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  $('page-title').textContent=pageNames[page];document.title=pageNames[page]+' · Home Invest';closeMenu();
+ if(page==='aandelen'&&state)renderStockPage();
+ if(page==='dividend'&&state)renderDividendPage();
  if(page==='home'&&state)requestAnimationFrame(draw);
  if(page==='imports'&&state&&accessSession?.user?.role==='admin')loadImportHistory().catch(error=>{$('import-feedback').textContent=error.message;});
  if(page==='logs')loadLogs().catch(error=>{$('logs-feedback').textContent=error.message;});
@@ -43,6 +45,6 @@ $('settings-form').addEventListener('input',()=>{settingsDirty=true;});
 $('report-year').addEventListener('change',renderReports);
 $('settings-form').addEventListener('submit',async event=>{event.preventDefault();const button=event.target.querySelector('button');button.disabled=true;try{const response=await apiFetch('api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(Object.fromEntries(new FormData(event.target)))});if(!response.ok)throw Error('Instellingen opslaan mislukt.');settingsDirty=false;chartRange=event.target.elements.namedItem('default_range').value;syncRangeButtons();await load();$('settings-feedback').textContent='Instellingen opgeslagen.';}catch(error){$('settings-feedback').textContent=error.message;}finally{button.disabled=false;}});
 showPage();
-bindImportIssues();bindImportMappings();bindImports();bindAccess();bindLogs();bindCurrencies();startSession().catch(()=>{$('status').textContent='Verbinding mislukt. Herlaad de pagina.';document.body.classList.remove('booting');});
+bindHomeDashboard();bindImportIssues();bindImportMappings();bindImports();bindAccess();bindLogs();bindCurrencies();startSession().catch(()=>{$('status').textContent='Verbinding mislukt. Herlaad de pagina.';document.body.classList.remove('booting');});
 setInterval(()=>{if(!document.hidden&&accessSession?.user)load();},120000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&accessSession?.user)load();});

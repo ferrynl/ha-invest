@@ -1,3 +1,12 @@
+# 0.10.0
+
+- Vernieuwd Home-dashboard met kerncijfers per valuta, grootste posities en beste/zwakste resultaten.
+- Portefeuilletotaal als standaardgrafiek; gerichte vergelijking van maximaal zes posities.
+- Lokaal doorzoekbare en sorteerbare positielijst met filters, wegingen en 25 regels per pagina.
+- Responsieve grafiek zonder grote lege zijruimte, interactieve legenda en toetsenbordbediening.
+- Dagwaardetabel pas opbouwen bij uitklappen, per 250 regels; geen extra providerverkeer voor dashboardfilters.
+- Geen schemawijziging; schema blijft 10.
+
 # 0.9.0
 
 - Geldige importregels verwerken terwijl fouten duurzaam apart worden gehouden voor beoordeling.

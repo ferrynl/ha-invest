@@ -42,3 +42,6 @@ Bij iedere wijziging aan dit project:
 - De gebruikersimport boekt geldige regels en bewaart fouten duurzaam in import_issues.
   Gebruik een savepoint per regel; ongeldige verkopen en ontbrekende FX mogen geen half geboekte regel achterlaten.
   Vraag om classificatie bij onbekende acties; kapitaalterugbetalingen zijn geen dividendwinst.
+
+- Home: houd valuta gescheiden, gebruik een totaalgrafiek als standaard en vergelijk maximaal zes posities.
+  Bouw lange daghistorie en tabellen van verborgen pagina's pas op wanneer de gebruiker ze opent.

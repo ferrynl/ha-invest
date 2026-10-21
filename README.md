@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.9.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.10.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -571,3 +571,13 @@ Schema 10 voegt de beoordelingslijst en kapitaalterugbetalingen toe, met automat
 Madrid en Amerikaanse OTC-noteringen worden nu ondersteund. De ISIN-koppelingen voor SAB (ES0113860A34), UNI (ES0180907000) en TCEHY (US88032Q1094) worden via actuele koersmetadata gecontroleerd.
 
 Noteringsbronnen: [Banco Sabadell bij BME](https://www.bolsasymercados.es/en/bme-exchange/prices-and-markets/shares/detail.banco-de-sabadell-es0113860a34.html), [Unicaja ISIN](https://www.unicajabanco.com/content/dam/unicaja/unicaja-corporacion/documentos-corporacion/junta-general-de-accionistas/2021-extraordinaria/2021-extraordinaria-documento-conforme-reglamento-ue-en.pdf), [Tencent ADR bij Citi](https://depositaryreceipts.citi.com/adr/notices/pgm_dispCA.aspx?cusip=88032Q109&pageId=15&subpageID=112).
+
+### Nieuw Home-overzicht (0.10.0)
+
+Home opent met het portefeuilletotaal in EUR (of de eerste aanwezige valuta). Valutaknoppen houden bedragen gescheiden; de kerncijfers tonen marktwaarde, openstaande kostprijs, totale winst en dividend dat aan deze posities gekoppeld is. Ontbrekende koersen worden expliciet gemeld. Er wordt geen automatische EUR-conversie verondersteld.
+
+Gebruik de positielijst om lokaal te zoeken op bedrijf, ticker, beurs of brokeraccount. Filter open/gesloten posities, ontbrekende koersen en positieve/negatieve resultaten; sorteer op waarde, weging, naam of winstpercentage. De lijst toont 25 regels per pagina. **Bekijken** opent de grafiek van die positie. Selecteer maximaal zes posities met de selectievakjes om ze gericht te vergelijken; de standaardgrafiek tekent niet meer alle honderd lijnen tegelijk.
+
+Grootste posities toont de vijf grootste bekende marktwaarden binnen de gekozen valuta. Beste/zwakste resultaat toont winst sinds aankoop gedeeld door de totale oorspronkelijke inleg, inclusief gekoppeld dividend. Dit is geen tijdgewogen rendement en geen rendement over de geselecteerde grafiekperiode. Een periodeknop verandert alleen de getoonde datums.
+
+De grafiek vult de beschikbare breedte en ondersteunt muis en pijltjestoetsen. Via de legenda kun je lijnen aan/uit zetten. Dagwaarden worden pas opgebouwd bij uitklappen, per 250 regels, zodat lange historie en veel posities de pagina niet met duizenden tabelregels belasten. Zoeken, sorteren en selectie gebruiken de reeds opgehaalde gegevens en doen geen extra koersaanvragen. Schema blijft 10; bestaande gegevens en back-ups blijven bruikbaar.

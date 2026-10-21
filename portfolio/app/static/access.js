@@ -12,6 +12,7 @@ async function apiFetch(url,options={}){
 }
 function lockApp(){
  accessSession=null;stateETag=null;state=null;
+ if(typeof clearHomeDashboard==='function')clearHomeDashboard();
  if(typeof clearImportIssues==='function')clearImportIssues();
  if(typeof clearImportMappings==='function')clearImportMappings();
  if(typeof clearLogs==='function')clearLogs();

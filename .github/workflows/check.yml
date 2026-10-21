@@ -23,5 +23,7 @@ jobs:
       - run: node --check portfolio/app/static/currencies.js
       - run: node --check portfolio/app/static/import-mappings.js
       - run: node --check portfolio/app/static/import-issues.js
+      - run: node --check portfolio/app/static/home.js
+      - run: node tests/test_home.cjs
       - run: node tests/test_chart.cjs
       - run: docker build portfolio -t aandelen-dashboard:test
