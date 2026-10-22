@@ -17,7 +17,7 @@ class HttpTests(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp = tempfile.TemporaryDirectory()
         with patch.dict(os.environ, {'DATA_DIR': cls.tmp.name}):
-            cls.module = importlib.import_module('server')
+            cls.module = importlib.reload(sys.modules['server']) if 'server' in sys.modules else importlib.import_module('server')
         cls.http = cls.module.ThreadingHTTPServer(('127.0.0.1', 0), cls.module.Handler)
         cls.worker = threading.Thread(target=cls.http.serve_forever, daemon=True)
         cls.worker.start()

@@ -114,14 +114,26 @@ def normalize_profile(payload,key):
     except ProfileError:raise
     except (ValueError,KeyError,IndexError,TypeError,AttributeError):raise ProfileError('invalid_profile') from None
 
-def fetch_profile(store,key):
+def company_data(payload):
+    profile=payload['quoteSummary']['result'][0].get('assetProfile') or {}
+    description=' '.join(str(profile.get('longBusinessSummary') or '').split())[:650]
+    website=urlsplit(str(profile.get('website') or ''))
+    domain=website.hostname if website.scheme in ('http','https') else None
+    if domain and not re.fullmatch(r'[a-zA-Z0-9.-]{1,253}',domain):domain=None
+    return dict(description=description,domain=domain or '')
+
+def fetch_profile(store,key,company=False):
     def load():
         global _session,_crumb
         with _lock:
             with store.connect() as db:pauses=db.execute("SELECT expires_at FROM api_cache WHERE namespace='provider-cooldown' AND cache_key IN ('yahoo','yahoo-profile')").fetchall()
             delay=max((row[0]-time.time() for row in pauses),default=0)
             if delay>0:raise ProfileError('provider_cooldown',max(1,int(delay)))
-            try:return normalize_profile(_download_profile(key[0]),key)
+            try:
+                payload=_download_profile(key[0]);values=normalize_profile(payload,key);info=company_data(payload)
+                if company:return info
+                cached_json(store,'yahoo-company-v1','|'.join(key),10*365*86400,lambda:info)
+                return values
             except HTTPError as error:
                 _session=None;_crumb=None
                 try:seconds=min(86400,max(900,int((error.headers or {}).get('Retry-After','900'))))
@@ -134,7 +146,8 @@ def fetch_profile(store,key):
             except (ValueError,TypeError) as error:
                 if isinstance(error,ProfileError):raise
                 raise ProfileError('invalid_profile') from None
-    cached=cached_json(store,'yahoo-profile-v1','|'.join(key),30*86400,load)
+    cached=cached_json(store,'yahoo-company-v1' if company else 'yahoo-profile-v1','|'.join(key),(10*365 if company else 30)*86400,load)
+    if company:return cached
     if not isinstance(cached,dict):raise ProfileError('invalid_profile')
     try:values=validate_categories(cached)
     except (ValueError,TypeError):raise ProfileError('invalid_profile') from None
@@ -176,3 +189,13 @@ def enrich_categories(store,key,retry=False):
                 current=time.time();db.execute('INSERT OR REPLACE INTO api_cache VALUES(?,?,?,?,?)',('provider-cooldown','yahoo-profile','{}',current,current+seconds))
         record(store,'WARNING','market','categories_failed','Automatische categorieën ophalen mislukt; opnieuw proberen na de wachttijd.',{'symbol':key[0],'exchange':key[1],'currency':key[2],'code':code,'retry_seconds':seconds,'attempt':attempts,'error_type':type(error).__name__,**(error.details if isinstance(error,ProfileError) else {})})
         return False
+
+
+def fetch_company(store,key):
+    def load():
+        try:return fetch_profile(store,key,company=True)
+        except Exception as error:
+            record(store,'WARNING','market','company_failed','Bedrijfsinformatie ophalen mislukt.',{'symbol':key[0],'code':error.code if isinstance(error,ProfileError) else 'profile_failed'})
+            return {'description':'','domain':'','unavailable':True}
+    # Failed requests wait 15 minutes; successful company profiles are retained above.
+    return cached_json(store,'company-display','|'.join(key),900,load)

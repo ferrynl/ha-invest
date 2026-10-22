@@ -1,6 +1,10 @@
 """Listing details and explicit report categories; never infer an issuer from its exchange."""
 import json
 import re
+from decimal import Decimal
+from datetime import date
+from history import daily_values
+from forex import observation,unit
 from storage import now
 from transactions import scope
 
@@ -72,7 +76,16 @@ def details(store,data,account='all',include_pending=True):
                 events.append(dict(id=issue['id'],kind='issue',type=raw.get('Action') or row.get('kind') or 'Onbekend',day=row.get('day') or raw.get('Time (UTC)',raw.get('Time',''))[:10],trade_time=row.get('trade_time',''),account_id=issue['account_id'],quantity=row.get('quantity'),amount=row.get('amount'),price=row.get('price'),currency=row.get('currency',''),status='Te beoordelen',note=issue['reason']))
         for event in events:event['account_name']=accounts[event['account_id']]
         events.sort(key=lambda r:(r['day'],r.get('trade_time',''),r['id']),reverse=True)
-        return dict(category_sync=dict(sync) if sync else {'status':'pending'},symbol=key[0],exchange=key[1],currency=key[2],name=trades[0]['name'] if trades else key[0],categories=dict(categories) if categories else {field:'' for field in FIELDS},prices=prices,quote=dict(quote) if quote else None,events=events,account_id=account)
+        quantity=Decimal(0)
+        for owner in {row['account_id'] for row in trades}:
+            lots=[row for row in trades if row['account_id']==owner]
+            quantity+=Decimal(daily_values(lots,[],[])[-1]['quantity'])
+        value=quantity*Decimal(quote['price']) if quote else (Decimal(0) if not quantity else None)
+        day=quote['quoted_at'][:10] if quote else date.today().isoformat()
+        base,scale=unit(key[2]);fx=observation(store,base,day)
+        euro=value*scale/Decimal(fx['rate']) if value is not None and fx else None
+        summary=dict(quantity=str(quantity),value=str(value) if value is not None else None,value_eur=str(euro) if euro is not None else None,fx_day=fx['day'] if fx else None,dividend=str(sum((Decimal(row['amount']) for row in dividends),Decimal(0))))
+        return dict(summary=summary,category_sync=dict(sync) if sync else {'status':'pending'},symbol=key[0],exchange=key[1],currency=key[2],name=trades[0]['name'] if trades else key[0],categories=dict(categories) if categories else {field:'' for field in FIELDS},prices=prices,quote=dict(quote) if quote else None,events=events,account_id=account)
 
 
 def category_overview(store,account='all'):
@@ -93,3 +106,12 @@ def category_overview(store,account='all'):
             counts['complete' if all(categories[field] for field in ('sector','country','asset_type')) else 'partial']+=1
         else:counts[status]+=1
     return dict(account_id=str(account),entries=entries,counts=counts)
+
+
+def company(store,data,account='all'):
+    key=identity(data)
+    with store.connect() as db:
+        owner=scope(db,account);restriction='' if owner is None else ' AND account_id=?';args=key if owner is None else (*key,owner)
+        if not db.execute('SELECT 1 FROM purchases WHERE symbol=? AND exchange=? AND currency=?'+restriction+' UNION ALL SELECT 1 FROM dividends WHERE symbol=? AND exchange=? AND currency=?'+restriction,(*args,*args)).fetchone():raise ValueError('Aandeel niet gevonden.')
+    from profiles import fetch_company
+    return fetch_company(store,key)

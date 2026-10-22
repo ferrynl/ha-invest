@@ -1,5 +1,10 @@
 ## 0.16.2
 
+## 0.17.0
+- Aandeelpagina met overzichtsblokken voor aantal, waarde in noteringsvaluta, eurowaarde en ontvangen dividend.
+- Bedrijfslogo en korte bedrijfsomschrijving uit een bewaard bedrijfsprofiel, met rustige terugval als informatie ontbreekt.
+- Teruglink en technische categorietoelichtingen verwijderd; eurowaarde gebruikt uitsluitend opgeslagen wisselkoersen van uiterlijk de koersdatum.
+
 - Aandelencategorieën worden tijdens het aanvullen direct uit de opgeslagen metadata ververst, los van het gecachete portefeuilleoverzicht. Bij grote portefeuilles hoeft de lijst niet meer te wachten op de volledige koersronde.
 - De aandelenpagina toont voortgang en onderscheidt nog ophalen, ophalen mislukt, ontbrekende brongegevens, handmatig leeggemaakte velden en de zelf te kiezen eigen categorie.
 - Succesvolle aanvullingen maken de overzichtcache per aandeel ongeldig. De kleine metadata-aanvraag gebruikt geen koersdienst, herberekent geen historie en behoudt actieve kolomfilters en sortering.

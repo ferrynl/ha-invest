@@ -52,7 +52,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             self.send_header('Cache-Control','private, max-age=86400, immutable' if public else 'no-store')
             self.send_header('X-Content-Type-Options','nosniff')
             self.send_header('Referrer-Policy','same-origin')
-            self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'")
+            self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https://www.google.com https://t0.gstatic.com https://t1.gstatic.com https://t2.gstatic.com https://t3.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'")
             if digest:self.send_header('ETag',digest)
             if filename:self.send_header('Content-Disposition',f'attachment; filename="{filename}"')
             if cookie:self.send_header('Set-Cookie',cookie)
@@ -84,6 +84,10 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 query=parse_qs(urlsplit(self.path).query)
                 try:return self.respond(instruments.category_overview(store,query.get('account_id',['all'])[0]),etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
+            if path=='/api/instrument/company':
+                query=parse_qs(urlsplit(self.path).query)
+                try:return self.respond(instruments.company(store,{k:query.get(k,[''])[0] for k in ('symbol','exchange','currency')},query.get('account_id',['all'])[0]))
+                except (ValueError,TypeError):return self.respond({'error':'Aandeel of brokeraccount niet gevonden.'},400)
             if path=='/api/instrument':
                 query=parse_qs(urlsplit(self.path).query)
                 try:return self.respond(instruments.details(store,{k:query.get(k,[''])[0] for k in ('symbol','exchange','currency')},query.get('account_id',['all'])[0],include_pending=user['role']=='admin'))

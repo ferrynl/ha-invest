@@ -128,3 +128,22 @@ class ProfileTests(unittest.TestCase):
   raw=json.dumps(entry)
   for secret in ['private-crumb','private-cookie','private-body','private-message']:self.assertNotIn(secret,raw)
   with self.store.connect() as db:self.assertIsNotNone(db.execute("SELECT 1 FROM api_cache WHERE namespace='provider-cooldown' AND cache_key='yahoo-profile'").fetchone())
+
+ def test_company_information_reuses_profile_and_retains_only_public_description_and_domain(self):
+  raw=payload(longBusinessSummary='  A company.  With products. ',website='https://www.asml.com/en',companyOfficers=[{'name':'omit-me'}])
+  with patch('profiles._download_profile',return_value=raw) as api:
+   enrich_categories(self.store,KEY)
+   result=profiles.fetch_company(self.store,KEY)
+   self.assertEqual(result,dict(description='A company. With products.',domain='www.asml.com'));api.assert_called_once()
+  with patch('profiles._download_profile',side_effect=AssertionError('No new request')):
+   self.assertEqual(profiles.fetch_company(Store(self.tmp.name),KEY),result)
+  with self.store.connect() as db:
+   company=db.execute("SELECT payload FROM api_cache WHERE namespace='yahoo-company-v1'").fetchone()[0]
+  self.assertNotIn('omit-me',company)
+ def test_company_lookup_upgrades_existing_categories_and_caches_failure(self):
+  with patch('profiles._download_profile',return_value=payload(website='javascript:alert(1)',longBusinessSummary='Company')) as api:
+   info=profiles.fetch_company(self.store,KEY)
+   self.assertEqual(info['domain'],'');self.assertEqual(info['description'],'Company');api.assert_called_once()
+  other=('OTHER','NASDAQ','USD')
+  with patch('profiles._download_profile',side_effect=ProfileError('http_429')) as api:
+   self.assertTrue(profiles.fetch_company(self.store,other)['unavailable']);profiles.fetch_company(self.store,other);api.assert_called_once()

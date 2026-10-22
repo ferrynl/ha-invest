@@ -72,6 +72,28 @@ class InstrumentTests(unittest.TestCase):
   with self.store.connect() as db:db.execute("UPDATE instrument_mappings SET symbol='OTHER'")
   self.assertNotIn('CAPITAL_RETURN',{e['type'] for e in details(self.store,STOCK,'2')['events']})
 
+ def test_summary_scopes_quantity_and_dividend_and_preserves_missing_fx(self):
+  self.store.quote(STOCK['symbol'],STOCK['exchange'],STOCK['currency'],'140','2026-10-05T10:00:00+00:00','test')
+  scoped=details(self.store,STOCK,'2')['summary'];combined=details(self.store,STOCK,'all')['summary']
+  self.assertEqual(combined['quantity'],str(__import__('decimal').Decimal(scoped['quantity'])+1))
+  self.assertEqual(scoped['dividend'],'5');self.assertEqual(details(self.store,STOCK,'1')['summary']['dividend'],'0')
+  self.assertEqual(scoped['value_eur'],scoped['value'])
+  self.assertEqual(scoped['fx_day'],'2026-10-05')
+ def test_summary_fx_uses_quote_date_and_pence_without_network(self):
+  from unittest.mock import patch
+  stock=dict(symbol='TEST.L',exchange='LONDON',currency='GBX',name='Test')
+  self.store.add(dict(**stock,account_id=1,quantity='2.5',price='100',purchased_on='2026-10-01'))
+  self.store.quote('TEST.L','LONDON','GBX','200','2026-10-05T10:00:00+00:00','test')
+  with patch('forex.snapshot',side_effect=AssertionError('No network')):
+   self.assertIsNone(details(self.store,stock)['summary']['value_eur'])
+   with self.store.connect() as db:
+    db.execute("INSERT INTO fx_rates VALUES('EUR','GBP','2026-10-02','0.8','test','2026-10-02')")
+    db.execute("INSERT INTO fx_rates VALUES('EUR','GBP','2026-10-06','0.5','test','2026-10-06')")
+   summary=details(self.store,stock)['summary']
+   self.assertEqual(__import__('decimal').Decimal(summary['value_eur']),__import__('decimal').Decimal('6.25'))
+   self.assertEqual(summary['fx_day'],'2026-10-02')
+
+
 import test_transactions as transaction_test_support
 
 class InstrumentHttpTests(unittest.TestCase):
@@ -81,11 +103,18 @@ class InstrumentHttpTests(unittest.TestCase):
  def test_categories_require_admin_csrf_and_invalidate_state(self):
   query='/api/instrument?symbol=ASML.AS&exchange=AMSTERDAM&currency=EUR&account_id=all'
   self.assertEqual(self.request(query)[0],200)
+  from unittest.mock import patch
+  with patch('profiles.fetch_company',return_value=dict(description='Company',domain='example.com')) as company:
+   self.assertEqual(self.request(query.replace('/api/instrument?','/api/instrument/company?'))[1]['description'],'Company')
+   self.assertEqual(self.request(query.replace('ASML.AS','UNKNOWN').replace('/api/instrument?','/api/instrument/company?'))[0],400)
+   company.assert_called_once()
+
   self.cache.get(self.store.state)
   self.assertEqual(self.request('/api/instrument/categories',dict(**STOCK,sector='Technologie'))[0],200)
   self.assertEqual(self.request('/api/state')[1]['positions'][0]['categories']['sector'],'Technologie')
   self.auth.enable('owner','Long-test-password-2026');token=self.auth.login('owner','Long-test-password-2026','test');csrf=self.auth.user(token)['csrf']
   self.assertEqual(self.request(query)[0],401)
+  self.assertEqual(self.request(query.replace('/api/instrument?','/api/instrument/company?'))[0],401)
   self.assertEqual(self.request('/api/instrument/categories',dict(**STOCK,category='Groei'),token)[0],403)
   self.assertEqual(self.request('/api/instrument/categories',dict(**STOCK,category='Groei'),token,csrf)[0],200)
   self.store.add_account(dict(name='Broker',broker='Trading 212'))
