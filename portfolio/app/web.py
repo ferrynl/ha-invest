@@ -118,6 +118,11 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
                 try:return self.respond(overview(cache.get(store.state),account),etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
+            if path=='/api/home/euro':
+                from home_euro import overview
+                account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
+                try:return self.respond(overview(store,cache.get(store.state),account))
+                except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
             if path=='/api/state':
                 state=cache.get(store.state)
                 account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]

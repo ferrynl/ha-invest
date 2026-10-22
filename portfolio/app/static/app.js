@@ -18,7 +18,7 @@ async function load(){
 let chartRange='1M',rangeInitialized=false;
 function syncRangeButtons(){for(const button of $('chart-ranges').querySelectorAll('button'))button.setAttribute('aria-pressed',String(button.dataset.range===chartRange));}
 const dayLabel=day=>new Date(day+'T00:00:00Z').toLocaleDateString('nl-NL',{timeZone:'UTC'});
-function draw(){drawDashboardChart(state,chartRange,$("instrument").value,homeChartMembers());}
+function draw(){drawDashboardChart(homeViewState(),chartRange,$("instrument").value,homeChartMembers());}
 $('chart-ranges').addEventListener('click',event=>{const button=event.target.closest('button[data-range]');if(!button)return;chartRange=button.dataset.range;for(const choice of $('chart-ranges').querySelectorAll('button'))choice.setAttribute('aria-pressed',String(choice===button));draw();});
 $('instrument').addEventListener('change',()=>{homeChartChanged();draw();});
 window.addEventListener('resize',()=>{clearTimeout(homeResizeTimer);homeResizeTimer=setTimeout(()=>{if(location.hash==='#home'||!location.hash)draw();},120);});

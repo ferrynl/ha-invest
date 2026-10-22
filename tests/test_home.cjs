@@ -16,4 +16,6 @@ assert.notEqual(homeKey(a),homeKey({...a,account_id:2}));
 const many=Array.from({length:125},(_,i)=>position('Test '+i,{value:String(i+1)}));
 assert.equal(homeRows(many,'','open','value')[0].value,'125');
 assert.equal(many[0].value,'1'); // Sorting must not mutate the server snapshot.
-console.log('Home portfolio checks passed (13 assertions, 125-position fixture)');
+assert.equal(homeKey({...a,currency:'EUR',native_currency:'USD'}),homeKey({...a,currency:'USD'}));
+assert.notEqual(homeKey({...a,currency:'EUR',native_currency:'USD'}),homeKey(a));
+console.log('Home portfolio checks passed (15 assertions, 125-position fixture)');

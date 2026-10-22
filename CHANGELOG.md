@@ -1,5 +1,11 @@
 ## 0.16.2
 
+## 0.20.0
+- Dividendpagina toont alleen de eigen dashboardkop; algemene paginakop, brokerselector en koersstatus verdwijnen daar volledig.
+- Home krijgt de optie Alle valuta’s in euro, met kerncijfers, totaalgrafiek, wegingen en posities in één overzicht.
+- Aankoopinleg, verkopen en dividend worden op hun transactiedatum omgerekend; actuele marktwaarde tegen beschikbare actuele wisselkoersen. Britse pence worden correct verwerkt.
+- Ontbrekende omrekeningen worden expliciet apart gehouden en historische wisselkoersen zo nodig opgehaald. Oorspronkelijke boekingen blijven intact.
+
 ## 0.19.0
 - Nieuw dividenddashboard met kerncijfers per valuta, maandgrafiek, jaaroverzicht, kalender en grootste uitbetalers.
 - Vooruitblik van 12 maanden, 3 jaar of 5 jaar op basis van de laatste twaalf maanden en huidige aantallen, met bekende splitsingen verwerkt.
