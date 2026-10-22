@@ -10,6 +10,7 @@ from storage import positive
 from migrations import SCHEMA_VERSION
 
 TABLES={
+ 'instrument_valuations':(15,('symbol','exchange','currency','price','day','updated_at')),
  'broker_accounts':(6,('id','name','broker','created_at')),
  'purchases':(1,('id','symbol','exchange','name','quantity','price','currency','purchased_on','created_at','account_id','side','trade_time','split_before')),
  'instrument_categories':(13,('symbol','exchange','currency','sector','country','asset_type','category','updated_at','manual_sector','manual_country','manual_asset_type')),
@@ -82,7 +83,11 @@ def restore_backup(store,content):
                     if table=='purchases' and row['split_before'] not in ('','0'):positive(row['split_before'])
                     if table=='purchases' and row['split_before'] and row['side']!='BUY':raise ValueError('Ongeldige splitsing in back-up.')
                     for key in ('quantity','price','amount','rate','original_amount','converted_amount'):
-                        if key in row:positive(row[key])
+                        if key in row:
+                            if table=='instrument_valuations' and key=='price':
+                                from valuations import validate_price
+                                validate_price(row[key])
+                            else:positive(row[key])
                     for key in ('purchased_on','paid_on','day','start','end','synced_on','requested_on','rate_on'):
                         if key in row:
                             day=date.fromisoformat(row[key])

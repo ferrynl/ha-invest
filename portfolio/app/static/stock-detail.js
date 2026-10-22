@@ -2,7 +2,7 @@
 let stockDetail=null,stockDetailRequest=0,categoryTarget=null;
 const categoryLabels={sector:'Sector',country:'Land',asset_type:'Type belegging',category:'Eigen categorie'};
 function stockDetailLink(p){return '#aandeel?'+new URLSearchParams({symbol:p.symbol,exchange:p.exchange,currency:p.currency});}
-function clearStockDetail(){$('stock-detail-metrics').replaceChildren();$('stock-company-description').textContent='';$('stock-company-logo').onload=null;$('stock-company-logo').onerror=null;$('stock-company-logo').removeAttribute('src');stockDetailRequest++;stockDetail=null;categoryTarget=null;$('stock-detail-content').hidden=true;$('stock-events').replaceChildren();$('stock-price-chart').replaceChildren();$('stock-price-chart').onpointermove=null;$('stock-price-chart').onpointerleave=null;$('stock-price-chart').onkeydown=null;$('stock-custom-categories').replaceChildren();$('stock-detail-categories').replaceChildren();for(const id of ['stock-detail-name','stock-detail-identity','stock-detail-feedback','stock-price-latest','stock-price-note','stock-price-detail','stock-events-note','stock-category-title','stock-category-feedback'])$(id).textContent='';$('stock-category-form').reset();closePopup('stock-category-editor');}
+function clearStockDetail(){closePopup('stock-valuation-editor');$('stock-valuation-form').reset();$('stock-valuation-status').textContent='';$('stock-valuation-feedback').textContent='';$('stock-detail-metrics').replaceChildren();$('stock-company-description').textContent='';$('stock-company-logo').onload=null;$('stock-company-logo').onerror=null;$('stock-company-logo').removeAttribute('src');stockDetailRequest++;stockDetail=null;categoryTarget=null;$('stock-detail-content').hidden=true;$('stock-events').replaceChildren();$('stock-price-chart').replaceChildren();$('stock-price-chart').onpointermove=null;$('stock-price-chart').onpointerleave=null;$('stock-price-chart').onkeydown=null;$('stock-custom-categories').replaceChildren();$('stock-detail-categories').replaceChildren();for(const id of ['stock-detail-name','stock-detail-identity','stock-detail-feedback','stock-price-latest','stock-price-note','stock-price-detail','stock-events-note','stock-category-title','stock-category-feedback'])$(id).textContent='';$('stock-category-form').reset();closePopup('stock-category-editor');}
 async function loadStockDetail(){
  const params=new URLSearchParams(location.hash.split('?')[1]||'');if(!['symbol','exchange','currency'].every(k=>params.get(k))){clearStockDetail();$('stock-detail-feedback').textContent='Open een aandeel vanuit de aandelenlijst.';return;}
  const request=++stockDetailRequest,route=location.hash;params.set('account_id',currentBroker);
@@ -10,6 +10,7 @@ async function loadStockDetail(){
  try{const response=await apiFetch('api/instrument?'+params);const data=await response.json();if(!response.ok)throw Error(data.error);if(request!==stockDetailRequest||route!==location.hash||!accessSession?.user)return;
   stockDetail=data;$('stock-detail-content').hidden=false;$('stock-detail-feedback').textContent='';$('stock-detail-name').textContent=data.name;document.title=data.name+' · Home Invest';$('stock-detail-identity').textContent=data.symbol+' · '+data.exchange+' · '+data.currency+' · '+(currentBroker==='all'?'Alle brokeraccounts':state.accounts.find(a=>String(a.id)===String(currentBroker))?.name||'Brokeraccount');
   renderStockMetrics(data);
+  $('stock-valuation-open').hidden=accessSession.user.role!=='admin';$('stock-valuation-status').textContent=data.manual_valuation?'Handmatige laatste koers: '+money(data.manual_valuation.price,data.currency)+' · '+dayLabel(data.manual_valuation.day)+' · automatisch ophalen uitgeschakeld.':'';
   $('stock-company-description').textContent='Bedrijfsinformatie laden…';$('stock-company-logo').hidden=true;$('stock-company-logo').onload=null;$('stock-company-logo').onerror=null;$('stock-company-logo').removeAttribute('src');$('stock-company-initials').hidden=false;$('stock-company-initials').textContent=data.name.split(/\s+/).slice(0,2).map(word=>word[0]).join('').toUpperCase();
   loadStockCompany(params,request,route);
   $('stock-category-open').hidden=accessSession.user.role!=='admin';$('stock-detail-categories').replaceChildren();
@@ -58,7 +59,7 @@ $('stock-category-form').addEventListener('submit',async event=>{
 
 function renderStockMetrics(data){
  const summary=data.summary||{};const boxes=$('stock-detail-metrics');boxes.replaceChildren();
- const metrics=[['Aantal',quantityLabel(summary.quantity),'In bezit'],['Waarde in valuta',summary.value==null?'Geen koers beschikbaar':money(summary.value,data.currency),data.currency],['Waarde in euro',summary.value_eur==null?'Niet beschikbaar':money(summary.value_eur,'EUR'),summary.fx_day?'Wisselkoers van '+dayLabel(summary.fx_day):'Geen wisselkoers beschikbaar'],['Dividend',money(summary.dividend||'0',data.currency),'Totaal ontvangen']];
+ const metrics=[['Aantal',quantityLabel(summary.quantity),'In bezit'],['Waarde in valuta',summary.value==null?'Geen koers beschikbaar':money(summary.value,data.currency),data.currency],['Waarde in euro',summary.value_eur==null?'Niet beschikbaar':money(summary.value_eur,'EUR'),summary.fx_day?'Wisselkoers van '+dayLabel(summary.fx_day):'Geen wisselkoers beschikbaar'],['Dividend',money(summary.dividend||'0',data.currency),summary.dividend_percent==null?'Totaal ontvangen':new Intl.NumberFormat('nl-NL',{maximumFractionDigits:2}).format(Number(summary.dividend_percent))+'% van totale inleg sinds '+dayLabel(summary.first_purchase)]];
  for(const [label,value,note] of metrics){const box=document.createElement('article');box.className='home-metric';for(const [tag,text,style] of [['span',label,'home-metric-label'],['strong',value,''],['small',note,'']]){const el=document.createElement(tag);el.textContent=text;el.className=style;box.append(el);}boxes.append(box);}
 }
 async function loadStockCompany(params,request,route){
@@ -67,3 +68,16 @@ async function loadStockCompany(params,request,route){
  if(info.domain){const image=$('stock-company-logo');image.onload=()=>{if(request!==stockDetailRequest)return;image.hidden=false;$('stock-company-initials').hidden=true;};image.onerror=()=>{image.hidden=true;$('stock-company-initials').hidden=false;};image.src='https://www.google.com/s2/favicons?sz=128&domain='+encodeURIComponent(info.domain);}
  }catch{if(request===stockDetailRequest)$('stock-company-description').textContent='Bedrijfsinformatie is tijdelijk niet beschikbaar.';}
 }
+
+function syncValuationForm(){const manual=$('stock-valuation-form').elements.mode.value==='manual';for(const name of ['price','day'])$('stock-valuation-form').elements.namedItem(name).disabled=!manual;}
+$('stock-valuation-open').addEventListener('click',()=>{
+ if(!stockDetail||accessSession?.user?.role!=='admin')return;
+ const form=$('stock-valuation-form'),manual=stockDetail.manual_valuation;form.elements.mode.value=manual?'manual':'automatic';form.elements.price.value=manual?.price??stockDetail.quote?.price??'';form.elements.day.value=manual?.day??stockDetail.quote?.quoted_at.slice(0,10)??new Date().toISOString().slice(0,10);form.elements.day.max=new Date().toISOString().slice(0,10);$('stock-valuation-title').textContent=stockDetail.name+' · '+stockDetail.symbol;$('stock-valuation-currency').textContent=stockDetail.currency;$('stock-valuation-feedback').textContent='';syncValuationForm();openPopup('stock-valuation-editor');
+});
+$('stock-valuation-form').elements.mode.addEventListener('change',syncValuationForm);
+$('stock-valuation-cancel').addEventListener('click',()=>closePopup('stock-valuation-editor'));
+$('stock-valuation-form').addEventListener('submit',async event=>{
+ event.preventDefault();if(!stockDetail)return;const form=event.target,button=form.querySelector('button[type="submit"]');button.disabled=true;
+ const target={symbol:stockDetail.symbol,exchange:stockDetail.exchange,currency:stockDetail.currency};
+ try{await jsonAction('api/instrument/valuation',{...target,automatic:form.elements.mode.value==='automatic',price:form.elements.price.value,day:form.elements.day.value});closePopup('stock-valuation-editor');stateETag=null;await load();}catch(error){$('stock-valuation-feedback').textContent=error.message;}finally{button.disabled=false;}
+});

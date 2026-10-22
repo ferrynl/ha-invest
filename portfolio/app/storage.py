@@ -112,6 +112,9 @@ class Store:
             dividends = [dict(row) for row in db.execute('SELECT * FROM dividends ORDER BY paid_on,id')]
             accounts=[dict(r) for r in db.execute('SELECT * FROM broker_accounts ORDER BY id')]
             categories=[dict(r) for r in db.execute('SELECT * FROM instrument_categories')]
+            manual=[dict(r) for r in db.execute('SELECT * FROM instrument_valuations')]
+        from valuations import apply_final_prices,missing_diagnostics
+        quotes,daily=apply_final_prices(quotes,daily,manual)
         category_map={(r['symbol'],r['exchange'],r['currency']):r for r in categories}
         account_names={a['id']:a for a in accounts}
         for row in purchases:row['account_name']=account_names[row['account_id']]['name']
@@ -137,6 +140,7 @@ class Store:
                               'history': chart, 'quantity': str(quantity), 'cost': str(cost),
                               'value': str(value) if value is not None else None,
                               'gain': str(value - cost+realised) if value is not None else None})
+        missing_diagnostics(self,positions)
         return dict(instrument_categories=categories,purchases=purchases, positions=positions, quotes=quotes, dividends=dividends, portfolios=portfolio_values(positions),
                     accounts=accounts,settings=self.settings(), database_version=SCHEMA_VERSION)
 

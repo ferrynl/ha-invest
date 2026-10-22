@@ -1,5 +1,11 @@
 ## 0.16.2
 
+## 0.18.0
+- Dividend toont het cumulatieve percentage van de totale aankoopinleg sinds de eerste aankoop; groter bedrijfslogo.
+- Bekende winst blijft zichtbaar bij ontbrekende koersen. Home noemt de betrokken aandelen direct, inclusief diagnostische Log-ID.
+- Handmatige laatste koers per beursnotering (ook nul), met uitschakelen van automatische koers- en historieaanvragen en mogelijkheid tot hervatten.
+- Databaseversie 15 bewaart laatste koersen, inclusief veilige migratie, back-up en herstel.
+
 ## 0.17.0
 - Aandeelpagina met overzichtsblokken voor aantal, waarde in noteringsvaluta, eurowaarde en ontvangen dividend.
 - Bedrijfslogo en korte bedrijfsomschrijving uit een bewaard bedrijfsprofiel, met rustige terugval als informatie ontbreekt.

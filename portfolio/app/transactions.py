@@ -73,7 +73,7 @@ def changes(store,kind,record_id):
         return dict(changes=[dict(r) for r in db.execute('SELECT * FROM transaction_edits WHERE kind=? AND record_id=? ORDER BY id DESC',(kind,int(record_id)))])
 
 RESET_TABLES=('transaction_edits','import_issues','import_fx','import_records','capital_returns','instrument_mappings','import_batches','dividends','purchases')
-SHARED_TABLES=('instrument_category_sync','instrument_categories','quotes','daily_prices','history_sync','api_cache')
+SHARED_TABLES=('instrument_valuations','instrument_category_sync','instrument_categories','quotes','daily_prices','history_sync','api_cache')
 
 def reset_where(table,account_id):
     if account_id is None:return '',()

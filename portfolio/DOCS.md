@@ -518,3 +518,7 @@ Nog ophalen en Wordt opgehaald geven lopend werk aan. Ophalen mislukt duidt op e
 
 ### Aandeeloverzicht
 Open een aandeel vanuit Aandelen voor het aantal, de marktwaarde in noteringsvaluta, de eurowaarde en het ontvangen dividend binnen het gekozen brokeraccount. De eurowaarde gebruikt een reeds opgeslagen wisselkoers van uiterlijk de koersdatum; zonder koers blijft het bedrag onbekend. Bedrijfsomschrijving en websitedomein worden uit het Yahoo-profiel bewaard. Het bedrijfsicoon wordt via Google Favicons geladen op basis van dat domein; bij ontbreken blijven de bedrijfsinitialen zichtbaar.
+
+### Dividend en ontbrekende koersen
+Het dividendpercentage is cumulatief: totaal ontvangen dividend gedeeld door de totale aankoopinleg sinds de eerste aankoop, zonder splitsingen als extra inleg te tellen. Het is geen jaarrendement. Home telt de posities met bekende koers op en vermeldt de overgeslagen aandelen met een Log-ID. De log bevat beursnotering, brokeraccount, aantal en rekenbasis, maximaal eenmaal per zes uur bij ongewijzigde gegevens.
+Via Aandelen → aandeel → Koers instellen kan een admin een laatste koers met datum vastleggen, ook nul bij een waardeloos geworden aandeel. Automatische koers- en historieaanvragen stoppen voor die beursnotering bij alle brokeraccounts. Kies Automatisch om deze weer te hervatten. Een vaste laatste koers is geen verkoop of afboeking: transacties en dividend blijven intact.

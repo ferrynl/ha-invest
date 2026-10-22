@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from contextlib import closing
 
-SCHEMA_VERSION = 14
+SCHEMA_VERSION = 15
 MIGRATIONS = {
     1: (
         'CREATE TABLE IF NOT EXISTS purchases (id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL, name TEXT NOT NULL, quantity TEXT NOT NULL, price TEXT NOT NULL, currency TEXT NOT NULL, purchased_on TEXT NOT NULL, created_at TEXT NOT NULL)',
@@ -70,6 +70,9 @@ MIGRATIONS = {
         'ALTER TABLE instrument_categories ADD COLUMN manual_asset_type INTEGER NOT NULL DEFAULT 0 CHECK(manual_asset_type IN (0,1))',
         "UPDATE instrument_categories SET manual_sector=(sector<>''),manual_country=(country<>''),manual_asset_type=(asset_type<>'')",
         "CREATE TABLE instrument_category_sync (symbol TEXT NOT NULL, exchange TEXT NOT NULL, currency TEXT NOT NULL, status TEXT NOT NULL CHECK(status IN ('fetching','complete','partial','retry')), attempted_at TEXT NOT NULL, retry_at TEXT NOT NULL, attempts INTEGER NOT NULL, error_code TEXT NOT NULL DEFAULT '', PRIMARY KEY(symbol,exchange,currency))",
+    ),
+    15: (
+        'CREATE TABLE instrument_valuations (symbol TEXT NOT NULL, exchange TEXT NOT NULL, currency TEXT NOT NULL, price TEXT NOT NULL, day TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(symbol,exchange,currency))',
     ),
 }
 

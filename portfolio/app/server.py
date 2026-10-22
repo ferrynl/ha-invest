@@ -38,6 +38,9 @@ def refresh():
             instrument=(p['symbol'],p['exchange'],p['currency'])
             if instrument in seen:continue
             seen.add(instrument)
+            if p.get('quote',{} ) and p['quote'].get('manual'):
+                if enrich_categories(store,instrument):state_cache.invalidate()
+                continue
             start = min(l['purchased_on'] for l in snapshot['purchases'] if all(l[k] == p[k] for k in ('symbol', 'exchange', 'currency')))
             try:
                 if store.history_needed(p['symbol'], p['exchange'], p['currency'], start):
@@ -45,7 +48,7 @@ def refresh():
                     rows = fetch_history(p['symbol'], p['exchange'], p['currency'], requested,store=store)
                     store.save_history(p['symbol'], p['exchange'], p['currency'], start, rows)
             except Exception as error:
-                record(store,'WARNING','market','history_failed','Koershistorie ophalen mislukt.',{'symbol':p['symbol'],'error_type':type(error).__name__})
+                record(store,'WARNING','market','history_failed','Koershistorie ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],'error_type':type(error).__name__,'code':getattr(error,'code','provider_failed')})
                 history_errors += 1
             try:
                 fresh = p['quote'] and (datetime.now(timezone.utc)-datetime.fromisoformat(p['quote']['fetched_at'])).total_seconds()<interval
@@ -53,7 +56,7 @@ def refresh():
                     price, stamp = fetch_quote('', p['symbol'], p['exchange'], p['currency'],store=store,ttl=interval)
                     store.quote(p['symbol'], p['exchange'], p['currency'], price, stamp, 'Yahoo Finance (mogelijk vertraagd)')
             except Exception as error:
-                record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'error_type':type(error).__name__})
+                record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],'error_type':type(error).__name__,'code':getattr(error,'code','provider_failed')})
                 errors += 1
             # Profile lookup runs once per listing, including existing holdings.
             if enrich_categories(store,instrument):state_cache.invalidate()

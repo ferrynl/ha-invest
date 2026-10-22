@@ -156,7 +156,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 return self.respond({'error':'Ongeldige aanvraag.'},403)
             user=auth.user(self.token())
             if path!='/api/auth/login':
-                if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/transactions/edit','/api/instrument/categories') or path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/')):return
+                if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation') or path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/')):return
                 if auth.enabled() and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),user['csrf'] or ''):
                     return self.respond({'error':'Ongeldige sessiebeveiliging. Meld je opnieuw aan.'},403)
             try:
@@ -169,6 +169,12 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))
                 data=json.loads(body)
                 if not isinstance(data,dict):raise ValueError('Ongeldige aanvraag.')
+                if path=='/api/instrument/valuation':
+                    from valuations import save as save_valuation
+                    with refresh_lock:
+                        result=save_valuation(store,data);cache.invalidate()
+                    refresh_requested.set()
+                    return self.respond(result)
                 if path=='/api/instrument/categories':
                     with refresh_lock:
                         result=instruments.save_categories(store,data);cache.invalidate()

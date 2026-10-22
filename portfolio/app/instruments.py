@@ -47,6 +47,10 @@ def details(store,data,account='all',include_pending=True):
         sync=db.execute('SELECT * FROM instrument_category_sync WHERE symbol=? AND exchange=? AND currency=?',key).fetchone()
         prices=[dict(r) for r in db.execute('SELECT day,price FROM daily_prices WHERE symbol=? AND exchange=? AND currency=? ORDER BY day',key)]
         quote=db.execute('SELECT price,quoted_at,source FROM quotes WHERE symbol=? AND exchange=? AND currency=? ORDER BY quoted_at DESC,id DESC LIMIT 1',key).fetchone()
+        manual=db.execute('SELECT * FROM instrument_valuations WHERE symbol=? AND exchange=? AND currency=?',key).fetchone()
+        if manual:
+            from valuations import final_quote
+            quote=final_quote(dict(manual));prices=[row for row in prices if row['day']<manual['day']]+[dict(day=manual['day'],price=manual['price'])]
         accounts={r['id']:r['name'] for r in db.execute('SELECT id,name FROM broker_accounts')}
         mappings={}
         for source in db.execute("SELECT * FROM instrument_mappings WHERE symbol<>''"):
@@ -84,8 +88,10 @@ def details(store,data,account='all',include_pending=True):
         day=quote['quoted_at'][:10] if quote else date.today().isoformat()
         base,scale=unit(key[2]);fx=observation(store,base,day)
         euro=value*scale/Decimal(fx['rate']) if value is not None and fx else None
-        summary=dict(quantity=str(quantity),value=str(value) if value is not None else None,value_eur=str(euro) if euro is not None else None,fx_day=fx['day'] if fx else None,dividend=str(sum((Decimal(row['amount']) for row in dividends),Decimal(0))))
-        return dict(summary=summary,category_sync=dict(sync) if sync else {'status':'pending'},symbol=key[0],exchange=key[1],currency=key[2],name=trades[0]['name'] if trades else key[0],categories=dict(categories) if categories else {field:'' for field in FIELDS},prices=prices,quote=dict(quote) if quote else None,events=events,account_id=account)
+        invested=sum((Decimal(row['quantity'])*Decimal(row['price']) for row in trades if row['side']=='BUY' and not row['split_before']),Decimal(0))
+        received=sum((Decimal(row['amount']) for row in dividends),Decimal(0))
+        summary=dict(invested=str(invested),first_purchase=min((row['purchased_on'] for row in trades),default=None),dividend_percent=str(received/invested*100) if invested else None,quantity=str(quantity),value=str(value) if value is not None else None,value_eur=str(euro) if euro is not None else None,fx_day=fx['day'] if fx else None,dividend=str(sum((Decimal(row['amount']) for row in dividends),Decimal(0))))
+        return dict(manual_valuation=dict(manual) if manual else None,summary=summary,category_sync=dict(sync) if sync else {'status':'pending'},symbol=key[0],exchange=key[1],currency=key[2],name=trades[0]['name'] if trades else key[0],categories=dict(categories) if categories else {field:'' for field in FIELDS},prices=prices,quote=dict(quote) if quote else None,events=events,account_id=account)
 
 
 def category_overview(store,account='all'):

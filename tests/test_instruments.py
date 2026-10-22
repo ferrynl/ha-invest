@@ -112,8 +112,11 @@ class InstrumentHttpTests(unittest.TestCase):
   self.cache.get(self.store.state)
   self.assertEqual(self.request('/api/instrument/categories',dict(**STOCK,sector='Technologie'))[0],200)
   self.assertEqual(self.request('/api/state')[1]['positions'][0]['categories']['sector'],'Technologie')
+  self.assertEqual(self.request('/api/instrument/valuation',dict(**STOCK,automatic=False,price='1',day='2026-10-01'))[0],200)
+  self.assertTrue(self.request('/api/state')[1]['positions'][0]['quote']['manual'])
   self.auth.enable('owner','Long-test-password-2026');token=self.auth.login('owner','Long-test-password-2026','test');csrf=self.auth.user(token)['csrf']
   self.assertEqual(self.request(query)[0],401)
+  self.assertEqual(self.request('/api/instrument/valuation',dict(**STOCK,automatic=True),token)[0],403)
   self.assertEqual(self.request(query.replace('/api/instrument?','/api/instrument/company?'))[0],401)
   self.assertEqual(self.request('/api/instrument/categories',dict(**STOCK,category='Groei'),token)[0],403)
   self.assertEqual(self.request('/api/instrument/categories',dict(**STOCK,category='Groei'),token,csrf)[0],200)
@@ -128,3 +131,4 @@ class InstrumentHttpTests(unittest.TestCase):
   self.assertEqual(self.request(query,token=token)[0],200)
   self.assertNotIn('issue',{e['kind'] for e in self.request(query,token=token)[1]['events']})
   self.assertEqual(self.request('/api/instrument/categories',dict(**STOCK,category='Other'),token,csrf)[0],403)
+  self.assertEqual(self.request('/api/instrument/valuation',dict(**STOCK,automatic=False,price='1',day='2026-10-01'),token,csrf)[0],403)

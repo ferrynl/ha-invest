@@ -24,6 +24,7 @@ function formPopup(id,title,label,feedbackIds=[]){
  const cancel=document.createElement('button');cancel.type='button';cancel.className='secondary';cancel.textContent='Annuleren';cancel.addEventListener('click',()=>closePopup(panel.id));form.append(cancel);
 }
 function bindPopups(){
+ registerPopup('stock-valuation-editor','Koers instellen');
  registerPopup('stock-category-editor','Categorieën aanpassen');
  registerPopup('transaction-editor','Transactie bekijken en wijzigen');
  registerPopup('mapping-edit','Aandelenkoppeling aanpassen');
