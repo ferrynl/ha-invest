@@ -11,6 +11,7 @@ async function apiFetch(url,options={}){
  return response;
 }
 function lockApp(){
+ closeAllPopups();
  accessSession=null;stateETag=null;state=null;
  if(typeof clearTransactions==='function')clearTransactions();
  if(typeof clearHomeDashboard==='function')clearHomeDashboard();
@@ -55,7 +56,7 @@ async function jsonAction(path,data){
 }
 async function loadUsers(){
  const response=await apiFetch('api/users');if(!response.ok)throw Error('Gebruikers laden mislukt.');const data=await response.json();
- $('users-list').replaceChildren();for(const user of data.users){const row=document.createElement('tr');cell(row,user.username);cell(row,user.role);cell(row,user.active?'Actief':'Inactief');const action=cell(row,'');const button=document.createElement('button');button.type='button';button.textContent='Bewerken';button.addEventListener('click',()=>{const form=$('user-form');form.elements.namedItem('id').value=user.id;form.elements.namedItem('username').value=user.username;form.elements.namedItem('username').readOnly=true;form.elements.namedItem('password').value='';form.elements.namedItem('password').required=false;form.elements.namedItem('role').value=user.role;form.elements.namedItem('active').checked=Boolean(user.active);$('users-feedback').textContent='Laat het wachtwoord leeg om het bestaande te behouden.';});action.append(button);$('users-list').append(row);}
+ $('users-list').replaceChildren();for(const user of data.users){const row=document.createElement('tr');cell(row,user.username);cell(row,user.role);cell(row,user.active?'Actief':'Inactief');const action=cell(row,'');const button=document.createElement('button');button.type='button';button.textContent='Bewerken';button.addEventListener('click',()=>{const form=$('user-form');form.elements.namedItem('id').value=user.id;form.elements.namedItem('username').value=user.username;form.elements.namedItem('username').readOnly=true;form.elements.namedItem('password').value='';form.elements.namedItem('password').required=false;form.elements.namedItem('role').value=user.role;form.elements.namedItem('active').checked=Boolean(user.active);$('users-feedback').textContent='Laat het wachtwoord leeg om het bestaande te behouden.';openPopup('user-form-editor');});action.append(button);$('users-list').append(row);}
 }
 function newUser(){const form=$('user-form');form.reset();form.elements.namedItem('id').value='';form.elements.namedItem('username').readOnly=false;form.elements.namedItem('password').required=true;}
 function bindAccess(){

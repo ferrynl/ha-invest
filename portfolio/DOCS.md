@@ -1,6 +1,6 @@
 # Home Invest — Uitgebreide handleiding
 
-Experimentele versie (0.12.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.13.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -469,3 +469,22 @@ eveneens gewist, zodat je die gegevens bewust opnieuw kunt importeren.
 
 Schema **12** voegt transaction_edits toe; de bestaande schema-11-splitsingsmetadata
 blijft ongewijzigd. Back-upherstel ondersteunt wijzigingshistorie en oudere back-ups.
+
+
+## Home en bewerkpop-ups (0.13.0)
+
+Home begint direct bij het portefeuilleoverzicht. De algemene kop met MIJN PORTEFEUILLE,
+Home, de brokerselector en de koersstatusbalk zijn op deze pagina verborgen.
+Op andere pagina’s blijven de rekeningkeuze en status beschikbaar. De mobiele
+menuknop werkt ook op Home.
+
+Bewerken gebeurt altijd in een modale pop-up: transacties, aandelenkoppelingen,
+importclassificatie, gebruikers en instellingen. Toevoegen van aankopen, dividend
+en brokeraccounts, API-verbindingen, beveiliging, herstellen en verwijderen gebruiken
+dezelfde pop-upstijl. Lees- en zoekfilters blijven rechtstreeks op de pagina staan.
+
+Open het formulier via de bijbehorende knop. Sla expliciet op om de wijziging door
+te voeren. Sluiten, Annuleren of Escape slaat niets op. De achtergrond is tijdens
+bewerken niet bedienbaar en de toetsenbordfocus blijft in de pop-up. Bij navigatie
+en afmelden sluiten geopende pop-ups; wachtwoordvelden worden geleegd.
+Databaseschema en bestaande transacties blijven ongewijzigd.

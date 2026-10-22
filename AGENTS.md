@@ -45,3 +45,5 @@ Bij iedere wijziging aan dit project:
 
 - Home: houd valuta gescheiden, gebruik een totaalgrafiek als standaard en vergelijk maximaal zes posities.
   Bouw lange daghistorie en tabellen van verborgen pagina's pas op wanneer de gebruiker ze opent.
+
+- UI: alle formulieren die gegevens of instellingen wijzigen openen in een modale pop-up. Houd bewerkvelden uit de pagina zelf; gebruik dezelfde pop-upstijl, Sluiten/Annuleren, Escape en focusbeheer. Filters en alleen-lezen zoekvelden blijven op de pagina. Home toont geen algemene paginakop, brokerselector of koersstatusbalk; behoud het mobiele menu.

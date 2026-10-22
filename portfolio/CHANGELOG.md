@@ -1,3 +1,12 @@
+# 0.13.0
+
+- Home toont direct het portefeuilleoverzicht; de algemene paginakop, brokerselector en koersstatusbalk zijn daar verborgen. Het mobiele menu blijft bereikbaar.
+- Transacties en aandelen aanpassen gebeurt in een modale pop-up, inclusief wijzigingshistorie en bestaande controles.
+- Dezelfde pop-upstijl geldt voor aandelenkoppelingen, importbeoordelingen, gebruikers, dashboardinstellingen, API-verbindingen, nieuwe boekingen, brokeraccounts, beveiliging, herstellen en verwijderen.
+- Pop-ups ondersteunen Sluiten/Annuleren, Escape en toetsenbordfocus; bij navigatie of afmelden sluiten ze.
+- Vaste projectafspraak toegevoegd: toekomstige bewerkformulieren openen altijd in een pop-up.
+- Appversie 0.13.0; databaseschema blijft 12.
+
 # 0.12.0
 
 - Nieuwe pagina Transacties: aankopen, verkopen, dividend, kapitaalterugbetalingen en splitsingen bekijken, zoeken en filteren per type/brokeraccount, met 50 regels per pagina.
