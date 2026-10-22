@@ -1,3 +1,10 @@
+## 0.14.0
+
+- Alle tabellen hebben combineerbare filters per kolom. Bij Home filteren deze vóór paginering; andere tabellen doorzoeken de geladen regels.
+- Aantallen worden zonder wetenschappelijke nulnotatie getoond, met behoud van fractionele aandelen.
+- Importlogs bevatten aantallen bronregels, aankopen, verkopen, duplicaten en te beoordelen regels. Afgewezen verkopen en splitsingen vermelden bezit, gevraagd aantal en verschil waar relevant.
+- Bestaande transacties worden niet automatisch gewijzigd; ontbrekende historie en afgewezen regels blijven zichtbaar bij Te beoordelen.
+
 # 0.13.1
 
 - Foutieve importregels zonder geldige prijs of valuta worden niet meer aangeboden voor automatische beurskoppeling. De misleidende algemene TMX-aanvraagfout vervalt.

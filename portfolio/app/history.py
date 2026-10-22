@@ -1,6 +1,7 @@
 """Daily valuation, preserving unknown prices instead of inventing market data."""
 from datetime import date, timedelta
 from decimal import Decimal
+from diagnostics import ActionError
 
 def daily_values(purchases, daily, quotes, today=None):
     end = today or date.today()
@@ -25,10 +26,10 @@ def daily_values(purchases, daily, quotes, today=None):
             if lot.get('split_before','')!='':
                 before=Decimal(lot['split_before'])
                 if quantity<=0:raise ValueError('Splitsing zonder voorafgaand bezit. Importeer de volledige aankoopgeschiedenis.')
-                if before and before!=quantity:raise ValueError('Aantal voor splitsing wijkt af van het bezit. Controleer de aankoopgeschiedenis.')
+                if before and before!=quantity:raise ActionError('Aantal voor splitsing wijkt af van het bezit. Controleer de aankoopgeschiedenis.','split_quantity_mismatch',{'held_quantity':format(quantity,'f'),'expected_quantity':format(before,'f'),'new_quantity':format(units,'f'),'day':key})
                 quantity=units
             elif lot.get('side','BUY')=='SELL':
-                if units>quantity:raise ValueError('Verkoop groter dan het bezit. Importeer de volledige aankoopgeschiedenis.')
+                if units>quantity:raise ActionError('Verkoop groter dan het bezit. Importeer de volledige aankoopgeschiedenis.','sell_exceeds_holdings',{'held_quantity':format(quantity,'f'),'sell_quantity':format(units,'f'),'difference':format(units-quantity,'f'),'day':key})
                 removed=cost*units/quantity
                 realised+=units*price_at_trade-removed;quantity-=units;cost-=removed
                 if not quantity:cost=Decimal(0)
@@ -39,7 +40,7 @@ def daily_values(purchases, daily, quotes, today=None):
         if observed:
             price = prices[key]
         points.append(dict(day=key, cost=str(cost), value=str(quantity * Decimal(price)) if price is not None else ('0' if not quantity else None),
-                           quantity=str(quantity),realised=str(realised),invested=str(invested),price=price, carried=not observed))
+                           quantity=format(quantity,'f') if quantity else '0',realised=str(realised),invested=str(invested),price=price, carried=not observed))
         day += timedelta(days=1)
     return points
 

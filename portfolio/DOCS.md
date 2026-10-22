@@ -488,3 +488,8 @@ te voeren. Sluiten, Annuleren of Escape slaat niets op. De achtergrond is tijden
 bewerken niet bedienbaar en de toetsenbordfocus blijft in de pop-up. Bij navigatie
 en afmelden sluiten geopende pop-ups; wachtwoordvelden worden geleegd.
 Databaseschema en bestaande transacties blijven ongewijzigd.
+
+### Kolomfilters en importdiagnostiek (0.14.0)
+Elke tabel heeft onder de kolomkoppen zoekvelden. Meerdere velden worden gecombineerd; leegmaken heft een filter op. Home filtert alle posities binnen de gekozen valuta en algemene filters vóór paginering. Tabellen met een laadlimiet (zoals logs en dagwaarden) filteren de geladen regels; laad zo nodig extra regels. Filters worden alleen in het geheugen van de pagina bewaard.
+
+Aantallen zoals `0E-8` zijn exact nul en worden als `0` getoond. Fractionele aandelen behouden hun decimalen. API-import gebruikt het historische exportbestand, geen live bezitcontrole. Controleer bij afwijkingen de gekozen periode, aandelenkoppelingen en Te beoordelen. Diagnostische logs tonen per import het batchnummer, account, regelaantallen en afgewezen regels. Bij te grote verkopen of afwijkende splitsingen staan de betrokken aantallen in de details; bronbestanden en sleutels worden niet gelogd.

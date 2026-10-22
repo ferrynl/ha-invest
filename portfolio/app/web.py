@@ -27,7 +27,7 @@ from forex import overview as fx_overview,convert as fx_convert,history as fx_hi
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested):
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css')}
-    for name in ('home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups'):
+    for name in ('home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass

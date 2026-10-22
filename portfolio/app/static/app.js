@@ -1,4 +1,5 @@
 let state;
+const quantityLabel=value=>{const text=String(value??'0');if(Number(text)===0)return '0';return text.replace(/(\.\d*?[1-9])0+$|\.0+$/, '$1').replace('.',',');};
 const $ = id => document.getElementById(id);
 const money = (n,c) => n === null ? 'Nog geen koers' : new Intl.NumberFormat('nl-NL',{style:'currency',currency:c}).format(Number(n));
 function cell(row,value){const td=document.createElement('td');td.textContent=value;row.append(td);return td;}
@@ -61,9 +62,9 @@ function renderStockPage(){
  if(!state)return;
  $('positions').replaceChildren();$('purchases').replaceChildren();
  for(const p of state.positions){
-  const row=document.createElement('tr');cell(row,p.name+' · '+p.symbol+' · '+p.account_name);cell(row,p.quantity);cell(row,money(p.cost,p.currency));cell(row,p.quote?money(p.quote.price,p.currency):'—');cell(row,money(p.value,p.currency));cell(row,p.gain===null?'—':money(p.gain,p.currency)).className=Number(p.gain)>=0?'positive':'negative';cell(row,money(p.dividend,p.currency));cell(row,p.total_gain===null?'—':money(p.total_gain,p.currency)).className=Number(p.total_gain)>=0?'positive':'negative';cell(row,p.quote?new Date(p.quote.quoted_at).toLocaleString('nl-NL'):'Wacht op koers');$('positions').append(row);
+  const row=document.createElement('tr');cell(row,p.name+' · '+p.symbol+' · '+p.account_name);cell(row,quantityLabel(p.quantity));cell(row,money(p.cost,p.currency));cell(row,p.quote?money(p.quote.price,p.currency):'—');cell(row,money(p.value,p.currency));cell(row,p.gain===null?'—':money(p.gain,p.currency)).className=Number(p.gain)>=0?'positive':'negative';cell(row,money(p.dividend,p.currency));cell(row,p.total_gain===null?'—':money(p.total_gain,p.currency)).className=Number(p.total_gain)>=0?'positive':'negative';cell(row,p.quote?new Date(p.quote.quoted_at).toLocaleString('nl-NL'):'Wacht op koers');$('positions').append(row);
  }
- for(const p of state.purchases){const row=document.createElement('tr');for(const v of [p.purchased_on,p.name+' · '+p.symbol+' · '+p.account_name,Boolean(p.split_before)?'Aandelensplitsing':p.side,p.exchange,p.quantity,Boolean(p.split_before)?'—':money(p.price,p.currency)])cell(row,v);$('purchases').append(row);}
+ for(const p of state.purchases){const row=document.createElement('tr');for(const v of [p.purchased_on,p.name+' · '+p.symbol+' · '+p.account_name,Boolean(p.split_before)?'Aandelensplitsing':p.side,p.exchange,quantityLabel(p.quantity),Boolean(p.split_before)?'—':money(p.price,p.currency)])cell(row,v);$('purchases').append(row);}
  $('empty').textContent=state.positions.length?'':'Voeg je eerste aankoop toe. Er worden geen voorbeeldbedragen als echte gegevens opgeslagen.';
 }
 function renderDividendPage(){

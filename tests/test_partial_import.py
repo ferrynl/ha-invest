@@ -86,3 +86,28 @@ class PartialTests(unittest.TestCase):
   result=commit_partial(self.store,batch)
   self.assertEqual((result['imported'],result['pending']),(0,2))
   self.assertEqual(self.store.state()['purchases'],[])
+
+class ImportQuantityDiagnosticsTests(unittest.TestCase):
+ setUp=PartialTests.setUp
+ batch=PartialTests.batch
+ def test_sell_rejection_logs_exact_quantities_and_summary(self):
+  from diagnostics import read_logs
+  batch=self.batch(BUY+SELL);commit_partial(self.store,batch)
+  entries=read_logs(self.store)['entries']
+  rejection=next(e for e in entries if e['event']=='import_row_rejected')
+  self.assertEqual(rejection['details']['code'],'sell_exceeds_holdings')
+  self.assertEqual(rejection['details']['held_quantity'],'1')
+  self.assertEqual(rejection['details']['sell_quantity'],'5')
+  self.assertEqual(rejection['details']['difference'],'4')
+  self.assertEqual(rejection['details']['batch_id'],batch)
+  summary=next(e for e in entries if e['event']=='import_summary')
+  self.assertEqual(summary['details']['pending'],1)
+  self.assertEqual(summary['details']['imported'],1)
+  self.assertNotIn('raw',str(rejection['details']))
+ def test_fractional_round_trip_returns_plain_zero_without_losing_shares(self):
+  buy=BUY.replace(',1,100,',',0.26314172,100,')
+  sell=SELL.replace(',5,120,',',0.26314172,120,')
+  batch=self.batch(buy+sell);result=commit_partial(self.store,batch)
+  self.assertEqual(result['pending'],0)
+  self.assertEqual(self.store.state()['positions'][0]['quantity'],'0')
+  self.assertEqual(self.store.state()['purchases'][0]['quantity'],'0.26314172')

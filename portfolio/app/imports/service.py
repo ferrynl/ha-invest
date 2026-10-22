@@ -3,6 +3,7 @@ import hashlib
 import json
 from . import ADAPTERS
 from storage import now
+from diagnostics import record
 from provider import EXCHANGES
 from forex import convert,prepare_rates
 from .registry import remember,lookup,discover,identity
@@ -30,6 +31,7 @@ def preview(store,account_id,provider,filename,text):
                 if existing and not row['duplicate']:row['error']='Deze bron-ID is eerder geïmporteerd met andere gegevens.'
         payload=json.dumps(rows)
         cursor=db.execute('INSERT INTO import_batches(account_id,provider,filename,digest,payload,created_at) VALUES(?,?,?,?,?,?)',(account_id,provider,str(filename)[:180],hashlib.sha256(text.encode()).hexdigest(),payload,now()))
+    record(store,'WARNING' if any(r.get('error') for r in rows) else 'INFO',provider,'import_preview','Importvoorbeeld aangemaakt.',{'account_id':account_id,'batch_id':cursor.lastrowid,'source_rows':len(rows),'errors':sum(bool(r.get('error')) for r in rows),'duplicates':sum(bool(r.get('duplicate')) for r in rows),'buys':sum(r.get('kind')=='BUY' for r in rows),'sells':sum(r.get('kind')=='SELL' for r in rows),'splits':sum(r.get('kind')=='SPLIT' for r in rows),'skipped':sum(r.get('kind')=='SKIP' for r in rows),'first_day':min((r['day'] for r in rows if r.get('day')),default=None),'last_day':max((r['day'] for r in rows if r.get('day')),default=None)})
     registered=set()
     for row in rows:
         if row.get('kind') in ('BUY','SELL','DIVIDEND','SPLIT') and row.get('currency'):

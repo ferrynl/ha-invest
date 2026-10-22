@@ -4,6 +4,7 @@ import io
 import json
 import sqlite3
 from storage import now
+from diagnostics import record,ActionError
 from forex import prepare_rates,convert
 from .registry import discover,lookup,remember
 from .service import book_row
@@ -26,6 +27,7 @@ def commit_partial(store,batch_id):
         conflicts={}
         for row in rows:
             conflicts.setdefault(row['external_id'],set()).add(row['digest'])
+        failure_details={}
         prepared=[];failures={};duplicates=set();processed=set();standalone=0;imported=0;ignored=0
         for row in sorted(rows,key=lambda r:(r.get('trade_time',''),0 if r.get('kind')=='BUY' else 1 if r.get('kind')=='SELL' else 2)):
             if row.get('kind')=='SKIP' and row.get('decision')!='IGNORE':continue
@@ -70,6 +72,7 @@ def commit_partial(store,batch_id):
                     db.execute('UPDATE import_issues SET state=?,resolution=?,updated_at=? WHERE batch_id=? AND line=?',(state,row.get('decision','retry'),now(),batch_id,row['line']))
                 except (ValueError,KeyError,TypeError,sqlite3.IntegrityError) as error:
                     db.execute('ROLLBACK TO import_row');db.execute('RELEASE import_row')
+                    if isinstance(error,ActionError):failure_details[row['line']]={'code':error.code,**error.details}
                     original=next(r for r in rows if r['line']==row['line'])
                     failures[row['line']]=(original,str(error))
             for line in duplicates:db.execute("UPDATE import_issues SET state='resolved',resolution='already_processed',updated_at=? WHERE batch_id=? AND line=?",(now(),batch_id,line))
@@ -79,7 +82,11 @@ def commit_partial(store,batch_id):
                 if original['line'] in processed|duplicates:original['duplicate']=True
             pending=db.execute("SELECT COUNT(*) FROM import_issues WHERE batch_id=? AND state='pending'",(batch_id,)).fetchone()[0]
             db.execute('UPDATE import_batches SET status=?,payload=? WHERE id=?',('partial' if pending else 'imported',json.dumps(rows),batch_id))
-        return dict(imported=imported,pending=pending,ignored=ignored,duplicates=len(duplicates),standalone_dividends=standalone,batch_id=batch_id)
+        for line,(row,reason) in failures.items():
+            record(store,'WARNING',batch['provider'],'import_row_rejected','Importregel apart gehouden; bekijk Te beoordelen.',{'batch_id':batch_id,'account_id':batch['account_id'],'line':line,'kind':row.get('kind'),'ticker':row.get('ticker'),'day':row.get('day'),'quantity':row.get('quantity'),'code':'row_requires_review',**failure_details.get(line,{})})
+        result=dict(imported=imported,pending=pending,ignored=ignored,duplicates=len(duplicates),standalone_dividends=standalone,batch_id=batch_id)
+        record(store,'WARNING' if pending else 'INFO',batch['provider'],'import_summary','Import afgerond met regels ter beoordeling.' if pending else 'Import afgerond.',{'account_id':batch['account_id'],'source_rows':len(rows),'skipped':sum(r.get('kind')=='SKIP' for r in rows),**result})
+        return result
 
 def list_issues(store):
     with store.connect() as db:
