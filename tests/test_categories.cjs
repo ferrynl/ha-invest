@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict');
+const {categoryFieldLabel,categoryProgressLabel,categoryKey}=require('../portfolio/app/static/category-status.js');
+assert.equal(categoryFieldLabel({sector:'Technologie'},{status:'pending'},'sector'),'Technologie');
+assert.equal(categoryFieldLabel({},{status:'pending'},'sector'),'Nog ophalen…');
+assert.equal(categoryFieldLabel({},{status:'fetching'},'sector'),'Wordt opgehaald…');
+assert.equal(categoryFieldLabel({},{status:'retry'},'sector'),'Ophalen mislukt');
+assert.equal(categoryFieldLabel({},{status:'partial'},'country'),'Niet beschikbaar bij bron');
+assert.equal(categoryFieldLabel({manual_country:1},{status:'complete'},'country'),'Handmatig leeg');
+assert.equal(categoryFieldLabel({},{status:'complete'},'category'),'Zelf te kiezen');
+assert.equal(categoryFieldLabel({category:'Groei'},{status:'complete'},'category'),'Groei');
+assert.match(categoryProgressLabel({total:125,processed:100,complete:90,partial:10,pending:20,fetching:1,retry:4}),/100 van 125/);
+assert.match(categoryProgressLabel({total:125,processed:100,complete:90,partial:10,pending:20,fetching:1,retry:4}),/21 nog ophalen/);
+assert.equal(categoryKey({symbol:'ISRG',exchange:'NASDAQ',currency:'USD',account_id:1}),categoryKey({symbol:'ISRG',exchange:'NASDAQ',currency:'USD',account_id:2}));
+console.log('Category presentation checks passed');

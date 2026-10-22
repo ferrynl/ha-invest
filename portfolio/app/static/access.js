@@ -13,6 +13,7 @@ async function apiFetch(url,options={}){
 function lockApp(){
  closeAllPopups();
  accessSession=null;stateETag=null;state=null;
+ if(typeof clearCategoryOverview==='function')clearCategoryOverview();
  if(typeof clearTableControls==='function')clearTableControls();
  if(typeof clearStockDetail==='function')clearStockDetail();
  if(typeof clearTransactions==='function')clearTransactions();

@@ -510,3 +510,8 @@ Handmatige wijzigingen beschermen alleen het gewijzigde veld, ook als je een aut
 
 ### Profielaanvragen en HTTP 406 (0.16.1)
 Profielpagina’s worden als HTML aangevraagd, de anonieme sessiecode als tekst en de directe profiel-API als JSON. Bij HTTP 406 op de directe route probeert de app de ingesloten API-respons op de profielpagina. Blijft ook die aanvraag mislukken, dan tonen de diagnostische logs de precieze stap (`cookie_bootstrap`, `session_crumb`, `quote_summary` of `profile_page`), host, verwacht formaat en HTTP-status. Cookies, sessiecodes en antwoordinhoud worden niet gelogd. Een ETF kan een geldig gedeeltelijk profiel hebben: ontbrekend sector- of landinformatie wordt niet geschat.
+
+### Voortgang bij grote portefeuilles (0.16.2)
+De aandelenpagina haalt tijdens het aanvullen iedere vijf seconden alleen de actuele lokaal opgeslagen categorieën en voortgang op. Deze aanvraag gebruikt geen externe API en bouwt geen portefeuillehistorie opnieuw op. Gereed gemelde aandelen verschijnen direct, zonder op het einde van de volledige koersronde of de normale schermverversing te wachten. Als de ronde klaar is, wordt minder vaak gecontroleerd. Weergave vernieuwen controleert uitsluitend de lokale gegevens.
+
+Nog ophalen en Wordt opgehaald geven lopend werk aan. Ophalen mislukt duidt op een aanvraag met wachttijd. Niet beschikbaar bij bron betekent dat het profiel succesvol is opgehaald maar de bron dat veld niet levert; dit komt onder meer bij ETF’s voor. Handmatig leeg is een bewust beschermde correctie. Eigen categorie blijft Zelf te kiezen totdat je deze zelf instelt. De voortgang telt unieke beursnoteringen binnen het gekozen brokeraccount; dezelfde notering op meerdere accounts wordt één keer opgehaald.

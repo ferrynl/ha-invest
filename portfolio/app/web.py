@@ -28,7 +28,7 @@ from forex import overview as fx_overview,convert as fx_convert,history as fx_hi
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested):
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css')}
-    for name in ('home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail'):
+    for name in ('home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass
@@ -80,6 +80,10 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     backup=transactions.deletion_backup(store,query.get('name',[''])[0])
                     return self.respond(backup.read_bytes(),kind='application/vnd.sqlite3',filename=backup.name)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldige aanvraag of brokeraccount.'},400)
+            if path=='/api/instruments/categories':
+                query=parse_qs(urlsplit(self.path).query)
+                try:return self.respond(instruments.category_overview(store,query.get('account_id',['all'])[0]),etag=True)
+                except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
             if path=='/api/instrument':
                 query=parse_qs(urlsplit(self.path).query)
                 try:return self.respond(instruments.details(store,{k:query.get(k,[''])[0] for k in ('symbol','exchange','currency')},query.get('account_id',['all'])[0],include_pending=user['role']=='admin'))

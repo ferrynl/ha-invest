@@ -56,7 +56,7 @@ def refresh():
                 record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'error_type':type(error).__name__})
                 errors += 1
             # Profile lookup runs once per listing, including existing holdings.
-            enrich_categories(store,instrument)
+            if enrich_categories(store,instrument):state_cache.invalidate()
             # Space requests to avoid bursts; plan limits still apply.
             time.sleep(1)
         from storage import now

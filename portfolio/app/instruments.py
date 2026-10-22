@@ -73,3 +73,23 @@ def details(store,data,account='all',include_pending=True):
         for event in events:event['account_name']=accounts[event['account_id']]
         events.sort(key=lambda r:(r['day'],r.get('trade_time',''),r['id']),reverse=True)
         return dict(category_sync=dict(sync) if sync else {'status':'pending'},symbol=key[0],exchange=key[1],currency=key[2],name=trades[0]['name'] if trades else key[0],categories=dict(categories) if categories else {field:'' for field in FIELDS},prices=prices,quote=dict(quote) if quote else None,events=events,account_id=account)
+
+
+def category_overview(store,account='all'):
+    """Read current category progress without the financial state cache or provider calls."""
+    with store.connect() as db:
+        account_id=scope(db,account)
+        where='' if account_id is None else ' WHERE account_id=?'
+        records=db.execute("SELECT i.symbol,i.exchange,i.currency,c.sector,c.country,c.asset_type,c.category,c.manual_sector,c.manual_country,c.manual_asset_type,s.status,s.attempted_at,s.retry_at,s.error_code FROM (SELECT DISTINCT symbol,exchange,currency FROM purchases"+where+") i LEFT JOIN instrument_categories c ON c.symbol=i.symbol AND c.exchange=i.exchange AND c.currency=i.currency LEFT JOIN instrument_category_sync s ON s.symbol=i.symbol AND s.exchange=i.exchange AND s.currency=i.currency ORDER BY i.symbol,i.exchange,i.currency",() if account_id is None else (account_id,)).fetchall()
+    entries=[];counts=dict(total=len(records),processed=0,complete=0,partial=0,pending=0,fetching=0,retry=0)
+    for source in records:
+        row=dict(source);status=row['status'] or 'pending'
+        categories={field:row[field] or '' for field in FIELDS}
+        categories.update({'manual_'+field:row['manual_'+field] or 0 for field in ('sector','country','asset_type')})
+        sync={field:row[field] or '' for field in ('attempted_at','retry_at','error_code')};sync['status']=status
+        entries.append(dict(symbol=row['symbol'],exchange=row['exchange'],currency=row['currency'],categories=categories,sync=sync))
+        if status in ('complete','partial'):
+            counts['processed']+=1
+            counts['complete' if all(categories[field] for field in ('sector','country','asset_type')) else 'partial']+=1
+        else:counts[status]+=1
+    return dict(account_id=str(account),entries=entries,counts=counts)

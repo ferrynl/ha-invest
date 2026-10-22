@@ -29,6 +29,8 @@ jobs:
       - run: node --check portfolio/app/static/table-filters.js
       - run: node --check portfolio/app/static/stock-detail.js
       - run: node --check portfolio/app/static/transactions.js
+      - run: node --check portfolio/app/static/category-status.js
+      - run: node tests/test_categories.cjs
       - run: node tests/test_tables.cjs
       - run: node tests/test_home.cjs
       - run: node tests/test_chart.cjs
