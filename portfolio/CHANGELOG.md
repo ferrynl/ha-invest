@@ -1,5 +1,11 @@
 ## 0.16.2
 
+## 0.21.0
+- Dividend krijgt Alle valuta’s in euro voor kerncijfers, grafieken, kalender, uitbetalers en betalingen. Historische bedragen worden op betaaldatum omgerekend; de verwachting houdt de huidige wisselkoers vast.
+- Aandelen toont elke beursnotering één keer, met opgetelde aantallen en bedragen van alle brokers. Detailpagina’s openen altijd met alle brokertransacties.
+- Sectoren, landen en beleggingstypen krijgen visuele verdelingen op basis van open beursnoteringen. Bedrijfslinks passen bij de huisstijl, met beurs en ticker onder de naam.
+- De algemene brokerselector en dubbele kop verdwijnen op het aandelenoverzicht; de transactietabel onderaan is verwijderd. Aankopen toevoegen blijft beschikbaar via de pop-up.
+
 ## 0.20.0
 - Dividendpagina toont alleen de eigen dashboardkop; algemene paginakop, brokerselector en koersstatus verdwijnen daar volledig.
 - Home krijgt de optie Alle valuta’s in euro, met kerncijfers, totaalgrafiek, wegingen en posities in één overzicht.

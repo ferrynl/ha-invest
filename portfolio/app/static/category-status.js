@@ -14,7 +14,7 @@ function categoryProgressLabel(counts){
  if(!counts.total)return 'Nog geen aandelen om in te delen.';
  return counts.processed+' van '+counts.total+' profielen gecontroleerd · '+counts.complete+' volledig ingedeeld · '+counts.partial+' met ontbrekende velden · '+(counts.pending+counts.fetching)+' nog ophalen'+(counts.retry?' · '+counts.retry+' wachten op opnieuw proberen':'')+'. Je eigen categorie kies je zelf.';
 }
-function categoryForPosition(p){return categoryScope===String(currentBroker)&&categoryItems.get(categoryKey(p))||{categories:p.categories||{},sync:{status:'pending'}};}
+function categoryForPosition(p){return categoryScope==='all'&&categoryItems.get(categoryKey(p))||{categories:p.categories||{},sync:{status:'pending'}};}
 function clearCategoryOverview(){categoryGeneration++;categoryScope='';categoryItems.clear();categoryETag=null;categoryCounts=null;categoryNextCheck=0;categoryRequest=null;$('stock-categories-summary').textContent='';$('stock-categories-progress').value=0;$('stock-categories-refresh').disabled=false;}
 function applyCategoryOverview(result){
  categoryCounts=result.counts;categoryItems=new Map(result.entries.map(entry=>[categoryKey(entry),entry]));
@@ -24,20 +24,21 @@ function applyCategoryOverview(result){
   const entry=categoryItems.get(row.dataset.categoryKey);if(!entry)continue;
   for(const fieldCell of row.querySelectorAll('[data-category-field]')){const label=categoryFieldLabel(entry.categories,entry.sync,fieldCell.dataset.categoryField);if(fieldCell.textContent!==label)fieldCell.textContent=label;}
  }
+ if(typeof updateStocksCategories==='function')updateStocksCategories(result.entries);
  $('stock-categories-summary').textContent=categoryProgressLabel(result.counts);$('stock-categories-progress').max=Math.max(1,result.counts.total);$('stock-categories-progress').value=result.counts.processed;
 }
 async function refreshCategoryOverview(force=false){
  if(!state||!accessSession?.user||location.hash!=='#aandelen'||document.hidden)return;
- const account=String(currentBroker);
+ const account='all';
  if(categoryScope!==account){categoryGeneration++;categoryScope=account;categoryETag=null;categoryItems.clear();categoryCounts=null;categoryRequest=null;categoryNextCheck=0;}
  if(categoryRequest||!force&&Date.now()<categoryNextCheck)return;
  const request={generation:categoryGeneration,account};categoryRequest=request;$('stock-categories-refresh').disabled=true;
  try{
   const headers={};if(categoryETag)headers['If-None-Match']=categoryETag;
   const response=await apiFetch('api/instruments/categories?account_id='+encodeURIComponent(account),{headers});
-  if(request.generation!==categoryGeneration||account!==String(currentBroker)||!state||!accessSession?.user)return;
+  if(request.generation!==categoryGeneration||!state||!accessSession?.user)return;
   if(response.status===304)return;
-  const result=await response.json();if(request.generation!==categoryGeneration||account!==String(currentBroker)||!state||!accessSession?.user)return;if(!response.ok)throw Error(result.error||'Categorieën laden mislukt.');
+  const result=await response.json();if(request.generation!==categoryGeneration||!state||!accessSession?.user)return;if(!response.ok)throw Error(result.error||'Categorieën laden mislukt.');
   if(result.account_id!==account)return;
   categoryETag=response.headers.get('ETag');applyCategoryOverview(result);
  }catch(error){if(request.generation===categoryGeneration&&accessSession?.user)$('stock-categories-summary').textContent='Actuele categorieën laden mislukt. De getoonde gegevens blijven bewaard. Kies Weergave vernieuwen.';}

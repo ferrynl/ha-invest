@@ -28,7 +28,7 @@ from forex import overview as fx_overview,convert as fx_convert,history as fx_hi
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested):
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css')}
-    for name in ('home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends'):
+    for name in ('home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass
@@ -114,10 +114,13 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 with store.connect() as db:batches=[dict(r) for r in db.execute('SELECT id,account_id,provider,filename,status,created_at FROM import_batches ORDER BY id DESC LIMIT 50')]
                 return self.respond({'providers':[{'id':key,'name':value['name'],'formats':value['formats']} for key,value in ADAPTERS.items()],'batches':batches})
             if path=='/api/dividends/overview':
-                from dividend_dashboard import overview
+                from dividend_dashboard import overview,euro_overview
                 account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
-                try:return self.respond(overview(cache.get(store.state),account),etag=True)
+                try:return self.respond(euro_overview(store,cache.get(store.state),account) if parse_qs(urlsplit(self.path).query).get('combined')==['1'] else overview(cache.get(store.state),account),etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
+            if path=='/api/stocks':
+                from stocks_dashboard import overview
+                return self.respond(overview(store,cache.get(store.state)))
             if path=='/api/home/euro':
                 from home_euro import overview
                 account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]

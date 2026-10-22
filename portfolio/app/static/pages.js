@@ -9,6 +9,8 @@ function showPage(){
  for(const link of document.querySelectorAll('[data-route]')){if(link.dataset.route===page||(page==='aandeel'&&link.dataset.route==='aandelen')||((page==='import-koppelingen'||page==='import-beoordeling')&&link.dataset.route==='imports'))link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  document.body.classList.toggle('home-page',page==='home');
  document.body.classList.toggle('dividend-page',page==='dividend');
+ document.body.classList.toggle('stocks-page',page==='aandelen'||page==='aandeel');
+ document.body.classList.toggle('stocks-list-page',page==='aandelen');
  $('page-title').textContent=pageNames[page];document.title=pageNames[page]+' · Home Invest';closeMenu();
  if(page==='transacties'&&state)loadTransactions();
  if(page==='aandelen'&&state)renderStockPage();

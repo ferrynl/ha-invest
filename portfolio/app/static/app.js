@@ -59,16 +59,7 @@ $('dividend-form').addEventListener('submit',async event=>{
  try{const response=await apiFetch('api/dividends',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify({...Object.fromEntries(new FormData(event.target)),symbol,exchange,currency,account_id})});const result=await response.json();if(!response.ok)throw Error(result.error);$('dividend-feedback').textContent='Dividend apart opgeslagen en opgeteld bij je totale winst.';event.target.reset();await load();}catch(error){$('dividend-feedback').textContent=error.message;}finally{button.disabled=!state?.positions.length;}
 });
 
-function renderStockPage(){
- if(!state)return;
- $('positions').replaceChildren();$('purchases').replaceChildren();
- for(const p of state.positions){
-  const row=document.createElement('tr');row.dataset.categoryKey=categoryKey(p);const title=cell(row,'');const link=document.createElement('a');link.href=stockDetailLink(p);link.textContent=p.name+' · '+p.symbol+' · '+p.account_name;title.append(link);const metadata=categoryForPosition(p);for(const field of ['sector','country','asset_type','category']){const fieldCell=cell(row,categoryFieldLabel(metadata.categories,metadata.sync,field));fieldCell.dataset.categoryField=field;}cell(row,quantityLabel(p.quantity));cell(row,money(p.cost,p.currency));cell(row,p.quote?money(p.quote.price,p.currency):'—');cell(row,money(p.value,p.currency));cell(row,p.gain===null?'—':money(p.gain,p.currency)).className=Number(p.gain)>=0?'positive':'negative';cell(row,money(p.dividend,p.currency));cell(row,p.total_gain===null?'—':money(p.total_gain,p.currency)).className=Number(p.total_gain)>=0?'positive':'negative';cell(row,p.quote?new Date(p.quote.quoted_at).toLocaleString('nl-NL'):'Wacht op koers');$('positions').append(row);
- }
- for(const p of state.purchases){const row=document.createElement('tr');for(const v of [p.purchased_on,p.name+' · '+p.symbol+' · '+p.account_name,Boolean(p.split_before)?'Aandelensplitsing':p.side,p.exchange,quantityLabel(p.quantity),Boolean(p.split_before)?'—':money(p.price,p.currency)])cell(row,v);$('purchases').append(row);}
- $('empty').textContent=state.positions.length?'':'Voeg je eerste aankoop toe. Er worden geen voorbeeldbedragen als echte gegevens opgeslagen.';
- refreshCategoryOverview(true);
-}
+function renderStockPage(){loadStocksDashboard();}
 function renderDividendPage(){
  if(!state)return;
  const dividendSelected=$('dividend-stock').value;$('dividend-stock').replaceChildren();

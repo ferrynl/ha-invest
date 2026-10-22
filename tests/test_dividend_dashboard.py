@@ -61,3 +61,31 @@ class DividendDashboardHttpTests(unittest.TestCase):
   self.auth.enable('owner','Long-test-password-2026');self.assertEqual(self.request('/api/dividends/overview')[0],401)
   self.auth.save_user(dict(username='viewer',password='Long-test-password-2026',role='basic'));token=self.auth.login('viewer','Long-test-password-2026','test')
   self.assertEqual(self.request('/api/dividends/overview',token=token)[0],200)
+
+
+import tempfile
+from dividend_dashboard import euro_overview
+from storage import Store
+from unittest.mock import patch
+class DividendEuroTests(unittest.TestCase):
+ def setUp(self):
+  self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.store=Store(self.tmp.name)
+  for symbol,currency,exchange in [('US','USD','NYSE'),('EU','EUR','AMSTERDAM')]:
+   self.store.add(dict(symbol=symbol,currency=currency,exchange=exchange,name=symbol,quantity='2',price='100',purchased_on='2026-10-01'))
+   self.store.add_dividend(dict(symbol=symbol,currency=currency,exchange=exchange,amount='20' if currency=='USD' else '10',paid_on='2026-10-02'))
+ def run_euro(self,rates):
+  with self.store.connect() as db:
+   for day,rate in rates:db.execute('INSERT INTO fx_rates VALUES(?,?,?,?,?,?)',('EUR','USD',day,rate,'test','2026-10-22T10:00:00+00:00'))
+  with patch('forex.prepare_rates'):return euro_overview(self.store,self.store.state(),today=TODAY)['combined']
+ def test_actual_uses_payment_rate_forecast_uses_current_rate_and_original_identity_survives(self):
+  result=self.run_euro([('2026-10-02','2'),('2026-10-22','4')])
+  self.assertEqual(Decimal(result['total']),20);self.assertEqual(Decimal(result['next12']),15);self.assertEqual(result['coverage']['modeled'],2)
+  payment=next(p for p in result['ledger'] if p['symbol']=='US');self.assertEqual(payment['native_currency'],'USD');self.assertEqual(Decimal(payment['amount']),10);self.assertEqual(payment['source_amount'],'20')
+  company=next(p for p in result['contributors'] if p['symbol']=='US');self.assertEqual(company['native_currency'],'USD');self.assertEqual(Decimal(company['expected']),5)
+ def test_future_rate_is_not_used_for_past_payment_and_missing_conversion_is_explicit(self):
+  result=self.run_euro([('2026-10-22','4')]);self.assertEqual(Decimal(result['total']),10);self.assertEqual(len(result['missing_payments']),1);self.assertEqual(result['missing_payments'][0]['symbol'],'US')
+ def test_missing_current_rate_keeps_actual_but_does_not_guess_forecast(self):
+  result=self.run_euro([('2026-10-02','2')]);self.assertEqual(Decimal(result['total']),20);self.assertEqual(Decimal(result['next12']),10);self.assertIn('actuele wisselkoers',next(p for p in result['coverage']['excluded'] if p['symbol']=='US')['reason'])
+ def test_empty_portfolio_has_an_empty_combined_view(self):
+  with patch('forex.prepare_rates'):result=euro_overview(self.store,snapshot(),today=TODAY)['combined']
+  self.assertEqual(result['total'],'0');self.assertEqual(result['ledger'],[]);self.assertEqual(result['currency'],'EUR')
