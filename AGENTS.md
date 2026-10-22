@@ -2,6 +2,11 @@
 
 Bij iedere wijziging aan dit project:
 
+- Rond iedere wijziging af met commit en push naar GitHub, nadat de passende controles slagen.
+  Maak voor iedere nieuwe appversie ook een gepubliceerde GitHub Release met tag `v<appversie>`
+  en de bijbehorende changelogtekst. Controleer dat de GitHub-controles en release geslaagd zijn.
+  Dit is door de gebruiker doorlopend geautoriseerd; vraag hiervoor niet opnieuw om bevestiging.
+  Alleen documentatiewijzigingen vereisen geen nieuwe appversie of extra release.
 - Houd appcode, dashboard, databestand en back-ups apart. Commit nooit gebruikersdata.
 - Werk appversies bij in `portfolio/config.yaml` en `portfolio/app/version.py` bij functionele wijzigingen. Alleen documentatiecorrecties veranderen de appversie niet.
 - Als het databaseschema verandert: voeg de volgende opeenvolgende migratie toe

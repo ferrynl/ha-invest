@@ -6,6 +6,7 @@
 - AREB krijgt een exacte broker/ISIN-koppeling; historische TMX- en EPIX-transacties kunnen ook zonder actuele beursnotering gekoppeld worden. Deze koppelingen leveren geen fictieve koers op.
 - Stock distribution en Custom stock distribution worden herkend als aandelenuitkering/omzetting en duurzaam apart gehouden voor controle van de over te dragen kostprijs. Automatisch boeken van fusies en CVR-rechten is nog niet ondersteund.
 - Opgeslagen API-importvoorbeelden worden bij opnieuw openen bijgewerkt vanuit hun oorspronkelijke rapportregels, met behoud van bron-ID's en eerdere handmatige keuzes.
+- GitHub publiceert na geslaagde controles automatisch de ontbrekende release voor de huidige appversie, met gevalideerde versie en changelogtekst. Commit, push en release zijn voortaan vaste projectafspraken.
 - Databaseschema blijft 12.
 
 ## 0.13.0 — 22 oktober 2026

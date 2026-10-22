@@ -1,5 +1,7 @@
 name: Checks
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -27,3 +29,28 @@ jobs:
       - run: node tests/test_home.cjs
       - run: node tests/test_chart.cjs
       - run: docker build portfolio -t aandelen-dashboard:test
+  release:
+    needs: tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: github-release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Prepare version and release notes
+        run: python scripts/release_notes.py
+      - name: Publish missing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "v$APP_VERSION" >/dev/null 2>&1; then
+            echo "Release v$APP_VERSION already exists."
+          else
+            gh release create "v$APP_VERSION" --target "$GITHUB_SHA" --title "Home Invest $APP_VERSION" --notes-file "$RUNNER_TEMP/release-notes.md"
+          fi
