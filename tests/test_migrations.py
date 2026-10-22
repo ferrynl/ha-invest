@@ -23,12 +23,14 @@ class MigrationTests(unittest.TestCase):
                     db.execute(statement)
             db.execute(f'PRAGMA user_version={version}')
             db.execute("INSERT INTO purchases(id,symbol,exchange,name,quantity,price,currency,purchased_on,created_at) VALUES(1,'ASML.AS','AMSTERDAM','ASML','1','999','EUR','2026-10-12','2026-10-12T00:00:00Z')")
+            if version >= 2:
+                db.execute("INSERT INTO daily_prices VALUES('ASML.AS','AMSTERDAM','EUR','2026-10-12','1000')")
             if version >= 3:
                 db.execute("INSERT INTO dividends(id,symbol,exchange,currency,amount,paid_on,note,created_at) VALUES(1,'ASML.AS','AMSTERDAM','EUR','5.25','2026-10-15','netto','2026-10-15T00:00:00Z')")
             db.commit()
 
     def test_all_previously_released_versions_upgrade_without_losing_data(self):
-        for version in (1,2,3,4,5,6,7,8,9):
+        for version in (1,2,3,4,5,6,7,8,9,10):
             with self.subTest(version=version), tempfile.TemporaryDirectory() as directory:
                 self.path=Path(directory)/'portfolio.sqlite3'
                 self.create_old(version)
@@ -37,7 +39,8 @@ class MigrationTests(unittest.TestCase):
                     self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],SCHEMA_VERSION)
                     self.assertEqual(db.execute('SELECT price FROM purchases').fetchone()[0],'999')
                     self.assertEqual(db.execute('SELECT value FROM app_settings').fetchone()[0],'1M')
-                    if version==3:self.assertEqual(db.execute('SELECT amount FROM dividends').fetchone()[0],'5.25')
+                    if version>=2:self.assertEqual(db.execute('SELECT price FROM daily_prices').fetchone()[0],'1000')
+                    if version>=3:self.assertEqual(db.execute('SELECT amount FROM dividends').fetchone()[0],'5.25')
                 backups=list((self.path.parent/'backups'/'migrations').glob('*.sqlite3'))
                 self.assertEqual(len(backups),1)
                 with closing(sqlite3.connect(backups[0])) as db:

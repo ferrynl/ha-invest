@@ -34,7 +34,7 @@ function showImportProblems(problems){
 function showImportPreview(result){
  importPreview=result;$('import-commit').textContent='Import definitief opslaan';$('import-preview').hidden=false;$('import-confirm').checked=false;$('import-rows').replaceChildren();$('import-mappings').replaceChildren();
  $('import-warnings').textContent='Bestemming: '+result.account.name+' · '+result.account.broker+'. '+result.warnings.join(' ');
- for(const entry of result.rows){const row=document.createElement('tr');for(const value of [entry.line,entry.kind??'Onbekend',entry.ticker,entry.day??'—',entry.quantity??entry.amount??'—',entry.error??(entry.duplicate?'Reeds geïmporteerd':entry.kind==='SKIP'?'Overgeslagen (geen aandelenmutatie)':'Te importeren')])cell(row,value);$('import-rows').append(row);}
+ for(const entry of result.rows){const row=document.createElement('tr');for(const value of [entry.line,entry.kind??'Onbekend',entry.ticker,entry.day??'—',entry.quantity??entry.amount??'—',entry.error??(entry.duplicate?'Reeds geïmporteerd':entry.kind==='SPLIT_INFO'?'Splitsing: oude aantal (controle bij open)':entry.kind==='SKIP'?'Overgeslagen (geen aandelenmutatie)':'Te importeren')])cell(row,value);$('import-rows').append(row);}
  $('import-commit').disabled=false;showImportProblems(importProblems(result));
  const statuses=new Map();
  for(const instrument of result.instruments){const row=document.createElement('div');row.className='auto-mapping-row';const title=document.createElement('strong');title.textContent=instrument.ticker+' · '+instrument.currency;const status=document.createElement('p');status.textContent='Automatisch koppelen…';row.append(title,status);$('import-mappings').append(row);statuses.set(instrument.ticker+'|'+instrument.currency,status);}

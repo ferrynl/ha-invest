@@ -22,7 +22,12 @@ def daily_values(purchases, daily, quotes, today=None):
         while cursor < len(lots) and lots[cursor]['purchased_on'] <= key:
             lot = lots[cursor]
             units,price_at_trade=Decimal(lot['quantity']),Decimal(lot['price'])
-            if lot.get('side','BUY')=='SELL':
+            if lot.get('split_before','')!='':
+                before=Decimal(lot['split_before'])
+                if quantity<=0:raise ValueError('Splitsing zonder voorafgaand bezit. Importeer de volledige aankoopgeschiedenis.')
+                if before and before!=quantity:raise ValueError('Aantal voor splitsing wijkt af van het bezit. Controleer de aankoopgeschiedenis.')
+                quantity=units
+            elif lot.get('side','BUY')=='SELL':
                 if units>quantity:raise ValueError('Verkoop groter dan het bezit. Importeer de volledige aankoopgeschiedenis.')
                 removed=cost*units/quantity
                 realised+=units*price_at_trade-removed;quantity-=units;cost-=removed

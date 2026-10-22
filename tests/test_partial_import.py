@@ -25,17 +25,15 @@ class PartialTests(unittest.TestCase):
   return result['batch_id']
  def test_valid_row_imports_and_errors_are_durable_and_idempotent(self):
   batch=self.batch(BUY+MISSING+CAPITAL+SELL);result=commit_partial(self.store,batch)
-  self.assertEqual((result['imported'],result['pending']),(1,3))
+  self.assertEqual((result['imported'],result['pending']),(2,2))
   self.assertEqual(len(self.store.state()['purchases']),1)
-  self.assertEqual(len(list_issues(Store(self.tmp.name))['issues']),3)
+  self.assertEqual(len(list_issues(Store(self.tmp.name))['issues']),2)
   again=commit_partial(Store(self.tmp.name),batch)
-  self.assertEqual((again['imported'],again['pending']),(0,3))
+  self.assertEqual((again['imported'],again['pending']),(0,2))
   self.assertEqual(len(self.store.state()['purchases']),1)
- def test_capital_return_requires_choice_and_never_becomes_dividend_profit(self):
-  batch=self.batch(BUY+CAPITAL);commit_partial(self.store,batch)
-  issue=list_issues(self.store)['issues'][0]
-  result=resolve_issue(self.store,dict(id=issue['id'],decision='CAPITAL_RETURN'))
-  self.assertEqual((result['imported'],result['pending']),(1,0))
+ def test_capital_return_imports_automatically_and_never_becomes_dividend_profit(self):
+  batch=self.batch(BUY+CAPITAL);result=commit_partial(self.store,batch)
+  self.assertEqual((result['imported'],result['pending']),(2,0))
   self.assertEqual(self.store.state()['dividends'],[])
   returns=list_issues(self.store)['capital_returns'];self.assertEqual(returns[0]['amount'],'5')
   self.assertEqual(returns[0]['currency'],'USD')
@@ -51,7 +49,7 @@ class PartialTests(unittest.TestCase):
   self.assertEqual((result['imported'],result['pending']),(1,0))
   self.assertEqual(len(self.store.state()['purchases']),2)
  def test_ignore_preserves_raw_and_does_not_create_financial_rows(self):
-  batch=self.batch(CAPITAL);commit_partial(self.store,batch)
+  batch=self.batch(CAPITAL.replace('Dividend (Return of capital manufactured payment)','Unknown action'));commit_partial(self.store,batch)
   issue=list_issues(self.store)['issues'][0]
   result=resolve_issue(self.store,dict(id=issue['id'],decision='IGNORE'))
   self.assertEqual(result['pending'],0)
@@ -59,7 +57,7 @@ class PartialTests(unittest.TestCase):
   self.assertEqual(list_issues(self.store)['capital_returns'],[])
   self.assertEqual(list_issues(self.store)['issues'][0]['state'],'ignored')
   with self.store.connect() as db:raw=json.loads(db.execute('SELECT raw FROM import_records').fetchone()[0])
-  self.assertEqual(raw['Action'],'Dividend (Return of capital manufactured payment)')
+  self.assertEqual(raw['Action'],'Unknown action')
  def test_fx_failure_isolated_and_cannot_leave_half_booked_rows(self):
   batch=self.batch(BUY+MISSING)
   row=next(r for r in open_preview(self.store,batch)['rows'] if r['ticker']=='SAB')
@@ -71,8 +69,6 @@ class PartialTests(unittest.TestCase):
    self.assertEqual(db.execute('SELECT COUNT(*) FROM import_fx').fetchone()[0],0)
  def test_pending_and_capital_data_survive_backup_restore(self):
   batch=self.batch(CAPITAL+MISSING);commit_partial(self.store,batch)
-  issue=next(i for i in list_issues(self.store)['issues'] if i['ticker']=='HSHP')
-  resolve_issue(self.store,dict(id=issue['id'],decision='CAPITAL_RETURN'))
   restore_backup(self.store,self.store.backup().read_bytes())
   data=list_issues(self.store)
   self.assertEqual(len(data['capital_returns']),1)

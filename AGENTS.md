@@ -14,7 +14,7 @@ Bij iedere wijziging aan dit project:
 - Test behoud van aankopen, dividend en historie bij upgrades, herhaalde start en
   rollback bij fouten. Voeg regressietests toe voor elke nieuwe migratie.
 - Controleer de betrokken pagina's in de browser en voer passende bestaande tests uit.
-- Werk README, DOCS en CHANGELOG bij wanneer gebruik of installatie verandert.
+- Houd iedere wijziging bij in CHANGELOG.md. Houd README.md compact: versiegeschiedenis hoort alleen in CHANGELOG.md. Werk README en DOCS bij wanneer gebruik of installatie verandert.
 - Dwing accountrollen en CSRF op de server af; verborgen menu's zijn geen toegangscontrole.
 - Importeer bij portefeuilleherstel nooit gebruikers, beveiligingsopties of uitvoerbaar
   schema uit een upload. Behoud de huidige accounts en maak vooraf een veiligheidskopie.

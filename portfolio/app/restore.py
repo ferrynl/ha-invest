@@ -10,7 +10,7 @@ from migrations import SCHEMA_VERSION
 
 TABLES={
  'broker_accounts':(6,('id','name','broker','created_at')),
- 'purchases':(1,('id','symbol','exchange','name','quantity','price','currency','purchased_on','created_at','account_id','side','trade_time')),
+ 'purchases':(1,('id','symbol','exchange','name','quantity','price','currency','purchased_on','created_at','account_id','side','trade_time','split_before')),
  'quotes':(1,('id','symbol','exchange','currency','price','quoted_at','fetched_at','source')),
  'daily_prices':(2,('symbol','exchange','currency','day','price')),
  'history_sync':(2,('symbol','exchange','currency','start','synced_on')),
@@ -44,11 +44,13 @@ def restore_backup(store,content):
                 definition=source.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name=?",(table,)).fetchone()
                 if not definition or 'VIRTUAL' in definition[0].upper():raise ValueError('De back-up bevat geen geldig portefeuilleschema.')
                 source_columns=columns
-                if version<6 and table=='purchases':source_columns=columns[:-3]
+                if table=='purchases' and version<11:source_columns=columns[:-1]
+                if version<6 and table=='purchases':source_columns=columns[:-4]
                 if version<6 and table=='dividends':source_columns=columns[:-1]
                 data=source.execute(f'SELECT {",".join(source_columns)} FROM {table} LIMIT 250001').fetchall()
                 if version<6 and table=='purchases':data=[(*r,1,'BUY','') for r in data]
                 if version<6 and table=='dividends':data=[(*r,1) for r in data]
+                if table=='purchases' and version<11:data=[(*r,'') for r in data]
                 if len(data)>250000:raise ValueError('Te veel regels in deze back-up.')
                 for values in data:
                     row=dict(zip(columns,values))
@@ -60,6 +62,8 @@ def restore_backup(store,content):
                     for key in ('code','base','quote','currency','source_currency','target_currency'):
                         if key in row and not (table=='instrument_mappings' and key=='currency' and row[key]=='') and not re.fullmatch('[A-Z]{3}',str(row[key])):raise ValueError('Ongeldige valutacode in back-up.')
                     if 'symbol' in row and not (table=='instrument_mappings' and row['symbol']=='') and (not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',str(row['symbol'])) or not re.fullmatch(r'[A-Z0-9 _-]{1,40}',str(row['exchange'])) or not re.fullmatch(r'[A-Z]{3}',str(row['currency']))):raise ValueError('Ongeldige beursnotering in back-up.')
+                    if table=='purchases' and row['split_before'] not in ('','0'):positive(row['split_before'])
+                    if table=='purchases' and row['split_before'] and row['side']!='BUY':raise ValueError('Ongeldige splitsing in back-up.')
                     for key in ('quantity','price','amount','rate','original_amount','converted_amount'):
                         if key in row:positive(row[key])
                     for key in ('purchased_on','paid_on','day','start','end','synced_on','requested_on','rate_on'):

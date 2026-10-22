@@ -50,7 +50,9 @@ def parse_csv(text):
         action=raw.get('Action','').lower();kind=None;error=None
         if action.endswith('buy'):kind='BUY'
         elif action.endswith('sell'):kind='SELL'
-        elif action.startswith('dividend') and 'return of capital' not in action:kind='DIVIDEND'
+        elif action.startswith('dividend'):kind='CAPITAL_RETURN' if 'return of capital' in action else 'DIVIDEND'
+        elif action=='stock split open':kind='SPLIT'
+        elif action=='stock split close':kind='SPLIT_CLOSE'
         elif action in ('deposit','withdrawal','currency conversion','interest on cash','lending interest','cashback','spending cashback'):
             kind='SKIP'
         else:error='Dit transactietype wordt nog niet ondersteund: '+raw.get('Action','onbekend')
@@ -61,10 +63,14 @@ def parse_csv(text):
                 if stamp.date()>date.today():raise ValueError('Toekomstige transactie.')
                 row.update(day=stamp.date().isoformat(),trade_time=stamp.isoformat())
                 if not row['ticker']:raise ValueError('Ticker ontbreekt.')
-                if kind=='DIVIDEND':
+                if kind in ('DIVIDEND','CAPITAL_RETURN'):
                     amount=Decimal(number(raw.get('Total')))
                     if amount<=0:raise ValueError('Netto dividend moet positief zijn.')
                     row.update(amount=str(amount),currency=currency_code(raw.get('Currency (Total)','')))
+                elif kind in ('SPLIT','SPLIT_CLOSE'):
+                    quantity=Decimal(number(raw.get('No. of shares')))
+                    if quantity<=0:raise ValueError('Aantal na/voor splitsing moet positief zijn.')
+                    row.update(quantity=str(quantity),currency=currency_code(raw.get('Currency (Price / share)','')))
                 else:
                     quantity,price=Decimal(number(raw.get('No. of shares'))),Decimal(number(raw.get('Price / share')))
                     if quantity<=0 or price<=0:raise ValueError('Aantal of prijs ontbreekt.')
@@ -77,6 +83,22 @@ def parse_csv(text):
         if not row.get('external_id'):
             digest,external_id=unclassified_identity(raw)
             row.update(digest=digest,external_id=external_id)
+        if kind in ('CAPITAL_RETURN','SPLIT','SPLIT_CLOSE'):
+            digest,external_id=unclassified_identity(raw)
+            row.update(digest=digest,external_id=external_id)
         rows.append(row)
     if not rows:raise ValueError('CSV bevat geen gegevens.')
+    split_groups={}
+    for row in rows:
+        if row['kind'] in ('SPLIT','SPLIT_CLOSE'):
+            key=(row.get('trade_time'),row['ticker'],row['raw'].get('ISIN',''))
+            split_groups.setdefault(key,[]).append(row)
+    for group in split_groups.values():
+        opens=[r for r in group if r['kind']=='SPLIT']
+        closes=[r for r in group if r['kind']=='SPLIT_CLOSE']
+        if len(opens)!=1 or len(closes)>1 or any(r.get('error') for r in group) or len({r.get('currency') for r in group})!=1:
+            for row in group:row['error']=row.get('error') or 'Splitsing heeft geen geldige, eenduidige open/close-combinatie.'
+            continue
+        opens[0]['split_before']=closes[0]['quantity'] if closes else '0'
+        if closes:closes[0]['kind']='SPLIT_INFO'
     return rows

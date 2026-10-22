@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from contextlib import closing
 
-SCHEMA_VERSION = 10
+SCHEMA_VERSION = 11
 MIGRATIONS = {
     1: (
         'CREATE TABLE IF NOT EXISTS purchases (id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL, name TEXT NOT NULL, quantity TEXT NOT NULL, price TEXT NOT NULL, currency TEXT NOT NULL, purchased_on TEXT NOT NULL, created_at TEXT NOT NULL)',
@@ -53,6 +53,9 @@ MIGRATIONS = {
     10: (
         "CREATE TABLE import_issues (id INTEGER PRIMARY KEY, batch_id INTEGER NOT NULL REFERENCES import_batches(id), line INTEGER NOT NULL, state TEXT NOT NULL CHECK(state IN ('pending','resolved','ignored')), reason TEXT NOT NULL, payload TEXT NOT NULL, resolution TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL, UNIQUE(batch_id,line))",
         "CREATE TABLE capital_returns (id INTEGER PRIMARY KEY, batch_id INTEGER NOT NULL REFERENCES import_batches(id), account_id INTEGER NOT NULL REFERENCES broker_accounts(id), provider TEXT NOT NULL, external_id TEXT NOT NULL, ticker TEXT NOT NULL, isin TEXT NOT NULL, amount TEXT NOT NULL, currency TEXT NOT NULL, paid_on TEXT NOT NULL, created_at TEXT NOT NULL, UNIQUE(account_id,provider,external_id))",
+    ),
+    11: (
+        "ALTER TABLE purchases ADD COLUMN split_before TEXT NOT NULL DEFAULT ''",
     ),
 }
 

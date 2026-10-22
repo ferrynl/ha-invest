@@ -33,7 +33,7 @@ def discover(store):
     entries={}
     for batch in batches:
         for row in json.loads(batch['payload']):
-            if row.get('kind') not in ('BUY','SELL','DIVIDEND') or not row.get('currency'):continue
+            if row.get('kind') not in ('BUY','SELL','DIVIDEND','SPLIT') or not row.get('currency'):continue
             key=(batch['account_id'],batch['provider'],identity(row)[0],row['currency'])
             if key not in entries or (not entries[key].get('mapping') and row.get('mapping')):entries[key]=row
     for key,row in entries.items():

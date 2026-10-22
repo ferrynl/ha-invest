@@ -3,7 +3,7 @@ import csv
 import io
 import json
 import sqlite3
-from storage import now,positive
+from storage import now
 from forex import prepare_rates,convert
 from .registry import discover,lookup,remember
 from .service import book_row
@@ -20,7 +20,9 @@ def commit_partial(store,batch_id):
         with store.connect() as db:batch=db.execute('SELECT * FROM import_batches WHERE id=?',(batch_id,)).fetchone()
         if not batch:raise ValueError('Importvoorbeeld niet gevonden.')
         if batch['status']=='imported':return dict(imported=0,pending=0,duplicate=True)
-        rows=[stable(r) for r in json.loads(batch['payload'])];discover(store)
+        rows=[stable(r) for r in json.loads(batch['payload'])]
+        refresh_supported(rows)
+        discover(store)
         conflicts={}
         for row in rows:
             conflicts.setdefault(row['external_id'],set()).add(row['digest'])
@@ -35,11 +37,11 @@ def commit_partial(store,batch_id):
                     if existing[0]!=row['digest']:raise ValueError('Deze bron-ID is eerder met andere gegevens verwerkt. Eerdere boeking blijft behouden.')
                     duplicates.add(row['line']);continue
                 if row.get('error'):raise ValueError(row['error'])
-                if row.get('kind')=='CAPITAL_RETURN':prepared.append((row,None,None));continue
+                if row.get('kind') in ('CAPITAL_RETURN','SPLIT_INFO'):prepared.append((row,None,None));continue
                 mapping=lookup(store,batch['account_id'],batch['provider'],row) or row.get('mapping')
                 if not mapping:raise ValueError('Beurskoppeling ontbreekt. Kies de juiste notering bij Aandelenkoppelingen en probeer deze regel opnieuw.')
                 row['mapping']=mapping;trace=None;booked=row
-                if row['currency']!=mapping['currency']:
+                if row['kind']!='SPLIT' and row['currency']!=mapping['currency']:
                     prepare_rates(store,[(row['currency'],mapping['currency'],row['day'])])
                     key='amount' if row['kind']=='DIVIDEND' else 'price'
                     trace=convert(store,row[key],row['currency'],mapping['currency'],row['day'])
@@ -59,11 +61,6 @@ def commit_partial(store,batch_id):
                     elif existing:
                         if existing[0]!=row['digest']:raise ValueError('Bron-ID wijkt af van een eerdere boeking.')
                         duplicates.add(row['line'])
-                    elif row['kind']=='CAPITAL_RETURN':
-                        if row['kind']=='CAPITAL_RETURN':
-                            db.execute('INSERT INTO capital_returns(batch_id,account_id,provider,external_id,ticker,isin,amount,currency,paid_on,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',(batch_id,batch['account_id'],batch['provider'],row['external_id'],row['ticker'],row['raw'].get('ISIN',''),positive(row['amount']),row['currency'],row['day'],now()))
-                        db.execute('INSERT INTO import_records(batch_id,account_id,provider,external_id,digest,raw) VALUES(?,?,?,?,?,?)',(batch_id,batch['account_id'],batch['provider'],row['external_id'],row['digest'],json.dumps(row['raw'])))
-                        imported+=1
                     else:
                         count=book_row(db,batch_id,batch['account_id'],batch['provider'],row,mapping,trace)
                         standalone+=count;imported+=1
@@ -114,7 +111,23 @@ def resolve_issue(store,data):
             if row.get('mapping'):parsed['mapping']=row['mapping']
             row.clear();row.update(parsed)
         elif decision=='IGNORE':row.update(kind='SKIP',error=None,decision='IGNORE')
-        else:row['decision']='retry'
+        else:
+            row['decision']='retry'
+            refresh_supported(rows)
         with store.connect() as db:db.execute('UPDATE import_batches SET payload=? WHERE id=?',(json.dumps(rows),batch['id']))
-        if row.get('kind') in ('BUY','SELL','DIVIDEND'):remember(store,batch['account_id'],batch['provider'],row)
+        if row.get('kind') in ('BUY','SELL','DIVIDEND','SPLIT'):remember(store,batch['account_id'],batch['provider'],row)
         return commit_partial(store,batch['id'])
+
+def refresh_supported(rows):
+    if not any(r.get('kind') is None and r.get('error') and r.get('decision') in (None,'retry') for r in rows):return
+    stream=io.StringIO()
+    fields=list(dict.fromkeys(k for r in rows for k in r['raw']))
+    writer=csv.DictWriter(stream,fieldnames=fields);writer.writeheader()
+    for row in rows:writer.writerow(row['raw'])
+    parsed=parse_csv(stream.getvalue())
+    for row,new in zip(rows,parsed):
+        if row.get('kind') is not None or row.get('decision') not in (None,'retry') or not row.get('error'):continue
+        if new.get('kind') not in ('CAPITAL_RETURN','SPLIT','SPLIT_INFO','SPLIT_CLOSE'):continue
+        new.update(line=row['line'],external_id=row['external_id'],digest=row['digest'])
+        if row.get('mapping'):new['mapping']=row['mapping']
+        row.clear();row.update(new)
