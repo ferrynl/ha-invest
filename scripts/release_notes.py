@@ -19,7 +19,7 @@ def prepare(root):
     sections = []
     for filename in ('CHANGELOG.md', 'portfolio/CHANGELOG.md'):
         text = (root / filename).read_text(encoding='utf-8')
-        heading = re.search(r'^#{1,2}\s+' + re.escape(version) + r'(?:\s+[^\n]*)?$', text, re.M)
+        heading = re.search(r'^#{1,2}[ \t]+' + re.escape(version) + r'(?:[ \t]+[^\n]*)?$', text, re.M)
         if not heading:
             raise ValueError(f'Missing changelog section in {filename}')
         tail = text[heading.end():]
