@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');
+const {tableSortValue,sortTableData,tableColumnSorts,tableColumnTypes}=require('../portfolio/app/static/table-filters.js');
+assert.equal(tableSortValue('€ 1.234,56','number'),1234.56);
+assert.equal(tableSortValue('-12,5%','number'),-12.5);
+assert.equal(tableSortValue('0,00000001','number'),0.00000001);
+assert.equal(tableSortValue('Nog geen koers','number'),null);
+assert.equal(tableSortValue('2-10-2026','date'),'2026-10-02');
+assert.equal(tableSortValue('12-9-2026','date'),'2026-09-12');
+tableColumnTypes.set('test',['number']);tableColumnSorts.set('test',{index:0,direction:1});
+const values=['10','2','—','0,00000001'];
+assert.deepEqual(sortTableData('test',values,x=>[x]),['0,00000001','2','10','—']);
+tableColumnSorts.set('test',{index:0,direction:-1});
+assert.deepEqual(sortTableData('test',values,x=>[x]),['10','2','0,00000001','—']);
+const all=Array.from({length:125},(_,i)=>String(i));
+assert.equal(sortTableData('test',all,x=>[x]).slice(0,25)[0],'124');
+console.log('Table sorting checks passed');

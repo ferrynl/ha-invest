@@ -51,7 +51,8 @@ class HttpTests(unittest.TestCase):
         status,data,_=self.request('GET','/api/state')
         state=json.loads(data)
         self.assertEqual(state['settings']['default_range'],'3M')
-        self.assertEqual(state['database_version'],12)
+        from migrations import SCHEMA_VERSION
+        self.assertEqual(state['database_version'],SCHEMA_VERSION)
         from version import APP_VERSION
         self.assertEqual(state['app_version'],APP_VERSION)
         self.assertEqual(self.request('POST','/api/settings',json.dumps({'default_range':'bad'}),headers)[0],400)

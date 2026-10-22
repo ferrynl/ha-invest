@@ -1,3 +1,10 @@
+## 0.15.0
+
+- Open een aandeel vanuit de aandelenlijst voor een eigen detailpagina met koersgrafiek, periodekeuze en alle gekoppelde aankopen, verkopen, dividenden, splitsingen en kapitaalterugbetalingen. Gekoppelde openstaande importregels zijn herkenbaar als Te beoordelen.
+- Sector, land, type belegging en een eigen categorie worden blijvend per beursnotering opgeslagen. Admins wijzigen deze in een pop-up; de indeling staat ook in de aandelenlijst en blijft behouden in back-ups.
+- Klik op kolomkoppen om oplopend of aflopend te sorteren, ook in combinatie met kolomfilters. Home en Transacties sorteren en filteren vóór paginering.
+- Databaseversie 13 voegt categorieën toe met automatische migratie en veiligheidsback-up; bestaande transacties en historie blijven behouden.
+
 ## 0.14.0
 
 - Alle tabellen hebben combineerbare filters per kolom. Bij Home filteren deze vóór paginering; andere tabellen doorzoeken de geladen regels.

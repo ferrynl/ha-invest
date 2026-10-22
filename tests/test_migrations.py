@@ -30,7 +30,7 @@ class MigrationTests(unittest.TestCase):
             db.commit()
 
     def test_all_previously_released_versions_upgrade_without_losing_data(self):
-        for version in (1,2,3,4,5,6,7,8,9,10,11):
+        for version in (1,2,3,4,5,6,7,8,9,10,11,12):
             with self.subTest(version=version), tempfile.TemporaryDirectory() as directory:
                 self.path=Path(directory)/'portfolio.sqlite3'
                 self.create_old(version)
@@ -110,3 +110,17 @@ class MigrationTests(unittest.TestCase):
         self.assertEqual(restarted.settings()['default_range'],'1Y')
         self.assertFalse((self.path.parent/'backups'/'migrations').exists())
         with self.assertRaises(ValueError):store.save_settings({'default_range':'bad'})
+
+    def test_categories_migration_preserves_ledger_and_rolls_back_on_failure(self):
+        self.create_old(12)
+        broken={**MIGRATIONS,13:MIGRATIONS[13]+('INVALID SQL',)}
+        with patch.dict('migrations.MIGRATIONS',broken,clear=True),self.assertRaises(sqlite3.Error):migrate(self.path)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],12)
+            self.assertIsNone(db.execute("SELECT name FROM sqlite_master WHERE name='instrument_categories'").fetchone())
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM dividends').fetchone()[0],1)
+        migrate(self.path);migrate(self.path)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],13)
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM purchases').fetchone()[0],1)
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM instrument_categories').fetchone()[0],0)

@@ -20,6 +20,7 @@ from imports.matching import resolve_instrument
 from imports.registry import discover as mapping_list,edit as mapping_edit
 from imports import trading212_api
 import transactions
+import instruments
 from history import portfolio_values
 from diagnostics import read_logs,record,DiagnosticError,ActionError
 from forex import overview as fx_overview,convert as fx_convert,history as fx_history
@@ -27,7 +28,7 @@ from forex import overview as fx_overview,convert as fx_convert,history as fx_hi
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested):
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css')}
-    for name in ('home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters'):
+    for name in ('home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass
@@ -79,6 +80,10 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     backup=transactions.deletion_backup(store,query.get('name',[''])[0])
                     return self.respond(backup.read_bytes(),kind='application/vnd.sqlite3',filename=backup.name)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldige aanvraag of brokeraccount.'},400)
+            if path=='/api/instrument':
+                query=parse_qs(urlsplit(self.path).query)
+                try:return self.respond(instruments.details(store,{k:query.get(k,[''])[0] for k in ('symbol','exchange','currency')},query.get('account_id',['all'])[0],include_pending=user['role']=='admin'))
+                except (ValueError,TypeError):return self.respond({'error':'Aandeel of brokeraccount niet gevonden.'},400)
             if path=='/api/logs':
                 if not auth.enabled():return self.respond({'error':'Schakel gebruikersbeveiliging in en meld je aan als admin om logs te bekijken.'},403)
                 query=parse_qs(urlsplit(self.path).query)
@@ -143,7 +148,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 return self.respond({'error':'Ongeldige aanvraag.'},403)
             user=auth.user(self.token())
             if path!='/api/auth/login':
-                if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path=='/api/transactions/edit' or path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/')):return
+                if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/transactions/edit','/api/instrument/categories') or path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/')):return
                 if auth.enabled() and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),user['csrf'] or ''):
                     return self.respond({'error':'Ongeldige sessiebeveiliging. Meld je opnieuw aan.'},403)
             try:
@@ -156,6 +161,10 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))
                 data=json.loads(body)
                 if not isinstance(data,dict):raise ValueError('Ongeldige aanvraag.')
+                if path=='/api/instrument/categories':
+                    with refresh_lock:
+                        result=instruments.save_categories(store,data);cache.invalidate()
+                    return self.respond(result)
                 if path=='/api/transactions/edit':
                     with refresh_lock:
                         result=transactions.edit(store,data,user['username']);cache.invalidate()

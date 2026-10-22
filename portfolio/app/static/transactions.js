@@ -5,12 +5,13 @@ async function loadTransactions(){
  const version=++transactionLoad,account=currentBroker;
  try{const response=await apiFetch('api/transactions?account_id='+encodeURIComponent(account));const result=await response.json();if(!response.ok)throw Error(result.error);if(version!==transactionLoad||!accessSession?.user)return;transactionRows=result.transactions;transactionPage=0;renderTransactions();}catch(error){if(version===transactionLoad)$('transaction-feedback').textContent=error.message;}
 }
+function transactionColumnValues(entry){return [entry.day,transactionLabels[entry.type],entry.name||entry.symbol||entry.ticker,entry.account_name,entry.currency,entry.quantity==null?'—':quantityLabel(entry.quantity),entry.amount?money(entry.amount,entry.currency):entry.type==='SPLIT'?'—':money(entry.price,entry.currency),'Bekijken'];}
 function renderTransactions(){
  const query=$('transaction-search').value.trim().toLocaleLowerCase(),type=$('transaction-type').value;
- const filtered=transactionRows.filter(r=>(!type||r.type===type)&&[r.symbol,r.ticker,r.name,r.account_name,r.broker,r.day].join(' ').toLocaleLowerCase().includes(query));
+ const filtered=sortTableData('transaction-list',transactionRows.filter(r=>(!type||r.type===type)&&[r.symbol,r.ticker,r.name,r.account_name,r.broker,r.day].join(' ').toLocaleLowerCase().includes(query)&&matchesTableColumns('transaction-list',transactionColumnValues(r))),transactionColumnValues);
  const pages=Math.max(1,Math.ceil(filtered.length/50));transactionPage=Math.min(transactionPage,pages-1);$('transaction-list').replaceChildren();
  for(const entry of filtered.slice(transactionPage*50,transactionPage*50+50)){
-  const row=document.createElement('tr');for(const value of [entry.day,transactionLabels[entry.type],entry.name||entry.symbol||entry.ticker,entry.account_name,entry.currency,entry.quantity??'—',entry.amount?money(entry.amount,entry.currency):entry.type==='SPLIT'?'—':money(entry.price,entry.currency)])cell(row,value);
+  const row=document.createElement('tr');for(const value of transactionColumnValues(entry).slice(0,7))cell(row,value);
   const button=document.createElement('button');button.type='button';button.textContent='Bekijken';button.addEventListener('click',()=>openTransaction(entry));cell(row,'').append(button);$('transaction-list').append(row);
  }
  $('transaction-feedback').textContent=filtered.length+' transacties · pagina '+(transactionPage+1)+' van '+pages;
@@ -48,7 +49,7 @@ function bindTransactions(){
  $('delete-confirmation').addEventListener('input',()=>{$('delete-submit').disabled=!deletePreview||$('delete-confirmation').value!=='VERWIJDEREN';});
  $('delete-preview').addEventListener('click',async()=>{clearDeleteReview();const account=$('delete-account').value;const button=$('delete-preview');button.disabled=true;
   try{const response=await apiFetch('api/portfolio/delete-preview?account_id='+encodeURIComponent(account));const result=await response.json();if(!response.ok)throw Error(result.error);if(account!==$('delete-account').value)return;deletePreview=result;
-   const c=result.counts;$('delete-summary').textContent=result.label+': '+(c.purchases||0)+' aankopen/verkopen/splitsingen, '+(c.dividends||0)+' dividendontvangsten, '+(c.capital_returns||0)+' kapitaalterugbetalingen, '+(c.import_batches||0)+' imports en '+(c.import_issues||0)+' beoordelingen. Ook de bijbehorende bron-ID’s, omrekeningen, aandelenkoppelingen en wijzigingshistorie worden verwijderd.'+(account==='all'?' Gedeelde aandelenkoersen en hun cache worden ook gewist.':' Gedeelde aandelenkoersen blijven beschikbaar voor de overige rekeningen.');
+   const c=result.counts;$('delete-summary').textContent=result.label+': '+(c.purchases||0)+' aankopen/verkopen/splitsingen, '+(c.dividends||0)+' dividendontvangsten, '+(c.capital_returns||0)+' kapitaalterugbetalingen, '+(c.import_batches||0)+' imports en '+(c.import_issues||0)+' beoordelingen. Ook de bijbehorende bron-ID’s, omrekeningen, aandelenkoppelingen en wijzigingshistorie worden verwijderd.'+(account==='all'?' Gedeelde aandelenkoersen, categorieën en hun cache worden ook gewist.':' Gedeelde aandelenkoersen blijven beschikbaar voor de overige rekeningen.');
    $('delete-review').hidden=false;$('delete-confirmation').focus();
   }catch(error){$('delete-feedback').textContent=error.message;}finally{button.disabled=false;}
  });

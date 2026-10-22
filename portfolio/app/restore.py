@@ -12,6 +12,7 @@ from migrations import SCHEMA_VERSION
 TABLES={
  'broker_accounts':(6,('id','name','broker','created_at')),
  'purchases':(1,('id','symbol','exchange','name','quantity','price','currency','purchased_on','created_at','account_id','side','trade_time','split_before')),
+ 'instrument_categories':(13,('symbol','exchange','currency','sector','country','asset_type','category','updated_at')),
  'quotes':(1,('id','symbol','exchange','currency','price','quoted_at','fetched_at','source')),
  'daily_prices':(2,('symbol','exchange','currency','day','price')),
  'history_sync':(2,('symbol','exchange','currency','start','synced_on')),
@@ -61,6 +62,9 @@ def restore_backup(store,content):
                         if row['origin'] not in ('pending','automatic','manual') or row['provider']!='trading212':raise ValueError('Ongeldige instrumentkoppeling in back-up.')
                         if row['identity']!=('isin:'+row['isin'] if row['isin'] else 'ticker:'+row['ticker'].strip().upper()):raise ValueError('Ongeldige instrumentidentiteit in back-up.')
                         if not row['symbol'] and (row['exchange'] or row['currency'] or row['origin']!='pending'):raise ValueError('Onvolledige instrumentkoppeling in back-up.')
+                    if table=='instrument_categories':
+                        from instruments import validate_categories
+                        validate_categories(row)
                     if table=='transaction_edits':
                         if row['kind'] not in ('trade','dividend','capital'):raise ValueError('Ongeldig transactietype in wijzigingshistorie.')
                         for field in ('before_payload','after_payload'):

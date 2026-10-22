@@ -111,13 +111,15 @@ class Store:
             daily = [dict(row) for row in db.execute('SELECT * FROM daily_prices ORDER BY day')]
             dividends = [dict(row) for row in db.execute('SELECT * FROM dividends ORDER BY paid_on,id')]
             accounts=[dict(r) for r in db.execute('SELECT * FROM broker_accounts ORDER BY id')]
+            categories=[dict(r) for r in db.execute('SELECT * FROM instrument_categories')]
+        category_map={(r['symbol'],r['exchange'],r['currency']):r for r in categories}
         account_names={a['id']:a for a in accounts}
         for row in purchases:row['account_name']=account_names[row['account_id']]['name']
         groups = {}
         for p in purchases:
             key = (p['account_id'],p['symbol'], p['exchange'], p['currency'])
             account=account_names[p['account_id']]
-            groups.setdefault(key,dict(account_id=key[0],symbol=key[1],exchange=key[2],currency=key[3],name=p['name'],account_name=account['name'],broker=account['broker'],quote=None))
+            groups.setdefault(key,dict(account_id=key[0],symbol=key[1],exchange=key[2],currency=key[3],categories=category_map.get((key[1],key[2],key[3]),{}),name=p['name'],account_name=account['name'],broker=account['broker'],quote=None))
         for q in quotes:
             for group in groups.values():
                 if all(q[k]==group[k] for k in ('symbol','exchange','currency')):group['quote']=q
@@ -135,7 +137,7 @@ class Store:
                               'history': chart, 'quantity': str(quantity), 'cost': str(cost),
                               'value': str(value) if value is not None else None,
                               'gain': str(value - cost+realised) if value is not None else None})
-        return dict(purchases=purchases, positions=positions, quotes=quotes, dividends=dividends, portfolios=portfolio_values(positions),
+        return dict(instrument_categories=categories,purchases=purchases, positions=positions, quotes=quotes, dividends=dividends, portfolios=portfolio_values(positions),
                     accounts=accounts,settings=self.settings(), database_version=SCHEMA_VERSION)
 
     def history_start(self,symbol,exchange,currency,start):
