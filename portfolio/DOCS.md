@@ -1,6 +1,6 @@
 # Home Invest — Uitgebreide handleiding
 
-Experimentele versie (0.11.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.12.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -423,3 +423,49 @@ automatische fiscale kostprijscorrectie gedaan.
 
 Schema 11 voegt purchases.split_before toe. Oudere back-ups krijgen bij herstel lege
 splitsingsmetadata; nieuwe back-ups behouden splitsingen en de bestaande administratie.
+
+
+## Transacties bekijken en wijzigen (0.12.0)
+
+Open **Transacties** in het zijmenu. De rekeningkeuze bovenaan geldt voor deze lijst;
+zoek op aandeel, broker of datum en filter op transactietype. De lijst toont 50 regels
+per pagina. **Bekijken** opent de gegevens en de volledige wijzigingshistorie.
+Basic-gebruikers kunnen bekijken; alleen admins kunnen wijzigingen opslaan.
+
+Bij aankopen en verkopen kun je datum, tijd, aantal, prijs en aankoop/verkooptype wijzigen.
+Bij dividend kun je datum, netto bedrag en notitie wijzigen. Bij kapitaalterugbetalingen
+zijn datum en bedrag aanpasbaar; ze blijven buiten dividendwinst.
+Bij splitsingen kun je datum, tijd en het nieuwe aantal aanpassen. Het oude aantal
+uit de bron blijft als controle behouden. Brokeraccount, aandeel en valuta blijven vaststaan.
+Een wijziging die latere verkopen of splitsingen ongeldig maakt, wordt volledig teruggedraaid.
+
+De oorspronkelijke importregel, gebruikte bron-ID en oorspronkelijke valutaomrekening
+blijven als bronadministratie bewaard. Een correctie past de geboekte ledger aan;
+de wijzigingshistorie vermeldt vóór/na, tijd en gebruiker. Opnieuw importeren van dezelfde
+bronregel maakt de handmatige correctie niet ongedaan. Vernieuw het overzicht als een
+andere sessie de transactie intussen heeft gewijzigd.
+
+## Portefeuillegegevens verwijderen
+
+Open **Instellingen → Portefeuillegegevens verwijderen**. Kies **Alles** of één
+brokeraccount en bekijk het verwijderoverzicht. Typ **VERWIJDEREN** en kies
+**Getoonde gegevens verwijderen**. Een intussen gewijzigde administratie vereist een
+nieuw overzicht. Zonder succesvolle veiligheidsback-up wordt niets verwijderd.
+
+Verwijderd worden de gekozen aankopen, verkopen, splitsingen, dividend, kapitaalterugbetalingen,
+imports, bron-ID-registraties, importomrekeningen, beoordelingen, aandelenkoppelingen
+en wijzigingshistorie. Bij Alles worden ook gedeelde aandelenkoersen, synchronisatiestatus
+en API-cache gewist. Bij één brokeraccount blijven gedeelde koersen en andere rekeningen behouden.
+Brokeraccounts zelf, gebruikers, wachtwoorden, beveiliging, appinstellingen, referentiekoersen
+voor valuta en opgeslagen API-verbindingen blijven behouden. Lopende API-rapportaanvragen
+blijven eveneens beschikbaar; ophalen maakt een nieuw importvoorbeeld.
+
+Een volledige back-up van de portefeuille vóór verwijderen staat in
+/data/backups/deletions/before-delete-portfolio-*.sqlite3, buiten de gewone rotatie.
+Download deze via de link die na verwijderen verschijnt (alleen admin). Terugzetten
+via de bestaande back-upfunctie herstelt de volledige portefeuille, inclusief andere rekeningen
+zoals ze op het moment van de back-up waren. De bron-ID’s van gewiste imports worden
+eveneens gewist, zodat je die gegevens bewust opnieuw kunt importeren.
+
+Schema **12** voegt transaction_edits toe; de bestaande schema-11-splitsingsmetadata
+blijft ongewijzigd. Back-upherstel ondersteunt wijzigingshistorie en oudere back-ups.

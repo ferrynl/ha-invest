@@ -1,5 +1,6 @@
 """Import portfolio rows only; never import executable schema or access controls."""
 import sqlite3
+import json
 import tempfile
 import re
 from pathlib import Path
@@ -18,6 +19,7 @@ TABLES={
  'import_batches':(6,('id','account_id','provider','filename','digest','payload','status','created_at')),
  'import_issues':(10,('id','batch_id','line','state','reason','payload','resolution','updated_at')),
  'capital_returns':(10,('id','batch_id','account_id','provider','external_id','ticker','isin','amount','currency','paid_on','created_at')),
+ 'transaction_edits':(12,('id','kind','record_id','account_id','before_payload','after_payload','changed_by','created_at')),
  'instrument_mappings':(9,('id','account_id','provider','identity','ticker','isin','source_currency','symbol','exchange','currency','name','origin','updated_at')),
  'import_records':(6,('id','batch_id','account_id','provider','external_id','digest','raw')),
  'api_cache':(6,('namespace','cache_key','payload','fetched_at','expires_at')),
@@ -59,6 +61,12 @@ def restore_backup(store,content):
                         if row['origin'] not in ('pending','automatic','manual') or row['provider']!='trading212':raise ValueError('Ongeldige instrumentkoppeling in back-up.')
                         if row['identity']!=('isin:'+row['isin'] if row['isin'] else 'ticker:'+row['ticker'].strip().upper()):raise ValueError('Ongeldige instrumentidentiteit in back-up.')
                         if not row['symbol'] and (row['exchange'] or row['currency'] or row['origin']!='pending'):raise ValueError('Onvolledige instrumentkoppeling in back-up.')
+                    if table=='transaction_edits':
+                        if row['kind'] not in ('trade','dividend','capital'):raise ValueError('Ongeldig transactietype in wijzigingshistorie.')
+                        for field in ('before_payload','after_payload'):
+                            try:value=json.loads(row[field])
+                            except (ValueError,TypeError):raise ValueError('Ongeldige wijzigingshistorie.')
+                            if not isinstance(value,dict) or value.get('id')!=row['record_id'] or value.get('account_id')!=row['account_id']:raise ValueError('Ongeldige wijzigingshistorie.')
                     for key in ('code','base','quote','currency','source_currency','target_currency'):
                         if key in row and not (table=='instrument_mappings' and key=='currency' and row[key]=='') and not re.fullmatch('[A-Z]{3}',str(row[key])):raise ValueError('Ongeldige valutacode in back-up.')
                     if 'symbol' in row and not (table=='instrument_mappings' and row['symbol']=='') and (not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',str(row['symbol'])) or not re.fullmatch(r'[A-Z0-9 _-]{1,40}',str(row['exchange'])) or not re.fullmatch(r'[A-Z]{3}',str(row['currency']))):raise ValueError('Ongeldige beursnotering in back-up.')
@@ -75,11 +83,11 @@ def restore_backup(store,content):
                             stamp=datetime.fromisoformat(row[key].replace('Z','+00:00'))
                             if stamp.tzinfo is None:raise ValueError('Ongeldige tijdzone in back-up.')
                     for key,value in row.items():
-                        if key in ('id','account_id','batch_id','line'):
+                        if key in ('id','account_id','batch_id','line','record_id'):
                             if not isinstance(value,int) or value<1:raise ValueError('Ongeldig recordnummer in back-up.')
                         elif key in ('fetched_at','expires_at') and table=='api_cache':
                             if not isinstance(value,(int,float)):raise ValueError('Ongeldige cachetijd.')
-                        elif not isinstance(value,str) or len(value)>(20*1024*1024 if key in ('payload','raw') else 500):raise ValueError('Ongeldige gegevens in back-up.')
+                        elif not isinstance(value,str) or len(value)>(20*1024*1024 if key in ('payload','raw','before_payload','after_payload') else 500):raise ValueError('Ongeldige gegevens in back-up.')
                 rows[table]=data
             default_range='1M'
             if version>=4:

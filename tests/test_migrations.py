@@ -30,7 +30,7 @@ class MigrationTests(unittest.TestCase):
             db.commit()
 
     def test_all_previously_released_versions_upgrade_without_losing_data(self):
-        for version in (1,2,3,4,5,6,7,8,9,10):
+        for version in (1,2,3,4,5,6,7,8,9,10,11):
             with self.subTest(version=version), tempfile.TemporaryDirectory() as directory:
                 self.path=Path(directory)/'portfolio.sqlite3'
                 self.create_old(version)

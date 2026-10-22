@@ -7,6 +7,7 @@ function accountOptions(select,accounts,prefer){
  else if(accounts.some(a=>String(a.id)===prefer))select.value=prefer;
 }
 function renderBrokerAccounts(){
+ renderDeleteAccounts();
  const filter=$('account-filter');filter.replaceChildren();const all=document.createElement('option');all.value='all';all.textContent='Alle accounts';filter.append(all);
  for(const account of state.accounts){const option=document.createElement('option');option.value=account.id;option.textContent=account.name+' · '+account.broker;filter.append(option);}filter.value=currentBroker;
  accountOptions($('purchase-account'),state.accounts,currentBroker);

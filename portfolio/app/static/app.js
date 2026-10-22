@@ -6,6 +6,7 @@ async function load(){
  try{
  const response=await apiFetch('api/state?account_id='+encodeURIComponent(currentBroker));if(response.status===304)return;if(!response.ok)throw Error();state=await response.json();
  $('status').textContent=state.status.message+' Automatische controle elke '+state.refresh_minutes+' minuten.';
+ if(location.hash==='#transacties')loadTransactions();
  if(location.hash==='#aandelen')renderStockPage();
  if(location.hash==='#dividend')renderDividendPage();
  if(!rangeInitialized){chartRange=state.settings.default_range;rangeInitialized=true;syncRangeButtons();}

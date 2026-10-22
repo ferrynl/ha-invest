@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.11.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.12.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -25,6 +25,7 @@ Brokeraccounts zijn afzonderlijke portefeuillerekeningen; gebruikersaccounts reg
 toegang tot de app.
 
 - **Home**: overzicht per valuta, posities zoeken/filteren en maximaal zes posities vergelijken.
+- **Transacties**: alle boekingen bekijken, zoeken en als admin wijzigen, met wijzigingshistorie.
 - **Aandelen**: posities en transacties bekijken; handmatig aankopen toevoegen.
 - **Dividend**: netto ontvangen dividend boeken en bekijken.
 - **Valuta**: historische omrekening en opgeslagen dagreferentiekoersen.
@@ -61,10 +62,15 @@ niet in het portefeuillerendement verwerkt.
 
 ## Opslag en back-ups
 
-De database en instellingen staan in de app-datafolder. Appversie **0.11.0** gebruikt
-databaseschema **11**. Upgrades maken vooraf een consistente back-up en voeren alleen
+De database en instellingen staan in de app-datafolder. Appversie **0.12.0** gebruikt
+databaseschema **12**. Upgrades maken vooraf een consistente back-up en voeren alleen
 ontbrekende migraties transactioneel uit. Bestaande aankopen, dividend en historie blijven
 behouden. Neem voor opgeslagen API-verbindingen de volledige app op in een Home Assistant-back-up.
+
+Onder **Instellingen → Portefeuillegegevens verwijderen** wis je alles of één
+brokeraccount. Controleer het overzicht en typ VERWIJDEREN. De app bewaart eerst een
+herstelback-up die je daarna kunt downloaden. Accounts en beveiliging blijven behouden.
+Verwijderde imports kunnen daarna opnieuw worden ingelezen.
 
 Gebruikersdata, back-ups en API-sleutels horen niet in deze repository.
 

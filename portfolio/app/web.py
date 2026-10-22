@@ -19,6 +19,7 @@ from imports.partial import commit_partial,list_issues,resolve_issue
 from imports.matching import resolve_instrument
 from imports.registry import discover as mapping_list,edit as mapping_edit
 from imports import trading212_api
+import transactions
 from history import portfolio_values
 from diagnostics import read_logs,record,DiagnosticError,ActionError
 from forex import overview as fx_overview,convert as fx_convert,history as fx_history
@@ -26,7 +27,7 @@ from forex import overview as fx_overview,convert as fx_convert,history as fx_hi
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested):
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css')}
-    for name in ('home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues'):
+    for name in ('home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass
@@ -68,7 +69,16 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 return self.respond(content,kind=kind,etag=path!='/',public=path!='/')
             user=auth.user(self.token())
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
-            if not self.allowed(user,admin=path in ('/api/users','/api/backup','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
+            if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/users','/api/backup','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
+            if path in ('/api/transactions','/api/transactions/changes','/api/portfolio/delete-preview','/api/portfolio/deletion-backup'):
+                query=parse_qs(urlsplit(self.path).query)
+                try:
+                    if path=='/api/transactions':return self.respond(transactions.ledger(store,query.get('account_id',['all'])[0]))
+                    if path=='/api/transactions/changes':return self.respond(transactions.changes(store,query.get('kind',[''])[0],query.get('id',['0'])[0]))
+                    if path=='/api/portfolio/delete-preview':return self.respond(transactions.reset_preview(store,query.get('account_id',['all'])[0]))
+                    backup=transactions.deletion_backup(store,query.get('name',[''])[0])
+                    return self.respond(backup.read_bytes(),kind='application/vnd.sqlite3',filename=backup.name)
+                except (ValueError,TypeError):return self.respond({'error':'Ongeldige aanvraag of brokeraccount.'},400)
             if path=='/api/logs':
                 if not auth.enabled():return self.respond({'error':'Schakel gebruikersbeveiliging in en meld je aan als admin om logs te bekijken.'},403)
                 query=parse_qs(urlsplit(self.path).query)
@@ -133,7 +143,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 return self.respond({'error':'Ongeldige aanvraag.'},403)
             user=auth.user(self.token())
             if path!='/api/auth/login':
-                if not self.allowed(user,admin=path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/')):return
+                if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path=='/api/transactions/edit' or path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/')):return
                 if auth.enabled() and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),user['csrf'] or ''):
                     return self.respond({'error':'Ongeldige sessiebeveiliging. Meld je opnieuw aan.'},403)
             try:
@@ -146,6 +156,18 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))
                 data=json.loads(body)
                 if not isinstance(data,dict):raise ValueError('Ongeldige aanvraag.')
+                if path=='/api/transactions/edit':
+                    with refresh_lock:
+                        result=transactions.edit(store,data,user['username']);cache.invalidate()
+                    refresh_requested.set()
+                    return self.respond(result)
+                if path=='/api/portfolio/delete':
+                    with refresh_lock:
+                        try:result=transactions.reset(store,data)
+                        except OSError:return self.respond({'error':'De veiligheidsback-up kon niet worden gemaakt. Er is niets verwijderd.'},500)
+                        cache.invalidate()
+                    refresh_requested.set()
+                    return self.respond(result)
                 if path=='/api/fx/convert':return self.respond(fx_convert(store,data['amount'],data['from'],data['to'],data['day']))
                 if path.startswith('/api/imports/trading212/'):
                     if not auth.enabled():raise ValueError('Schakel eerst gebruikersbeveiliging in bij Instellingen om API-sleutels te beheren.')

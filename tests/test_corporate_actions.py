@@ -13,7 +13,7 @@ from imports.service import preview,commit
 from imports.partial import commit_partial,list_issues,resolve_issue
 from imports.registry import remember
 from imports.trading212 import parse_csv
-from migrations import MIGRATIONS,migrate
+from migrations import MIGRATIONS,migrate,SCHEMA_VERSION
 from restore import restore_backup
 
 HEADER='Action,Time (UTC),ISIN,Ticker,Name,ID,No. of shares,Price / share,Currency (Price / share),Total,Currency (Total)\n'
@@ -113,6 +113,6 @@ class CorporateActionsTests(unittest.TestCase):
      with patch.dict(MIGRATIONS,{11:MIGRATIONS[11]+('INVALID SQL',)}),self.assertRaises(sqlite3.Error):migrate(path)
     else:migrate(path);migrate(path)
     with closing(sqlite3.connect(path)) as db, db:
-     self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],10 if failed else 11)
+     self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],10 if failed else SCHEMA_VERSION)
      self.assertEqual(db.execute('SELECT quantity,price FROM purchases').fetchone(),('2','100'))
     self.assertEqual(len(list((Path(folder)/'backups'/'migrations').glob('*.sqlite3'))),1)
