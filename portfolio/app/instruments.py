@@ -25,7 +25,9 @@ def save_categories(store,data):
     key=identity(data);values=validate_categories(data)
     with store.connect() as db:
         if not db.execute('SELECT 1 FROM purchases WHERE symbol=? AND exchange=? AND currency=? UNION ALL SELECT 1 FROM dividends WHERE symbol=? AND exchange=? AND currency=?',(*key,*key)).fetchone():raise ValueError('Aandeel niet gevonden.')
-        db.execute('INSERT INTO instrument_categories VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(symbol,exchange,currency) DO UPDATE SET sector=excluded.sector,country=excluded.country,asset_type=excluded.asset_type,category=excluded.category,updated_at=excluded.updated_at',(*key,*(values[k] for k in FIELDS),now()))
+        previous=db.execute('SELECT * FROM instrument_categories WHERE symbol=? AND exchange=? AND currency=?',key).fetchone()
+        manual=tuple(int(bool(previous and previous['manual_'+field]) or values[field]!=(previous[field] if previous else '')) for field in ('sector','country','asset_type'))
+        db.execute('INSERT INTO instrument_categories VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(symbol,exchange,currency) DO UPDATE SET sector=excluded.sector,country=excluded.country,asset_type=excluded.asset_type,category=excluded.category,updated_at=excluded.updated_at,manual_sector=excluded.manual_sector,manual_country=excluded.manual_country,manual_asset_type=excluded.manual_asset_type',(*key,*(values[k] for k in FIELDS),now(),*manual))
     return dict(ok=True)
 
 def details(store,data,account='all',include_pending=True):
@@ -38,6 +40,7 @@ def details(store,data,account='all',include_pending=True):
         dividends=[dict(r) for r in db.execute('SELECT * FROM dividends WHERE symbol=? AND exchange=? AND currency=?'+restriction,args)]
         if not trades and not dividends:raise ValueError('Aandeel niet gevonden in dit brokeraccount.')
         categories=db.execute('SELECT * FROM instrument_categories WHERE symbol=? AND exchange=? AND currency=?',key).fetchone()
+        sync=db.execute('SELECT * FROM instrument_category_sync WHERE symbol=? AND exchange=? AND currency=?',key).fetchone()
         prices=[dict(r) for r in db.execute('SELECT day,price FROM daily_prices WHERE symbol=? AND exchange=? AND currency=? ORDER BY day',key)]
         quote=db.execute('SELECT price,quoted_at,source FROM quotes WHERE symbol=? AND exchange=? AND currency=? ORDER BY quoted_at DESC,id DESC LIMIT 1',key).fetchone()
         accounts={r['id']:r['name'] for r in db.execute('SELECT id,name FROM broker_accounts')}
@@ -69,4 +72,4 @@ def details(store,data,account='all',include_pending=True):
                 events.append(dict(id=issue['id'],kind='issue',type=raw.get('Action') or row.get('kind') or 'Onbekend',day=row.get('day') or raw.get('Time (UTC)',raw.get('Time',''))[:10],trade_time=row.get('trade_time',''),account_id=issue['account_id'],quantity=row.get('quantity'),amount=row.get('amount'),price=row.get('price'),currency=row.get('currency',''),status='Te beoordelen',note=issue['reason']))
         for event in events:event['account_name']=accounts[event['account_id']]
         events.sort(key=lambda r:(r['day'],r.get('trade_time',''),r['id']),reverse=True)
-        return dict(symbol=key[0],exchange=key[1],currency=key[2],name=trades[0]['name'] if trades else key[0],categories=dict(categories) if categories else {field:'' for field in FIELDS},prices=prices,quote=dict(quote) if quote else None,events=events,account_id=account)
+        return dict(category_sync=dict(sync) if sync else {'status':'pending'},symbol=key[0],exchange=key[1],currency=key[2],name=trades[0]['name'] if trades else key[0],categories=dict(categories) if categories else {field:'' for field in FIELDS},prices=prices,quote=dict(quote) if quote else None,events=events,account_id=account)

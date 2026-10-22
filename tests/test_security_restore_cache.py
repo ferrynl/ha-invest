@@ -159,7 +159,7 @@ class AccessTests(unittest.TestCase):
   self.store.add(dict(name='Apple',symbol='AAPL',exchange='NASDAQ',currency='USD',quantity='1',price='100',purchased_on='2026-01-01'))
   self.store.quote('AAPL','NASDAQ','USD','120','2026-10-16T20:00:00+00:00','test')
   self.store.save_history('AAPL','NASDAQ','USD','2026-01-01',[dict(day=date.today().isoformat(),price='120')])
-  with patch.object(server,'store',self.store),patch.object(server,'fetch_quote') as quote,patch.object(server,'fetch_history') as history,patch('server.time.sleep'):
+  with patch.object(server,'store',self.store),patch.object(server,'fetch_quote') as quote,patch.object(server,'fetch_history') as history,patch.object(server,'enrich_categories'),patch('server.time.sleep'):
    server.refresh();server.refresh()
    quote.assert_not_called();history.assert_not_called()
  def test_restore_preserves_live_users_and_rejects_bad_files(self):

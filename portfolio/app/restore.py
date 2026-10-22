@@ -12,7 +12,8 @@ from migrations import SCHEMA_VERSION
 TABLES={
  'broker_accounts':(6,('id','name','broker','created_at')),
  'purchases':(1,('id','symbol','exchange','name','quantity','price','currency','purchased_on','created_at','account_id','side','trade_time','split_before')),
- 'instrument_categories':(13,('symbol','exchange','currency','sector','country','asset_type','category','updated_at')),
+ 'instrument_categories':(13,('symbol','exchange','currency','sector','country','asset_type','category','updated_at','manual_sector','manual_country','manual_asset_type')),
+ 'instrument_category_sync':(14,('symbol','exchange','currency','status','attempted_at','retry_at','attempts','error_code')),
  'quotes':(1,('id','symbol','exchange','currency','price','quoted_at','fetched_at','source')),
  'daily_prices':(2,('symbol','exchange','currency','day','price')),
  'history_sync':(2,('symbol','exchange','currency','start','synced_on')),
@@ -47,10 +48,12 @@ def restore_backup(store,content):
                 definition=source.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name=?",(table,)).fetchone()
                 if not definition or 'VIRTUAL' in definition[0].upper():raise ValueError('De back-up bevat geen geldig portefeuilleschema.')
                 source_columns=columns
+                if table=='instrument_categories' and version<14:source_columns=columns[:-3]
                 if table=='purchases' and version<11:source_columns=columns[:-1]
                 if version<6 and table=='purchases':source_columns=columns[:-4]
                 if version<6 and table=='dividends':source_columns=columns[:-1]
                 data=source.execute(f'SELECT {",".join(source_columns)} FROM {table} LIMIT 250001').fetchall()
+                if table=='instrument_categories' and version<14:data=[(*r,int(bool(r[3])),int(bool(r[4])),int(bool(r[5]))) for r in data]
                 if version<6 and table=='purchases':data=[(*r,1,'BUY','') for r in data]
                 if version<6 and table=='dividends':data=[(*r,1) for r in data]
                 if table=='purchases' and version<11:data=[(*r,'') for r in data]
@@ -62,6 +65,8 @@ def restore_backup(store,content):
                         if row['origin'] not in ('pending','automatic','manual') or row['provider']!='trading212':raise ValueError('Ongeldige instrumentkoppeling in back-up.')
                         if row['identity']!=('isin:'+row['isin'] if row['isin'] else 'ticker:'+row['ticker'].strip().upper()):raise ValueError('Ongeldige instrumentidentiteit in back-up.')
                         if not row['symbol'] and (row['exchange'] or row['currency'] or row['origin']!='pending'):raise ValueError('Onvolledige instrumentkoppeling in back-up.')
+                    if table=='instrument_category_sync':
+                        if row['status'] not in ('fetching','complete','partial','retry') or not isinstance(row['attempts'],int) or row['attempts']<1 or not re.fullmatch(r'[a-z0-9_]{0,60}',str(row['error_code'])):raise ValueError('Ongeldige profielstatus in back-up.')
                     if table=='instrument_categories':
                         from instruments import validate_categories
                         validate_categories(row)
@@ -82,12 +87,15 @@ def restore_backup(store,content):
                         if key in row:
                             day=date.fromisoformat(row[key])
                             if day>date.today():raise ValueError('De back-up bevat toekomstige datums.')
-                    for key in ('quoted_at','fetched_at','created_at','updated_at','checked_at'):
+                    for key in ('quoted_at','fetched_at','created_at','updated_at','checked_at','attempted_at','retry_at'):
                         if key in row and not (table=='api_cache' and key=='fetched_at'):
                             stamp=datetime.fromisoformat(row[key].replace('Z','+00:00'))
                             if stamp.tzinfo is None:raise ValueError('Ongeldige tijdzone in back-up.')
                     for key,value in row.items():
-                        if key in ('id','account_id','batch_id','line','record_id'):
+                        if key in ('manual_sector','manual_country','manual_asset_type'):
+                            if not isinstance(value,int) or value not in (0,1):raise ValueError('Ongeldige handmatige categorie in back-up.')
+                        elif table=='instrument_category_sync' and key=='attempts':pass
+                        elif key in ('id','account_id','batch_id','line','record_id'):
                             if not isinstance(value,int) or value<1:raise ValueError('Ongeldig recordnummer in back-up.')
                         elif key in ('fetched_at','expires_at') and table=='api_cache':
                             if not isinstance(value,(int,float)):raise ValueError('Ongeldige cachetijd.')

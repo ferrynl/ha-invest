@@ -12,6 +12,7 @@ from cache import StateCache
 from web import make_handler
 from datetime import datetime, timezone
 from diagnostics import record
+from profiles import enrich_categories
 from forex import snapshot as fx_snapshot,currencies as fx_currencies
 
 ROOT = Path(__file__).parent
@@ -54,6 +55,8 @@ def refresh():
             except Exception as error:
                 record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'error_type':type(error).__name__})
                 errors += 1
+            # Profile lookup runs once per listing, including existing holdings.
+            enrich_categories(store,instrument)
             # Space requests to avoid bursts; plan limits still apply.
             time.sleep(1)
         from storage import now

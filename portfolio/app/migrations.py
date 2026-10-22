@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from contextlib import closing
 
-SCHEMA_VERSION = 13
+SCHEMA_VERSION = 14
 MIGRATIONS = {
     1: (
         'CREATE TABLE IF NOT EXISTS purchases (id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL, name TEXT NOT NULL, quantity TEXT NOT NULL, price TEXT NOT NULL, currency TEXT NOT NULL, purchased_on TEXT NOT NULL, created_at TEXT NOT NULL)',
@@ -63,6 +63,13 @@ MIGRATIONS = {
     ),
     13: (
         "CREATE TABLE instrument_categories (symbol TEXT NOT NULL, exchange TEXT NOT NULL, currency TEXT NOT NULL, sector TEXT NOT NULL DEFAULT '', country TEXT NOT NULL DEFAULT '', asset_type TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL, PRIMARY KEY(symbol,exchange,currency))",
+    ),
+    14: (
+        'ALTER TABLE instrument_categories ADD COLUMN manual_sector INTEGER NOT NULL DEFAULT 0 CHECK(manual_sector IN (0,1))',
+        'ALTER TABLE instrument_categories ADD COLUMN manual_country INTEGER NOT NULL DEFAULT 0 CHECK(manual_country IN (0,1))',
+        'ALTER TABLE instrument_categories ADD COLUMN manual_asset_type INTEGER NOT NULL DEFAULT 0 CHECK(manual_asset_type IN (0,1))',
+        "UPDATE instrument_categories SET manual_sector=(sector<>''),manual_country=(country<>''),manual_asset_type=(asset_type<>'')",
+        "CREATE TABLE instrument_category_sync (symbol TEXT NOT NULL, exchange TEXT NOT NULL, currency TEXT NOT NULL, status TEXT NOT NULL CHECK(status IN ('fetching','complete','partial','retry')), attempted_at TEXT NOT NULL, retry_at TEXT NOT NULL, attempts INTEGER NOT NULL, error_code TEXT NOT NULL DEFAULT '', PRIMARY KEY(symbol,exchange,currency))",
     ),
 }
 

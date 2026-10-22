@@ -1,3 +1,10 @@
+## 0.16.0
+
+- Sector, land en type belegging worden eenmalig automatisch aangevuld via Yahoo Finance, ook voor bestaande aandelen. Profielen worden per ticker, beurs en valuta gecontroleerd en blijvend opgeslagen.
+- Handmatige correcties winnen per veld, inclusief bewust leeg gemaakte velden. Bestaande categorieën uit 0.15.0 blijven behouden; de eigen categorie blijft handmatig.
+- De detailpagina toont de API-status, ophaaldatum en ontbrekende gegevens. Verbindingsproblemen krijgen veilige diagnostische logs en een wachttijd voor opnieuw proberen; succesvolle profielen worden niet telkens opnieuw opgevraagd.
+- Databaseversie 14 bewaart de voortgang en bescherming van handmatige categorieën, inclusief migratie, back-up en herstel.
+
 ## 0.15.0
 
 - Open een aandeel vanuit de aandelenlijst voor een eigen detailpagina met koersgrafiek, periodekeuze en alle gekoppelde aankopen, verkopen, dividenden, splitsingen en kapitaalterugbetalingen. Gekoppelde openstaande importregels zijn herkenbaar als Te beoordelen.
