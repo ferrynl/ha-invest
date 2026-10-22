@@ -1,3 +1,21 @@
+# 0.12.0
+
+- Nieuwe pagina Transacties: aankopen, verkopen, dividend, kapitaalterugbetalingen en splitsingen bekijken, zoeken en filteren per type/brokeraccount, met 50 regels per pagina.
+- Admins kunnen datum, tijd, aantal, aankoop/verkooptype, prijs, ontvangen bedrag en dividendnotitie wijzigen waar van toepassing. De app controleert de volledige positiehistorie en weigert ongeldige verkopen of splitsingen.
+- Originele importregels en bron-ID’s blijven behouden; correcties krijgen een blijvende wijzigingshistorie. Gelijktijdige wijzigingen worden niet overschreven.
+- Instellingen biedt verwijderen van alle portefeuillegegevens of de administratie van één brokeraccount, inclusief bijbehorende imports en koppelingen. Vooraf verschijnt een overzicht en is de bevestiging VERWIJDEREN nodig.
+- Vóór verwijderen wordt een volledige herstelback-up buiten de gewone back-uprotatie opgeslagen, met een downloadlink. Andere brokeraccounts, gebruikers, instellingen en API-verbindingen blijven behouden bij een gerichte verwijdering. Herimport van gewiste gegevens is mogelijk.
+- Schema 12 voegt transaction_edits toe. Migratie en back-upherstel behouden de bestaande administratie; oudere back-ups blijven ondersteund.
+- Het app-changelog (portfolio/CHANGELOG.md) is aangevuld met 0.11.0 en 0.12.0; voortaan worden het repository- en app-changelog bij iedere release samen bijgewerkt.
+
+# 0.11.0
+
+- Trading 212 herkent Return of capital manufactured payment automatisch als kapitaalterugbetaling. De ontvangst blijft in de bronvaluta en telt niet als dividendwinst.
+- Stock split open past het volledige aantal aandelen aan met behoud van totale kostprijs, inleg en gerealiseerde winst. Stock split close controleert het oude aantal wanneer beide regels in hetzelfde bestand staan. Splitsingen zonder voorafgaand bezit blijven ter beoordeling staan.
+- Bestaande afgewezen regels kunnen opnieuw worden geprobeerd; bronregels, eerdere handmatige keuzes en deduplicatie blijven behouden.
+- Schema 11 voegt splitsingsmetadata toe. Migratie maakt vooraf een back-up; herstel ondersteunt oude en nieuwe back-ups.
+- Versiegeschiedenis verplaatst uit README naar dit bestand. Voeg toekomstige wijzigingen hier bovenaan toe.
+
 # 0.10.0
 
 - Vernieuwd Home-dashboard met kerncijfers per valuta, grootste posities en beste/zwakste resultaten.

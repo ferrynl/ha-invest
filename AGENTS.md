@@ -3,7 +3,7 @@
 Bij iedere wijziging aan dit project:
 
 - Houd appcode, dashboard, databestand en back-ups apart. Commit nooit gebruikersdata.
-- Werk appversies bij in `portfolio/config.yaml` en `portfolio/app/version.py`.
+- Werk appversies bij in `portfolio/config.yaml` en `portfolio/app/version.py` bij functionele wijzigingen. Alleen documentatiecorrecties veranderen de appversie niet.
 - Als het databaseschema verandert: voeg de volgende opeenvolgende migratie toe
   in `portfolio/app/migrations.py` en verhoog `SCHEMA_VERSION`.
 - Wijzig eerder gepubliceerde migraties niet. Een app-update zonder schemawijziging
@@ -14,7 +14,7 @@ Bij iedere wijziging aan dit project:
 - Test behoud van aankopen, dividend en historie bij upgrades, herhaalde start en
   rollback bij fouten. Voeg regressietests toe voor elke nieuwe migratie.
 - Controleer de betrokken pagina's in de browser en voer passende bestaande tests uit.
-- Houd iedere wijziging bij in CHANGELOG.md. Houd README.md compact: versiegeschiedenis hoort alleen in CHANGELOG.md. Werk README en DOCS bij wanneer gebruik of installatie verandert.
+- Houd iedere wijziging bij in CHANGELOG.md én portfolio/CHANGELOG.md. Het app-changelog wordt door Home Assistant gebruikt. Zet nieuwe versies bovenaan beide bestanden en controleer vóór publiceren dat beide de appversie bevatten. Houd README.md compact; versiegeschiedenis hoort in de changelogs. Werk README en DOCS bij wanneer gebruik of installatie verandert.
 - Dwing accountrollen en CSRF op de server af; verborgen menu's zijn geen toegangscontrole.
 - Importeer bij portefeuilleherstel nooit gebruikers, beveiligingsopties of uitvoerbaar
   schema uit een upload. Behoud de huidige accounts en maak vooraf een veiligheidskopie.

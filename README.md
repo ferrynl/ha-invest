@@ -78,7 +78,7 @@ Gebruikersdata, back-ups en API-sleutels horen niet in deze repository.
 
 - [Uitgebreide handleiding](portfolio/DOCS.md): installatie, gebruik, API, beveiliging,
   opslag en ontwikkelinstructies.
-- [Changelog](CHANGELOG.md): versiegeschiedenis. Nieuwe wijzigingen worden hier bijgehouden.
+- [Changelog](CHANGELOG.md): versiegeschiedenis; ook bijgehouden in het [Home Assistant app-changelog](portfolio/CHANGELOG.md).
 - [Projectafspraken](AGENTS.md): afspraken voor onderhoud.
 
 Tests uitvoeren vanuit de repository: python -m unittest discover -s tests.
