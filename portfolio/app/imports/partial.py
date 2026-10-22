@@ -119,15 +119,16 @@ def resolve_issue(store,data):
         return commit_partial(store,batch['id'])
 
 def refresh_supported(rows):
-    if not any(r.get('kind') is None and r.get('error') and r.get('decision') in (None,'retry') for r in rows):return
+    if not any(r.get('error') and r.get('decision') in (None,'retry') for r in rows):return
     stream=io.StringIO()
     fields=list(dict.fromkeys(k for r in rows for k in r['raw']))
     writer=csv.DictWriter(stream,fieldnames=fields);writer.writeheader()
     for row in rows:writer.writerow(row['raw'])
     parsed=parse_csv(stream.getvalue())
     for row,new in zip(rows,parsed):
-        if row.get('kind') is not None or row.get('decision') not in (None,'retry') or not row.get('error'):continue
-        if new.get('kind') not in ('CAPITAL_RETURN','SPLIT','SPLIT_INFO','SPLIT_CLOSE'):continue
+        if row.get('decision') not in (None,'retry') or not row.get('error') or row.get('duplicate'):continue
+        if new.get('kind') not in ('BUY','SELL','DISTRIBUTION','CAPITAL_RETURN','SPLIT','SPLIT_INFO','SPLIT_CLOSE'):continue
+        if row.get('kind') is not None and not (row.get('kind') in ('BUY','SELL') and str(row.get('error','')).startswith('Aantal of prijs ontbreekt.')):continue
         new.update(line=row['line'],external_id=row['external_id'],digest=row['digest'])
         if row.get('mapping'):new['mapping']=row['mapping']
         row.clear();row.update(new)

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.1 — 22 oktober 2026
+
+- Foutieve importregels zonder geldige prijs of valuta worden niet meer aangeboden voor automatische beurskoppeling. De misleidende algemene TMX-aanvraagfout vervalt.
+- AREB krijgt een exacte broker/ISIN-koppeling; historische TMX- en EPIX-transacties kunnen ook zonder actuele beursnotering gekoppeld worden. Deze koppelingen leveren geen fictieve koers op.
+- Stock distribution en Custom stock distribution worden herkend als aandelenuitkering/omzetting en duurzaam apart gehouden voor controle van de over te dragen kostprijs. Automatisch boeken van fusies en CVR-rechten is nog niet ondersteund.
+- Opgeslagen API-importvoorbeelden worden bij opnieuw openen bijgewerkt vanuit hun oorspronkelijke rapportregels, met behoud van bron-ID's en eerdere handmatige keuzes.
+- Databaseschema blijft 12.
+
 ## 0.13.0 — 22 oktober 2026
 
 - Home toont direct het portefeuilleoverzicht; de algemene paginakop, brokerselector en koersstatusbalk zijn daar verborgen. Het mobiele menu blijft bereikbaar.

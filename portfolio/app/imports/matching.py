@@ -4,7 +4,7 @@ import re
 from provider import search_stocks,fetch_quote,listing,ProviderBusy
 from persistent_cache import cached_json
 from diagnostics import record
-from .listings import CATALOGUE
+from .listings import CATALOGUE, HISTORICAL_LISTINGS, BROKER_LISTINGS
 from .registry import remember,lookup,discover
 
 def ticker_base(value):
@@ -26,6 +26,11 @@ def resolve(store,rows,provider,preferred=None):
                 if row.get('currency')!=currency:continue
                 same=(row.get('raw',{}).get('ISIN','').upper()==isin) if isin else row.get('ticker')==ticker
                 if same and row.get('mapping') and (not preferred or row['mapping']['currency']==target):return {'mapping':row['mapping'],'via':'Bewaarde koppeling'}
+        historical=HISTORICAL_LISTINGS.get(isin)
+        if historical and all(r.get('day','9999')<=historical['last_day'] for r in rows):
+            return {'mapping':{k:v for k,v in historical.items() if k!='last_day'},'via':'Historische ISIN-notering; actuele koers kan ontbreken'}
+        broker_listing=BROKER_LISTINGS.get((provider,isin))
+        if broker_listing:return {'mapping':dict(broker_listing),'via':'Exacte ISIN-notering van de broker; koersbeschikbaarheid apart gecontroleerd'}
         # Issuer-backed ISIN tables bypass incomplete Yahoo search indexes.
         catalogue=CATALOGUE.get(isin,[])
         if catalogue:
@@ -81,7 +86,7 @@ def resolve_instrument(store,batch_id,key):
     with store.connect() as db:batch=db.execute('SELECT * FROM import_batches WHERE id=?',(batch_id,)).fetchone()
     if not batch or batch['status'] not in ('preview','partial'):raise ValueError('Importvoorbeeld niet beschikbaar.')
     rows=json.loads(batch['payload'])
-    selected=[r for r in rows if r.get('kind') not in (None,'SKIP') and r.get('ticker','')+'|'+r.get('currency','')==key and not r.get('duplicate')]
+    selected=[r for r in rows if r.get('kind') not in (None,'SKIP') and r.get('ticker','')+'|'+r.get('currency','')==key and r.get('currency') and not r.get('error') and not r.get('duplicate')]
     if not selected:raise ValueError('Instrument niet gevonden in dit importvoorbeeld.')
     # Dividend settlement currency may differ from the listing currency. Reuse
     # the quote currency of purchases of the same instrument in this batch.

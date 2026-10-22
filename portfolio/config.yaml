@@ -1,6 +1,6 @@
 name: Home Invest
 url: https://github.com/ferrynl/ha-invest
-version: "0.13.0"
+version: "0.13.1"
 slug: aandelen_dashboard
 description: Persoonlijke aandelenportefeuille met SQLite en koershistorie
 arch: [amd64, aarch64]

@@ -51,6 +51,7 @@ def parse_csv(text):
         if action.endswith('buy'):kind='BUY'
         elif action.endswith('sell'):kind='SELL'
         elif action.startswith('dividend'):kind='CAPITAL_RETURN' if 'return of capital' in action else 'DIVIDEND'
+        elif action in ('stock distribution','custom stock distribution'):kind='DISTRIBUTION'
         elif action=='stock split open':kind='SPLIT'
         elif action=='stock split close':kind='SPLIT_CLOSE'
         elif action in ('deposit','withdrawal','currency conversion','interest on cash','lending interest','cashback','spending cashback'):
@@ -63,6 +64,9 @@ def parse_csv(text):
                 if stamp.date()>date.today():raise ValueError('Toekomstige transactie.')
                 row.update(day=stamp.date().isoformat(),trade_time=stamp.isoformat())
                 if not row['ticker']:raise ValueError('Ticker ontbreekt.')
+                if kind=='DISTRIBUTION':
+                    row.update(quantity=number(raw.get('No. of shares')),currency=currency_code(raw.get('Currency (Price / share)') or raw.get('Currency (Total)') or ''))
+                    raise ValueError('Aandelenuitkering of omzetting: de oorspronkelijke aandelen en over te dragen kostprijs moeten worden gecontroleerd. Deze regel blijft apart bewaard; boek dit niet als dividend of gewone aankoop.')
                 if kind in ('DIVIDEND','CAPITAL_RETURN'):
                     amount=Decimal(number(raw.get('Total')))
                     if amount<=0:raise ValueError('Netto dividend moet positief zijn.')
@@ -72,8 +76,9 @@ def parse_csv(text):
                     if quantity<=0:raise ValueError('Aantal na/voor splitsing moet positief zijn.')
                     row.update(quantity=str(quantity),currency=currency_code(raw.get('Currency (Price / share)','')))
                 else:
+                    row['currency']=currency_code(raw.get('Currency (Price / share)',''))
                     quantity,price=Decimal(number(raw.get('No. of shares'))),Decimal(number(raw.get('Price / share')))
-                    if quantity<=0 or price<=0:raise ValueError('Aantal of prijs ontbreekt.')
+                    if quantity<=0 or price<=0:raise ValueError('Aantal of prijs ontbreekt. Bij een fusie of intrekking kan de broker een nulprijs rapporteren; controleer de bijbehorende aandelenuitkering en kostprijs bij Te beoordelen.')
                     row.update(quantity=str(quantity),price=str(price),currency=currency_code(raw.get('Currency (Price / share)','')))
                 canonical={k:row.get(k) for k in ('kind','ticker','day','trade_time','quantity','price','amount','currency')}
                 digest=hashlib.sha256(json.dumps(canonical,sort_keys=True).encode()).hexdigest()

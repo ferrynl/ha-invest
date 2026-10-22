@@ -35,7 +35,7 @@ def preview(store,account_id,provider,filename,text):
         if row.get('kind') in ('BUY','SELL','DIVIDEND','SPLIT') and row.get('currency'):
             key=(identity(row)[0],row['currency'])
             if key not in registered:remember(store,account_id,provider,row);registered.add(key)
-    instruments=sorted({(r['ticker'],r.get('currency','')) for r in rows if r.get('kind') in ('BUY','SELL','DIVIDEND','SPLIT') and not r.get('duplicate')})
+    instruments=sorted({(r['ticker'],r.get('currency','')) for r in rows if r.get('kind') in ('BUY','SELL','DIVIDEND','SPLIT') and r.get('currency') and not r.get('error') and not r.get('duplicate')})
     return dict(batch_id=cursor.lastrowid,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Dividend zonder voorafgaande aankoop wordt apart opgeslagen met een melding over ontbrekende aankoophistorie; er wordt geen positie of kostprijs aangemaakt.', 'Prijzen worden in de noteringsvaluta geïmporteerd; transactiekosten, rente en valutawissels worden niet in de winst verwerkt.','Afwijkende prijs- of dividendvaluta wordt op transactiedatum omgerekend met opgeslagen dagreferentiekoersen. Het bronbedrag en de omrekening blijven bewaard.'])
 
 def commit(store,batch_id,mappings):
@@ -93,6 +93,8 @@ def open_preview(store,batch_id):
         account=dict(db.execute('SELECT * FROM broker_accounts WHERE id=?',(batch['account_id'],)).fetchone())
     discover(store)
     rows=json.loads(batch['payload'])
+    from .partial import refresh_supported
+    refresh_supported(rows)
     for row in rows:
         if row.get('external_id'):
             with store.connect() as db:previous=db.execute('SELECT digest FROM import_records WHERE account_id=? AND provider=? AND external_id=?',(batch['account_id'],batch['provider'],row['external_id'])).fetchone()
@@ -100,7 +102,9 @@ def open_preview(store,batch_id):
         if row.get('kind') in ('BUY','SELL','DIVIDEND','SPLIT') and row.get('currency'):
             saved=lookup(store,batch['account_id'],batch['provider'],row)
             if saved:row['mapping']=saved
-    instruments=sorted({(r['ticker'],r['currency']) for r in rows if r.get('kind') in ('BUY','SELL','DIVIDEND','SPLIT') and not r.get('duplicate')})
+    with store.connect() as db:
+        db.execute("UPDATE import_batches SET payload=? WHERE id=? AND payload=? AND status IN ('preview','partial')",(json.dumps(rows),batch_id,batch['payload']))
+    instruments=sorted({(r['ticker'],r['currency']) for r in rows if r.get('kind') in ('BUY','SELL','DIVIDEND','SPLIT') and r.get('currency') and not r.get('error') and not r.get('duplicate')})
     return dict(batch_id=batch_id,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Dividend zonder voorafgaande aankoop wordt apart opgeslagen met een melding over ontbrekende aankoophistorie; er wordt geen positie of kostprijs aangemaakt.', 'Beursnoteringen worden automatisch gekoppeld. Bronbedragen blijven bewaard; afwijkende noteringsvaluta wordt met historische dagreferentiekoersen omgerekend.'])
 
 def book_row(db,batch_id,account_id,provider,row,mapping,trace):
