@@ -5,10 +5,11 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch,Mock
 from urllib.error import HTTPError
 from contextlib import closing
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'portfolio'/'app'))
+import profiles
 from storage import Store
 from instruments import save_categories,details
 from profiles import enrich_categories,normalize_profile,EmbeddedProfile,ProfileError
@@ -96,3 +97,34 @@ class ProfileTests(unittest.TestCase):
   with patch.object(server,'store',self.store),patch.object(server,'state_cache',StateCache()),patch.object(server,'fetch_quote',return_value=('140','2026-10-22T10:00:00+00:00')),patch.object(server,'fetch_history',return_value=[dict(day='2026-10-01',price='100')]),patch('server.time.sleep'),patch('profiles._download_profile',return_value=payload()) as api:
    server.refresh();server.refresh();api.assert_called_once()
   self.assertEqual(details(self.store,STOCK)['category_sync']['status'],'complete')
+
+ def test_request_formats_match_html_session_text_and_json(self):
+  session=Mock();session.open.return_value=Mock()
+  with patch.object(profiles,'_session',session):
+   for response_type in ('html','text','json'):
+    profiles._open('https://finance.yahoo.com/test',response_type=response_type,stage='profile_page')
+    request=session.open.call_args.args[0]
+    self.assertIn({'html':'text/html','text':'text/plain','json':'application/json'}[response_type],request.get_header('Accept'))
+    self.assertEqual(request.get_header('User-agent'),'Mozilla/5.0')
+    self.assertEqual(request.get_header('Accept-language'),'en-US,en;q=0.9')
+ def test_http_406_direct_profile_uses_html_fallback(self):
+  document='<script type="application/json" data-sveltekit-fetched data-url="https://query1.finance.yahoo.com/v10/finance/quoteSummary/ASML.AS?modules=assetProfile">'+json.dumps({'status':200,'body':json.dumps(payload())})+'</script>'
+  error=HTTPError('https://query2.finance.yahoo.com/test?crumb=private',406,'not acceptable',{},io.BytesIO())
+  with patch.object(profiles,'_direct_retry_at',0),patch.object(profiles,'_download_direct',side_effect=error),patch.object(profiles,'_open',return_value=io.BytesIO(document.encode())) as page:
+   result=profiles._download_profile('ASML.AS')
+   self.assertEqual(normalize_profile(result,KEY)['country'],'Nederland')
+   page.assert_called_once_with('https://finance.yahoo.com/quote/ASML.AS/profile/',response_type='html',stage='profile_page')
+ def test_rate_limit_does_not_attempt_html_fallback(self):
+  error=HTTPError('https://query2.finance.yahoo.com/test',429,'rate limit',{},io.BytesIO())
+  with patch.object(profiles,'_direct_retry_at',0),patch.object(profiles,'_download_direct',side_effect=error),patch.object(profiles,'_open') as page:
+   with self.assertRaises(HTTPError):profiles._download_profile('ASML.AS')
+   page.assert_not_called()
+  error.close()
+ def test_failed_html_request_logs_stage_format_and_status_without_secrets(self):
+  session=Mock();session.open.side_effect=HTTPError('https://finance.yahoo.com/test?crumb=private-crumb',406,'private-message',{'Set-Cookie':'private-cookie'},io.BytesIO(b'private-body'))
+  with patch.object(profiles,'_direct_retry_at',float('inf')),patch.object(profiles,'build_opener',return_value=session):self.assertFalse(enrich_categories(self.store,KEY))
+  entry=next(e for e in read_logs(self.store)['entries'] if e['event']=='categories_failed')
+  self.assertEqual(entry['details']['stage'],'profile_page');self.assertEqual(entry['details']['requested_format'],'html');self.assertEqual(entry['details']['http_status'],406);self.assertEqual(entry['details']['endpoint_host'],'finance.yahoo.com');self.assertIn('duration_ms',entry['details'])
+  raw=json.dumps(entry)
+  for secret in ['private-crumb','private-cookie','private-body','private-message']:self.assertNotIn(secret,raw)
+  with self.store.connect() as db:self.assertIsNotNone(db.execute("SELECT 1 FROM api_cache WHERE namespace='provider-cooldown' AND cache_key='yahoo-profile'").fetchone())

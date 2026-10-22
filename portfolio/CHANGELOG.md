@@ -1,3 +1,9 @@
+## 0.16.1
+
+- Profielaanvragen gebruiken het juiste antwoordformaat: HTML voor profielpagina’s en sessieopbouw, tekst voor de sessiecode en JSON voor de profiel-API. De aanvragen gebruiken ook een expliciete taalvoorkeur.
+- HTTP 406 bij de directe profielaanvraag schakelt nu over naar de ingesloten API-respons op de profielpagina. Aanvraaglimieten (HTTP 429) blijven gerespecteerd.
+- Foutlogs vermelden de precieze aanvraagstap, host, gevraagd formaat, HTTP-status en duur, zonder sessiegegevens of volledige antwoorden. Aanhoudende HTTP 406-fouten krijgen een gedeelde wachttijd om aanvraagpieken te voorkomen.
+
 ## 0.16.0
 
 - Sector, land en type belegging worden eenmalig automatisch aangevuld via Yahoo Finance, ook voor bestaande aandelen. Profielen worden per ticker, beurs en valuta gecontroleerd en blijvend opgeslagen.

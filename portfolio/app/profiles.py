@@ -24,23 +24,32 @@ COUNTRIES={'Netherlands':'Nederland','United States':'Verenigde Staten','United 
 TYPES={'EQUITY':'Aandeel','ETF':'ETF','MUTUALFUND':'Beleggingsfonds','BOND':'Obligatie'}
 
 class ProfileError(ActionError):
-    def __init__(self,code,seconds=900):
-        super().__init__('Automatische categorieën konden niet worden opgehaald.',code)
+    def __init__(self,code,seconds=900,details=None):
+        super().__init__('Automatische categorieën konden niet worden opgehaald.',code,details)
         self.seconds=seconds
 
-def _open(url):
-    return _session.open(Request(url,headers={'User-Agent':'Mozilla/5.0','Accept':'application/json'}),timeout=15)
+def _open(url,response_type='json',stage='quote_summary'):
+    # Cookie bootstrap/profile pages are HTML; the crumb endpoint returns plain text.
+    accepts={'json':'application/json','html':'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8','text':'text/plain,*/*;q=0.8'}
+    headers={'User-Agent':'Mozilla/5.0','Accept':accepts[response_type],'Accept-Language':'en-US,en;q=0.9'}
+    started=time.monotonic()
+    try:return _session.open(Request(url,headers=headers),timeout=15)
+    except (HTTPError,URLError,TimeoutError,OSError) as error:
+        # Only fixed request metadata, never a URL query, headers, body or cookie.
+        error.profile_details={'stage':stage,'endpoint_host':urlsplit(url).hostname,'requested_format':response_type,'duration_ms':round((time.monotonic()-started)*1000)}
+        if isinstance(error,HTTPError):error.profile_details['http_status']=error.code
+        raise
 
 def _download_direct(symbol):
     global _session,_crumb
     if _session is None:_session=build_opener(HTTPCookieProcessor(CookieJar()))
     if _crumb is None:
         try:
-            with _open('https://fc.yahoo.com') as response:response.read(1024)
+            with _open('https://fc.yahoo.com',response_type='html',stage='cookie_bootstrap') as response:response.read(1024)
         except HTTPError as error:
             if error.code!=404:raise
             error.close()  # This cookie bootstrap may return 404 with Set-Cookie.
-        with _open('https://query1.finance.yahoo.com/v1/test/getcrumb') as response:crumb=response.read(1025).decode('utf-8').strip()
+        with _open('https://query1.finance.yahoo.com/v1/test/getcrumb',response_type='text',stage='session_crumb') as response:crumb=response.read(1025).decode('utf-8').strip()
         if not crumb or len(crumb)>1024 or any(c.isspace() for c in crumb) or '<' in crumb:raise ProfileError('session_unavailable')
         _crumb=crumb
     params=urlencode({'modules':'assetProfile,quoteType,price','crumb':_crumb})
@@ -75,14 +84,14 @@ def _download_profile(symbol):
     if time.time()>=_direct_retry_at:
         try:return _download_direct(symbol)
         except HTTPError as error:
-            if error.code not in (401,403):raise
+            if error.code not in (401,403,406):raise
             error.close()
         except (URLError,TimeoutError,OSError,ProfileError):pass
         _direct_retry_at=time.time()+900
     # The profile page carries the same quoteSummary API response server-side.
     # This avoids requiring a user login when the anonymous cookie host is blocked.
     _session=build_opener(HTTPCookieProcessor(CookieJar()));_crumb=None
-    with _open('https://finance.yahoo.com/quote/'+quote(symbol,safe='')+'/profile/') as response:
+    with _open('https://finance.yahoo.com/quote/'+quote(symbol,safe='')+'/profile/',response_type='html',stage='profile_page') as response:
         raw=response.read(4*1024*1024+1)
         if len(raw)>4*1024*1024:raise ProfileError('invalid_profile')
     parser=EmbeddedProfile(symbol);parser.feed(raw.decode('utf-8'))
@@ -118,10 +127,10 @@ def fetch_profile(store,key):
                 try:seconds=min(86400,max(900,int((error.headers or {}).get('Retry-After','900'))))
                 except (ValueError,TypeError):seconds=900
                 code='http_'+str(error.code);error.close()
-                raise ProfileError(code,seconds) from None
-            except (URLError,TimeoutError,OSError,UnicodeError):
+                raise ProfileError(code,seconds,getattr(error,'profile_details',{'stage':'unknown','http_status':error.code})) from None
+            except (URLError,TimeoutError,OSError,UnicodeError) as error:
                 _session=None;_crumb=None
-                raise ProfileError('connection_error') from None
+                raise ProfileError('connection_error',details=getattr(error,'profile_details',{'stage':'unknown'})) from None
             except (ValueError,TypeError) as error:
                 if isinstance(error,ProfileError):raise
                 raise ProfileError('invalid_profile') from None
@@ -163,7 +172,7 @@ def enrich_categories(store,key,retry=False):
         seconds=max(error.seconds if isinstance(error,ProfileError) else 900,min(86400,900*2**min(attempts-1,7)))
         with store.connect() as db:
             db.execute("UPDATE instrument_category_sync SET status='retry',retry_at=?,error_code=? WHERE symbol=? AND exchange=? AND currency=? AND attempted_at=?",((stamp+timedelta(seconds=seconds)).isoformat(),code,*key,stamp.isoformat()))
-            if code in ('connection_error','http_401','http_403','http_429','http_503','session_unavailable'):
+            if code in ('connection_error','http_401','http_403','http_406','http_429','http_503','session_unavailable'):
                 current=time.time();db.execute('INSERT OR REPLACE INTO api_cache VALUES(?,?,?,?,?)',('provider-cooldown','yahoo-profile','{}',current,current+seconds))
-        record(store,'WARNING','market','categories_failed','Automatische categorieën ophalen mislukt; opnieuw proberen na de wachttijd.',{'symbol':key[0],'exchange':key[1],'currency':key[2],'code':code,'retry_seconds':seconds,'attempt':attempts,'error_type':type(error).__name__})
+        record(store,'WARNING','market','categories_failed','Automatische categorieën ophalen mislukt; opnieuw proberen na de wachttijd.',{'symbol':key[0],'exchange':key[1],'currency':key[2],'code':code,'retry_seconds':seconds,'attempt':attempts,'error_type':type(error).__name__,**(error.details if isinstance(error,ProfileError) else {})})
         return False
