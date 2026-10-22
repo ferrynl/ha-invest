@@ -75,7 +75,5 @@ function renderDividendPage(){
  for(const p of state.positions){const o=document.createElement('option');o.value=JSON.stringify([p.symbol,p.exchange,p.currency,p.account_id]);o.textContent=p.name+' · '+p.symbol+' · '+p.account_name+' · '+p.currency;$('dividend-stock').append(o);}
  if([...$('dividend-stock').options].some(o=>o.value===dividendSelected))$('dividend-stock').value=dividendSelected;
  $('dividend-form').querySelector('button').disabled=!state.positions.length;
- $('dividends').replaceChildren();for(const d of state.dividends){const row=document.createElement('tr');for(const v of [dayLabel(d.paid_on),d.symbol+' · '+d.exchange+' · '+(state.accounts.find(a=>a.id===d.account_id)?.name??''),money(d.amount,d.currency),d.note])cell(row,v);$('dividends').append(row);}
- $('dividend-empty').textContent=state.dividends.length?'':'Nog geen ontvangen dividend geboekt.';
-
+ renderDividendDashboard();
 }

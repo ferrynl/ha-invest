@@ -1,5 +1,11 @@
 ## 0.16.2
 
+## 0.19.0
+- Nieuw dividenddashboard met kerncijfers per valuta, maandgrafiek, jaaroverzicht, kalender en grootste uitbetalers.
+- Vooruitblik van 12 maanden, 3 jaar of 5 jaar op basis van de laatste twaalf maanden en huidige aantallen, met bekende splitsingen verwerkt.
+- Verwachtingen zijn zichtbaar gescheiden van ontvangen betalingen, met uitleg over aannames en posities zonder bruikbare basis.
+- Betalingen blijven filterbaar en sorteerbaar; dividend boeken blijft in een pop-up en grote overzichten laden betalingen in stappen.
+
 ## 0.18.0
 - Dividend toont het cumulatieve percentage van de totale aankoopinleg sinds de eerste aankoop; groter bedrijfslogo.
 - Bekende winst blijft zichtbaar bij ontbrekende koersen. Home noemt de betrokken aandelen direct, inclusief diagnostische Log-ID.
