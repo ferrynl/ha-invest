@@ -1,3 +1,9 @@
+## 0.21.2
+
+- Alle pagina’s benutten de beschikbare schermbreedte; Home, Aandelen en Dividend hebben geen vaste maximumbreedte meer.
+- Mobiele schermen krijgen passende kolommen, meeschalende velden en tabellen die binnen hun eigen paneel scrollen.
+- Het zijmenu blijft ook op lage schermen volledig bereikbaar door te scrollen.
+
 ## 0.21.1
 
 - Blijf 48 uur ingelogd; bij gebruik worden de sessie en cookie automatisch verlengd.
