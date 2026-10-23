@@ -7,6 +7,7 @@ import time
 from threading import RLock
 from datetime import datetime, timezone
 
+SESSION_TTL = 48 * 60 * 60
 ITERATIONS = 600_000
 def password_hash(password):
     if not isinstance(password,str) or not 12 <= len(password) <= 128:
@@ -32,7 +33,6 @@ class Auth:
     def __init__(self,store):
         self.store=store
         self.lock=RLock()
-        self.sessions={}
         self.failures={}
         self.dummy=password_hash(secrets.token_urlsafe(32))
 
@@ -41,16 +41,14 @@ class Auth:
     def user(self,token):
         if not self.enabled():return {'id':None,'username':'Home Assistant','role':'admin','csrf':None}
         key=hashlib.sha256(token.encode()).hexdigest()
-        with self.lock:
-            entry=self.sessions.get(key)
+        with self.lock, self.store.connect() as db:
+            now=time.time()
+            entry=db.execute('SELECT * FROM auth_sessions WHERE token_hash=?',(key,)).fetchone()
             if not entry:return None
-            now=time.monotonic()
-            if now-entry['seen']>1800 or now-entry['created']>28800:
-                self.sessions.pop(key,None);return None
-            with self.store.connect() as db:row=db.execute('SELECT id,username,role,active,revision FROM users WHERE id=?',(entry['user_id'],)).fetchone()
-            if not row or not row['active'] or row['revision']!=entry['revision']:
-                self.sessions.pop(key,None);return None
-            entry['seen']=now
+            row=db.execute('SELECT id,username,role,active,revision FROM users WHERE id=?',(entry['user_id'],)).fetchone()
+            if entry['expires_at']<=now or not row or not row['active'] or row['revision']!=entry['revision']:
+                db.execute('DELETE FROM auth_sessions WHERE token_hash=?',(key,));return None
+            db.execute('UPDATE auth_sessions SET expires_at=? WHERE token_hash=?',(now+SESSION_TTL,key))
             return dict(id=row['id'],username=row['username'],role=row['role'],csrf=entry['csrf'])
 
     def login(self,username,password,peer):
@@ -67,13 +65,18 @@ class Auth:
                 raise ValueError('Gebruikersnaam of wachtwoord onjuist.')
             self.failures.pop(('name',username),None)
             token=secrets.token_urlsafe(32)
-            self.sessions={k:s for k,s in self.sessions.items() if now-s['seen']<=1800 and now-s['created']<=28800}
-            if len(self.sessions)>=1000:raise PermissionError('Te veel actieve sessies.')
-            self.sessions[hashlib.sha256(token.encode()).hexdigest()]=dict(user_id=row['id'],revision=row['revision'],created=now,seen=now,csrf=secrets.token_urlsafe(32))
+            with self.store.connect() as db:
+                db.execute('DELETE FROM auth_sessions WHERE expires_at<=?',(time.time(),))
+                if db.execute('SELECT COUNT(*) FROM auth_sessions').fetchone()[0]>=1000:raise PermissionError('Te veel actieve sessies.')
+                db.execute('INSERT INTO auth_sessions VALUES(?,?,?,?,?)',(hashlib.sha256(token.encode()).hexdigest(),row['id'],row['revision'],secrets.token_urlsafe(32),time.time()+SESSION_TTL))
             return token
 
     def logout(self,token):
-        with self.lock:self.sessions.pop(hashlib.sha256(token.encode()).hexdigest(),None)
+        with self.lock, self.store.connect() as db:
+            db.execute('DELETE FROM auth_sessions WHERE token_hash=?',(hashlib.sha256(token.encode()).hexdigest(),))
+
+    def clear_sessions(self):
+        with self.lock, self.store.connect() as db:db.execute('DELETE FROM auth_sessions')
 
     def enable(self,username,password):
         username=username_value(username);encoded=password_hash(password)

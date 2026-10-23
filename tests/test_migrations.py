@@ -152,3 +152,16 @@ class MigrationTests(unittest.TestCase):
         with closing(sqlite3.connect(self.path)) as db:
             self.assertEqual(db.execute('SELECT COUNT(*) FROM instrument_valuations').fetchone()[0],0)
             self.assertEqual(db.execute('SELECT price FROM purchases').fetchone()[0],'999')
+
+    def test_sessions_migration_rollback_and_ledger_preservation(self):
+        self.create_old(15)
+        broken={**MIGRATIONS,16:MIGRATIONS[16]+('INVALID SQL',)}
+        with patch.dict('migrations.MIGRATIONS',broken,clear=True),self.assertRaises(sqlite3.Error):migrate(self.path)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],15)
+            self.assertIsNone(db.execute("SELECT name FROM sqlite_master WHERE name='auth_sessions'").fetchone())
+        migrate(self.path);migrate(self.path)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM auth_sessions').fetchone()[0],0)
+            self.assertEqual(db.execute('SELECT price FROM purchases').fetchone()[0],'999')
+            self.assertEqual(db.execute('SELECT amount FROM dividends').fetchone()[0],'5.25')

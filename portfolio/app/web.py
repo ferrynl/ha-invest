@@ -10,7 +10,7 @@ from urllib.parse import urlsplit,parse_qs
 from pathlib import Path
 from provider import search_stocks,listing as resolve_listing
 from restore import restore_backup
-from security import verify_password
+from security import verify_password,SESSION_TTL
 from version import APP_VERSION
 from updates import check_updates
 from imports import ADAPTERS
@@ -42,7 +42,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if not re.fullmatch(r'/[a-zA-Z0-9_./-]*',path):path='/'
             path=path.rstrip('/')+'/'
             secure=self.headers.get('X-Forwarded-Proto','').split(',')[0].strip()=='https' or self.headers.get('Origin','').startswith('https://')
-            return f'homeinvest_session={token}; Path={path}; HttpOnly; SameSite=Strict; Max-Age={28800 if token else 0}'+('; Secure' if secure else '')
+            return f'homeinvest_session={token}; Path={path}; HttpOnly; SameSite=Strict; Max-Age={SESSION_TTL if token else 0}'+('; Secure' if secure else '')
         def respond(self,content,code=200,kind='application/json',filename=None,cookie=None,etag=False,public=False):
             if kind=='application/json':content=json.dumps(content,separators=(',',':')).encode()
             digest='"'+hashlib.sha256(content).hexdigest()+'"' if etag else None
@@ -55,6 +55,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https://www.google.com https://t0.gstatic.com https://t1.gstatic.com https://t2.gstatic.com https://t3.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'")
             if digest:self.send_header('ETag',digest)
             if filename:self.send_header('Content-Disposition',f'attachment; filename="{filename}"')
+            if cookie is None:cookie=getattr(self,'renew_cookie',None)
             if cookie:self.send_header('Set-Cookie',cookie)
             self.end_headers()
             if content:self.wfile.write(content)
@@ -69,6 +70,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 if path=='/':content=content.replace(b'__ASSET_VERSION__',APP_VERSION.encode())
                 return self.respond(content,kind=kind,etag=path!='/',public=path!='/')
             user=auth.user(self.token())
+            self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
             if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/users','/api/backup','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
             if path in ('/api/transactions','/api/transactions/changes','/api/portfolio/delete-preview','/api/portfolio/deletion-backup'):
@@ -168,6 +170,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if self.headers.get('X-Portfolio-Request')!='1' or self.headers.get('Content-Type')!=expected:
                 return self.respond({'error':'Ongeldige aanvraag.'},403)
             user=auth.user(self.token())
+            self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path!='/api/auth/login':
                 if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation') or path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/')):return
                 if auth.enabled() and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),user['csrf'] or ''):
@@ -177,7 +180,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     if self.headers.get('X-Confirm-Restore')!='yes':raise ValueError('Bevestig het terugzetten van de portefeuille.')
                     with refresh_lock:
                         result=restore_backup(store,body);cache.invalidate()
-                        with auth.lock:auth.sessions.clear()
+                        auth.clear_sessions()
                     refresh_requested.set()
                     return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))
                 data=json.loads(body)
@@ -247,7 +250,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                         row=db.execute('SELECT password_hash FROM users WHERE id=?',(user['id'],)).fetchone()
                         if not row or not verify_password(data.get('password',''),row['password_hash']):raise ValueError('Huidig adminwachtwoord onjuist.')
                         db.execute("UPDATE app_settings SET value='false' WHERE key='auth_enabled'")
-                    with auth.lock:auth.sessions.clear()
+                    auth.clear_sessions()
                     cache.invalidate();return self.respond({'ok':True},cookie=self.cookie(''))
                 if path=='/api/auth/logout':
                     auth.logout(self.token());return self.respond({'ok':True},cookie=self.cookie(''))

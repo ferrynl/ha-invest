@@ -1,3 +1,9 @@
+## 0.21.1
+
+- Blijf 48 uur ingelogd; bij gebruik worden de sessie en cookie automatisch verlengd.
+- Sessies blijven behouden na een appherstart en worden bij uitloggen, accountwijzigingen en herstel ingetrokken.
+- Databaseversie 16 voegt blijvende sessies toe met uitsluitend gehashte sessiesleutels.
+
 ## 0.16.2
 
 ## 0.21.0

@@ -117,11 +117,35 @@ class AccessTests(unittest.TestCase):
   self.assertTrue(self.auth.user(admin))
   self.assertEqual(self.request('POST','/api/auth/logout',{},basic,basic_csrf)[0],200)
   self.assertEqual(self.request('GET','/api/state',token=basic)[0],401)
+ def test_persistent_sliding_session_and_cookie(self):
+  token,csrf=self.activate()
+  from security import SESSION_TTL
+  import time
+  now=time.time()
+  with self.store.connect() as db:
+   row=db.execute('SELECT * FROM auth_sessions').fetchone()
+   self.assertNotEqual(row['token_hash'],token)
+   self.assertAlmostEqual(row['expires_at'],now+SESSION_TTL,delta=3)
+  restarted=Auth(Store(self.temp.name))
+  with patch('security.time.time',return_value=now+SESSION_TTL-1):
+   self.assertEqual(restarted.user(token)['csrf'],csrf)
+  with patch('security.time.time',return_value=now+SESSION_TTL+60):
+   self.assertIsNotNone(restarted.user(token))
+  with patch('security.time.time',return_value=now+3*SESSION_TTL):
+   self.assertIsNone(restarted.user(token))
+  self.assertIsNone(self.auth.user(token))
+  token=self.auth.login('owner',self.password,'test')
+  code,_,headers=self.request('GET','/api/session',token=token,extra={'X-Ingress-Path':'/api/hassio_ingress/test','X-Forwarded-Proto':'https'})
+  self.assertEqual(code,200)
+  for part in ['Max-Age=172800','HttpOnly','SameSite=Strict','Secure','Path=/api/hassio_ingress/test/']:self.assertIn(part,headers['Set-Cookie'])
+  restarted.logout(token)
+  self.assertIsNone(self.auth.user(token))
+
  def test_password_hash_rate_limit_expiry_and_revocation(self):
   token,csrf=self.activate()
   with self.store.connect() as db:encoded=db.execute('SELECT password_hash FROM users').fetchone()[0]
   self.assertNotIn(self.password,encoded);self.assertTrue(verify_password(self.password,encoded))
-  with patch('security.time.monotonic',return_value=10**12):self.assertIsNone(self.auth.user(token))
+  with patch('security.time.time',return_value=10**12):self.assertIsNone(self.auth.user(token))
   token=self.auth.login('owner',self.password,'test')
   self.auth.change_password(1,self.password,'Another-long-password-2026')
   self.assertIsNone(self.auth.user(token))

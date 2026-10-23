@@ -245,8 +245,8 @@ Wachtwoorden worden met een unieke salt en PBKDF2-HMAC-SHA256 (600.000 iteraties
 opgeslagen. Sessies gebruiken willekeurige tokens in HttpOnly/SameSite=Strict-cookies;
 de server bewaart alleen de tokenhash. Cookies krijgen Secure bij HTTPS-toegang.
 Gebruik Home Assistant via HTTPS; de app publiceert geen eigen hostpoort. Schrijfacties
-hebben CSRF-controle. Een sessie verloopt na 30 minuten zonder aanvragen of uiterlijk
-na 8 uur, en vervalt bij uitloggen, accountwijziging of serverherstart. Er is een
+hebben CSRF-controle. Een sessie verloopt na 48 uur zonder aanvragen. Bij gebruik worden sessie en cookie
+met 48 uur verlengd. De sessie overleeft een appherstart en vervalt bij uitloggen of accountwijziging. Er is een
 limiet van 10 mislukte pogingen per gebruikersnaam en verbindingsadres in 15 minuten.
 Via ingress kan het verbindingsadres gedeeld zijn; de limiet kan dan meerdere
 gebruikers raken. Sessies en pogingstellers zijn bewust alleen in het geheugen.
@@ -536,3 +536,7 @@ Ontbrekende historische wisselkoersen worden zo nodig via de bestaande koersdien
 Op Dividend combineert Alle valuta’s in euro de ontvangen betalingen tegen hun wisselkoers op betaaldatum. Verwachtingen rekenen de oorspronkelijke dividendbedragen om met de huidige beschikbare wisselkoers, die voor de hele toekomstige horizon vast blijft. Het scenario voorspelt geen toekomstige wisselkoersen. Ontbrekende omrekeningen worden apart vermeld; de originele bedragen blijven bij de betalingen zichtbaar.
 Aandelen is een gezamenlijk overzicht van alle brokeraccounts, met één regel per symbool, beurs en noteringsvaluta. Aantallen, kostprijs, waarde, gerealiseerde winst en dividend worden binnen die beursnotering opgeteld. Verschillende beursnoteringen of valuta’s worden niet ongemerkt samengevoegd. Een aandeel openen toont alle transacties, dividend en splitsingen van alle brokers. Transactiebeheer blijft onder Transacties; de extra tabel onder het aandelenoverzicht is verwijderd.
 De cirkelgrafieken voor sector, land en beleggingstype tonen aantallen open beursnoteringen, geen verdeling van marktwaarde. Niet ingedeelde aandelen blijven zichtbaar. Nieuwe categoriegegevens verversen de grafieken zonder tabelsortering en filters te wissen.
+
+### Ingelogd blijven
+
+Na aanmelden blijf je 48 uur ingelogd. Elk geauthenticeerd verzoek verlengt dit met 48 uur, ook na het sluiten van de browser of een appherstart. De browser bewaart een HttpOnly-cookie; de server bewaart alleen de hash van de sessiesleutel in SQLite. Uitloggen, accountwijzigingen en herstel trekken sessies in. Na deze update is één keer opnieuw aanmelden nodig.

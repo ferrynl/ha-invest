@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from contextlib import closing
 
-SCHEMA_VERSION = 15
+SCHEMA_VERSION = 16
 MIGRATIONS = {
     1: (
         'CREATE TABLE IF NOT EXISTS purchases (id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL, name TEXT NOT NULL, quantity TEXT NOT NULL, price TEXT NOT NULL, currency TEXT NOT NULL, purchased_on TEXT NOT NULL, created_at TEXT NOT NULL)',
@@ -73,6 +73,10 @@ MIGRATIONS = {
     ),
     15: (
         'CREATE TABLE instrument_valuations (symbol TEXT NOT NULL, exchange TEXT NOT NULL, currency TEXT NOT NULL, price TEXT NOT NULL, day TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(symbol,exchange,currency))',
+    ),
+    16: (
+        'CREATE TABLE auth_sessions (token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), revision INTEGER NOT NULL, csrf TEXT NOT NULL, expires_at REAL NOT NULL)',
+        'CREATE INDEX auth_sessions_expiry ON auth_sessions(expires_at)',
     ),
 }
 
