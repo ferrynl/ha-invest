@@ -8,6 +8,10 @@ from provider import EXCHANGES
 from forex import convert,prepare_rates
 from .registry import remember,lookup,discover,identity
 
+def prepare_rows(store,account_id,provider,rows):
+    prepare=ADAPTERS[provider].get('prepare')
+    if prepare:prepare(store,account_id,rows)
+
 def preview(store,account_id,provider,filename,text):
     adapter=ADAPTERS.get(provider)
     if not adapter:raise ValueError('Onbekende importaanbieder.')
@@ -16,6 +20,7 @@ def preview(store,account_id,provider,filename,text):
         account=dict(db.execute('SELECT * FROM broker_accounts WHERE id=?',(account_id,)).fetchone())
     if account['broker']!=adapter['name']:raise ValueError('Kies een brokeraccount van '+adapter['name']+'.')
     rows=adapter['parse'](text)
+    prepare_rows(store,account_id,provider,rows)
     with store.connect() as db:
         seen={}
         for row in rows:
@@ -97,6 +102,7 @@ def open_preview(store,batch_id):
     rows=json.loads(batch['payload'])
     from .partial import refresh_supported
     refresh_supported(rows,batch['provider'])
+    prepare_rows(store,batch['account_id'],batch['provider'],rows)
     for row in rows:
         if row.get('external_id'):
             with store.connect() as db:previous=db.execute('SELECT digest FROM import_records WHERE account_id=? AND provider=? AND external_id=?',(batch['account_id'],batch['provider'],row['external_id'])).fetchone()
@@ -141,6 +147,13 @@ def book_row(db,batch_id,account_id,provider,row,mapping,trace):
             prior=[p for p in lots if (p['purchased_on'],p['trade_time'])<=(row['day'],row['trade_time'])]
             if not prior:raise ValueError('Splitsing zonder voorafgaand bezit. Importeer de volledige aankoopgeschiedenis.')
             point=daily_values(prior,[],[],today=date.fromisoformat(row['day']))[-1]
+            if provider=='traderepublic' and row.get('split_ratio'):
+                from .traderepublic import SPLITS
+                ratio=SPLITS.get((row['raw'].get('ISIN'),row['day']))
+                before=Decimal(point['quantity']);source_quantity=Decimal(row['quantity'])
+                if not ratio or before<=0 or source_quantity not in (before*ratio,before*(ratio-1)):
+                    raise ValueError('Splitsingsaantal sluit niet aan op het voorafgaande bezit en de bevestigde verhouding. Controleer de volledige aankoophistorie.')
+                row={**row,'quantity':str(before*ratio),'split_before':str(before)}
             # Store the preserved cost per new share, never an invented cash price.
             row={**row,'price':str(Decimal(point['cost'])/Decimal(row['quantity']))}
         db.execute('INSERT INTO purchases(symbol,exchange,name,quantity,price,currency,purchased_on,created_at,account_id,side,trade_time) VALUES(?,?,?,?,?,?,?,?,?,?,?)',(base['symbol'],base['exchange'],str(mapping.get('name') or row['name'])[:100],positive(row['quantity']),positive(row['price']),base['currency'],row['day'],now(),base['account_id'],'BUY' if row['kind']=='SPLIT' else row['kind'],row['trade_time']))

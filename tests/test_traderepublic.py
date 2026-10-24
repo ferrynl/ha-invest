@@ -141,3 +141,74 @@ class TradeRepublicTests(unittest.TestCase):
         with closing(sqlite3.connect(backup)) as db:
             db.execute("UPDATE instrument_mappings SET provider='unknown-provider'");db.commit()
         with self.assertRaisesRegex(ValueError,'instrumentkoppeling'):restore_backup(self.store,backup.read_bytes())
+
+    def test_deposit_and_cash_bonus_are_not_dividend_or_purchases(self):
+        cash=dict(category='CASH',symbol='',shares='',price='',asset_class='')
+        batch=preview(self.store,2,'traderepublic','cash.csv',export(dict(cash,type='CUSTOMER_INPAYMENT',amount='100',transaction_id='deposit'),dict(cash,type='BONUS',amount='.10',transaction_id='bonus')))
+        self.assertEqual([r['kind'] for r in batch['rows']],['SKIP','SKIP'])
+        self.assertFalse(any(r['error'] for r in batch['rows']))
+        self.assertEqual(commit_partial(self.store,batch['batch_id'])['imported'],0)
+        self.assertEqual(self.store.state()['purchases'],[]);self.assertEqual(self.store.state()['dividends'],[])
+        self.assertIsNone(parse_csv(export(dict(type='BONUS',category='CASH')))[0]['kind'])
+
+    def migration(self,**changes):
+        return dict(category='DELIVERY',type='MIGRATION',shares='-1',price='100',transaction_id='out',datetime='2026-01-02T10:00:00.100Z')|changes
+
+    def test_balanced_internal_migration_preserves_holdings_and_cost(self):
+        batch=self.mapped(export({},self.migration(),self.migration(shares='1',transaction_id='in',datetime='2026-01-02T10:00:00.108Z')))
+        self.assertEqual([r['kind'] for r in batch['rows']],['BUY','SKIP','SKIP'])
+        result=commit_partial(self.store,batch['batch_id']);self.assertEqual(result['imported'],1);self.assertEqual(result['pending'],0)
+        position=self.store.state()['positions'][0];self.assertEqual(position['quantity'],'2');self.assertEqual(position['cost'],'200')
+        again=self.mapped(export({},self.migration(),self.migration(shares='1',transaction_id='in',datetime='2026-01-02T10:00:00.108Z')))
+        self.assertEqual(commit_partial(self.store,again['batch_id'])['imported'],0)
+
+    def test_incomplete_or_changed_migration_stays_pending(self):
+        for second in (None,dict(shares='.5'),dict(price='101'),dict(currency='USD'),dict(transaction_id='out'),dict(datetime='2026-01-02T10:00:02Z')):
+            entries=[self.migration()]
+            if second is not None:entries.append(self.migration(shares='1',transaction_id='in')|second)
+            rows=parse_csv(export(*entries));self.assertTrue(all(r.get('error') for r in rows),second)
+            self.assertTrue(all(r['kind']=='MIGRATION' for r in rows))
+
+    def netflix(self,**changes):
+        return dict(symbol='US64110L1061',category='CORPORATE_ACTION',type='SPLIT',date='2025-11-17',datetime='2025-11-17T06:00:00Z',shares='9',price='',amount='',currency='',transaction_id='split')|changes
+
+    def netflix_buy(self):
+        return dict(symbol='US64110L1061',date='2025-11-01',datetime='2025-11-01T10:00:00Z',shares='1',price='100',amount='-100')
+
+    def test_split_without_currency_preserves_cost_and_validates_added_or_total_units(self):
+        from decimal import Decimal
+        for source_quantity in ('9','10'):
+            batch=self.mapped(export(self.netflix_buy(),self.netflix(shares=source_quantity,transaction_id='split-'+source_quantity)))
+            self.assertEqual(batch['rows'][1]['kind'],'SPLIT');self.assertEqual(batch['rows'][1]['currency'],'EUR')
+            self.assertEqual(batch['rows'][1]['raw']['currency'],'');self.assertFalse(batch['rows'][1]['error'])
+            # Each case needs a fresh account ledger, without preceding test holdings.
+            if source_quantity=='10':
+                with self.store.connect() as db:
+                    db.execute('DELETE FROM import_records');db.execute('DELETE FROM purchases')
+            result=commit_partial(self.store,batch['batch_id']);self.assertEqual(result['pending'],0);self.assertEqual(result['imported'],2)
+            position=self.store.state()['positions'][0];self.assertEqual(Decimal(position['quantity']),10);self.assertEqual(Decimal(position['cost']),100);self.assertEqual(Decimal(position['realised']),0)
+            self.assertEqual(commit_partial(self.store,batch['batch_id'])['imported'],0)
+            again=self.mapped(export(self.netflix_buy(),self.netflix(shares=source_quantity,transaction_id='split-'+source_quantity)))
+            self.assertEqual(commit_partial(self.store,again['batch_id'])['imported'],0)
+
+    def test_split_can_use_saved_isin_currency_but_never_invents_holdings(self):
+        batch=self.mapped(export(self.netflix_buy()));commit_partial(self.store,batch['batch_id'])
+        split=preview(self.store,2,'traderepublic','split-only.csv',export(self.netflix()))
+        self.assertFalse(split['rows'][0]['error']);self.assertEqual(split['rows'][0]['currency_origin'],'saved_listing')
+        self.assertEqual(commit_partial(self.store,split['batch_id'])['imported'],1)
+        mismatch=self.mapped(export(self.netflix(shares='7',transaction_id='mismatch')))
+        result=commit_partial(self.store,mismatch['batch_id']);self.assertEqual(result['imported'],0);self.assertEqual(result['pending'],1)
+        self.assertEqual(self.store.state()['positions'][0]['quantity'],'10')
+        unknown=parse_csv(export(self.netflix(date='2026-01-02',datetime='2026-01-02T06:00:00Z')))[0]
+        self.assertIn('verhouding',unknown['error'])
+
+    def test_old_cash_migration_and_split_errors_recover_without_reupload(self):
+        text=export(self.netflix_buy(),self.netflix(),dict(category='CASH',type='CUSTOMER_INPAYMENT',symbol='',shares='',price='',transaction_id='deposit'),self.migration(symbol='US64110L1061'),self.migration(symbol='US64110L1061',shares='1',transaction_id='in'))
+        batch=self.mapped(text)
+        identities=[(r['external_id'],r['digest']) for r in batch['rows']]
+        for row in batch['rows'][1:]:row.update(kind=None,error='Oude parserfout')
+        with self.store.connect() as db:db.execute('UPDATE import_batches SET payload=? WHERE id=?',(json.dumps(batch['rows']),batch['batch_id']))
+        opened=open_preview(self.store,batch['batch_id'])
+        self.assertFalse(any(r.get('error') for r in opened['rows']))
+        self.assertEqual(identities,[(r['external_id'],r['digest']) for r in opened['rows']])
+        result=commit_partial(self.store,batch['batch_id']);self.assertEqual(result['imported'],2);self.assertEqual(result['pending'],0)

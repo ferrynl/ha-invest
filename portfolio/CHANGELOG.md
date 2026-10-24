@@ -1,3 +1,11 @@
+## 0.22.2
+
+- Trade Republic herkent CUSTOMER_INPAYMENT en geldbonussen zonder effecten als cashmutaties; ze tellen niet als aankoop of dividend.
+- DELIVERY/MIGRATION wordt alleen overgeslagen bij een eenduidig gelijk uit-/inboekingspaar voor dezelfde ISIN, accountsoort, dag, valuta en prijs binnen één seconde. Onvolledige of afwijkende migraties blijven ter beoordeling.
+- De bevestigde Netflix-splitsing van 17 november 2025 wordt gecontroleerd tegen het voorafgaande bezit en de 10-op-1-verhouding. Het bronbestand mag de extra aandelen of het nieuwe totaal bevatten; kostprijs, inleg en gerealiseerde winst blijven behouden.
+- Een splitsing zonder geldvaluta gebruikt uitsluitend een eenduidige valuta uit dezelfde aankoophistorie of de opgeslagen ISIN-koppeling. Ontbrekende historie of een afwijkend aantal wordt niet geschat.
+- Bestaande foutregels worden bij heropenen/opnieuw proberen opnieuw gecontroleerd met behoud van bron-ID’s, originele bronregels en handmatige beslissingen.
+
 ## 0.22.1
 
 - Trade Republic: Private Markets-vooruitbetalingen zonder aantal/prijs worden als cashmutatie overgeslagen; de latere PRIVATE_FUND-aankoop gebruikt het expliciete aantal en de prijs.

@@ -7,7 +7,7 @@ from storage import now
 from diagnostics import record,ActionError
 from forex import prepare_rates,convert
 from .registry import discover,lookup,remember
-from .service import book_row
+from .service import book_row,prepare_rows
 from .trading212 import parse_csv,unclassified_identity
 
 def stable(row):
@@ -23,6 +23,7 @@ def commit_partial(store,batch_id):
         if batch['status']=='imported':return dict(imported=0,pending=0,duplicate=True)
         rows=[stable(r) for r in json.loads(batch['payload'])]
         refresh_supported(rows,batch['provider'])
+        prepare_rows(store,batch['account_id'],batch['provider'],rows)
         discover(store)
         conflicts={}
         for row in rows:
@@ -143,7 +144,7 @@ def refresh_supported(rows,provider='trading212'):
     for row,new in zip(rows,parsed):
         if row.get('decision') not in (None,'retry') or not row.get('error') or row.get('duplicate'):continue
         if provider=='traderepublic':
-            if new.get('error') or new.get('kind') not in ('BUY','SELL','DIVIDEND','CAPITAL_RETURN','SKIP'):continue
+            if (new.get('error') and not new.get('needs_split_currency')) or new.get('kind') not in ('BUY','SELL','DIVIDEND','CAPITAL_RETURN','SKIP','SPLIT'):continue
         else:
             if new.get('kind') not in ('BUY','SELL','DISTRIBUTION','CAPITAL_RETURN','SPLIT','SPLIT_INFO','SPLIT_CLOSE'):continue
             if row.get('kind') is not None and not (row.get('kind') in ('BUY','SELL') and str(row.get('error','')).startswith('Aantal of prijs ontbreekt.')):continue
