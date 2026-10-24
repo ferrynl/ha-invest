@@ -123,6 +123,9 @@ def company_data(payload):
     return dict(description=description,domain=domain or '')
 
 def fetch_profile(store,key,company=False):
+    if key[1]=='PRIVATE':
+        if company:return dict(description='Niet-beursgenoteerd fonds. Vul de actuele intrinsieke waarde per aandeel en de koersdatum handmatig in; aankoopprijzen worden niet als actuele koers gebruikt.',domain='')
+        return dict(sector='',country='',asset_type='Beleggingsfonds')
     def load():
         global _session,_crumb
         with _lock:

@@ -30,7 +30,9 @@ def resolve(store,rows,provider,preferred=None):
         if historical and all(r.get('day','9999')<=historical['last_day'] for r in rows):
             return {'mapping':{k:v for k,v in historical.items() if k!='last_day'},'via':'Historische ISIN-notering; actuele koers kan ontbreken'}
         broker_listing=BROKER_LISTINGS.get((provider,isin))
-        if broker_listing:return {'mapping':dict(broker_listing),'via':'Exacte ISIN-notering van de broker; koersbeschikbaarheid apart gecontroleerd'}
+        if broker_listing:return {'mapping':dict(broker_listing),'via':'Niet-beursgenoteerd fonds; actuele fondskoers handmatig instellen bij Aandelen' if broker_listing['exchange']=='PRIVATE' else 'Exacte ISIN-notering van de broker; koersbeschikbaarheid apart gecontroleerd'}
+        if provider=='traderepublic' and first.get('raw',{}).get('asset_class','').upper()=='PRIVATE_FUND':
+            return {'error':'Niet-beursgenoteerd fonds: de exacte ISIN-koppeling is nog niet ondersteund. Er wordt geen beursnotering op naam gekozen.'}
         # Issuer-backed ISIN tables bypass incomplete Yahoo search indexes.
         catalogue=CATALOGUE.get(isin,[])
         if catalogue:

@@ -28,6 +28,7 @@ def save(store,data):
     from storage import now
     key=identity(data);automatic=data.get('automatic')
     if not isinstance(automatic,bool):raise ValueError('Kies automatisch ophalen of een laatste koers.')
+    if automatic and key[1]=='PRIVATE':raise ValueError('Dit fonds is niet beursgenoteerd. Vul de fondskoers en koersdatum handmatig in.')
     if not automatic:
         price=validate_price(data.get('price'));day=date.fromisoformat(data.get('day',''))
         if day>date.today():raise ValueError('De koersdatum mag niet in de toekomst liggen.')

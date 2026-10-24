@@ -52,6 +52,7 @@ def edit(store,data):
     if not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',symbol):raise ValueError('Vul een geldig koersticker in, bijvoorbeeld SOF.BR of MO.')
     with store.connect() as db:entry=db.execute('SELECT * FROM instrument_mappings WHERE id=?',(record_id,)).fetchone()
     if not entry:raise ValueError('Koppeling niet gevonden.')
+    if entry['exchange']=='PRIVATE':raise ValueError('Dit fonds heeft geen beursnotering. Stel de actuele fondskoers handmatig in bij Aandelen; de ISIN-koppeling blijft behouden.')
     actual=listing(symbol,store=store)
     if actual['exchange']!=str(data.get('exchange','')).upper() or actual['currency']!=str(data.get('currency','')).upper():
         raise ValueError('Beurs of valuta wijkt af van de gecontroleerde notering: '+actual['exchange']+' / '+actual['currency']+'. Pas de velden aan; er is niets gewijzigd.')

@@ -36,7 +36,8 @@ EXCHANGES = {'AMS': ('AMSTERDAM', 'EUR'), 'BRU': ('BRUSSELS', 'EUR'), 'MCE': ('M
              'NASDAQ': ('NASDAQ', 'USD'), 'NYQ': ('NYSE', 'USD'), 'NYSE': ('NYSE', 'USD'),
              'PCX': ('NYSEARCA','USD'), 'ASE': ('AMEX','USD'),
              'GER': ('XETRA','EUR'), 'PAR': ('PARIS','EUR'), 'MIL': ('MILAN','EUR'),
-             'LSE': ('LONDON','GBP'), 'EBS': ('SWISS','CHF'), 'FRA': ('FRANKFURT','EUR')}
+             'LSE': ('LONDON','GBP'), 'EBS': ('SWISS','CHF'), 'FRA': ('FRANKFURT','EUR'),
+             'PRIVATE': ('PRIVATE','EUR')}
 
 def search_stocks(query,store=None):
     query = query.strip()

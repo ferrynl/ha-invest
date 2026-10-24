@@ -38,6 +38,9 @@ def refresh():
             instrument=(p['symbol'],p['exchange'],p['currency'])
             if instrument in seen:continue
             seen.add(instrument)
+            if p['exchange']=='PRIVATE':
+                if enrich_categories(store,instrument):state_cache.invalidate()
+                continue
             if p.get('quote',{} ) and p['quote'].get('manual'):
                 if enrich_categories(store,instrument):state_cache.invalidate()
                 continue

@@ -43,3 +43,12 @@ class ValuationTests(unittest.TestCase):
   save(self.store,dict(**STOCK,automatic=False,price='25',day='2026-10-03'))
   with patch.object(server,'store',self.store),patch.object(server,'fetch_quote') as quote,patch.object(server,'fetch_history') as history,patch.object(server,'enrich_categories',return_value=False):
    server.refresh();quote.assert_not_called();history.assert_not_called()
+ def test_background_never_requests_public_market_data_for_private_funds(self):
+  import server
+  self.store.add(dict(symbol='LU3170240538',exchange='PRIVATE',currency='EUR',name='Private fund',quantity='1',price='100',purchased_on='2026-01-01'))
+  from profiles import enrich_categories
+  with patch.object(server,'store',self.store),patch.object(server,'fetch_quote') as quote,patch.object(server,'fetch_history') as history,patch.object(server,'enrich_categories',wraps=enrich_categories),patch('profiles._download_profile') as profile:
+   # Only the private position is relevant; the setup's public position is excluded.
+   original=self.store.state
+   with patch.object(self.store,'state',side_effect=lambda:dict(original(),positions=[p for p in original()['positions'] if p['exchange']=='PRIVATE'])):server.refresh()
+   quote.assert_not_called();history.assert_not_called();profile.assert_not_called()

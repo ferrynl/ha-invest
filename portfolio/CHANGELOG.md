@@ -1,3 +1,13 @@
+## 0.22.1
+
+- Trade Republic: Private Markets-vooruitbetalingen zonder aantal/prijs worden als cashmutatie overgeslagen; de latere PRIVATE_FUND-aankoop gebruikt het expliciete aantal en de prijs.
+- Apollo Global Private Markets ELTIF A2 UNH (LU3170240538) krijgt een eigen niet-beursgenoteerde ISIN-koppeling. Actuele fondswaardering is handmatig; er worden geen Yahoo-koersen of aankoophistorie als actuele waarde gebruikt.
+- De boekdatum blijft behouden als de UTC-transactietijd op een aangrenzende dag valt. Beide bronvelden en bron-ID’s blijven ongewijzigd bewaard.
+- Exacte, gecontroleerde EUR-noteringen toegevoegd voor Dividend 15 Split, BYD H, Rheinmetall, Xiaomi B en Alphabet A.
+- Eerder afgewezen Trade Republic-regels worden bij heropenen of opnieuw proberen opnieuw gevalideerd met behoud van bronidentiteit en handmatige beslissingen. Herkende cashmutaties verdwijnen uit de openstaande beoordeling.
+- Te beoordelen toont nu ook het Trade Republic-actietype en bronbedrag.
+- Back-upherstel accepteert koppelingen van alle ondersteunde importaanbieders, inclusief Trade Republic, en blijft onbekende aanbieders weigeren.
+
 ## 0.22.0
 
 - Imports krijgt een overzicht met brokerkaarten, duidelijke importstappen en een lege geschiedenis met uitleg. CSV-upload en API-rapportaanvraag openen in pop-ups.

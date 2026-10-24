@@ -32,6 +32,10 @@ def parse_csv(text, decision=None):
             digest=hashlib.sha256(json.dumps(raw,sort_keys=True).encode()).hexdigest()
             category,action=raw['category'],raw['type']
             kind=decision or (action if (category,action) in {('TRADING','BUY'),('TRADING','SELL'),('CASH','DIVIDEND')} else 'SKIP' if category=='CASH' and action in CASH_ONLY else None)
+            # Pre-payment is a cash reservation, not the eventual fund purchase.
+            # Only accept the observed shape; a changed shape still needs review.
+            if not decision and category=='CASH' and action=='PRIVATE_MARKET_BUY' and raw['asset_class']=='PRIVATE_FUND' and not raw['shares'] and not raw['price']:
+                kind='SKIP'
             row=dict(line=index,kind=kind,ticker=raw['symbol'],name=raw['name'],raw={**raw,'ISIN':raw['symbol']},
                      digest=digest,external_id='id:'+raw['transaction_id'] if raw['transaction_id'] else 'raw:'+digest,error=None)
             try:
@@ -40,13 +44,19 @@ def parse_csv(text, decision=None):
                 stamp=datetime.fromisoformat(raw['datetime'].replace('Z','+00:00'))
                 stamp=stamp.replace(tzinfo=timezone.utc) if stamp.tzinfo is None else stamp.astimezone(timezone.utc)
                 day=date.fromisoformat(raw['date'])
-                if stamp.date()!=day:raise ValueError('Datum wijkt af van de transactietijd in UTC.')
-                if day>date.today():raise ValueError('Toekomstige transactie.')
+                # Broker booking date and UTC execution time can straddle midnight.
+                # Preserve the explicit source date for the ledger and FX.
+                if abs((stamp.date()-day).days)>1:raise ValueError('Boekdatum en transactietijd verschillen meer dan één dag; controleer de bronregel.')
+                if day>date.today() or stamp.date()>date.today():raise ValueError('Toekomstige transactie.')
                 row.update(day=day.isoformat(),trade_time=stamp.isoformat(),currency=currency_code(raw['currency']))
+                if stamp.date()!=day:row['notice']='Boekdatum uit de export behouden; UTC-transactietijd valt op een andere dag.'
                 if not kind:raise ValueError('Dit transactietype vereist beoordeling: '+category+' / '+action+'.')
-                if kind=='SKIP':rows.append(row);continue
-                if raw['asset_class'].lower() not in ('stock','fund','etf','equity'):
+                if kind=='SKIP':
+                    if action=='PRIVATE_MARKET_BUY':row['notice']='Vooruitbetaling overgeslagen; de latere fondsuitvoering boekt de aankoop.'
+                    rows.append(row);continue
+                if raw['asset_class'].lower() not in ('stock','fund','etf','equity','private_fund'):
                     raise ValueError('Alleen aandelen en fondsen worden ondersteund; controleer de beleggingscategorie.')
+                if raw['asset_class'].lower()=='private_fund':row['notice']='Niet-beursgenoteerd fonds: stel de actuele fondskoers handmatig in bij Aandelen.'
                 if not re.fullmatch(r'[A-Z]{2}[A-Z0-9]{9}[0-9]',row['ticker']):raise ValueError('Geldige ISIN ontbreekt.')
                 if len(row['currency'])!=3:raise ValueError('Valutacode ontbreekt.')
                 if kind in ('DIVIDEND','CAPITAL_RETURN'):

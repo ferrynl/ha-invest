@@ -63,7 +63,8 @@ def restore_backup(store,content):
                     row=dict(zip(columns,values))
                     if table=='import_issues' and row['state'] not in ('pending','resolved','ignored'):raise ValueError('Ongeldige importstatus in back-up.')
                     if table=='instrument_mappings':
-                        if row['origin'] not in ('pending','automatic','manual') or row['provider']!='trading212':raise ValueError('Ongeldige instrumentkoppeling in back-up.')
+                        from imports import ADAPTERS
+                        if row['origin'] not in ('pending','automatic','manual') or row['provider'] not in ADAPTERS:raise ValueError('Ongeldige instrumentkoppeling in back-up.')
                         if row['identity']!=('isin:'+row['isin'] if row['isin'] else 'ticker:'+row['ticker'].strip().upper()):raise ValueError('Ongeldige instrumentidentiteit in back-up.')
                         if not row['symbol'] and (row['exchange'] or row['currency'] or row['origin']!='pending'):raise ValueError('Onvolledige instrumentkoppeling in back-up.')
                     if table=='instrument_category_sync':

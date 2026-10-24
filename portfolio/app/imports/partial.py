@@ -28,9 +28,12 @@ def commit_partial(store,batch_id):
         for row in rows:
             conflicts.setdefault(row['external_id'],set()).add(row['digest'])
         failure_details={}
-        prepared=[];failures={};duplicates=set();processed=set();standalone=0;imported=0;ignored=0
+        prepared=[];failures={};duplicates=set();processed=set();standalone=0;imported=0;ignored=0;skipped=[]
         for row in sorted(rows,key=lambda r:(r.get('trade_time',''),0 if r.get('kind')=='BUY' else 1 if r.get('kind')=='SELL' else 2)):
-            if row.get('kind')=='SKIP' and row.get('decision')!='IGNORE':continue
+            if row.get('kind')=='SKIP' and row.get('decision')!='IGNORE':
+                if not row.get('error'):skipped.append(row['line'])
+                else:failures[row['line']]=(row,row['error'])
+                continue
             try:
                 if row.get('decision')=='IGNORE':prepared.append((row,None,None));continue
                 if len(conflicts[row['external_id']])>1:raise ValueError('Dezelfde bron-ID heeft verschillende gegevens. Controleer het bronbestand; deze regels zijn apart gehouden.')
@@ -53,6 +56,7 @@ def commit_partial(store,batch_id):
         # Provider calls are complete before opening the writer transaction.
         with store.connect() as db:
             db.execute('BEGIN IMMEDIATE')
+            for line in skipped:db.execute("UPDATE import_issues SET state='ignored',resolution='supported_cash_movement',updated_at=? WHERE batch_id=? AND line=? AND state='pending'",(now(),batch_id,line))
             for row,mapping,trace in prepared:
                 db.execute('SAVEPOINT import_row')
                 try:
@@ -94,7 +98,7 @@ def list_issues(store):
         returns=[dict(r) for r in db.execute('SELECT c.*,a.name AS account_name FROM capital_returns c JOIN broker_accounts a ON a.id=c.account_id ORDER BY c.id DESC LIMIT 500')]
     result=[]
     for item in entries:
-        item=dict(item);row=json.loads(item.pop('payload'));item.update(ticker=row.get('ticker',''),action=row.get('raw',{}).get('Action',''),day=row.get('day') or row.get('raw',{}).get('Time (UTC)',row.get('raw',{}).get('Time','')),currency=row.get('currency') or row.get('raw',{}).get('Currency (Total)',''),amount=row.get('amount') or row.get('raw',{}).get('Total',''))
+        item=dict(item);row=json.loads(item.pop('payload'));raw=row.get('raw',{});item.update(ticker=row.get('ticker',''),action=raw.get('Action') or raw.get('type',''),day=row.get('day') or raw.get('date') or raw.get('Time (UTC)',raw.get('Time','')),currency=row.get('currency') or raw.get('currency') or raw.get('Currency (Total)',''),amount=row.get('amount') or raw.get('amount') or raw.get('Total',''))
         result.append(item)
     return dict(issues=result,capital_returns=returns)
 
@@ -138,8 +142,11 @@ def refresh_supported(rows,provider='trading212'):
     parsed=ADAPTERS[provider]['parse'](stream.getvalue())
     for row,new in zip(rows,parsed):
         if row.get('decision') not in (None,'retry') or not row.get('error') or row.get('duplicate'):continue
-        if new.get('kind') not in ('BUY','SELL','DISTRIBUTION','CAPITAL_RETURN','SPLIT','SPLIT_INFO','SPLIT_CLOSE'):continue
-        if row.get('kind') is not None and not (row.get('kind') in ('BUY','SELL') and str(row.get('error','')).startswith('Aantal of prijs ontbreekt.')):continue
+        if provider=='traderepublic':
+            if new.get('error') or new.get('kind') not in ('BUY','SELL','DIVIDEND','CAPITAL_RETURN','SKIP'):continue
+        else:
+            if new.get('kind') not in ('BUY','SELL','DISTRIBUTION','CAPITAL_RETURN','SPLIT','SPLIT_INFO','SPLIT_CLOSE'):continue
+            if row.get('kind') is not None and not (row.get('kind') in ('BUY','SELL') and str(row.get('error','')).startswith('Aantal of prijs ontbreekt.')):continue
         new.update(line=row['line'],external_id=row['external_id'],digest=row['digest'])
         if row.get('mapping'):new['mapping']=row['mapping']
         row.clear();row.update(new)
