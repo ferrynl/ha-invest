@@ -96,7 +96,7 @@ def open_preview(store,batch_id):
     discover(store)
     rows=json.loads(batch['payload'])
     from .partial import refresh_supported
-    refresh_supported(rows)
+    refresh_supported(rows,batch['provider'])
     for row in rows:
         if row.get('external_id'):
             with store.connect() as db:previous=db.execute('SELECT digest FROM import_records WHERE account_id=? AND provider=? AND external_id=?',(batch['account_id'],batch['provider'],row['external_id'])).fetchone()
@@ -123,7 +123,7 @@ def book_row(db,batch_id,account_id,provider,row,mapping,trace):
     # The connection-scoped import helpers below avoid nested SQLite writers.
     if row['kind']=='DIVIDEND':
         lot=db.execute("SELECT 1 FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=? AND side='BUY' AND purchased_on<=?",(base['account_id'],base['symbol'],base['exchange'],base['currency'],row['day'])).fetchone()
-        note='Trading 212 import'
+        note=ADAPTERS[provider]['name']+' import'
         if not lot:
             standalone_dividends=1
             note+=' - bij import geen voorafgaande aankoop in dit brokeraccount gevonden; aankoophistorie kan ontbreken.'

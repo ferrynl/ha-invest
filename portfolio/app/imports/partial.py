@@ -22,7 +22,7 @@ def commit_partial(store,batch_id):
         if not batch:raise ValueError('Importvoorbeeld niet gevonden.')
         if batch['status']=='imported':return dict(imported=0,pending=0,duplicate=True)
         rows=[stable(r) for r in json.loads(batch['payload'])]
-        refresh_supported(rows)
+        refresh_supported(rows,batch['provider'])
         discover(store)
         conflicts={}
         for row in rows:
@@ -110,7 +110,10 @@ def resolve_issue(store,data):
         if decision not in ('retry','IGNORE'):
             raw=row['raw'];edited={**raw,'Action':{'DIVIDEND':'Dividend (Ordinary)','BUY':'Market buy','SELL':'Market sell','CAPITAL_RETURN':'Dividend (Ordinary)'}[decision]}
             stream=io.StringIO();writer=csv.DictWriter(stream,fieldnames=list(edited));writer.writeheader();writer.writerow(edited)
-            parsed=parse_csv(stream.getvalue())[0]
+            if batch['provider']=='traderepublic':
+                from .traderepublic import parse_csv as parse_trade_republic
+                parsed=parse_trade_republic(stream.getvalue(),decision)[0]
+            else:parsed=parse_csv(stream.getvalue())[0]
             if parsed.get('error'):raise ValueError(parsed['error'])
             # Preserve the original source identity, original amount and raw columns.
             parsed.update(line=row['line'],raw=raw,external_id=row['external_id'],digest=row['digest'],decision=decision)
@@ -120,18 +123,19 @@ def resolve_issue(store,data):
         elif decision=='IGNORE':row.update(kind='SKIP',error=None,decision='IGNORE')
         else:
             row['decision']='retry'
-            refresh_supported(rows)
+            refresh_supported(rows,batch['provider'])
         with store.connect() as db:db.execute('UPDATE import_batches SET payload=? WHERE id=?',(json.dumps(rows),batch['id']))
         if row.get('kind') in ('BUY','SELL','DIVIDEND','SPLIT'):remember(store,batch['account_id'],batch['provider'],row)
         return commit_partial(store,batch['id'])
 
-def refresh_supported(rows):
+def refresh_supported(rows,provider='trading212'):
     if not any(r.get('error') and r.get('decision') in (None,'retry') for r in rows):return
     stream=io.StringIO()
     fields=list(dict.fromkeys(k for r in rows for k in r['raw']))
     writer=csv.DictWriter(stream,fieldnames=fields);writer.writeheader()
     for row in rows:writer.writerow(row['raw'])
-    parsed=parse_csv(stream.getvalue())
+    from . import ADAPTERS
+    parsed=ADAPTERS[provider]['parse'](stream.getvalue())
     for row,new in zip(rows,parsed):
         if row.get('decision') not in (None,'retry') or not row.get('error') or row.get('duplicate'):continue
         if new.get('kind') not in ('BUY','SELL','DISTRIBUTION','CAPITAL_RETURN','SPLIT','SPLIT_INFO','SPLIT_CLOSE'):continue

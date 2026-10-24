@@ -540,3 +540,14 @@ De cirkelgrafieken voor sector, land en beleggingstype tonen aantallen open beur
 ### Ingelogd blijven
 
 Na aanmelden blijf je 48 uur ingelogd. Elk geauthenticeerd verzoek verlengt dit met 48 uur, ook na het sluiten van de browser of een appherstart. De browser bewaart een HttpOnly-cookie; de server bewaart alleen de hash van de sessiesleutel in SQLite. Uitloggen, accountwijzigingen en herstel trekken sessies in. Na deze update is één keer opnieuw aanmelden nodig.
+
+
+## Importcentrum en Trade Republic (v0.22.0)
+
+Imports toont de beschikbare brokers en de stappen bron → voorbeeld → opslaan. Uploaden en rapporten aanvragen gebeurt in pop-ups. Beheer verbindingen onder **Imports → API-instellingen**; Trading 212 gebruikt de bestaande versleutelde opslag per rekening. Rapporten ophalen blijft een actie op de importpagina.
+
+Maak bij Instellingen een brokeraccount aan met bedrijf **Trade Republic**. Download de oorspronkelijke transactie-export CSV uit je profiel bij Trade Republic (afschriften/transactie-export; labels verschillen per appversie). Kies de volledige geschiedenis en upload het bestand ongewijzigd. De adapter herkent de vaste kolommen `date`, `datetime`, `category`, `type`, `name`, `symbol` (ISIN), `shares`, `price`, `amount`, `currency`, `transaction_id` en `asset_class`. PDF’s en CSV’s van externe downloadtools worden niet ondersteund.
+
+Ondersteund zijn TRADING/BUY, TRADING/SELL en CASH/DIVIDEND voor aandelen en fondsen. Verkoopaantallen worden positief opgeslagen met type Verkoop; de expliciete bronprijs wordt gebruikt. Dividend gebruikt het netto bedrag en de valuta uit de bron; belastingen worden niet nogmaals afgetrokken. Kosten en geldmutaties tellen niet mee in het portefeuillerendement. Bekende cashacties zoals rente, kaartbetalingen en Saveback worden overgeslagen. Negatieve dividendcorrecties, ontbrekende prijzen, crypto, effectenoverdrachten en onbekende acties blijven ter beoordeling. Handmatige classificatie gebruikt dezelfde strikte bronvalidatie. Identiteit en ontdubbeling gebruiken de transactie-ID per aanbieder en brokeraccount; gewijzigde gegevens met dezelfde ID worden geweigerd.
+
+Voor Trade Republic is geen ondersteunde openbare API met rapportrechten bevestigd; de koppeling gebruikt CSV en vraagt geen banklogin. Formaatonderzoek: [libtraderepublic](https://github.com/aritzmmartinez/libtraderepublic), een onafhankelijke parser die het bronformaat documenteert. De regressietests gebruiken uitsluitend verzonnen gegevens. Er is geen echte rekening of gebruikersbestand gebruikt voor deze controle.

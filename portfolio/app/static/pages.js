@@ -1,12 +1,13 @@
-const pageNames={aandeel:'Aandeel',transacties:'Transacties','import-beoordeling':'Te beoordelen','import-koppelingen':'Aandelenkoppelingen',home:'Home',aandelen:'Aandelen',dividend:'Dividend',rapporten:'Rapporten',instellingen:'Instellingen',imports:'Imports',logs:'Logs',valuta:'Valuta'};
+const pageNames={'import-api':'API-instellingen',aandeel:'Aandeel',transacties:'Transacties','import-beoordeling':'Te beoordelen','import-koppelingen':'Aandelenkoppelingen',home:'Home',aandelen:'Aandelen',dividend:'Dividend',rapporten:'Rapporten',instellingen:'Instellingen',imports:'Imports',logs:'Logs',valuta:'Valuta'};
 function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches&&!document.body.classList.contains('locked');$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label','Menu openen');}
 function showPage(){
  closeAllPopups();
  const requested=location.hash.slice(1).split('?')[0];let page=Object.hasOwn(pageNames,requested)?requested:'home';
- if((page==='instellingen'||page==='imports'||page==='import-koppelingen'||page==='import-beoordeling')&&accessSession?.user?.role!=='admin')page='home';
+ if((page==='instellingen'||page==='imports'||page==='import-koppelingen'||page==='import-beoordeling'||page==='import-api')&&accessSession?.user?.role!=='admin')page='home';
  if(page==='logs'&&(accessSession?.user?.role!=='admin'||!accessSession?.enabled))page='home';
  for(const view of document.querySelectorAll('[data-page]'))view.hidden=view.dataset.page!==page;
- for(const link of document.querySelectorAll('[data-route]')){if(link.dataset.route===page||(page==='aandeel'&&link.dataset.route==='aandelen')||((page==='import-koppelingen'||page==='import-beoordeling')&&link.dataset.route==='imports'))link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
+ for(const link of document.querySelectorAll('[data-route]')){if(link.dataset.route===page||(page==='aandeel'&&link.dataset.route==='aandelen')||((page==='import-koppelingen'||page==='import-beoordeling'||page==='import-api')&&link.dataset.route==='imports'))link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
+ for(const link of document.querySelectorAll('.import-nav a')){if(link.hash==='#'+page)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  document.body.classList.toggle('home-page',page==='home');
  document.body.classList.toggle('dividend-page',page==='dividend');
  document.body.classList.toggle('stocks-page',page==='aandelen'||page==='aandeel');

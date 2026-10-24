@@ -1,3 +1,11 @@
+## 0.22.0
+
+- Imports krijgt een overzicht met brokerkaarten, duidelijke importstappen en een lege geschiedenis met uitleg. CSV-upload en API-rapportaanvraag openen in pop-ups.
+- Nieuwe subpagina Imports → API-instellingen voor alle importaanbieders, met versleutelde Trading 212-verbindingen en uitleg over CSV bij Trade Republic.
+- Trade Republic transactie-export CSV ondersteunt aankopen, verkopen en positief netto dividend voor aandelen en fondsen. Bron-ID’s, ISIN-koppelingen en ontdubbeling blijven per brokeraccount gescheiden.
+- Onbekende acties, dividendcorrecties, ongeldige brongegevens en ontbrekende prijzen blijven duurzaam ter beoordeling; kostprijzen en corporate actions worden niet geschat.
+- De beoordeling en heropening van importvoorbeelden gebruiken de adapter van de oorspronkelijke aanbieder.
+
 ## 0.21.2
 
 - Alle pagina’s benutten de beschikbare schermbreedte; Home, Aandelen en Dividend hebben geen vaste maximumbreedte meer.

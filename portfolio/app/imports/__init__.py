@@ -1,4 +1,6 @@
 """Broker adapters normalize source rows; preview and commit remain broker-neutral."""
 from .trading212 import parse_csv
+from .traderepublic import parse_csv as parse_traderepublic
 
-ADAPTERS={'trading212':{'name':'Trading 212','formats':['csv','api'],'parse':parse_csv}}
+ADAPTERS={'trading212':{'name':'Trading 212','formats':['csv','api'],'parse':parse_csv},
+          'traderepublic':{'name':'Trade Republic','formats':['csv'],'parse':parse_traderepublic}}

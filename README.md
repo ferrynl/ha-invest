@@ -30,7 +30,7 @@ toegang tot de app. Wijzigen en instellen gebeurt in pop-ups; Home opent direct 
 - **Dividend**: netto ontvangen dividend boeken en bekijken.
 - **Valuta**: historische omrekening en opgeslagen dagreferentiekoersen.
 - **Rapporten**: dividend per maand en portefeuillestand.
-- **Imports** (admin): Trading 212 CSV/API, beurskoppelingen en regels ter beoordeling.
+- **Imports** (admin): Trading 212 CSV/API en Trade Republic CSV, met aparte API-instellingen, beurskoppelingen en regels ter beoordeling.
 - **Instellingen** (admin): accounts, beveiliging, back-ups en versiecontrole.
 - **Logs** (admin): afgeschermde foutdetails en Log-ID zoeken.
 

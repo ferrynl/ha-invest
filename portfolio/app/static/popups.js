@@ -24,6 +24,7 @@ function formPopup(id,title,label,feedbackIds=[]){
  const cancel=document.createElement('button');cancel.type='button';cancel.className='secondary';cancel.textContent='Annuleren';cancel.addEventListener('click',()=>closePopup(panel.id));form.append(cancel);
 }
 function bindPopups(){
+ registerPopup('import-api-report','Trading 212-rapport ophalen');
  registerPopup('stock-valuation-editor','Koers instellen');
  registerPopup('stock-category-editor','Categorieën aanpassen');
  registerPopup('transaction-editor','Transactie bekijken en wijzigen');
@@ -31,6 +32,7 @@ function bindPopups(){
  registerPopup('issue-editor','Importregel aanpassen');
  const deletePanel=$('delete-settings'),placeholder=document.createElement('section');placeholder.className='panel';const heading=document.createElement('h2');heading.textContent='Portefeuillegegevens verwijderen';const text=document.createElement('p');text.textContent='Verwijder alles of één brokeraccount. Het overzicht, de bevestiging en de herstelback-up staan in de pop-up.';const button=document.createElement('button');button.type='button';button.className='secondary';button.textContent='Verwijderen instellen';button.addEventListener('click',()=>openPopup('delete-settings'));placeholder.append(heading,text,button);deletePanel.before(placeholder);registerPopup('delete-settings','Portefeuillegegevens verwijderen');
  for(const [id,title,label,feedback] of [
+  ['import-form','Transactiehistorie importeren','CSV importeren',['import-source-help','import-account-help','import-upload-feedback']],
   ['purchase','Aankoop toevoegen','Aankoop toevoegen',['feedback','search-status']],
   ['dividend-form','Dividend boeken','Dividend toevoegen',['dividend-feedback']],
   ['broker-form','Brokeraccount toevoegen','Brokeraccount toevoegen',['broker-feedback']],
