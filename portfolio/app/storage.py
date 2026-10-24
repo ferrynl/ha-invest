@@ -37,6 +37,12 @@ class Store:
                 yield db
 
     @contextmanager
+    def read(self):
+        # SQLite gives readers a committed snapshot. A provider request holding
+        # the application writer lock must not block cached dashboard reads.
+        with self._connect() as db:yield db
+
+    @contextmanager
     def _connect(self):
         db = sqlite3.connect(self.path, timeout=30)
         db.row_factory = sqlite3.Row
@@ -105,7 +111,10 @@ class Store:
                        (symbol, exchange, currency, amount, day.isoformat(), note, now(),account_id))
 
     def state(self):
-        with self.connect() as db:
+        with self.read() as db:
+            db.execute('BEGIN')
+            revision=db.execute('SELECT revision FROM dashboard_revision WHERE id=1').fetchone()[0]
+            settings=dict(db.execute('SELECT key,value FROM app_settings'))
             purchases = [dict(row) for row in db.execute('SELECT * FROM purchases ORDER BY purchased_on,id')]
             quotes = [dict(row) for row in db.execute('SELECT * FROM quotes ORDER BY quoted_at,id')]
             daily = [dict(row) for row in db.execute('SELECT * FROM daily_prices ORDER BY day')]
@@ -142,7 +151,7 @@ class Store:
                               'gain': str(value - cost+realised) if value is not None else None})
         missing_diagnostics(self,positions)
         return dict(instrument_categories=categories,purchases=purchases, positions=positions, quotes=quotes, dividends=dividends, portfolios=portfolio_values(positions),
-                    accounts=accounts,settings=self.settings(), database_version=SCHEMA_VERSION)
+                    accounts=accounts,settings=settings, database_version=SCHEMA_VERSION,data_revision=revision)
 
     def history_start(self,symbol,exchange,currency,start):
         with self.connect() as db:
@@ -153,7 +162,7 @@ class Store:
         return max(start,(date.fromisoformat(last)-timedelta(days=7)).isoformat())
 
     def settings(self):
-        with self.connect() as db:
+        with self.read() as db:
             return dict(db.execute('SELECT key,value FROM app_settings').fetchall())
 
     def save_settings(self, data):

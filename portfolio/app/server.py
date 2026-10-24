@@ -18,7 +18,7 @@ from forex import snapshot as fx_snapshot,currencies as fx_currencies
 ROOT = Path(__file__).parent
 store = Store(os.environ.get('DATA_DIR', './data'))
 auth = Auth(store)
-state_cache = StateCache(30)
+state_cache = StateCache(30,store=store)
 options_path = store.root / 'options.json'
 options = json.loads(options_path.read_text()) if options_path.exists() else {}
 interval = max(5, int(options.get('refresh_minutes', 15))) * 60
@@ -30,8 +30,9 @@ def refresh():
     if not refresh_lock.acquire(blocking=False):
         return
     try:
+        state_cache.bind(store)
         errors = 0
-        snapshot = store.state()
+        snapshot = state_cache.get(store.state)
         history_errors = 0
         seen=set()
         for p in snapshot['positions']:
@@ -73,6 +74,14 @@ def refresh():
     finally:
         refresh_lock.release()
 
+def warm_dashboard():
+    # Refresh FX and warm durable views outside the page request path.
+    from home_euro import prepare_portfolio_rates,overview as euro_overview
+    snapshot=state_cache.get(store.state)
+    prepare_portfolio_rates(store,snapshot)
+    snapshot=state_cache.get(store.state)
+    state_cache.derived('home-euro:all',lambda:{**euro_overview(store,snapshot,fetch_rates=False),'data_revision':snapshot['data_revision']})
+
 def background():
     last_backup = 0
     last_fx=0
@@ -88,6 +97,7 @@ def background():
                 except ValueError as error:record(store,'WARNING','fx','daily_rates_failed',str(error))
                 last_fx=time.time()
             refresh()
+            warm_dashboard()
         except Exception as error:
             record(store,'ERROR','system','background_failed','Achtergrondtaak mislukt.',{'error_type':type(error).__name__})
             logging.exception('Achtergrondtaak mislukt')

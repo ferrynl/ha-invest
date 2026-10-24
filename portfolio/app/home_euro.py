@@ -58,7 +58,7 @@ def build(snapshot,rates,account='all',today=None):
         history.append(dict(day=day,value=str(value) if value is not None else None,cost=str(sum((Decimal(p['cost']) for p in active),Decimal(0))),dividend=str(sum((Decimal(p['dividend']) for p in active),Decimal(0))),with_dividends=str(sum((Decimal(p['with_dividends']) for p in known),Decimal(0))) if known else None,total_gain=str(sum((Decimal(p['total_gain']) for p in known),Decimal(0))) if known else None,price=None,carried=any(p['carried'] for p in active),missing=len(active)-len(known)))
     return dict(account_id=str(account),as_of=today.isoformat(),positions=positions,portfolios=[dict(name='Alle valuta’s in euro',currency='EUR',history=history)],excluded=excluded,fx_dates=[dict(currency=c,requested_on=d,rate_on=r) for c,d,r in sorted(used)])
 
-def overview(store,snapshot,account='all'):
+def prepare_portfolio_rates(store,snapshot,account='all'):
     # Validate scope before requesting any external rates.
     if str(account)!='all' and not any(str(a['id'])==str(account) for a in snapshot['accounts']):raise ValueError('Brokeraccount niet gevonden.')
     owner=None if str(account)=='all' else int(account);requests=[];today=date.today().isoformat()
@@ -67,5 +67,9 @@ def overview(store,snapshot,account='all'):
     requests.extend((p['currency'],'EUR',today) for p in snapshot['positions'] if (owner is None or p['account_id']==owner) and p['currency']!='EUR' and Decimal(p['quantity'])>0)
     try:prepare_rates(store,requests)
     except Exception as error:record(store,'WARNING','fx','home_euro_rates_failed','Wisselkoersen voor het totaaloverzicht konden niet volledig worden opgehaald.',{'error_type':type(error).__name__,'requested_pairs':len(set((a,b) for a,b,d in requests))})
+
+def overview(store,snapshot,account='all',fetch_rates=True):
+    if str(account)!='all' and not any(str(a['id'])==str(account) for a in snapshot['accounts']):raise ValueError('Brokeraccount niet gevonden.')
+    if fetch_rates:prepare_portfolio_rates(store,snapshot,account)
     with store.connect() as db:rates=[dict(row) for row in db.execute("SELECT base,quote,day,rate FROM fx_rates WHERE base='EUR'")]
     return build(snapshot,rates,account)

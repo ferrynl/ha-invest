@@ -1,27 +1,33 @@
-let state;
+let state,stateRequest=0;
 const quantityLabel=value=>{const text=String(value??'0');if(Number(text)===0)return '0';return text.replace(/(\.\d*?[1-9])0+$|\.0+$/, '$1').replace('.',',');};
 const $ = id => document.getElementById(id);
 const money = (n,c) => n === null ? 'Nog geen koers' : new Intl.NumberFormat('nl-NL',{style:'currency',currency:c}).format(Number(n));
 function cell(row,value){const td=document.createElement('td');td.textContent=value;row.append(td);return td;}
 async function load(){
  try{
- const response=await apiFetch('api/state?account_id='+encodeURIComponent(currentBroker));if(response.status===304)return;if(!response.ok)throw Error();state=await response.json();
+ const request=++stateRequest;const response=await apiFetch('api/state?account_id='+encodeURIComponent(currentBroker)+'&compact=1');if(response.status===304)return;if(!response.ok)throw Error();const result=await response.json();if(request!==stateRequest||!accessSession?.user)return;state=result;
  $('status').textContent=state.status.message+' Automatische controle elke '+state.refresh_minutes+' minuten.';
  if(location.hash==='#transacties')loadTransactions();
  if(location.hash==='#aandelen')renderStockPage();
  if(location.hash.startsWith('#aandeel?'))loadStockDetail();
  if(location.hash==='#dividend')renderDividendPage();
  if(!rangeInitialized){chartRange=state.settings.default_range;rangeInitialized=true;syncRangeButtons();}
- renderPages();renderBrokerAccounts();renderHomeDashboard();draw();
+ renderPages();renderBrokerAccounts();if(document.body.classList.contains('home-page')){renderHomeDashboard();draw();}
  }catch{$('status').textContent='Gegevens laden mislukt. Probeer de pagina opnieuw te openen.';}
 }
 let chartRange='1M',rangeInitialized=false;
 function syncRangeButtons(){for(const button of $('chart-ranges').querySelectorAll('button'))button.setAttribute('aria-pressed',String(button.dataset.range===chartRange));}
 const dayLabel=day=>new Date(day+'T00:00:00Z').toLocaleDateString('nl-NL',{timeZone:'UTC'});
-function draw(){drawDashboardChart(homeViewState(),chartRange,$("instrument").value,homeChartMembers());}
+function draw(){
+ if(!state||!document.body.classList.contains('home-page'))return;
+ const view=homeViewState(),selection=$('instrument').value;
+ const members=selection==='all'?homeChartMembers():selection.startsWith('portfolio:')?[]:[view.positions[Number(selection)]].filter(Boolean);
+ if(members.some(p=>p.history_loaded===false)){loadHomePositionHistory(members);return;}
+ drawDashboardChart(view,chartRange,selection,homeChartMembers());
+}
 $('chart-ranges').addEventListener('click',event=>{const button=event.target.closest('button[data-range]');if(!button)return;chartRange=button.dataset.range;for(const choice of $('chart-ranges').querySelectorAll('button'))choice.setAttribute('aria-pressed',String(choice===button));draw();});
 $('instrument').addEventListener('change',()=>{homeChartChanged();draw();});
-window.addEventListener('resize',()=>{clearTimeout(homeResizeTimer);homeResizeTimer=setTimeout(()=>{if(location.hash==='#home'||!location.hash)draw();},120);});
+window.addEventListener('resize',()=>{clearTimeout(homeResizeTimer);homeResizeTimer=setTimeout(()=>{if(document.body.classList.contains('home-page'))draw();},120);});
 let homeResizeTimer;
 let selectedStock=null,searchTimer,searchController,searchVersion=0;
 const stockFields=['name','symbol','exchange','currency'];

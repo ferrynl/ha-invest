@@ -1,3 +1,13 @@
+## 0.23.0
+
+- Home laadt uitsluitend opgeslagen portefeuillegegevens en wisselkoersen; externe koersaanvragen en ontbrekende historische valuta worden op de achtergrond bijgewerkt.
+- Berekende overzichten worden gecomprimeerd in SQLite bewaard en in het geheugen hergebruikt, ook na een herstart. Revisies, appversie en dag voorkomen verouderde resultaten.
+- Databaseversie 17 voegt een transactieve cache-revisie toe. Aankopen, dividend, koersen, historie, waarderingen, accounts, instellingen en FX-wijzigingen maken oude financiële overzichten ongeldig.
+- De eerste paginarespons bevat de kerncijfers en totaalgrafieken; lange daghistorie wordt pas voor bekeken of vergeleken posities opgehaald, maximaal zes tegelijk.
+- Verborgen rapporten en Home-tabellen worden niet bij iedere gegevensverversing opnieuw opgebouwd. Wisselen tussen valutakeuzes hergebruikt de reeds geladen euro-weergave.
+- Historische wisselkoersen worden alleen voor ontbrekende perioden opgehaald; één nieuwe koers veroorzaakt geen nieuwe download van alle bekende koersjaren.
+- Back-upherstel neemt geen berekende dashboardcaches over. Authenticatie blijft per aanvraag gecontroleerd; financiële gegevens en sessies worden niet in browseropslag bewaard.
+
 ## 0.22.2
 
 - Trade Republic herkent CUSTOMER_INPAYMENT en geldbonussen zonder effecten als cashmutaties; ze tellen niet als aankoop of dividend.

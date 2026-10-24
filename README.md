@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.13.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.23.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -35,7 +35,7 @@ toegang tot de app. Wijzigen en instellen gebeurt in pop-ups; Home opent direct 
 - **Logs** (admin): afgeschermde foutdetails en Log-ID zoeken.
 
 Koersen komen van Yahoo Finance en kunnen vertraagd of tijdelijk onbeschikbaar zijn.
-Bedragen in verschillende valuta blijven gescheiden. De app voert geen orders uit.
+Bedragen in verschillende valuta blijven gescheiden. De app voert geen orders uit. Home gebruikt opgeslagen databasegegevens en een blijvende overzichtcache; koersen worden op de achtergrond ververst.
 
 ## Trading 212 importeren
 
@@ -62,8 +62,8 @@ niet in het portefeuillerendement verwerkt.
 
 ## Opslag en back-ups
 
-De database en instellingen staan in de app-datafolder. Appversie **0.13.0** gebruikt
-databaseschema **12**. Upgrades maken vooraf een consistente back-up en voeren alleen
+De database en instellingen staan in de app-datafolder. Appversie **0.23.0** gebruikt
+databaseschema **17**. Upgrades maken vooraf een consistente back-up en voeren alleen
 ontbrekende migraties transactioneel uit. Bestaande aankopen, dividend en historie blijven
 behouden. Neem voor opgeslagen API-verbindingen de volledige app op in een Home Assistant-back-up.
 

@@ -26,6 +26,13 @@ from diagnostics import read_logs,record,DiagnosticError,ActionError
 from forex import overview as fx_overview,convert as fx_convert,history as fx_history
 
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested):
+    cache.bind(store)
+    def home_euro(account):
+        from home_euro import overview
+        def build():
+            snapshot=cache.get(store.state)
+            return {**overview(store,snapshot,account,fetch_rates=False),'data_revision':snapshot['data_revision']}
+        return cache.derived('home-euro:'+str(account),build)
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css')}
     for name in ('home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks'):
@@ -118,16 +125,27 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if path=='/api/dividends/overview':
                 from dividend_dashboard import overview,euro_overview
                 account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
-                try:return self.respond(euro_overview(store,cache.get(store.state),account) if parse_qs(urlsplit(self.path).query).get('combined')==['1'] else overview(cache.get(store.state),account),etag=True)
+                try:return self.respond(cache.derived('dividend-euro:'+str(account),lambda:euro_overview(store,cache.get(store.state),account,fetch_rates=False)) if parse_qs(urlsplit(self.path).query).get('combined')==['1'] else cache.derived('dividend:'+str(account),lambda:overview(cache.get(store.state),account)),etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
             if path=='/api/stocks':
                 from stocks_dashboard import overview
                 return self.respond(overview(store,cache.get(store.state)))
             if path=='/api/home/euro':
-                from home_euro import overview
-                account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
-                try:return self.respond(overview(store,cache.get(store.state),account))
+                from dashboard import compact
+                query=parse_qs(urlsplit(self.path).query);account=query.get('account_id',['all'])[0]
+                try:
+                    result=home_euro(account)
+                    return self.respond(compact(result) if query.get('compact')==['1'] else result,etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
+            if path=='/api/home/history':
+                from dashboard import histories
+                query=parse_qs(urlsplit(self.path).query);account=query.get('account_id',['all'])[0]
+                try:
+                    selections=json.loads(query.get('positions',['[]'])[0])
+                    snapshot=cache.get(store.state)
+                    if query.get('combined')==['1']:snapshot={**snapshot,**home_euro(account)}
+                    return self.respond(histories(snapshot,account,selections),etag=True)
+                except (ValueError,TypeError,KeyError):return self.respond({'error':'Kies één tot zes bestaande posities in dit brokeraccount.'},400)
             if path=='/api/state':
                 state=cache.get(store.state)
                 account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
@@ -139,6 +157,8 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     state['portfolios']=portfolio_values(state['positions'])
                 # Raw quote observations are used internally; daily histories and
                 # the latest quote are enough for the dashboard.
+                from dashboard import compact
+                if parse_qs(urlsplit(self.path).query).get('compact')==['1']:state=compact(state)
                 return self.respond({**{k:v for k,v in state.items() if k!='quotes'},'status':status,'refresh_minutes':interval//60,'app_version':APP_VERSION},etag=True)
             if path=='/api/backup':
                 backup=store.backup();return self.respond(backup.read_bytes(),kind='application/vnd.sqlite3',filename=backup.name)

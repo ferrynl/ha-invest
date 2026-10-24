@@ -211,7 +211,7 @@ class AccessTests(unittest.TestCase):
     db.execute('DROP TABLE users');db.execute("DELETE FROM app_settings WHERE key='auth_enabled'");db.execute('PRAGMA user_version=4')
    restore_backup(self.store,old.backup().read_bytes())
   self.assertTrue(self.auth.enabled());self.assertEqual(len(self.auth.list_users()),1)
-  with self.store.connect() as db:self.assertEqual(db.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='trigger'").fetchone()[0],0)
+  with self.store.connect() as db:self.assertEqual(db.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='trigger' AND name NOT LIKE 'dashboard_%'").fetchone()[0],0)
  def test_restore_transaction_failure_keeps_original_portfolio(self):
   lot=dict(name='Apple',symbol='AAPL',exchange='NASDAQ',currency='USD',quantity='2',price='100',purchased_on='2026-01-01')
   self.store.add(lot)

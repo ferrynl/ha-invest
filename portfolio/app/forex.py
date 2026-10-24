@@ -120,26 +120,36 @@ def convert(store,amount,source,target,day):
     return {**rate,'amount':str(value),'converted':str(value*Decimal(rate['rate']))}
 
 def prepare_rates(store,requests):
-    requests=sorted(set(requests))
-    needed=set();days=[]
-    for source,target,day in requests:
+    # Only missing observations determine the download range. One new daily rate
+    # must never cause years of already stored history to be fetched again.
+    missing={}
+    for source,target,day in sorted(set(requests)):
         first,last=unit(source)[0],unit(target)[0]
         if first==last:continue
-        days.append(day_value(day));needed.update({first,last}-{'EUR'})
-    if not days:return
-    # Fetch only when the required observations are not already in the database.
-    if all(observation(store,unit(c)[0],d) and (observation(store,unit(c)[0],d)['day']==d or covered(store,unit(c)[0],d)) for a,b,d in requests for c in (a,b)):return
-    first=min(days)-timedelta(days=7);last=max(days)
-    while first<=last:
-        end=min(date(first.year,12,31),last)
-        params={'base':'EUR','quotes':','.join(sorted(needed)),'from':first.isoformat(),'to':end.isoformat()}
-        key='history:'+urlencode(params)
-        def load():
-            items=decimal_json(load_json('rates?'+urlencode(params)))
-            save_rates(store,items,end)
-            return items
-        result=cached_json(store,'fx',key,86400 if end>=date.today()-timedelta(days=7) else 10*365*86400,load)
-        save_rates(store,result,end);remember_coverage(store,needed,first.isoformat(),end.isoformat());first=end+timedelta(days=1)
+        requested=day_value(day)
+        for currency in {first,last}-{'EUR'}:
+            found=observation(store,currency,day)
+            if found and (found['day']==day or covered(store,currency,day)):continue
+            missing.setdefault(currency,[]).append(requested)
+    ranges={}
+    for currency,days in missing.items():ranges.setdefault((min(days)-timedelta(days=7),max(days)),set()).add(currency)
+    merged=[]
+    for (first,last),needed in ranges.items():
+        for group in merged:
+            if abs((group[0]-first).days)<=7 and abs((group[1]-last).days)<=7:
+                group[0]=min(group[0],first);group[1]=max(group[1],last);group[2].update(needed);break
+        else:merged.append([first,last,set(needed)])
+    for first,last,needed in merged:
+        while first<=last:
+            end=min(date(first.year,12,31),last)
+            params={'base':'EUR','quotes':','.join(sorted(needed)),'from':first.isoformat(),'to':end.isoformat()}
+            key='history:'+urlencode(params)
+            def load():
+                items=decimal_json(load_json('rates?'+urlencode(params)))
+                save_rates(store,items,end)
+                return items
+            result=cached_json(store,'fx',key,86400 if end>=date.today()-timedelta(days=7) else 10*365*86400,load)
+            save_rates(store,result,end);remember_coverage(store,needed,first.isoformat(),end.isoformat());first=end+timedelta(days=1)
 
 def overview(store,day):
     day_value(day)

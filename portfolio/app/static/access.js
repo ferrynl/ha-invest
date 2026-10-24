@@ -1,18 +1,18 @@
 /* Session credentials stay in HttpOnly cookies; only the CSRF token is in memory. */
-let accessSession=null,stateETag=null;
+let accessSession=null,stateETag=null,stateETagUrl='';
 const nativeFetch=window.fetch.bind(window);
 async function apiFetch(url,options={}){
  const headers=new Headers(options.headers??{});
  if(options.method==='POST'&&accessSession?.user?.csrf)headers.set('X-CSRF-Token',accessSession.user.csrf);
- if(url.startsWith('api/state')&&stateETag)headers.set('If-None-Match',stateETag);
+ if(url.startsWith('api/state')&&stateETag&&stateETagUrl===url)headers.set('If-None-Match',stateETag);
  const response=await nativeFetch(url,{...options,headers,cache:'no-store'});
- if(url.startsWith('api/state')&&response.ok)stateETag=response.headers.get('ETag');
+ if(url.startsWith('api/state')&&response.ok){stateETag=response.headers.get('ETag');stateETagUrl=url;}
  if(response.status===401){lockApp();throw Error('Je sessie is verlopen. Meld je opnieuw aan.');}
  return response;
 }
 function lockApp(){
  closeAllPopups();
- accessSession=null;stateETag=null;state=null;
+ accessSession=null;stateETag=null;stateETagUrl='';state=null;stateRequest++;
  if(typeof clearCategoryOverview==='function')clearCategoryOverview();
  if(typeof clearTableControls==='function')clearTableControls();
  if(typeof clearStockDetail==='function')clearStockDetail();

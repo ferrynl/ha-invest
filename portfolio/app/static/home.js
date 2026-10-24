@@ -1,4 +1,4 @@
-/* Local portfolio navigation: no network calls, browser storage or mixed-currency totals. */
+/* Database-backed overview; request long histories only for selected positions. */
 const homeKey=p=>JSON.stringify([p.account_id,p.symbol,p.exchange,p.native_currency??p.currency]);
 function homeReturn(p){const basis=Number(p.history?.at(-1)?.invested??p.cost);return p.total_gain==null||basis<=0?null:Number(p.total_gain)/basis*100;}
 function homeSummary(positions){
@@ -17,7 +17,7 @@ const homeDisplayCurrency=()=>homeCurrency==='ALL'?'EUR':homeCurrency;
 const homeViewState=()=>homeCurrency==='ALL'?{...state,positions:homeEuro?.positions??[],portfolios:homeEuro?.portfolios??[]}:state;
 const homeScope=()=>homeCurrency==='ALL'?(homeEuro?.positions??[]):state?.positions.filter(p=>p.currency===homeCurrency)??[];
 function homeChartMembers(){return homeScope().filter(p=>homeSelected.has(homeKey(p))).slice(0,6);}
-function clearHomeDashboard(){homeEuroRequest++;homeEuroPending=false;homeEuro=null;homeEuroSource=null;homeEuroAccount='';$('home-euro-status').textContent='';homeCurrency='';homePage=0;homeMode='overview';homeFocus='';homeSelected.clear();for(const id of ['home-currencies','home-positions','home-allocation','home-movers'])$(id).replaceChildren();for(const id of ['home-summary','home-health','home-table-note','home-selection-count','home-page-note','home-table-empty','home-allocation-note'])$(id).textContent='';$('home-search').value='';$('home-position-filter').value='open';$('home-sort').value='value';$('home-ranking').value='best';$('chart').onpointermove=null;$('chart').onpointerleave=null;$('chart').onkeydown=null;$('chart-day-details').ontoggle=null;$('chart-days-more').onclick=null;$('chart-day-details').open=false;$('chart-days-note').textContent='';$('instrument').replaceChildren();$('chart-legend').replaceChildren();$('chartnote').textContent='';$('chart-detail').textContent='';}
+function clearHomeDashboard(){homeHistoryPending.clear();homeEuroRequest++;homeEuroPending=false;homeEuro=null;homeEuroSource=null;homeEuroAccount='';$('home-euro-status').textContent='';homeCurrency='';homePage=0;homeMode='overview';homeFocus='';homeSelected.clear();for(const id of ['home-currencies','home-positions','home-allocation','home-movers'])$(id).replaceChildren();for(const id of ['home-summary','home-health','home-table-note','home-selection-count','home-page-note','home-table-empty','home-allocation-note'])$(id).textContent='';$('home-search').value='';$('home-position-filter').value='open';$('home-sort').value='value';$('home-ranking').value='best';$('chart').onpointermove=null;$('chart').onpointerleave=null;$('chart').onkeydown=null;$('chart-day-details').ontoggle=null;$('chart-days-more').onclick=null;$('chart-day-details').open=false;$('chart-days-note').textContent='';$('instrument').replaceChildren();$('chart-legend').replaceChildren();$('chartnote').textContent='';$('chart-detail').textContent='';}
 function homeNode(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}
 function homePercent(value){return value==null?'—':new Intl.NumberFormat('nl-NL',{maximumFractionDigits:2,signDisplay:'exceptZero'}).format(value)+'%';}
 function homeMetric(label,value,detail,tone){const box=homeNode('article',undefined,'home-metric');box.append(homeNode('span',label,'home-metric-label'),homeNode('strong',value,tone??''),homeNode('small',detail));$('totals').append(box);}
@@ -25,7 +25,7 @@ function renderHomeDashboard(){
  if(!state)return;const currencies=[...new Set(state.positions.map(p=>p.currency))].sort();if(homeEuroAccount&&homeEuroAccount!==String(currentBroker)){homeEuro=null;homeEuroSource=null;homeEuroAccount='';homeEuroRequest++;homeEuroPending=false;}if(homeCurrency!=='ALL'&&!currencies.includes(homeCurrency))homeCurrency=currencies.includes('EUR')?'EUR':currencies[0]??'EUR';
  if(homeCurrency==='ALL'&&homeEuroSource!==state&&!homeEuroPending)loadHomeEuro();
  const keys=new Set(homeViewState().positions.map(homeKey));homeSelected=new Set([...homeSelected].filter(key=>keys.has(key)));
- $('home-currencies').replaceChildren();for(const currency of ['ALL',...currencies]){const count=state.positions.filter(p=>(currency==='ALL'||p.currency===currency)&&Number(p.quantity)>0).length;const button=homeNode('button',currency==='ALL'?'Alle valuta’s in euro':currency+' · '+count+' posities');button.type='button';button.setAttribute('aria-pressed',String(currency===homeCurrency));button.addEventListener('click',()=>{homeCurrency=currency;if(currency==='ALL')homeEuroSource=null;homePage=0;homeMode='overview';homeFocus='';homeSelected.clear();renderHomeDashboard();draw();$('home-currencies').querySelector('[aria-pressed="true"]')?.focus({preventScroll:true});});$('home-currencies').append(button);}
+ $('home-currencies').replaceChildren();for(const currency of ['ALL',...currencies]){const count=state.positions.filter(p=>(currency==='ALL'||p.currency===currency)&&Number(p.quantity)>0).length;const button=homeNode('button',currency==='ALL'?'Alle valuta’s in euro':currency+' · '+count+' posities');button.type='button';button.setAttribute('aria-pressed',String(currency===homeCurrency));button.addEventListener('click',()=>{homeCurrency=currency;homePage=0;homeMode='overview';homeFocus='';homeSelected.clear();renderHomeDashboard();draw();$('home-currencies').querySelector('[aria-pressed="true"]')?.focus({preventScroll:true});});$('home-currencies').append(button);}
  const scope=homeScope(),summary=homeSummary(scope);$('home-summary').textContent=state.positions.length?state.positions.filter(p=>Number(p.quantity)>0).length+' open posities · '+currencies.length+' valuta · '+(homeCurrency==='ALL'?'totaal omgerekend naar EUR':'overzicht in '+homeCurrency):'Voeg een aankoop toe of importeer je portefeuille om te beginnen.';
  $('totals').replaceChildren();homeMetric('Marktwaarde',money(summary.value,homeDisplayCurrency()),summary.missing?'Bekende waarde · '+summary.missing+' posities zonder koers':'Alle posities in '+homeDisplayCurrency()+' met beschikbare koers');homeMetric('Openstaande kostprijs',money(summary.cost,homeDisplayCurrency()),summary.open+(homeCurrency==='ALL'?' omgerekende open posities':' open posities in deze valuta'));homeMetric('Totale winst',money(summary.gain,homeDisplayCurrency()),summary.missing?'Bekende posities · '+summary.missing+' zonder koers overgeslagen':'Inclusief gerealiseerde winst en gekoppeld dividend',summary.gain>=0?'positive':'negative');homeMetric('Ontvangen dividend',money(summary.dividend,homeDisplayCurrency()),homeDividendLabel(scope));
  const missing=state.positions.filter(p=>p.value==null);$('home-health').replaceChildren();
@@ -34,6 +34,7 @@ function renderHomeDashboard(){
  if(homeCurrency==='ALL'&&homeEuro?.excluded.length){$('home-health').append(document.createTextNode(' Niet omgerekend: '));for(const [i,p] of homeEuro.excluded.entries()){if(i)$('home-health').append(document.createTextNode(' · '));const link=homeNode('a',p.name+' ('+p.currency+' · '+p.account_name+')');link.href=stockDetailLink(p);$('home-health').append(link,document.createTextNode(' · wisselkoers ontbreekt op '+p.dates.slice(0,3).map(dayLabel).join(', ')));}}
  if(homeCurrency==='ALL'&&!homeEuro)for(const box of $('totals').children)box.querySelector('strong').textContent=homeEuroPending?'Laden…':'Niet beschikbaar';
  if(homeCurrency!=='ALL')$('home-euro-status').textContent='';
+ else if(homeEuro&&!homeEuroPending)showHomeEuroStatus(homeEuro);
  const selected=$('instrument');selected.replaceChildren();const add=(value,label)=>{const option=homeNode('option',label);option.value=value;selected.append(option);};add('portfolio:'+homeDisplayCurrency(),'Portefeuilletotaal · '+(homeCurrency==='ALL'?'alle valuta’s in EUR':homeCurrency));add('all','Vergelijk gekozen posities · maximaal 6');
  const focus=homeViewState().positions.findIndex(p=>homeKey(p)===homeFocus);if(focus>=0)add(String(focus),homeViewState().positions[focus].name+' · '+homeViewState().positions[focus].account_name);
  selected.value=homeMode==='compare'?'all':homeMode==='position'&&focus>=0?String(focus):'portfolio:'+homeDisplayCurrency();
@@ -71,9 +72,30 @@ function homeDividendLabel(positions){
 }
 
 async function loadHomeEuro(){
- if(!state||!accessSession?.user)return;const source=state,account=String(currentBroker),request=++homeEuroRequest;homeEuroPending=true;homeEuroAccount=account;$('home-euro-status').textContent='Alle valuta’s omrekenen naar euro. Ontbrekende historische wisselkoersen worden zo nodig opgehaald…';
- try{const response=await apiFetch('api/home/euro?account_id='+encodeURIComponent(account));const data=await response.json();if(request!==homeEuroRequest||!accessSession?.user||account!==String(currentBroker))return;if(!response.ok)throw Error();if(state!==source)return;
- homeEuro=data;homeEuroSource=source;const dates=data.fx_dates.map(row=>row.rate_on).sort();$('home-euro-status').textContent=data.positions.length+' posities omgerekend'+(data.excluded.length?' · '+data.excluded.length+' overgeslagen wegens ontbrekende wisselkoersen':'')+'. Marktwaarde tegen beschikbare wisselkoersen tot '+(dates.length?dayLabel(dates.at(-1)):dayLabel(data.as_of))+'. Historische grafiek: bekende waarden per dag; ontbrekende omrekeningen kunnen gaten geven.';
+ if(!state||!accessSession?.user)return;const source=state,account=String(currentBroker),request=++homeEuroRequest;homeEuroPending=true;homeEuroAccount=account;$('home-euro-status').textContent='Opgeslagen euro-overzicht laden; wisselkoersen worden op de achtergrond bijgewerkt…';
+ try{const response=await apiFetch('api/home/euro?account_id='+encodeURIComponent(account)+'&compact=1');const data=await response.json();if(request!==homeEuroRequest||!accessSession?.user||account!==String(currentBroker))return;if(!response.ok)throw Error();if(state!==source)return;
+ homeEuro=data;homeEuroSource=source;showHomeEuroStatus(data);
  }catch{if(request===homeEuroRequest){homeEuroSource=source;$('home-euro-status').textContent='Het totaal in euro kon niet worden geladen. Kies een valuta of probeer het opnieuw.';}}
- finally{if(request===homeEuroRequest){homeEuroPending=false;if(homeCurrency==='ALL'){renderHomeDashboard();draw();}}}
+ finally{if(request===homeEuroRequest){homeEuroPending=false;if(homeCurrency==='ALL'&&document.body.classList.contains('home-page')){renderHomeDashboard();draw();}}}
 }
+
+let homeHistoryPending=new Set();
+async function loadHomePositionHistory(members){
+ const source=state,view=homeViewState(),account=String(currentBroker),combined=homeCurrency==='ALL';
+ const missing=members.filter(p=>p.history_loaded===false);
+ const key=JSON.stringify([stateRequest,source.data_revision,account,combined,missing.map(homeKey)]);
+ if(!missing.length||homeHistoryPending.has(key))return;
+ homeHistoryPending.add(key);$('chartnote').textContent='Opgeslagen koershistorie laden…';
+ const selections=missing.map(p=>({account_id:p.account_id,symbol:p.symbol,exchange:p.exchange,currency:p.native_currency??p.currency}));
+ try{
+  const response=await apiFetch('api/home/history?account_id='+encodeURIComponent(account)+'&combined='+(combined?'1':'0')+'&positions='+encodeURIComponent(JSON.stringify(selections)));
+  const result=await response.json();if(!response.ok)throw Error();
+  if(state!==source||!accessSession?.user||account!==String(currentBroker))return;
+  if(result.data_revision!==source.data_revision){stateETag=null;await load();return;}
+  for(const record of result.histories){const position=view.positions.find(p=>homeKey(p)===homeKey(record));if(position){position.history=record.history;position.history_loaded=true;}}
+  draw();
+ }catch{if(state===source&&accessSession?.user)$('chartnote').textContent='Historie laden mislukt. Selecteer de positie opnieuw om te proberen.';}
+ finally{homeHistoryPending.delete(key);}
+}
+
+function showHomeEuroStatus(data){const dates=data.fx_dates.map(row=>row.rate_on).sort();$('home-euro-status').textContent=data.positions.length+' posities omgerekend'+(data.excluded.length?' · '+data.excluded.length+' overgeslagen wegens ontbrekende wisselkoersen':'')+'. Marktwaarde tegen beschikbare wisselkoersen tot '+(dates.length?dayLabel(dates.at(-1)):dayLabel(data.as_of))+'. Historische grafiek: bekende waarden per dag; ontbrekende omrekeningen kunnen gaten geven.';}

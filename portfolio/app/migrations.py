@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from contextlib import closing
 
-SCHEMA_VERSION = 16
+SCHEMA_VERSION = 17
 MIGRATIONS = {
     1: (
         'CREATE TABLE IF NOT EXISTS purchases (id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL, name TEXT NOT NULL, quantity TEXT NOT NULL, price TEXT NOT NULL, currency TEXT NOT NULL, purchased_on TEXT NOT NULL, created_at TEXT NOT NULL)',
@@ -77,6 +77,14 @@ MIGRATIONS = {
     16: (
         'CREATE TABLE auth_sessions (token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), revision INTEGER NOT NULL, csrf TEXT NOT NULL, expires_at REAL NOT NULL)',
         'CREATE INDEX auth_sessions_expiry ON auth_sessions(expires_at)',
+    ),
+    17: (
+        'CREATE TABLE dashboard_revision (id INTEGER PRIMARY KEY CHECK(id=1), revision INTEGER NOT NULL)',
+        'INSERT INTO dashboard_revision VALUES(1,0)',
+    ) + tuple(
+        f'CREATE TRIGGER dashboard_{table}_{action.lower()} AFTER {action} ON {table} BEGIN UPDATE dashboard_revision SET revision=revision+1 WHERE id=1; END'
+        for table in ('purchases','dividends','quotes','daily_prices','instrument_valuations','broker_accounts','app_settings','fx_rates')
+        for action in ('INSERT','UPDATE','DELETE')
     ),
 }
 

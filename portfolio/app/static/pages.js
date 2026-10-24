@@ -17,7 +17,8 @@ function showPage(){
  if(page==='aandelen'&&state)renderStockPage();
  if(page==='aandeel'&&state)loadStockDetail();
  if(page==='dividend'&&state)renderDividendPage();
- if(page==='home'&&state)requestAnimationFrame(draw);
+ if(page==='home'&&state){renderHomeDashboard();requestAnimationFrame(draw);}
+ if(page==='rapporten'&&state)renderReports();
  if(page==='imports'&&state&&accessSession?.user?.role==='admin')loadImportHistory().catch(error=>{$('import-feedback').textContent=error.message;});
  if(page==='logs')loadLogs().catch(error=>{$('logs-feedback').textContent=error.message;});
  if(page==='import-koppelingen')loadImportMappings();
@@ -38,7 +39,7 @@ function renderPages(){
  if(!settingsDirty)$('settings-form').elements.namedItem('default_range').value=state.settings.default_range;
  const selected=$('report-year').value,years=[...new Set([String(new Date().getFullYear()),...state.dividends.map(d=>d.paid_on.slice(0,4))])].sort().reverse();
  $('report-year').replaceChildren();for(const year of years){const option=document.createElement('option');option.value=year;option.textContent=year;$('report-year').append(option);}if(years.includes(selected))$('report-year').value=selected;
- renderReports();
+ if(location.hash==='#rapporten')renderReports();
 }
 function renderReports(){
  if(!state)return;const groups={};const year=$('report-year').value;

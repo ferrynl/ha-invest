@@ -41,7 +41,10 @@ class Auth:
     def user(self,token):
         if not self.enabled():return {'id':None,'username':'Home Assistant','role':'admin','csrf':None}
         key=hashlib.sha256(token.encode()).hexdigest()
-        with self.lock, self.store.connect() as db:
+        # Validate and renew atomically in SQLite without waiting for an unrelated
+        # provider operation holding the portfolio's application writer lock.
+        with self.lock, self.store._connect() as db:
+            db.execute('BEGIN IMMEDIATE')
             now=time.time()
             entry=db.execute('SELECT * FROM auth_sessions WHERE token_hash=?',(key,)).fetchone()
             if not entry:return None

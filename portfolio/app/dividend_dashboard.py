@@ -64,7 +64,7 @@ def overview(snapshot,account='all',today=None,force_currency=None):
     return dict(account_id=str(account),as_of=today.isoformat(),currencies=result,method='historical_same_month_current_holdings')
 
 
-def euro_overview(store,snapshot,account='all',today=None):
+def euro_overview(store,snapshot,account='all',today=None,fetch_rates=True):
     from bisect import bisect_right
     from forex import unit,prepare_rates
     from diagnostics import record
@@ -72,8 +72,9 @@ def euro_overview(store,snapshot,account='all',today=None):
     payments=[row for row in snapshot['dividends'] if (owner is None or row['account_id']==owner) and row['paid_on']<=today.isoformat()]
     payment_currencies={row['currency'] for row in payments}
     requests=[(row['currency'],'EUR',row['paid_on']) for row in payments]+[(p['currency'],'EUR',today.isoformat()) for p in snapshot['positions'] if (owner is None or p['account_id']==owner) and Decimal(p['quantity'])>0 and p['currency'] in payment_currencies]
-    try:prepare_rates(store,requests)
-    except Exception as error:record(store,'WARNING','fx','dividend_euro_rates_failed','Wisselkoersen voor dividend konden niet volledig worden opgehaald.',{'error_type':type(error).__name__})
+    if fetch_rates:
+        try:prepare_rates(store,requests)
+        except Exception as error:record(store,'WARNING','fx','dividend_euro_rates_failed','Wisselkoersen voor dividend konden niet volledig worden opgehaald.',{'error_type':type(error).__name__})
     with store.connect() as db:rows=[dict(row) for row in db.execute("SELECT quote,day,rate FROM fx_rates WHERE base='EUR' ORDER BY day")]
     rates={}
     for row in rows:rates.setdefault(row['quote'],[]).append(row)

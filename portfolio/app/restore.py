@@ -54,6 +54,8 @@ def restore_backup(store,content):
                 if version<6 and table=='purchases':source_columns=columns[:-4]
                 if version<6 and table=='dividends':source_columns=columns[:-1]
                 data=source.execute(f'SELECT {",".join(source_columns)} FROM {table} LIMIT 250001').fetchall()
+                # Derived financial snapshots from uploads must never be trusted.
+                if table=='api_cache':data=[row for row in data if not str(row[0]).startswith('dashboard:')]
                 if table=='instrument_categories' and version<14:data=[(*r,int(bool(r[3])),int(bool(r[4])),int(bool(r[5]))) for r in data]
                 if version<6 and table=='purchases':data=[(*r,1,'BUY','') for r in data]
                 if version<6 and table=='dividends':data=[(*r,1) for r in data]

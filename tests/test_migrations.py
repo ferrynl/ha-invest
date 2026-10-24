@@ -11,6 +11,23 @@ from migrations import migrate, MIGRATIONS, SCHEMA_VERSION
 from storage import Store
 
 class MigrationTests(unittest.TestCase):
+    def test_dashboard_revision_upgrade_rolls_back_preserves_ledger_and_is_idempotent(self):
+        self.create_old(16)
+        broken={**MIGRATIONS,17:MIGRATIONS[17]+('INVALID SQL',)}
+        with patch.dict('migrations.MIGRATIONS',broken,clear=True),self.assertRaises(sqlite3.Error):migrate(self.path)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],16)
+            self.assertIsNone(db.execute("SELECT name FROM sqlite_master WHERE name='dashboard_revision'").fetchone())
+        migrate(self.path);migrate(self.path)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('SELECT price FROM purchases').fetchone()[0],'999')
+            self.assertEqual(db.execute('SELECT amount FROM dividends').fetchone()[0],'5.25')
+            self.assertEqual(db.execute('SELECT price FROM daily_prices').fetchone()[0],'1000')
+            before=db.execute('SELECT revision FROM dashboard_revision').fetchone()[0]
+            db.execute("UPDATE purchases SET quantity='2'")
+            self.assertGreater(db.execute('SELECT revision FROM dashboard_revision').fetchone()[0],before)
+            db.rollback()
+            self.assertEqual(db.execute('SELECT revision FROM dashboard_revision').fetchone()[0],before)
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
