@@ -25,7 +25,7 @@ from history import portfolio_values
 from diagnostics import read_logs,record,DiagnosticError,ActionError
 from forex import overview as fx_overview,convert as fx_convert,history as fx_history
 
-def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested):
+def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested,integration_options=None):
     cache.bind(store)
     def home_euro(account):
         from home_euro import overview
@@ -79,7 +79,11 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             user=auth.user(self.token())
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
-            if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/users','/api/backup','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
+            if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/home-assistant','/api/users','/api/backup','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
+            if path=='/api/home-assistant':
+                from ha_export import overview,configuration,valid_token
+                summary=overview(store,cache)
+                return self.respond({'summary':summary,'configuration':configuration(summary['currencies']),'enabled':valid_token((integration_options or {}).get('home_assistant_token',''))})
             if path in ('/api/transactions','/api/transactions/changes','/api/portfolio/delete-preview','/api/portfolio/deletion-backup'):
                 query=parse_qs(urlsplit(self.path).query)
                 try:

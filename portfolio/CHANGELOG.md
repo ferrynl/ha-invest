@@ -1,3 +1,11 @@
+## 0.24.0
+
+- Home Assistant kan de totale beleggingswaarde per oorspronkelijke valuta en het gezamenlijke totaal in euro ophalen via een aparte, alleen-lezen sensor-API.
+- De sensorkoppeling is standaard uitgeschakeld. Een eigen toegangssleutel en optionele netwerkpoort beschermen de gegevens; het dashboard blijft via ingress bereikbaar.
+- Instellingen toont actuele sensortotalen en passende REST-configuratie voor Home Assistant. Eén lokale aanvraag per minuut bedient alle sensoren vanuit de blijvende databasecache.
+- Ontbrekende beurs- of wisselkoersen geven een onbekende waarde, met expliciete volledigheidsinformatie. Eurototalen gebruiken uitsluitend opgeslagen, gedateerde wisselkoersen; GBX wordt als pence omgerekend.
+- De sensorwaarden zijn actuele beleggingswaarden over alle brokeraccounts; los brokersaldo en al uitgekeerd dividend worden niet nogmaals opgeteld. Databaseversie blijft 17.
+
 ## 0.23.0
 
 - Home laadt uitsluitend opgeslagen portefeuillegegevens en wisselkoersen; externe koersaanvragen en ontbrekende historische valuta worden op de achtergrond bijgewerkt.

@@ -584,3 +584,64 @@ Het berekende portefeuilleoverzicht en de euro-/dividendoverzichten worden gecom
 Home laadt eerst kerncijfers, posities en de totaalgrafiek. Individuele lange histories komen pas uit de databasecache wanneer een positie wordt bekeken of maximaal zes posities worden vergeleken. De volledige daghistorie blijft beschikbaar. Verborgen pagina’s bouwen hun tabellen pas bij openen. Een tweede bezoek of een appherstart hergebruikt een passend opgeslagen overzicht; na nieuwe gegevens wordt het overzicht opnieuw berekend.
 
 Database-upgrade 17 maakt vooraf een consistente back-up en installeert alleen de lokale revisietabel en triggers. Back-upherstel importeert geen revisietabel, triggers of dashboard-snapshots uit een upload. De portefeuille wordt uit de echte brongegevens opnieuw berekend; huidige gebruikers en beveiliging blijven behouden. Voor elk antwoord controleert de server opnieuw de sessie en rol. De browser gebruikt geen localStorage, sessionStorage of offlinecache voor financiële antwoorden.
+
+
+## Home Assistant-sensoren (v0.24.0)
+
+De app levert een compacte, alleen-lezen JSON-export op een aparte HTTP-server:
+`http://<lokaal-HA-IP>:8100/api/ha/state`. Het dashboard op poort 8099 blijft uitsluitend
+via ingress toegankelijk. De exportserver start alleen met een geldige
+`home_assistant_token` in `/data/options.json`: 32–128 ASCII-letters, cijfers,
+streepjes of underscores. Gebruik een willekeurig gegenereerde geheime sleutel.
+De optionele hostpoort `8100/tcp` staat standaard uit; zet die in de appconfiguratie
+op 8100 (of een andere vrije hostpoort) en herstart de app. Gebruik deze lokale
+HTTP-poort alleen binnen je vertrouwde netwerk; stel hem niet via je router open.
+Dezelfde sleutel komt als `Authorization: Bearer <sleutel>` in de REST-configuratie.
+De app toont de sleutel nooit in de beheer-API, instellingen, diagnostiek of logs.
+
+Open **Instellingen → Home Assistant-sensoren** voor een actuele configuratie met
+één sensor per aanwezige valuta en één extra sensor voor het gecombineerde eurototaal.
+Deze beheer-API is alleen voor admins. Voeg de getoonde `rest:`-configuratie toe aan
+Home Assistants `configuration.yaml`; voeg bij een bestaande `rest:`-sectie alleen
+het lijstonderdeel toe. Voeg in `secrets.yaml` toe:
+
+```yaml
+home_invest_resource: "http://192.168.1.10:8100/api/ha/state"
+home_invest_authorization: "Bearer VUL_HIER_DEZELFDE_SLEUTEL_IN"
+```
+
+Vervang adres en sleutel. Gebruik de hostpoort die je hebt ingesteld. Controleer de
+HA-configuratie, herstart Home Assistant en voeg de sensoren aan een dashboard toe.
+De standaardsensoren heten bijvoorbeeld `sensor.home_invest_totaal_eur`,
+`sensor.home_invest_eur` en `sensor.home_invest_usd`; Home Assistant kan bij bestaande
+namen een suffix toevoegen. Sensoren hebben vaste unique_id's. Nieuwe valuta worden
+aangeboden door de API; neem daarvoor de vernieuwde configuratie uit Instellingen over.
+Er wordt eenmaal per minuut één lokale aanvraag gedaan voor alle sensoren samen.
+Zie [Home Assistant RESTful](https://www.home-assistant.io/integrations/rest/) en
+[RESTful-sensor](https://www.home-assistant.io/integrations/sensor.rest/).
+
+De export bevat uitsluitend `as_of`, `data_revision`, `oldest_quote_at`, `currencies`
+en `total_eur`. Valutabedragen staan als exacte decimale strings in `value` en
+`known_value`; `value` is null als het totaal onvolledig is. `total_eur` bevat ook
+`complete`, `missing_fx`, `missing_quotes`, `positions` en `fx_dates`. De getoonde
+HA-configuratie bewaart deze volledigheidsinformatie als attributen van de totaalsensor.
+Elke valutasensor blijft onafhankelijk beschikbaar als zijn eigen koersen compleet zijn.
+Een onvolledig totaal wordt `unknown`, nooit stilzwijgend nul of een gedeeltelijke som.
+
+Het gaat om de marktwaarde van open beleggingen over alle brokeraccounts. Gerealiseerde
+winst, uitgekeerd dividend en los brokersaldo worden niet bij de waarde opgeteld.
+Het eurototaal vereist alleen huidige opgeslagen FX, geen historische aankoop-FX.
+De laatste EUR-referentiekoers op of vóór de waarderingsdag mag maximaal zeven dagen
+oud zijn; toekomstige of ontbrekende FX wordt niet gebruikt. GBX is 0,01 GBP.
+De oorspronkelijke quote- en FX-datums blijven zichtbaar: dit is geen realtime feed.
+De export gebruikt de blijvende revisie-/dagcache en doet geen externe aanvragen.
+Een gewijzigde koers, transactie, account of FX-koers vernieuwt ook deze export.
+Geen nieuwe migratie: schema 17 blijft behouden.
+
+De exportpoort levert geen dashboard, transacties, namen van posities, back-ups,
+instellingen of schrijf-API. Ontbrekende/verkeerde bearer geeft 401, andere routes
+404, en schrijfmethoden 405. Financiële antwoorden blijven `no-store` in de browser.
+Een nieuwe sleutel in de appconfiguratie plus herstart trekt de oude sleutel in;
+werk ook `secrets.yaml` bij. Home Assistant-dashboardtoegang wordt door je eigen
+HA-accounts geregeld. Een lokaal voorbeeld op `127.0.0.1:8107` bevat alleen testdata
+op je computer en maakt geen sensoren in je echte Home Assistant-installatie aan.

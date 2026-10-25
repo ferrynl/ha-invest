@@ -11,7 +11,7 @@ from cache import StateCache
 from dashboard import compact
 from restore import restore_backup
 from forex import prepare_rates,save_rates
-from datetime import date
+from datetime import date,timedelta
 
 class DashboardCacheTests(unittest.TestCase):
  def setUp(self):
@@ -81,7 +81,7 @@ class DashboardCacheTests(unittest.TestCase):
  def test_day_change_rebuilds_time_dependent_overview(self):
   self.cache.get(self.store.state)
   with patch('cache.date') as clock:
-   clock.today.return_value=date(2026,10,25)
+   clock.today.return_value=date.today()+timedelta(days=1)
    loader=Mock(wraps=self.store.state);self.cache.get(loader);loader.assert_called_once()
  def test_memory_budget_keeps_database_cache_usable(self):
   with patch('cache.MEMORY_BUDGET',1):

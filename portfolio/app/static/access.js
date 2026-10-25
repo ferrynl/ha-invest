@@ -23,6 +23,7 @@ function lockApp(){
  if(typeof clearImportIssues==='function')clearImportIssues();
  if(typeof clearImportMappings==='function')clearImportMappings();
  if(typeof clearLogs==='function')clearLogs();
+ for(const id of ['ha-export-status','ha-export-values','ha-export-yaml']){const item=document.getElementById(id);if(item)item.textContent='';}
  if(typeof clearCurrencies==='function')clearCurrencies();
  if(typeof closeMenu==='function')closeMenu();
  document.getElementById('sidebar').inert=false;

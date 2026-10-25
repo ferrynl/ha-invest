@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.23.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.24.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -37,6 +37,21 @@ toegang tot de app. Wijzigen en instellen gebeurt in pop-ups; Home opent direct 
 Koersen komen van Yahoo Finance en kunnen vertraagd of tijdelijk onbeschikbaar zijn.
 Bedragen in verschillende valuta blijven gescheiden. De app voert geen orders uit. Home gebruikt opgeslagen databasegegevens en een blijvende overzichtcache; koersen worden op de achtergrond ververst.
 
+## Waarden in je Home Assistant-dashboard
+
+Open in Home Invest **Instellingen → Home Assistant-sensoren**. Daar staan de actuele
+waarde per valuta, het totaal omgerekend naar euro en de bijbehorende REST-configuratie.
+Stel in de Home Assistant-appconfiguratie een `home_assistant_token` in (32–128 letters,
+cijfers, streepjes of underscores), schakel netwerkpoort `8100/tcp` in en herstart de app.
+Neem vervolgens de getoonde sensorconfiguratie en twee secrets over in Home Assistant.
+De sensoren verversen iedere minuut via één lokale aanvraag en gebruiken opgeslagen
+koersen. De koppeling staat standaard uit; het dashboard blijft via ingress bereikbaar.
+
+`127.0.0.1` is een lokaal ontwikkelvoorbeeld op je eigen computer. Voor echte sensoren
+gebruik je het lokale adres van je Home Assistant-apparaat. De waarden betreffen
+beleggingen over alle brokeraccounts, zonder los brokersaldo of uitgekeerd dividend.
+Ontbrekende koersen maken de betreffende sensor onbekend; er wordt niets geschat.
+
 ## Trading 212 importeren
 
 1. Maak bij **Instellingen → Brokeraccounts** een Trading 212-rekening aan.
@@ -62,7 +77,7 @@ niet in het portefeuillerendement verwerkt.
 
 ## Opslag en back-ups
 
-De database en instellingen staan in de app-datafolder. Appversie **0.23.0** gebruikt
+De database en instellingen staan in de app-datafolder. Appversie **0.24.0** gebruikt
 databaseschema **17**. Upgrades maken vooraf een consistente back-up en voeren alleen
 ontbrekende migraties transactioneel uit. Bestaande aankopen, dividend en historie blijven
 behouden. Neem voor opgeslagen API-verbindingen de volledige app op in een Home Assistant-back-up.

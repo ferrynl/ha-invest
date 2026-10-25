@@ -104,9 +104,24 @@ def background():
         refresh_requested.wait(interval)
         refresh_requested.clear()
 
-Handler = make_handler(store, auth, state_cache, status, interval, refresh_lock, refresh_requested)
+Handler = make_handler(store, auth, state_cache, status, interval, refresh_lock, refresh_requested, options)
+
+def start_export():
+    from ha_export import valid_token,make_export_handler
+    token=options.get('home_assistant_token','')
+    if not valid_token(token):
+        if token:logging.warning('Home Assistant-sensoren uitgeschakeld: gebruik een toegangssleutel van 32–128 letters, cijfers, streepjes of underscores.')
+        return None
+    try:
+        http=ThreadingHTTPServer((os.environ.get('BIND','0.0.0.0'),int(os.environ.get('HA_EXPORT_PORT',8100))),make_export_handler(store,state_cache,token))
+    except OSError:
+        logging.error('Home Assistant-sensorpoort kon niet worden geopend. Het dashboard blijft beschikbaar.')
+        return None
+    threading.Thread(target=http.serve_forever,daemon=True).start()
+    return http
 
 if __name__ == '__main__':
+    start_export()
     threading.Thread(target=background, daemon=True).start()
-    # No published host port in HA; access is through authenticated ingress only.
+    # The dashboard stays ingress-only; optional sensors use a separate read-only port.
     ThreadingHTTPServer((os.environ.get('BIND', '0.0.0.0'), int(os.environ.get('PORT', 8099))), Handler).serve_forever()

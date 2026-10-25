@@ -1,6 +1,6 @@
 name: Home Invest
 url: https://github.com/ferrynl/ha-invest
-version: "0.23.0"
+version: "0.24.0"
 slug: aandelen_dashboard
 description: Persoonlijke aandelenportefeuille met SQLite en koershistorie
 arch: [amd64, aarch64]
@@ -12,7 +12,13 @@ ingress: true
 ingress_port: 8099
 panel_icon: mdi:chart-line
 panel_title: Home Invest
+ports:
+  8100/tcp: null
+ports_description:
+  8100/tcp: Alleen-lezen portefeuillewaarden voor Home Assistant (toegangssleutel vereist)
 options:
   refresh_minutes: 15
+  home_assistant_token: ""
 schema:
   refresh_minutes: int(5,1440)
+  home_assistant_token: password?

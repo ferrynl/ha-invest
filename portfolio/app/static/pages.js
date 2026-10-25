@@ -24,6 +24,7 @@ function showPage(){
  if(page==='import-koppelingen')loadImportMappings();
  if(page==='import-beoordeling')loadImportIssues();
  if(page==='valuta')loadCurrencies();
+ if(page==='instellingen'&&state)loadHomeAssistant();
  window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',showPage);
@@ -40,6 +41,18 @@ function renderPages(){
  const selected=$('report-year').value,years=[...new Set([String(new Date().getFullYear()),...state.dividends.map(d=>d.paid_on.slice(0,4))])].sort().reverse();
  $('report-year').replaceChildren();for(const year of years){const option=document.createElement('option');option.value=year;option.textContent=year;$('report-year').append(option);}if(years.includes(selected))$('report-year').value=selected;
  if(location.hash==='#rapporten')renderReports();
+ if(location.hash==='#instellingen')loadHomeAssistant();
+}
+async function loadHomeAssistant(){
+ const request=stateRequest;
+ try{
+  const response=await apiFetch('api/home-assistant');if(!response.ok)throw Error('Home Assistant-koppeling laden mislukt.');
+  const data=await response.json();if(request!==stateRequest||accessSession?.user?.role!=='admin')return;
+  $('ha-export-status').textContent=data.enabled?'Toegangssleutel ingesteld. Controleer ook de netwerkpoort in de app-configuratie.':'Nog niet ingeschakeld. Stel de toegangssleutel en netwerkpoort hieronder in.';
+  const summary=data.summary,values=Object.entries(summary.currencies).map(([currency,item])=>currency+': '+(item.complete?money(item.value,currency):'onvolledig'));
+  values.push('Totaal in euro: '+(summary.total_eur.complete?money(summary.total_eur.value,'EUR'):'onvolledig; ontbrekende koersen of wisselkoersen'));
+  $('ha-export-values').textContent=values.join(' · ');$('ha-export-yaml').textContent=data.configuration;
+ }catch(error){if(request===stateRequest)$('ha-export-status').textContent=error.message;}
 }
 function renderReports(){
  if(!state)return;const groups={};const year=$('report-year').value;
