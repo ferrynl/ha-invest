@@ -645,3 +645,13 @@ Een nieuwe sleutel in de appconfiguratie plus herstart trekt de oude sleutel in;
 werk ook `secrets.yaml` bij. Home Assistant-dashboardtoegang wordt door je eigen
 HA-accounts geregeld. Een lokaal voorbeeld op `127.0.0.1:8107` bevat alleen testdata
 op je computer en maakt geen sensoren in je echte Home Assistant-installatie aan.
+
+## Taal kiezen
+
+Bij de eerste start kies je Nederlands, Engels of Spaans. Je kunt de keuze later wijzigen via **Taal / Language / Idioma** onder je account in de zijbalk. Opslaan herlaadt de app in de gekozen taal. Met loginaccounts wordt de voorkeur per gebruiker op de server bewaard en op andere apparaten toegepast. Zonder loginaccounts geldt de servervoorkeur voor toegang via Home Assistant. Op het aanmeldscherm onthoudt de browser alleen de taalvoorkeur; sessies en portefeuilledata worden daar niet opgeslagen.
+
+### Nieuwe teksten toevoegen
+
+Alle vaste schermteksten staan in `app/static/translations.js`, met dezelfde Nederlandse brontekst als sleutel en verplichte `nl`, `en` en `es`-waarden. Voeg bij elke nieuwe tekst direct alle drie de vertalingen toe. JavaScript gebruikt `ui('Nederlandse tekst')`; vertaal nooit namen, notities, tickers, routepaden, API-waarden of gegevens van gebruikers. HTML-teksten en toegankelijkheidslabels worden vóór het openen van de app vertaald. Gebruik `appLocale()` voor datum- en getalnotatie. Formulierwaarden en databasewaarden blijven taalneutraal.
+
+`python scripts/check_translations.py` controleert nieuwe HTML/JavaScript-teksten en serverfoutmeldingen. Dezelfde controle draait in de tests en op GitHub. `scripts/i18n_technical_strings.json` bevat uitsluitend technische identificaties, merknamen en codevoorbeelden die niet vertaald horen te worden; voeg daar geen schermteksten aan toe. Serverberichten worden pas aan de HTTP-grens vertaald, zodat de gedeelde cache en opgeslagen gegevens taalneutraal blijven.

@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.24.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.25.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -77,8 +77,8 @@ niet in het portefeuillerendement verwerkt.
 
 ## Opslag en back-ups
 
-De database en instellingen staan in de app-datafolder. Appversie **0.24.0** gebruikt
-databaseschema **17**. Upgrades maken vooraf een consistente back-up en voeren alleen
+De database en instellingen staan in de app-datafolder. Appversie **0.25.0** gebruikt
+databaseschema **18**. Upgrades maken vooraf een consistente back-up en voeren alleen
 ontbrekende migraties transactioneel uit. Bestaande aankopen, dividend en historie blijven
 behouden. Neem voor opgeslagen API-verbindingen de volledige app op in een Home Assistant-back-up.
 
@@ -98,3 +98,5 @@ Gebruikersdata, back-ups en API-sleutels horen niet in deze repository.
 
 Tests uitvoeren vanuit de repository: python -m unittest discover -s tests.
 De grafiek- en Home-controles staan in tests/test_chart.cjs en tests/test_home.cjs.
+
+De app ondersteunt Nederlands, Engels en Spaans. Kies je taal bij de eerste start; wijzigen kan onder je account via **Taal / Language / Idioma**. Met loginaccounts wordt de keuze per gebruiker bewaard.

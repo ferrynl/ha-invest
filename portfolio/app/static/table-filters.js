@@ -1,6 +1,8 @@
+/* UI strings use the shared catalogue; pure Node tests retain Dutch defaults. */
+var ui=globalThis.HomeInvestTranslate||((value)=>value);
 /* Column filters and stable sorts are local; paged tables apply them before pagination. */
 const tableColumnFilters=new Map(),tableColumnSorts=new Map(),tableColumnTypes=new Map();
-const filterText=value=>String(value??'').normalize('NFKC').toLocaleLowerCase('nl-NL').replace(/\s+/g,' ').trim();
+const filterText=value=>String(value??'').normalize('NFKC').toLocaleLowerCase((typeof appLocale==='function'?appLocale():'nl-NL')).replace(/\s+/g,' ').trim();
 function matchesTableColumns(id,values){return (tableColumnFilters.get(id)||[]).every((term,index)=>!term||filterText(values[index]).includes(term));}
 function tableSortValue(value,type){
  const text=String(value??'').trim();if(!text||/^(—|nog geen|wacht|onbekend|onvolledig)/i.test(text))return null;
@@ -30,7 +32,7 @@ function installTableFilters(){
   const id=body.id,headers=[...head.rows[0].cells],row=document.createElement('tr');row.className='column-filters';
   const labels=headers.map(h=>h.textContent),terms=headers.map(()=>'');tableColumnFilters.set(id,terms);
   tableColumnTypes.set(id,labels.map(label=>/datum|tijd|^maand$/i.test(label)?'date':/^(aant(al|allen)|inleg|koers$|waarde|marktwaarde|weging|.*winst|dividend|netto|prijs|bedrag|factor|uitkeringen|aandelen$|1 eenheid)/i.test(label)?'number':'text'));
-  const values=item=>[...item.cells].map((c,index)=>c.dataset.sortValue??(tableColumnTypes.get(id)[index]==='number'?(c.dataset.sortValue??c.firstChild?.textContent??c.textContent):c.textContent+' '+[...c.querySelectorAll('input[type="checkbox"]')].map(i=>i.checked?'Geselecteerd':'Niet geselecteerd').join(' ')));
+  const values=item=>[...item.cells].map((c,index)=>c.dataset.sortValue??(tableColumnTypes.get(id)[index]==='number'?(c.dataset.sortValue??c.firstChild?.textContent??c.textContent):c.textContent+' '+[...c.querySelectorAll('input[type="checkbox"]')].map(i=>i.checked?ui('Geselecteerd'):ui('Niet geselecteerd')).join(' ')));
   const apply=()=>{
    if(id==='home-positions'||id==='transaction-list')return;
    for(const item of body.rows){const visible=matchesTableColumns(id,[...item.cells].map(c=>c.textContent));if(item.hidden===visible)item.hidden=!visible;}
@@ -38,13 +40,13 @@ function installTableFilters(){
   };
   const refresh=()=>{if(id==='home-positions'){homePage=0;renderHomeTable();}else if(id==='transaction-list'){transactionPage=0;renderTransactions();}else apply();};
   for(const [index,header] of headers.entries()){
-   header.setAttribute('scope','col');const button=document.createElement('button');button.type='button';button.className='column-sort';button.textContent=labels[index];button.setAttribute('aria-label','Sorteren op '+labels[index]);header.replaceChildren(button);header.setAttribute('aria-sort','none');
+   header.setAttribute('scope','col');const button=document.createElement('button');button.type='button';button.className='column-sort';button.textContent=labels[index];button.setAttribute('aria-label',ui('Sorteren op ')+labels[index]);header.replaceChildren(button);header.setAttribute('aria-sort','none');
    button.addEventListener('click',()=>{const previous=tableColumnSorts.get(id),direction=previous?.index===index?-previous.direction:1;tableColumnSorts.set(id,{index,direction});headers.forEach((h,i)=>h.setAttribute('aria-sort',i===index?(direction===1?'ascending':'descending'):'none'));refresh();});
-   const cell=document.createElement('th'),input=document.createElement('input');input.type='search';input.placeholder='Filter '+labels[index];input.setAttribute('aria-label','Filter '+labels[index]);input.autocomplete='off';
+   const cell=document.createElement('th'),input=document.createElement('input');input.type='search';input.placeholder=ui('Filter ')+labels[index];input.setAttribute('aria-label',ui('Filter ')+labels[index]);input.autocomplete='off';
    input.addEventListener('input',()=>{terms[index]=filterText(input.value);refresh();});cell.append(input);row.append(cell);
   }
   head.append(row);
-  const note=document.createElement('small');note.className='table-filter-note';note.textContent=(id==='home-positions'||id==='transaction-list')?'Klik op een kolomnaam om te sorteren. Kolomfilters combineren; sortering en filters gelden over alle pagina’s binnen de gekozen selectie.':'Klik op een kolomnaam om te sorteren. Kolomfilters combineren; filters en sortering gelden voor de geladen regels.';table.parentElement.before(note);
+  const note=document.createElement('small');note.className='table-filter-note';note.textContent=(id==='home-positions'||id==='transaction-list')?ui('Klik op een kolomnaam om te sorteren. Kolomfilters combineren; sortering en filters gelden over alle pagina’s binnen de gekozen selectie.'):ui('Klik op een kolomnaam om te sorteren. Kolomfilters combineren; filters en sortering gelden voor de geladen regels.');table.parentElement.before(note);
   new MutationObserver(apply).observe(body,{childList:true,subtree:true,characterData:true});body.addEventListener('change',apply);apply();
  }
 }

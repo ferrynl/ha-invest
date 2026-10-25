@@ -39,7 +39,7 @@ class Auth:
     def enabled(self):return self.store.settings().get('auth_enabled')=='true'
 
     def user(self,token):
-        if not self.enabled():return {'id':None,'username':'Home Assistant','role':'admin','csrf':None}
+        if not self.enabled():return {'id':None,'username':'Home Assistant','role':'admin','csrf':None,'language':self.store.settings().get('language','')}
         key=hashlib.sha256(token.encode()).hexdigest()
         # Validate and renew atomically in SQLite without waiting for an unrelated
         # provider operation holding the portfolio's application writer lock.
@@ -48,11 +48,21 @@ class Auth:
             now=time.time()
             entry=db.execute('SELECT * FROM auth_sessions WHERE token_hash=?',(key,)).fetchone()
             if not entry:return None
-            row=db.execute('SELECT id,username,role,active,revision FROM users WHERE id=?',(entry['user_id'],)).fetchone()
+            row=db.execute('SELECT id,username,role,active,revision,language FROM users WHERE id=?',(entry['user_id'],)).fetchone()
             if entry['expires_at']<=now or not row or not row['active'] or row['revision']!=entry['revision']:
                 db.execute('DELETE FROM auth_sessions WHERE token_hash=?',(key,));return None
             db.execute('UPDATE auth_sessions SET expires_at=? WHERE token_hash=?',(now+SESSION_TTL,key))
-            return dict(id=row['id'],username=row['username'],role=row['role'],csrf=entry['csrf'])
+            return dict(id=row['id'],username=row['username'],role=row['role'],csrf=entry['csrf'],language=row['language'])
+
+    def set_language(self,user,language):
+        if language not in ('nl','en','es'):
+            raise ValueError('Kies Nederlands, Engels of Spaans.')
+        with self.lock, self.store.connect() as db:
+            if user['id'] is None:
+                db.execute("INSERT INTO app_settings(key,value) VALUES('language',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",(language,))
+            else:
+                db.execute('UPDATE users SET language=? WHERE id=?',(language,user['id']))
+        return language
 
     def login(self,username,password,peer):
         username=str(username).strip().lower()

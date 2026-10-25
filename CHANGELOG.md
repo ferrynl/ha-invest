@@ -1,3 +1,12 @@
+## 0.25.0 — 25 oktober 2026
+
+- Nederlands, Engels en Spaans voor schermen, navigatie, formulieren, grafieken en meldingen.
+- Bij de eerste start verschijnt een taalkeuze. Wijzig de taal later onder je account via Taal / Language / Idioma.
+- De taal wordt per loginaccount opgeslagen en volgt het account op andere apparaten. Zonder aparte login geldt de opgeslagen voorkeur voor toegang via Home Assistant.
+- Datums en bedragen volgen de gekozen taal. Eigen namen, notities, brontickers en gebruikersgegevens worden niet vertaald.
+- Centrale vertaalcatalogus en automatische controle op ontbrekende talen bij nieuwe schermteksten.
+- Databaseversie 18 voegt alleen een taalvoorkeur aan gebruikers toe, met vooraf een migratieback-up; bestaande portefeuillegegevens blijven behouden.
+
 ## 0.24.0
 
 - Home Assistant kan de totale beleggingswaarde per oorspronkelijke valuta en het gezamenlijke totaal in euro ophalen via een aparte, alleen-lezen sensor-API.

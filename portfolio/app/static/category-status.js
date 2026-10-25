@@ -1,18 +1,20 @@
+/* UI strings use the shared catalogue; pure Node tests retain Dutch defaults. */
+var ui=globalThis.HomeInvestTranslate||((value)=>value);
 /* Poll only small local metadata; never refetch providers or rebuild financial histories. */
 let categoryScope='',categoryItems=new Map(),categoryETag=null,categoryCounts=null,categoryNextCheck=0,categoryRequest=null,categoryGeneration=0;
 const categoryKey=p=>JSON.stringify([p.symbol,p.exchange,p.currency]);
 function categoryFieldLabel(categories={},sync={},field){
  if(categories[field])return categories[field];
- if(field==='category')return 'Zelf te kiezen';
- if(categories['manual_'+field])return 'Handmatig leeg';
- if(sync.status==='complete'||sync.status==='partial')return 'Niet beschikbaar bij bron';
- if(sync.status==='retry')return 'Ophalen mislukt';
- if(sync.status==='fetching')return 'Wordt opgehaald…';
- return 'Nog ophalen…';
+ if(field==='category')return ui('Zelf te kiezen');
+ if(categories['manual_'+field])return ui('Handmatig leeg');
+ if(sync.status==='complete'||sync.status==='partial')return ui('Niet beschikbaar bij bron');
+ if(sync.status==='retry')return ui('Ophalen mislukt');
+ if(sync.status==='fetching')return ui('Wordt opgehaald…');
+ return ui('Nog ophalen…');
 }
 function categoryProgressLabel(counts){
- if(!counts.total)return 'Nog geen aandelen om in te delen.';
- return counts.processed+' van '+counts.total+' profielen gecontroleerd · '+counts.complete+' volledig ingedeeld · '+counts.partial+' met ontbrekende velden · '+(counts.pending+counts.fetching)+' nog ophalen'+(counts.retry?' · '+counts.retry+' wachten op opnieuw proberen':'')+'. Je eigen categorie kies je zelf.';
+ if(!counts.total)return ui('Nog geen aandelen om in te delen.');
+ return counts.processed+ui(' van ')+counts.total+ui(' profielen gecontroleerd · ')+counts.complete+ui(' volledig ingedeeld · ')+counts.partial+ui(' met ontbrekende velden · ')+(counts.pending+counts.fetching)+ui(' nog ophalen')+(counts.retry?' · '+counts.retry+ui(' wachten op opnieuw proberen'):'')+ui('. Je eigen categorie kies je zelf.');
 }
 function categoryForPosition(p){return categoryScope==='all'&&categoryItems.get(categoryKey(p))||{categories:p.categories||{},sync:{status:'pending'}};}
 function clearCategoryOverview(){categoryGeneration++;categoryScope='';categoryItems.clear();categoryETag=null;categoryCounts=null;categoryNextCheck=0;categoryRequest=null;$('stock-categories-summary').textContent='';$('stock-categories-progress').value=0;$('stock-categories-refresh').disabled=false;}
@@ -38,10 +40,10 @@ async function refreshCategoryOverview(force=false){
   const response=await apiFetch('api/instruments/categories?account_id='+encodeURIComponent(account),{headers});
   if(request.generation!==categoryGeneration||!state||!accessSession?.user)return;
   if(response.status===304)return;
-  const result=await response.json();if(request.generation!==categoryGeneration||!state||!accessSession?.user)return;if(!response.ok)throw Error(result.error||'Categorieën laden mislukt.');
+  const result=await response.json();if(request.generation!==categoryGeneration||!state||!accessSession?.user)return;if(!response.ok)throw Error(result.error||ui('Categorieën laden mislukt.'));
   if(result.account_id!==account)return;
   categoryETag=response.headers.get('ETag');applyCategoryOverview(result);
- }catch(error){if(request.generation===categoryGeneration&&accessSession?.user)$('stock-categories-summary').textContent='Actuele categorieën laden mislukt. De getoonde gegevens blijven bewaard. Kies Weergave vernieuwen.';}
+ }catch(error){if(request.generation===categoryGeneration&&accessSession?.user)$('stock-categories-summary').textContent=ui('Actuele categorieën laden mislukt. De getoonde gegevens blijven bewaard. Kies Weergave vernieuwen.');}
  finally{if(categoryRequest===request){categoryRequest=null;$('stock-categories-refresh').disabled=false;const active=!categoryCounts||categoryCounts.pending+categoryCounts.fetching+categoryCounts.retry>0;categoryNextCheck=Date.now()+(active?5000:30000);}}
 }
 if(typeof document!=='undefined'){

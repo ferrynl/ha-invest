@@ -1,8 +1,10 @@
+/* UI strings use the shared catalogue; pure Node tests retain Dutch defaults. */
+var ui=globalThis.HomeInvestTranslate||((value)=>value);
 let savedImportMappings=[];
 function clearImportMappings(){savedImportMappings=[];$('mapping-list').replaceChildren();$('mapping-edit-form').reset();$('mapping-filter').value='';$('mapping-edit-title').textContent='';$('mapping-edit-feedback').textContent='';$('mapping-feedback').textContent='';closePopup('mapping-edit');}
 async function loadImportMappings(){
- $('mapping-feedback').textContent='Koppelingen uit de database laden…';
- try{const response=await apiFetch('api/imports/mappings');const result=await response.json();if(!response.ok)throw Error(result.error);savedImportMappings=result.mappings;renderImportMappings();$('mapping-feedback').textContent=result.mappings.length+' koppelingen en openstaande instrumenten. Deze lijst gebruikt geen koersdienst.';}
+ $('mapping-feedback').textContent=ui('Koppelingen uit de database laden…');
+ try{const response=await apiFetch('api/imports/mappings');const result=await response.json();if(!response.ok)throw Error(result.error);savedImportMappings=result.mappings;renderImportMappings();$('mapping-feedback').textContent=result.mappings.length+ui(' koppelingen en openstaande instrumenten. Deze lijst gebruikt geen koersdienst.');}
  catch(error){$('mapping-feedback').textContent=error.message;}
 }
 function renderImportMappings(){
@@ -10,8 +12,8 @@ function renderImportMappings(){
  for(const entry of savedImportMappings){
   if(query&&!Object.values(entry).join(' ').toLowerCase().includes(query))continue;
   const row=document.createElement('tr');
-  for(const value of [entry.account_name,entry.ticker,entry.isin||'—',entry.source_currency,entry.symbol||'Nog niet gekoppeld',entry.exchange||'—',entry.currency||'—',entry.origin==='manual'?'Handmatig gecontroleerd':entry.symbol?'Automatisch opgeslagen':'Openstaand'])cell(row,value);
-  const action=cell(row,'');const button=document.createElement('button');button.type='button';button.textContent=entry.symbol?'Corrigeren':'Koppelen';
+  for(const value of [entry.account_name,entry.ticker,entry.isin||'—',entry.source_currency,entry.symbol||ui('Nog niet gekoppeld'),entry.exchange||'—',entry.currency||'—',entry.origin==='manual'?ui('Handmatig gecontroleerd'):entry.symbol?ui('Automatisch opgeslagen'):ui('Openstaand')])cell(row,value);
+  const action=cell(row,'');const button=document.createElement('button');button.type='button';button.textContent=entry.symbol?ui('Corrigeren'):ui('Koppelen');
   button.addEventListener('click',()=>{const form=$('mapping-edit-form');form.elements.namedItem('id').value=entry.id;for(const key of ['symbol','exchange','currency'])form.elements.namedItem(key).value=entry[key];$('mapping-edit-title').textContent=entry.ticker+' / '+entry.source_currency+' · '+entry.account_name;openPopup('mapping-edit');$('mapping-edit-feedback').textContent='';form.elements.namedItem('symbol').focus();});action.append(button);$('mapping-list').append(row);
  }
 }
@@ -21,7 +23,7 @@ function bindImportMappings(){
  $('mapping-cancel').addEventListener('click',()=>{closePopup('mapping-edit');});
  $('mapping-check').addEventListener('click',async()=>{
   const button=$('mapping-check'),form=$('mapping-edit-form');button.disabled=true;
-  try{const symbol=form.elements.namedItem('symbol').value.trim().toUpperCase();const response=await apiFetch('api/listing?symbol='+encodeURIComponent(symbol));const result=await response.json();if(!response.ok)throw Error(result.error);for(const key of ['symbol','exchange','currency'])form.elements.namedItem(key).value=result[key];$('mapping-edit-feedback').textContent='Gecontroleerd: '+result.name+' · '+result.exchange+' · '+result.currency+'. Controleer of dit het juiste aandeel is en sla op.';}
+  try{const symbol=form.elements.namedItem('symbol').value.trim().toUpperCase();const response=await apiFetch('api/listing?symbol='+encodeURIComponent(symbol));const result=await response.json();if(!response.ok)throw Error(result.error);for(const key of ['symbol','exchange','currency'])form.elements.namedItem(key).value=result[key];$('mapping-edit-feedback').textContent=ui('Gecontroleerd: ')+result.name+' · '+result.exchange+' · '+result.currency+ui('. Controleer of dit het juiste aandeel is en sla op.');}
   catch(error){$('mapping-edit-feedback').textContent=error.message;}finally{button.disabled=false;}
  });
  $('mapping-edit-form').addEventListener('submit',async event=>{

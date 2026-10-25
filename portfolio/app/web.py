@@ -12,6 +12,7 @@ from provider import search_stocks,listing as resolve_listing
 from restore import restore_backup
 from security import verify_password,SESSION_TTL
 from version import APP_VERSION
+from i18n import localize,LANGUAGES
 from updates import check_updates
 from imports import ADAPTERS
 from imports.service import preview as import_preview,open_preview
@@ -35,7 +36,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
         return cache.derived('home-euro:'+str(account),build)
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css')}
-    for name in ('home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks'):
+    for name in ('i18n','translations','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass
@@ -51,7 +52,9 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             secure=self.headers.get('X-Forwarded-Proto','').split(',')[0].strip()=='https' or self.headers.get('Origin','').startswith('https://')
             return f'homeinvest_session={token}; Path={path}; HttpOnly; SameSite=Strict; Max-Age={SESSION_TTL if token else 0}'+('; Secure' if secure else '')
         def respond(self,content,code=200,kind='application/json',filename=None,cookie=None,etag=False,public=False):
-            if kind=='application/json':content=json.dumps(content,separators=(',',':')).encode()
+            if kind=='application/json':
+                language=self.headers.get('X-HomeInvest-Language','nl')
+                content=json.dumps(localize(content,language),separators=(',',':')).encode()
             digest='"'+hashlib.sha256(content).hexdigest()+'"' if etag else None
             if digest and self.headers.get('If-None-Match')==digest:code=304;content=b''
             self.send_response(code)
@@ -74,7 +77,9 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             path=urlsplit(self.path).path
             if path in assets:
                 name,kind=assets[path];content=(static/name).read_bytes()
-                if path=='/':content=content.replace(b'__ASSET_VERSION__',APP_VERSION.encode())
+                if path=='/':
+                    language=(auth.user(self.token()) or {}).get('language','')
+                    content=content.replace(b'__ASSET_VERSION__',APP_VERSION.encode()).replace(b'__ACCOUNT_LANGUAGE__',(language if language in LANGUAGES else '').encode())
                 return self.respond(content,kind=kind,etag=path!='/',public=path!='/')
             user=auth.user(self.token())
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
@@ -209,6 +214,8 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))
                 data=json.loads(body)
                 if not isinstance(data,dict):raise ValueError('Ongeldige aanvraag.')
+                if path=='/api/account/language':
+                    return self.respond({'language':auth.set_language(user,data.get('language'))})
                 if path=='/api/instrument/valuation':
                     from valuations import save as save_valuation
                     with refresh_lock:

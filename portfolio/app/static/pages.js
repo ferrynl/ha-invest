@@ -1,5 +1,7 @@
-const pageNames={'import-api':'API-instellingen',aandeel:'Aandeel',transacties:'Transacties','import-beoordeling':'Te beoordelen','import-koppelingen':'Aandelenkoppelingen',home:'Home',aandelen:'Aandelen',dividend:'Dividend',rapporten:'Rapporten',instellingen:'Instellingen',imports:'Imports',logs:'Logs',valuta:'Valuta'};
-function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches&&!document.body.classList.contains('locked');$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label','Menu openen');}
+/* UI strings use the shared catalogue; pure Node tests retain Dutch defaults. */
+var ui=globalThis.HomeInvestTranslate||((value)=>value);
+const pageNames={'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
+function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches&&!document.body.classList.contains('locked');$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label',ui('Menu openen'));}
 function showPage(){
  closeAllPopups();
  const requested=location.hash.slice(1).split('?')[0];let page=Object.hasOwn(pageNames,requested)?requested:'home';
@@ -28,15 +30,15 @@ function showPage(){
  window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',showPage);
-$('menu-toggle').addEventListener('click',()=>{if(document.body.hasAttribute('data-menu-open'))closeMenu();else{document.body.setAttribute('data-menu-open','');$('sidebar').inert=false;$('nav-overlay').hidden=false;$('menu-toggle').setAttribute('aria-expanded','true');$('menu-toggle').setAttribute('aria-label','Menu sluiten');}});
+$('menu-toggle').addEventListener('click',()=>{if(document.body.hasAttribute('data-menu-open'))closeMenu();else{document.body.setAttribute('data-menu-open','');$('sidebar').inert=false;$('nav-overlay').hidden=false;$('menu-toggle').setAttribute('aria-expanded','true');$('menu-toggle').setAttribute('aria-label',ui('Menu sluiten'));}});
 window.matchMedia('(max-width:850px)').addEventListener('change',closeMenu);
 document.querySelector('.skip-link').addEventListener('click',event=>{event.preventDefault();$('main-content').focus();});
 $('nav-overlay').addEventListener('click',closeMenu);
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.body.hasAttribute('data-menu-open')){closeMenu();$('menu-toggle').focus();}});
 document.querySelectorAll('[data-route]').forEach(link=>link.addEventListener('click',closeMenu));
 function renderPages(){
- $('sidebar-version').textContent='Versie '+state.app_version;
- $('settings-version').textContent=state.app_version;$('settings-database').textContent=state.database_version;$('settings-interval').textContent=state.refresh_minutes+' minuten';
+ $('sidebar-version').textContent=ui('Versie ')+state.app_version;
+ $('settings-version').textContent=state.app_version;$('settings-database').textContent=state.database_version;$('settings-interval').textContent=state.refresh_minutes+ui(' minuten');
  if(!settingsDirty)$('settings-form').elements.namedItem('default_range').value=state.settings.default_range;
  const selected=$('report-year').value,years=[...new Set([String(new Date().getFullYear()),...state.dividends.map(d=>d.paid_on.slice(0,4))])].sort().reverse();
  $('report-year').replaceChildren();for(const year of years){const option=document.createElement('option');option.value=year;option.textContent=year;$('report-year').append(option);}if(years.includes(selected))$('report-year').value=selected;
@@ -46,27 +48,27 @@ function renderPages(){
 async function loadHomeAssistant(){
  const request=stateRequest;
  try{
-  const response=await apiFetch('api/home-assistant');if(!response.ok)throw Error('Home Assistant-koppeling laden mislukt.');
+  const response=await apiFetch('api/home-assistant');if(!response.ok)throw Error(ui('Home Assistant-koppeling laden mislukt.'));
   const data=await response.json();if(request!==stateRequest||accessSession?.user?.role!=='admin')return;
-  $('ha-export-status').textContent=data.enabled?'Toegangssleutel ingesteld. Controleer ook de netwerkpoort in de app-configuratie.':'Nog niet ingeschakeld. Stel de toegangssleutel en netwerkpoort hieronder in.';
-  const summary=data.summary,values=Object.entries(summary.currencies).map(([currency,item])=>currency+': '+(item.complete?money(item.value,currency):'onvolledig'));
-  values.push('Totaal in euro: '+(summary.total_eur.complete?money(summary.total_eur.value,'EUR'):'onvolledig; ontbrekende koersen of wisselkoersen'));
+  $('ha-export-status').textContent=data.enabled?ui('Toegangssleutel ingesteld. Controleer ook de netwerkpoort in de app-configuratie.'):ui('Nog niet ingeschakeld. Stel de toegangssleutel en netwerkpoort hieronder in.');
+  const summary=data.summary,values=Object.entries(summary.currencies).map(([currency,item])=>currency+': '+(item.complete?money(item.value,currency):ui('onvolledig')));
+  values.push(ui('Totaal in euro: ')+(summary.total_eur.complete?money(summary.total_eur.value,'EUR'):ui('onvolledig; ontbrekende koersen of wisselkoersen')));
   $('ha-export-values').textContent=values.join(' · ');$('ha-export-yaml').textContent=data.configuration;
  }catch(error){if(request===stateRequest)$('ha-export-status').textContent=error.message;}
 }
 function renderReports(){
  if(!state)return;const groups={};const year=$('report-year').value;
  for(const d of state.dividends){if(d.paid_on.slice(0,4)!==year)continue;const key=d.paid_on.slice(0,7)+'|'+d.currency;const item=groups[key]??={month:d.paid_on.slice(0,7),currency:d.currency,count:0,amount:0};item.count++;item.amount+=Number(d.amount);}
- $('report-dividends').replaceChildren();for(const key of Object.keys(groups).sort()){const item=groups[key],row=document.createElement('tr');for(const value of [new Date(item.month+'-01T00:00:00Z').toLocaleDateString('nl-NL',{month:'long',year:'numeric',timeZone:'UTC'}),item.currency,item.count,money(item.amount,item.currency)])cell(row,value);row.cells[0].dataset.sortValue=item.month+'-01';$('report-dividends').append(row);}
- $('report-empty').textContent=Object.keys(groups).length?'':'Geen dividend geboekt in '+year+'.';
+ $('report-dividends').replaceChildren();for(const key of Object.keys(groups).sort()){const item=groups[key],row=document.createElement('tr');for(const value of [new Date(item.month+'-01T00:00:00Z').toLocaleDateString((typeof appLocale==='function'?appLocale():'nl-NL'),{month:'long',year:'numeric',timeZone:'UTC'}),item.currency,item.count,money(item.amount,item.currency)])cell(row,value);row.cells[0].dataset.sortValue=item.month+'-01';$('report-dividends').append(row);}
+ $('report-empty').textContent=Object.keys(groups).length?'':ui('Geen dividend geboekt in ')+year+'.';
  const totals={};for(const p of state.positions){const t=totals[p.currency]??={cost:0,value:0,dividend:0,realised:0,count:0,complete:true};t.cost+=Number(p.cost);t.dividend+=Number(p.dividend);t.realised+=Number(p.realised??0);t.count++;if(p.value===null)t.complete=false;else t.value+=Number(p.value);}
- $('report-portfolio').replaceChildren();for(const [currency,t] of Object.entries(totals)){const row=document.createElement('tr');for(const value of [currency,t.count,money(t.cost,currency),t.complete?money(t.value,currency):'Onvolledig',t.complete?money(t.value-t.cost+t.realised,currency):'Onbekend',money(t.dividend,currency),t.complete?money(t.value-t.cost+t.realised+t.dividend,currency):'Onbekend'])cell(row,value);$('report-portfolio').append(row);}
+ $('report-portfolio').replaceChildren();for(const [currency,t] of Object.entries(totals)){const row=document.createElement('tr');for(const value of [currency,t.count,money(t.cost,currency),t.complete?money(t.value,currency):ui('Onvolledig'),t.complete?money(t.value-t.cost+t.realised,currency):ui('Onbekend'),money(t.dividend,currency),t.complete?money(t.value-t.cost+t.realised+t.dividend,currency):ui('Onbekend')])cell(row,value);$('report-portfolio').append(row);}
 }
 let settingsDirty=false;
 $('settings-form').addEventListener('input',()=>{settingsDirty=true;});
 $('report-year').addEventListener('change',renderReports);
-$('settings-form').addEventListener('submit',async event=>{event.preventDefault();const button=event.target.querySelector('button');button.disabled=true;try{const response=await apiFetch('api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(Object.fromEntries(new FormData(event.target)))});if(!response.ok)throw Error('Instellingen opslaan mislukt.');settingsDirty=false;chartRange=event.target.elements.namedItem('default_range').value;syncRangeButtons();await load();$('settings-feedback').textContent='Instellingen opgeslagen.';}catch(error){$('settings-feedback').textContent=error.message;}finally{button.disabled=false;}});
+$('settings-form').addEventListener('submit',async event=>{event.preventDefault();const button=event.target.querySelector('button');button.disabled=true;try{const response=await apiFetch('api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(Object.fromEntries(new FormData(event.target)))});if(!response.ok)throw Error(ui('Instellingen opslaan mislukt.'));settingsDirty=false;chartRange=event.target.elements.namedItem('default_range').value;syncRangeButtons();await load();$('settings-feedback').textContent=ui('Instellingen opgeslagen.');}catch(error){$('settings-feedback').textContent=error.message;}finally{button.disabled=false;}});
 bindPopups();showPage();
-bindTransactions();bindHomeDashboard();bindImportIssues();bindImportMappings();bindImports();bindAccess();bindLogs();bindCurrencies();startSession().catch(()=>{$('status').textContent='Verbinding mislukt. Herlaad de pagina.';document.body.classList.remove('booting');});
+bindTransactions();bindHomeDashboard();bindImportIssues();bindImportMappings();bindImports();bindAccess();bindLogs();bindCurrencies();startSession().catch(()=>{$('status').textContent=ui('Verbinding mislukt. Herlaad de pagina.');document.body.classList.remove('booting');});
 setInterval(()=>{if(!document.hidden&&accessSession?.user)load();},120000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&accessSession?.user)load();});

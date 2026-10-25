@@ -11,6 +11,28 @@ from migrations import migrate, MIGRATIONS, SCHEMA_VERSION
 from storage import Store
 
 class MigrationTests(unittest.TestCase):
+    def test_language_upgrade_preserves_accounts_ledger_and_rolls_back(self):
+        self.create_old(17)
+        with closing(sqlite3.connect(self.path)) as db:
+            db.execute("INSERT INTO users(username,password_hash,role,created_at) VALUES('owner','existing-hash','admin','2026-10-01')")
+            db.commit()
+        broken={**MIGRATIONS,18:MIGRATIONS[18]+('INVALID SQL',)}
+        with patch.dict('migrations.MIGRATIONS',broken,clear=True),self.assertRaises(sqlite3.Error):migrate(self.path)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],17)
+            self.assertNotIn('language',[row[1] for row in db.execute('PRAGMA table_info(users)')])
+        migrate(self.path)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('SELECT username,password_hash,language FROM users').fetchone(),('owner','existing-hash',''))
+            db.execute("UPDATE users SET language='es'");db.commit()
+        migrate(self.path)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('SELECT language FROM users').fetchone()[0],'es')
+            self.assertEqual(db.execute('SELECT price FROM purchases').fetchone()[0],'999')
+            self.assertEqual(db.execute('SELECT amount FROM dividends').fetchone()[0],'5.25')
+            self.assertEqual(db.execute('SELECT price FROM daily_prices').fetchone()[0],'1000')
+        self.assertTrue(list((self.path.parent/'backups/migrations').glob('before-v17-to-v18-*.sqlite3')))
+
     def test_dashboard_revision_upgrade_rolls_back_preserves_ledger_and_is_idempotent(self):
         self.create_old(16)
         broken={**MIGRATIONS,17:MIGRATIONS[17]+('INVALID SQL',)}
@@ -47,7 +69,7 @@ class MigrationTests(unittest.TestCase):
             db.commit()
 
     def test_all_previously_released_versions_upgrade_without_losing_data(self):
-        for version in (1,2,3,4,5,6,7,8,9,10,11,12,13,14):
+        for version in range(1,18):
             with self.subTest(version=version), tempfile.TemporaryDirectory() as directory:
                 self.path=Path(directory)/'portfolio.sqlite3'
                 self.create_old(version)

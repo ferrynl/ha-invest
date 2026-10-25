@@ -75,3 +75,5 @@ main input,main select,main textarea{max-width:100%}
 @media(max-width:700px){.import-providers,.import-steps{grid-template-columns:1fr}.import-intro{align-items:flex-start;flex-direction:column}.import-intro h2{font-size:24px}.import-nav a{padding:9px 10px}.import-steps{gap:0;margin:8px 0}.import-steps li{padding:8px 0}.import-actions{align-items:stretch}.import-actions button{flex:1}.import-providers>.panel{padding:18px}}
 
 #ha-export-yaml, [data-page="instellingen"] pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--bg);padding:16px;border-radius:12px;font-size:12px;line-height:1.6;}
+
+.language-dialog{max-width:450px}.language-dialog form{grid-template-columns:1fr}#language-feedback{color:#ffcf87;line-height:1.6}
