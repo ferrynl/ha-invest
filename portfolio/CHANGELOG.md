@@ -1,3 +1,7 @@
+## 0.26.1
+
+- Het accountmenu toont alleen de gebruikersnaam, zodat admin eenmaal verschijnt in plaats van admin · admin.
+
 ## 0.26.0
 
 - Brokeraccount kiezen bovenaan Home, Aandelen en Dividend. Dezelfde keuze blijft actief bij het wisselen tussen pagina’s; Alle accounts toont het gezamenlijke overzicht.

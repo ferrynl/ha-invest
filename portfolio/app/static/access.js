@@ -52,7 +52,7 @@ async function startSession(){
  document.getElementById('password-open').hidden=!accessSession.enabled;document.getElementById('logout').hidden=!accessSession.enabled;
  document.getElementById('login-open').hidden=true;
  document.getElementById('account-hint').textContent=accessSession.enabled?'':ui('Aanmelding via Home Assistant. Accounts inschakelen bij Instellingen.');
- document.getElementById('account-name').textContent=accessSession.user.username+' · '+accessSession.user.role;
+ document.getElementById('account-name').textContent=accessSession.user.username;
  document.getElementById('enable-auth').hidden=accessSession.enabled;
  document.getElementById('disable-auth').hidden=!accessSession.enabled;
  document.getElementById('security-status').textContent=accessSession.enabled?ui('Ingeschakeld. Accounts en rollen worden door de server gecontroleerd.'):ui('Uitgeschakeld. Toegang loopt momenteel via Home Assistant.');
