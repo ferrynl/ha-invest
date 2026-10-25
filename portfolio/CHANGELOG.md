@@ -1,3 +1,8 @@
+## 0.25.1
+
+- Fondsen worden nu naast aandelen en ETF’s in de zoekresultaten getoond. Hierdoor kan Hybrid Index Fund NL-I worden toegevoegd door te zoeken op 0P0001IV37 en de gecontroleerde Yahoo-notering 0P0001IV37.F te kiezen.
+- Zoekteksten verduidelijkt in Nederlands, Engels en Spaans. Valuta, notering, koers en historie blijven gecontroleerd via de bestaande koersdienst.
+
 ## 0.25.0 — 25 oktober 2026
 
 - Nederlands, Engels en Spaans voor schermen, navigatie, formulieren, grafieken en meldingen.

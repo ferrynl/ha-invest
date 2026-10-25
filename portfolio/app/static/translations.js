@@ -1840,11 +1840,6 @@ const UI_TRANSLATIONS = {
   "en": "Search for a stock",
   "es": "Buscar una acción"
  },
- "Zoek op bedrijfsnaam of symbool. Amsterdam, Nasdaq en NYSE.": {
-  "nl": "Zoek op bedrijfsnaam of symbool. Amsterdam, Nasdaq en NYSE.",
-  "en": "Search by company name or symbol. Amsterdam, Nasdaq and NYSE.",
-  "es": "Busca por empresa o símbolo. Ámsterdam, Nasdaq y NYSE."
- },
  "Zoeken": {
   "nl": "Zoeken",
   "en": "Search",
@@ -2339,11 +2334,6 @@ const UI_TRANSLATIONS = {
   "nl": "regels wachten op jouw keuze. De overige geldige regels zijn onafhankelijk verwerkt.",
   "en": "rows await your choice. Other valid rows have been processed independently.",
   "es": "filas esperan tu elección. Las demás filas válidas se han procesado independientemente."
- },
- "resultaten van Yahoo voor Amsterdam, Nasdaq en NYSE. Kies de juiste beursnotering; typ verder om te verfijnen.": {
-  "nl": "resultaten van Yahoo voor Amsterdam, Nasdaq en NYSE. Kies de juiste beursnotering; typ verder om te verfijnen.",
-  "en": "Yahoo results for Amsterdam, Nasdaq and NYSE. Choose the correct listing; type more to refine.",
-  "es": "resultados de Yahoo para Ámsterdam, Nasdaq y NYSE. Elige la cotización correcta; escribe más para precisar."
  },
  "tegenover de 12 maanden daarvoor": {
   "nl": "tegenover de 12 maanden daarvoor",
@@ -2879,11 +2869,6 @@ const UI_TRANSLATIONS = {
   "nl": "Geen opgeslagen koersen voor deze periode.",
   "en": "No saved prices for this period.",
   "es": "No hay cotizaciones guardadas para este período."
- },
- "Geen passende aandelen gevonden op deze beurzen. Probeer meer letters of het symbool.": {
-  "nl": "Geen passende aandelen gevonden op deze beurzen. Probeer meer letters of het symbool.",
-  "en": "No matching stocks found on these exchanges. Try more letters or the symbol.",
-  "es": "No se encontraron acciones en estas bolsas. Prueba con más letras o el símbolo."
  },
  "Geen posities gevonden. Pas je zoekopdracht of filter aan.": {
   "nl": "Geen posities gevonden. Pas je zoekopdracht of filter aan.",
@@ -5439,5 +5424,20 @@ const UI_TRANSLATIONS = {
   "nl": "· details",
   "en": "· details",
   "es": "· detalles"
+ },
+ "Zoek op bedrijfsnaam of symbool. Aandelen, ETF’s en fondsen.": {
+  "nl": "Zoek op bedrijfsnaam of symbool. Aandelen, ETF’s en fondsen.",
+  "en": "Search by company name or symbol. Stocks, ETFs and funds.",
+  "es": "Busca por empresa o símbolo. Acciones, ETF y fondos."
+ },
+ "resultaten van Yahoo. Kies de juiste notering; typ verder om te verfijnen.": {
+  "nl": "resultaten van Yahoo. Kies de juiste notering; typ verder om te verfijnen.",
+  "en": "Yahoo results. Choose the correct listing; type more to refine.",
+  "es": "resultados de Yahoo. Elige la cotización correcta; escribe más para precisar."
+ },
+ "Geen passende aandelen, ETF’s of fondsen gevonden. Probeer meer letters of het symbool.": {
+  "nl": "Geen passende aandelen, ETF’s of fondsen gevonden. Probeer meer letters of het symbool.",
+  "en": "No matching stocks, ETFs or funds found. Try more letters or the symbol.",
+  "es": "No se encontraron acciones, ETF o fondos. Prueba con más letras o el símbolo."
  }
 };

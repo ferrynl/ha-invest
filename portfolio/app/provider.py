@@ -55,7 +55,7 @@ def _search_stocks(query, minute,store=None):
     for item in payload.get('quotes', []):
         market = EXCHANGES.get(item.get('exchange', '').upper())
         symbol = item.get('symbol')
-        if not market or item.get('quoteType') not in ('EQUITY','ETF') or not symbol or symbol in seen:
+        if not market or item.get('quoteType') not in ('EQUITY','ETF','MUTUALFUND') or not symbol or symbol in seen:
             continue
         seen.add(symbol)
         exchange, currency = market
