@@ -37,6 +37,7 @@ function lockApp(){
  const passwordDialog=document.getElementById('password-dialog');if(passwordDialog.open)passwordDialog.close();
  document.getElementById('login-form').reset();
  document.getElementById('account-name').textContent=ui('Niet ingelogd');
+ document.getElementById('account-open').hidden=true;
  document.getElementById('password-open').hidden=true;document.getElementById('logout').hidden=true;
  document.getElementById('login-open').hidden=false;document.getElementById('account-hint').textContent=ui('Meld je aan om je portefeuille te openen.');
 }
@@ -53,6 +54,7 @@ async function startSession(){
  document.getElementById('login-open').hidden=true;
  document.getElementById('account-hint').textContent=accessSession.enabled?'':ui('Aanmelding via Home Assistant. Accounts inschakelen bij Instellingen.');
  document.getElementById('account-name').textContent=accessSession.user.username;
+ document.getElementById('account-open').hidden=false;
  document.getElementById('enable-auth').hidden=accessSession.enabled;
  document.getElementById('disable-auth').hidden=!accessSession.enabled;
  document.getElementById('security-status').textContent=accessSession.enabled?ui('Ingeschakeld. Accounts en rollen worden door de server gecontroleerd.'):ui('Uitgeschakeld. Toegang loopt momenteel via Home Assistant.');

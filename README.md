@@ -99,4 +99,4 @@ Gebruikersdata, back-ups en API-sleutels horen niet in deze repository.
 Tests uitvoeren vanuit de repository: python -m unittest discover -s tests.
 De grafiek- en Home-controles staan in tests/test_chart.cjs en tests/test_home.cjs.
 
-De app ondersteunt Nederlands, Engels en Spaans. Kies je taal bij de eerste start; wijzigen kan onder je account via **Taal / Language / Idioma**. Met loginaccounts wordt de keuze per gebruiker bewaard.
+De app ondersteunt Nederlands, Engels en Spaans. Kies je taal bij de eerste start; klik onderaan het menu op je gebruikersnaam voor **Mijn account** met **Taal / Language / Idioma**, **Account aanpassen** en **Uitloggen**. Met loginaccounts wordt de keuze per gebruiker bewaard.

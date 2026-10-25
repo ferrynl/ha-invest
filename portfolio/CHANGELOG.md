@@ -1,3 +1,8 @@
+## 0.26.2
+
+- Onderaan het menu staat alleen de klikbare gebruikersnaam. Deze opent Mijn account met taalkeuze, account aanpassen en uitloggen.
+- De gebruikerspagina werkt ook via het mobiele menu; accountwijzigingen blijven in een pop-up.
+
 ## 0.26.1
 
 - Het accountmenu toont alleen de gebruikersnaam, zodat admin eenmaal verschijnt in plaats van admin · admin.
