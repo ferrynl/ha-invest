@@ -16,7 +16,7 @@ function categoryProgressLabel(counts){
  if(!counts.total)return ui('Nog geen aandelen om in te delen.');
  return counts.processed+ui(' van ')+counts.total+ui(' profielen gecontroleerd · ')+counts.complete+ui(' volledig ingedeeld · ')+counts.partial+ui(' met ontbrekende velden · ')+(counts.pending+counts.fetching)+ui(' nog ophalen')+(counts.retry?' · '+counts.retry+ui(' wachten op opnieuw proberen'):'')+ui('. Je eigen categorie kies je zelf.');
 }
-function categoryForPosition(p){return categoryScope==='all'&&categoryItems.get(categoryKey(p))||{categories:p.categories||{},sync:{status:'pending'}};}
+function categoryForPosition(p){return categoryScope===String(currentBroker)&&categoryItems.get(categoryKey(p))||{categories:p.categories||{},sync:{status:'pending'}};}
 function clearCategoryOverview(){categoryGeneration++;categoryScope='';categoryItems.clear();categoryETag=null;categoryCounts=null;categoryNextCheck=0;categoryRequest=null;$('stock-categories-summary').textContent='';$('stock-categories-progress').value=0;$('stock-categories-refresh').disabled=false;}
 function applyCategoryOverview(result){
  categoryCounts=result.counts;categoryItems=new Map(result.entries.map(entry=>[categoryKey(entry),entry]));
@@ -31,7 +31,7 @@ function applyCategoryOverview(result){
 }
 async function refreshCategoryOverview(force=false){
  if(!state||!accessSession?.user||location.hash!=='#aandelen'||document.hidden)return;
- const account='all';
+ const account=String(currentBroker);
  if(categoryScope!==account){categoryGeneration++;categoryScope=account;categoryETag=null;categoryItems.clear();categoryCounts=null;categoryRequest=null;categoryNextCheck=0;}
  if(categoryRequest||!force&&Date.now()<categoryNextCheck)return;
  const request={generation:categoryGeneration,account};categoryRequest=request;$('stock-categories-refresh').disabled=true;

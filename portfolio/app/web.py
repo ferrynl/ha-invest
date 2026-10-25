@@ -138,7 +138,9 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
             if path=='/api/stocks':
                 from stocks_dashboard import overview
-                return self.respond(overview(store,cache.get(store.state)))
+                account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
+                try:return self.respond(overview(store,cache.get(store.state),account))
+                except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
             if path=='/api/home/euro':
                 from dashboard import compact
                 query=parse_qs(urlsplit(self.path).query);account=query.get('account_id',['all'])[0]

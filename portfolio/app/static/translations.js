@@ -5439,5 +5439,20 @@ const UI_TRANSLATIONS = {
   "nl": "Geen passende aandelen, ETF’s of fondsen gevonden. Probeer meer letters of het symbool.",
   "en": "No matching stocks, ETFs or funds found. Try more letters or the symbol.",
   "es": "No se encontraron acciones, ETF o fondos. Prueba con más letras o el símbolo."
+ },
+ "Elke beursnotering één keer · gekozen brokeraccounts": {
+  "nl": "Elke beursnotering één keer · gekozen brokeraccounts",
+  "en": "Each listing once · selected broker accounts",
+  "es": "Cada cotización una vez · cuentas de bróker seleccionadas"
+ },
+ "Open een aandeel voor de koers, het dividend en de transacties binnen je brokerkeuze.": {
+  "nl": "Open een aandeel voor de koers, het dividend en de transacties binnen je brokerkeuze.",
+  "en": "Open a stock to view its price, dividends and transactions within your broker selection.",
+  "es": "Abre una acción para ver su cotización, dividendos y transacciones dentro de tu selección de bróker."
+ },
+ "Aantallen binnen je brokerkeuze": {
+  "nl": "Aantallen binnen je brokerkeuze",
+  "en": "Quantities within your broker selection",
+  "es": "Cantidades dentro de tu selección de bróker"
  }
 };

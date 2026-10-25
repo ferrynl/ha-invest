@@ -22,12 +22,37 @@ class StocksDashboardTests(unittest.TestCase):
   self.store.add(dict(**{**STOCK,'exchange':'AMSTERDAM','currency':'EUR'},quantity='1',price='50',purchased_on='2026-10-01'))
   result=overview(self.store,self.store.state());self.assertEqual(len(result['positions']),2)
   p=next(p for p in result['positions'] if p['currency']=='EUR');self.assertIsNone(p['value']);self.assertIsNone(p['total_gain'])
+ def test_broker_scope_filters_money_quantity_dividend_and_categories_without_mutating_snapshot(self):
+  snapshot=self.store.state()
+  for account,quantity,value,cost,dividend,gain in [(1,'2','240','200','0','40'),(2,'3','360','300','10','70')]:
+   result=overview(self.store,snapshot,str(account));p=result['positions'][0]
+   self.assertEqual(result['account_id'],str(account));self.assertEqual(result['accounts'],1)
+   self.assertEqual((p['quantity'],p['value'],p['cost'],p['dividend'],p['total_gain']),(quantity,value,cost,dividend,gain))
+   self.assertEqual(p['broker_count'],1)
+  self.assertEqual(len(snapshot['positions']),2)
+  self.assertEqual(overview(self.store,snapshot)['positions'][0]['quantity'],'5')
+  with self.assertRaises(ValueError):overview(self.store,snapshot,'999')
+  with self.assertRaises(ValueError):overview(self.store,snapshot,'not-an-account')
 
 import test_transactions as transaction_test_support
 class StocksDashboardHttpTests(unittest.TestCase):
  setUp=transaction_test_support.TransactionHttpTests.setUp
  tearDown=transaction_test_support.TransactionHttpTests.tearDown
  request=transaction_test_support.TransactionHttpTests.request
- def test_read_endpoint_requires_login_and_ignores_broker_filter(self):
-  self.assertEqual(self.request('/api/stocks?account_id=999')[0],200)
+ def test_read_endpoint_requires_login_and_validates_broker_filter(self):
+  self.assertEqual(self.request('/api/stocks?account_id=999')[0],400)
+  self.assertEqual(self.request('/api/stocks?account_id=bad')[0],400)
+  self.assertEqual(self.request('/api/stocks?account_id=1')[1]['account_id'],'1')
   self.auth.enable('owner','Long-test-password-2026');self.assertEqual(self.request('/api/stocks')[0],401)
+ def test_same_broker_scope_is_applied_to_home_stocks_and_dividend(self):
+  self.store.add_account(dict(name='Other broker',broker='Trading 212'))
+  self.store.add(dict(symbol='OTHER',exchange='AMSTERDAM',currency='EUR',name='Other stock',account_id=2,quantity='4',price='50',purchased_on='2026-10-01'))
+  self.store.add_dividend(dict(symbol='OTHER',exchange='AMSTERDAM',currency='EUR',account_id=2,amount='12',paid_on='2026-10-02'))
+  for account,symbol,received in [('1','ASML.AS','0'),('2','OTHER','12')]:
+   home=self.request('/api/state?account_id='+account)[1]
+   stocks=self.request('/api/stocks?account_id='+account)[1]
+   dividends=self.request('/api/dividends/overview?account_id='+account)[1]
+   self.assertEqual({p['symbol'] for p in home['positions']},{symbol})
+   self.assertEqual({p['symbol'] for p in stocks['positions']},{symbol})
+   self.assertEqual(dividends['account_id'],account)
+   self.assertEqual(dividends['currencies'][0]['total'],received)

@@ -2,10 +2,11 @@
 from decimal import Decimal
 from instruments import category_overview
 
-def overview(store,snapshot):
-    metadata=category_overview(store);categories={(p['symbol'],p['exchange'],p['currency']):p['categories'] for p in metadata['entries']};groups={}
+def overview(store,snapshot,account='all'):
+    metadata=category_overview(store,account);categories={(p['symbol'],p['exchange'],p['currency']):p['categories'] for p in metadata['entries']};groups={}
     fields=('quantity','cost','value','gain','dividend','total_gain','realised')
     for p in snapshot['positions']:
+        if str(account)!='all' and str(p['account_id'])!=str(account):continue
         key=tuple(p[k] for k in ('symbol','exchange','currency'))
         row=groups.setdefault(key,{**{k:p[k] for k in ('symbol','exchange','currency','name','quote')},'categories':categories.get(key,p.get('categories',{})),'broker_count':0,**{field:Decimal(0) for field in fields}})
         row['broker_count']+=1
@@ -15,4 +16,4 @@ def overview(store,snapshot):
     positions=[]
     for p in groups.values():positions.append({**p,**{field:str(p[field]) if p[field] is not None else None for field in fields}})
     positions.sort(key=lambda p:p['name'].casefold())
-    return dict(positions=positions,accounts=len({p['account_id'] for p in snapshot['positions']}))
+    return dict(account_id=str(account),positions=positions,accounts=len({p['account_id'] for p in snapshot['positions'] if str(account)=='all' or str(p['account_id'])==str(account)}))

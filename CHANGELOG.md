@@ -1,3 +1,10 @@
+## 0.26.0
+
+- Brokeraccount kiezen bovenaan Home, Aandelen en Dividend. Dezelfde keuze blijft actief bij het wisselen tussen pagina’s; Alle accounts toont het gezamenlijke overzicht.
+- Aandelen, aantallen, waarde, winst, dividend, spreidingsgrafieken en categorievoortgang worden nu voor de gekozen brokeraccount berekend. Aandeeldetails volgen dezelfde selectie.
+- Eerdere overzichten en lopende aanvragen worden bij een nieuwe brokerkeuze gewist of genegeerd, zodat gegevens van verschillende selecties niet worden gemengd.
+- Nieuwe schermteksten beschikbaar in Nederlands, Engels en Spaans.
+
 ## 0.25.1
 
 - Fondsen worden nu naast aandelen en ETF’s in de zoekresultaten getoond. Hierdoor kan Hybrid Index Fund NL-I worden toegevoegd door te zoeken op 0P0001IV37 en de gecontroleerde Yahoo-notering 0P0001IV37.F te kiezen.

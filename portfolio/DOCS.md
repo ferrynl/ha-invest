@@ -657,3 +657,7 @@ Alle vaste schermteksten staan in `app/static/translations.js`, met dezelfde Ned
 `python scripts/check_translations.py` controleert nieuwe HTML/JavaScript-teksten en serverfoutmeldingen. Dezelfde controle draait in de tests en op GitHub. `scripts/i18n_technical_strings.json` bevat uitsluitend technische identificaties, merknamen en codevoorbeelden die niet vertaald horen te worden; voeg daar geen schermteksten aan toe. Serverberichten worden pas aan de HTTP-grens vertaald, zodat de gedeelde cache en opgeslagen gegevens taalneutraal blijven.
 
 Zoeken bij het toevoegen van een aankoop ondersteunt aandelen, ETF’s en beleggingsfondsen op ondersteunde markten. Voor Hybrid Index Fund NL-I kun je zoeken op `0P0001IV37`; selecteer de Yahoo-notering `0P0001IV37.F` (Frankfurt, EUR). De app controleert de notering en werkelijke koersvaluta voordat de aankoop wordt ingevuld.
+
+## Brokeraccount kiezen op je overzichten
+
+Bovenaan Home, Aandelen en Dividend kies je een brokeraccount of **Alle accounts**. De selectie blijft tijdens het navigeren actief en geldt voor bedragen, posities, grafieken, dividend en aandeeldetails. Op Aandelen wordt dezelfde beursnotering binnen de gekozen selectie één keer getoond. Koersgegevens en categorieën blijven per beursnotering gedeeld.

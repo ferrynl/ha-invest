@@ -14,6 +14,8 @@ function showPage(){
  document.body.classList.toggle('dividend-page',page==='dividend');
  document.body.classList.toggle('stocks-page',page==='aandelen'||page==='aandeel');
  document.body.classList.toggle('stocks-list-page',page==='aandelen');
+ const brokerSlot={home:'home-broker-slot',aandelen:'stocks-broker-slot',dividend:'dividend-broker-slot'}[page];
+ $(brokerSlot||'page-header').append($('broker-filter-control'));
  $('page-title').textContent=pageNames[page];document.title=pageNames[page]+' · Home Invest';closeMenu();
  if(page==='transacties'&&state)loadTransactions();
  if(page==='aandelen'&&state)renderStockPage();
