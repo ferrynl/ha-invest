@@ -5494,5 +5494,15 @@ const UI_TRANSLATIONS = {
   "nl": "Alle valuta’s",
   "en": "All currencies",
   "es": "Todas las divisas"
+ },
+ "De totalen zijn alleen gebaseerd op de meegenomen regels.": {
+  "nl": "De totalen zijn alleen gebaseerd op de meegenomen regels.",
+  "en": "Totals are based only on the included rows.",
+  "es": "Los totales se basan solo en las filas incluidas."
+ },
+ "Regels met ontbrekende of ongeldige gegevens overgeslagen:": {
+  "nl": "Regels met ontbrekende of ongeldige gegevens overgeslagen:",
+  "en": "Rows with missing or invalid data skipped:",
+  "es": "Filas con datos ausentes o no válidos omitidas:"
  }
 };

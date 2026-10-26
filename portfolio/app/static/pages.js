@@ -43,7 +43,7 @@ function renderPages(){
  $('sidebar-version').textContent=ui('Versie ')+state.app_version;
  $('settings-version').textContent=state.app_version;$('settings-database').textContent=state.database_version;$('settings-interval').textContent=state.refresh_minutes+ui(' minuten');
  if(!settingsDirty)$('settings-form').elements.namedItem('default_range').value=state.settings.default_range;
- const selected=$('report-year').value,years=[...new Set([String(new Date().getFullYear()),...state.dividends.map(d=>d.paid_on.slice(0,4))])].sort().reverse();
+ const selected=$('report-year').value,years=[...new Set([String(new Date().getFullYear()),...state.dividends.filter(d=>reportDate(d.paid_on)).map(d=>d.paid_on.slice(0,4))])].sort().reverse();
  $('report-year').replaceChildren();for(const year of years){const option=document.createElement('option');option.value=year;option.textContent=year;$('report-year').append(option);}if(years.includes(selected))$('report-year').value=selected;
  if(location.hash==='#rapporten')renderReports();
  if(location.hash==='#instellingen')loadHomeAssistant();

@@ -1,3 +1,8 @@
+# 0.27.1
+
+- Rapporten slaan regels met ontbrekende koersen, bedragen of ongeldige gegevens over; geldige regels blijven berekend en zichtbaar.
+- Toon het aantal overgeslagen regels en vermeld dat de totalen alleen de meegenomen regels bevatten. Bewaarde transacties blijven ongewijzigd.
+
 # 0.27.0
 
 - Vernieuwd rapportencentrum met portefeuille, resultaat per aandeel en dividend per maand of aandeel. Filters voor aandeel, valuta en dividendjaar binnen de gekozen broker.
