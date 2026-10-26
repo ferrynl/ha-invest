@@ -100,3 +100,7 @@ Tests uitvoeren vanuit de repository: python -m unittest discover -s tests.
 De grafiek- en Home-controles staan in tests/test_chart.cjs en tests/test_home.cjs.
 
 De app ondersteunt Nederlands, Engels en Spaans. Kies je taal bij de eerste start; klik onderaan het menu op je gebruikersnaam voor **Mijn account** met **Taal / Language / Idioma**, **Account aanpassen** en **Uitloggen**. Met loginaccounts wordt de keuze per gebruiker bewaard.
+
+## Rapporten
+
+Kies de huidige portefeuille, resultaat per aandeel, dividend per maand of dividend per aandeel. Filter op brokeraccount, aandeel en valuta. De jaarkeuze geldt voor dividendrapporten; resultaat en portefeuille tonen de actuele stand inclusief alle geboekte dividenden. Bedragen blijven gescheiden per valuta.

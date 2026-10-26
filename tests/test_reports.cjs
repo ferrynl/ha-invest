@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict'),{reportRows}=require('../portfolio/app/static/reports.js');
+const p={symbol:'AAA',exchange:'AMS',currency:'EUR',name:'Alpha',cost:'100',value:'120',realised:'5',dividend:'3'};
+const positions=[p,{...p,cost:'50',value:null},{...p,currency:'USD',value:'200'}];
+let rows=reportRows(positions,[],'portfolio','2026','','');assert.equal(rows.length,2);assert.equal(rows[0].complete,false);assert.equal(rows[0].cost,150);assert.equal(rows[1].currency,'USD');
+assert.equal(reportRows(positions,[],'stocks','2026','','EUR').length,1);
+const dividends=[{...p,paid_on:'2026-01-12',amount:'4'},{...p,paid_on:'2026-02-12',amount:'6'},{...p,paid_on:'2025-01-12',amount:'10'},{...p,currency:'USD',paid_on:'2026-01-12',amount:'8'}];
+rows=reportRows([],dividends,'income','2026','','EUR');assert.equal(rows[0].dividend,10);assert.equal(rows[0].count,2);
+assert.equal(reportRows([],dividends,'months','2026','','').length,3);
+assert.deepEqual(reportRows(positions,dividends,'income','2024','',''),[]);
+const key=JSON.stringify(['AAA','AMS','EUR']);assert.equal(reportRows(positions,dividends,'stocks','2026',key,'')[0].count,2);
+console.log('Report grouping, filters, missing prices and currency separation passed.');

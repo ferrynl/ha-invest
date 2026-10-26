@@ -36,7 +36,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
         return cache.derived('home-euro:'+str(account),build)
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css')}
-    for name in ('i18n','translations','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks'):
+    for name in ('i18n','translations','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass

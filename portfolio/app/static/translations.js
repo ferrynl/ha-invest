@@ -5454,5 +5454,45 @@ const UI_TRANSLATIONS = {
   "nl": "Aantallen binnen je brokerkeuze",
   "en": "Quantities within your broker selection",
   "es": "Cantidades dentro de tu selección de bróker"
+ },
+ "Inzicht in je beleggingen": {
+  "nl": "Inzicht in je beleggingen",
+  "en": "Insights into your investments",
+  "es": "Información sobre tus inversiones"
+ },
+ "Kies een rapport en filter op aandeel en valuta.": {
+  "nl": "Kies een rapport en filter op aandeel en valuta.",
+  "en": "Choose a report and filter by stock and currency.",
+  "es": "Elige un informe y filtra por acción y divisa."
+ },
+ "Resultaat per aandeel": {
+  "nl": "Resultaat per aandeel",
+  "en": "Results by stock",
+  "es": "Resultados por acción"
+ },
+ "Dividend per aandeel": {
+  "nl": "Dividend per aandeel",
+  "en": "Dividends by stock",
+  "es": "Dividendos por acción"
+ },
+ "Actuele stand, inclusief gerealiseerde winst en alle geboekte dividenden. Geen historische jaarstand of fiscale jaaropgave.": {
+  "nl": "Actuele stand, inclusief gerealiseerde winst en alle geboekte dividenden. Geen historische jaarstand of fiscale jaaropgave.",
+  "en": "Current position, including realised gains and all recorded dividends. Not a historical year-end statement or tax report.",
+  "es": "Situación actual, incluidas las ganancias realizadas y todos los dividendos registrados. No es un estado histórico de cierre anual ni un informe fiscal."
+ },
+ "Ontvangen netto dividend in het gekozen jaar. Bedragen blijven per valuta gescheiden.": {
+  "nl": "Ontvangen netto dividend in het gekozen jaar. Bedragen blijven per valuta gescheiden.",
+  "en": "Net dividends received in the selected year. Amounts remain separate by currency.",
+  "es": "Dividendos netos recibidos en el año seleccionado. Los importes se separan por divisa."
+ },
+ "Geen gegevens voor deze selectie.": {
+  "nl": "Geen gegevens voor deze selectie.",
+  "en": "No data for this selection.",
+  "es": "No hay datos para esta selección."
+ },
+ "Alle valuta’s": {
+  "nl": "Alle valuta’s",
+  "en": "All currencies",
+  "es": "Todas las divisas"
  }
 };

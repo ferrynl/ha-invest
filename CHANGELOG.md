@@ -1,3 +1,8 @@
+# 0.27.0
+
+- Vernieuwd rapportencentrum met portefeuille, resultaat per aandeel en dividend per maand of aandeel. Filters voor aandeel, valuta en dividendjaar binnen de gekozen broker.
+- Actuele resultaten en jaarlijkse dividendcijfers blijven duidelijk gescheiden; valuta worden niet opgeteld.
+
 ## 0.26.2
 
 - Onderaan het menu staat alleen de klikbare gebruikersnaam. Deze opent Mijn account met taalkeuze, account aanpassen en uitloggen.

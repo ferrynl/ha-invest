@@ -736,6 +736,22 @@
     "yes",
     "|",
     "—",
-    "−"
+    "−",
+    "portfolio",
+    "stocks",
+    "months",
+    "income",
+    "report-currency",
+    "report-description",
+    "report-head",
+    "report-rows",
+    "report-status",
+    "report-stock",
+    "report-type",
+    "report-types",
+    "report-year-filter",
+    "report-title",
+    "report-count",
+    "report-metrics"
   ]
 }

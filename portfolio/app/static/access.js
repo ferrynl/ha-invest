@@ -31,7 +31,7 @@ function lockApp(){
  if(typeof closeMenu==='function')closeMenu();
  document.getElementById('sidebar').inert=false;
  document.body.classList.add('locked');document.body.classList.remove('booting');document.getElementById('login-panel').hidden=false;
- for(const id of ['totals','positions','dividends','chart','chart-days','users-list','report-dividends','report-portfolio'])document.getElementById(id).replaceChildren();
+ for(const id of ['totals','positions','dividends','chart','chart-days','users-list','report-rows','report-stock','report-currency','report-metrics'])document.getElementById(id).replaceChildren();
  if(typeof importPreview!=='undefined'){importPreview=null;document.getElementById('import-preview').hidden=true;for(const id of ['import-rows','import-mappings','import-history'])document.getElementById(id).replaceChildren();}
  document.querySelectorAll('input[type="password"]').forEach(input=>{input.value='';});
  const passwordDialog=document.getElementById('password-dialog');if(passwordDialog.open)passwordDialog.close();

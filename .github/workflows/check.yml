@@ -37,6 +37,8 @@ jobs:
       - run: node --check portfolio/app/static/stocks.js
       - run: node tests/test_i18n.cjs
       - run: node tests/test_broker_scope.cjs
+      - run: node --check portfolio/app/static/reports.js
+      - run: node tests/test_reports.cjs
       - run: node tests/test_stocks.cjs
       - run: node tests/test_categories.cjs
       - run: node tests/test_tables.cjs

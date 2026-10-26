@@ -661,3 +661,7 @@ Zoeken bij het toevoegen van een aankoop ondersteunt aandelen, ETF’s en belegg
 ## Brokeraccount kiezen op je overzichten
 
 Bovenaan Home, Aandelen en Dividend kies je een brokeraccount of **Alle accounts**. De selectie blijft tijdens het navigeren actief en geldt voor bedragen, posities, grafieken, dividend en aandeeldetails. Op Aandelen wordt dezelfde beursnotering binnen de gekozen selectie één keer getoond. Koersgegevens en categorieën blijven per beursnotering gedeeld.
+
+## Rapporten
+
+Kies de huidige portefeuille, resultaat per aandeel, dividend per maand of dividend per aandeel. Filter op brokeraccount, aandeel en valuta. De jaarkeuze geldt voor dividendrapporten; resultaat en portefeuille tonen de actuele stand inclusief alle geboekte dividenden. Bedragen blijven gescheiden per valuta.

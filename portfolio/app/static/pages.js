@@ -59,14 +59,6 @@ async function loadHomeAssistant(){
   $('ha-export-values').textContent=values.join(' · ');$('ha-export-yaml').textContent=data.configuration;
  }catch(error){if(request===stateRequest)$('ha-export-status').textContent=error.message;}
 }
-function renderReports(){
- if(!state)return;const groups={};const year=$('report-year').value;
- for(const d of state.dividends){if(d.paid_on.slice(0,4)!==year)continue;const key=d.paid_on.slice(0,7)+'|'+d.currency;const item=groups[key]??={month:d.paid_on.slice(0,7),currency:d.currency,count:0,amount:0};item.count++;item.amount+=Number(d.amount);}
- $('report-dividends').replaceChildren();for(const key of Object.keys(groups).sort()){const item=groups[key],row=document.createElement('tr');for(const value of [new Date(item.month+'-01T00:00:00Z').toLocaleDateString((typeof appLocale==='function'?appLocale():'nl-NL'),{month:'long',year:'numeric',timeZone:'UTC'}),item.currency,item.count,money(item.amount,item.currency)])cell(row,value);row.cells[0].dataset.sortValue=item.month+'-01';$('report-dividends').append(row);}
- $('report-empty').textContent=Object.keys(groups).length?'':ui('Geen dividend geboekt in ')+year+'.';
- const totals={};for(const p of state.positions){const t=totals[p.currency]??={cost:0,value:0,dividend:0,realised:0,count:0,complete:true};t.cost+=Number(p.cost);t.dividend+=Number(p.dividend);t.realised+=Number(p.realised??0);t.count++;if(p.value===null)t.complete=false;else t.value+=Number(p.value);}
- $('report-portfolio').replaceChildren();for(const [currency,t] of Object.entries(totals)){const row=document.createElement('tr');for(const value of [currency,t.count,money(t.cost,currency),t.complete?money(t.value,currency):ui('Onvolledig'),t.complete?money(t.value-t.cost+t.realised,currency):ui('Onbekend'),money(t.dividend,currency),t.complete?money(t.value-t.cost+t.realised+t.dividend,currency):ui('Onbekend')])cell(row,value);$('report-portfolio').append(row);}
-}
 let settingsDirty=false;
 $('settings-form').addEventListener('input',()=>{settingsDirty=true;});
 $('report-year').addEventListener('change',renderReports);
