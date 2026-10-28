@@ -5504,5 +5504,420 @@ const UI_TRANSLATIONS = {
   "nl": "Regels met ontbrekende of ongeldige gegevens overgeslagen:",
   "en": "Rows with missing or invalid data skipped:",
   "es": "Filas con datos ausentes o no válidos omitidas:"
+ },
+ "PORTEFEUILLEANALYSE": {
+  "nl": "PORTEFEUILLEANALYSE",
+  "en": "PORTFOLIO ANALYTICS",
+  "es": "ANÁLISIS DE CARTERA"
+ },
+ "Je portefeuille, vanuit elke hoek.": {
+  "nl": "Je portefeuille, vanuit elke hoek.",
+  "en": "Your portfolio, from every angle.",
+  "es": "Tu cartera, desde todos los ángulos."
+ },
+ "Van het grote geheel tot de kleinste bijdrage. Ontdek wat je beleggingen beweegt.": {
+  "nl": "Van het grote geheel tot de kleinste bijdrage. Ontdek wat je beleggingen beweegt.",
+  "en": "From the big picture to every contribution. Discover what drives your investments.",
+  "es": "Desde la visión general hasta cada contribución. Descubre qué mueve tus inversiones."
+ },
+ "10 rapporten · 7 grafiekvormen": {
+  "nl": "10 rapporten · 7 grafiekvormen",
+  "en": "10 reports · 7 chart types",
+  "es": "10 informes · 7 tipos de gráficos"
+ },
+ "Kies je perspectief": {
+  "nl": "Kies je perspectief",
+  "en": "Choose your perspective",
+  "es": "Elige tu perspectiva"
+ },
+ "Portefeuille · resultaat · inkomen": {
+  "nl": "Portefeuille · resultaat · inkomen",
+  "en": "Portfolio · results · income",
+  "es": "Cartera · resultados · ingresos"
+ },
+ "JOUW RAPPORT": {
+  "nl": "JOUW RAPPORT",
+  "en": "YOUR REPORT",
+  "es": "TU INFORME"
+ },
+ "Valuta blijven gescheiden": {
+  "nl": "Valuta blijven gescheiden",
+  "en": "Currencies remain separate",
+  "es": "Las divisas se mantienen separadas"
+ },
+ "Onderliggende cijfers": {
+  "nl": "Onderliggende cijfers",
+  "en": "Underlying figures",
+  "es": "Cifras subyacentes"
+ },
+ "Dezelfde selectie als in de grafieken. Overgeslagen regels tellen niet mee.": {
+  "nl": "Dezelfde selectie als in de grafieken. Overgeslagen regels tellen niet mee.",
+  "en": "The same selection as the charts. Skipped rows are excluded.",
+  "es": "La misma selección que en los gráficos. Se excluyen las filas omitidas."
+ },
+ "Rapport kiezen": {
+  "nl": "Rapport kiezen",
+  "en": "Choose a report",
+  "es": "Elegir un informe"
+ },
+ "Portefeuilleoverzicht": {
+  "nl": "Portefeuilleoverzicht",
+  "en": "Portfolio overview",
+  "es": "Resumen de cartera"
+ },
+ "Waarde, winst en spreiding in één blik.": {
+  "nl": "Waarde, winst en spreiding in één blik.",
+  "en": "Value, profit and allocation at a glance.",
+  "es": "Valor, ganancias y distribución de un vistazo."
+ },
+ "Waardeontwikkeling": {
+  "nl": "Waardeontwikkeling",
+  "en": "Value over time",
+  "es": "Evolución del valor"
+ },
+ "Marktwaarde en kostprijs door de tijd.": {
+  "nl": "Marktwaarde en kostprijs door de tijd.",
+  "en": "Market value and cost basis over time.",
+  "es": "Valor de mercado y coste a lo largo del tiempo."
+ },
+ "Spreiding & concentratie": {
+  "nl": "Spreiding & concentratie",
+  "en": "Allocation & concentration",
+  "es": "Distribución y concentración"
+ },
+ "Je grootste posities en hun weging.": {
+  "nl": "Je grootste posities en hun weging.",
+  "en": "Your largest holdings and their weights.",
+  "es": "Tus mayores posiciones y sus ponderaciones."
+ },
+ "Winnaars & verliezers": {
+  "nl": "Winnaars & verliezers",
+  "en": "Winners & losers",
+  "es": "Ganadores y perdedores"
+ },
+ "Welke aandelen dragen het meeste bij?": {
+  "nl": "Welke aandelen dragen het meeste bij?",
+  "en": "Which stocks contribute the most?",
+  "es": "¿Qué acciones contribuyen más?"
+ },
+ "Opbouw van je resultaat": {
+  "nl": "Opbouw van je resultaat",
+  "en": "Result breakdown",
+  "es": "Desglose del resultado"
+ },
+ "Koerswinst, gerealiseerd en dividend.": {
+  "nl": "Koerswinst, gerealiseerd en dividend.",
+  "en": "Unrealised gains, realised gains and dividends.",
+  "es": "Ganancias no realizadas, realizadas y dividendos."
+ },
+ "Maandinkomen en cumulatieve groei.": {
+  "nl": "Maandinkomen en cumulatieve groei.",
+  "en": "Monthly income and cumulative growth.",
+  "es": "Ingresos mensuales y crecimiento acumulado."
+ },
+ "Ontdek je belangrijkste inkomstenbronnen.": {
+  "nl": "Ontdek je belangrijkste inkomstenbronnen.",
+  "en": "Discover your main sources of income.",
+  "es": "Descubre tus principales fuentes de ingresos."
+ },
+ "Dividendkalender": {
+  "nl": "Dividendkalender",
+  "en": "Dividend calendar",
+  "es": "Calendario de dividendos"
+ },
+ "Je dividendritme over meerdere jaren.": {
+  "nl": "Je dividendritme over meerdere jaren.",
+  "en": "Your dividend rhythm across the years.",
+  "es": "El ritmo de tus dividendos a lo largo de los años."
+ },
+ "Sectorverdeling": {
+  "nl": "Sectorverdeling",
+  "en": "Sector allocation",
+  "es": "Distribución por sector"
+ },
+ "Waar zit je economische blootstelling?": {
+  "nl": "Waar zit je economische blootstelling?",
+  "en": "Where is your economic exposure?",
+  "es": "¿Dónde está tu exposición económica?"
+ },
+ "Landenverdeling": {
+  "nl": "Landenverdeling",
+  "en": "Country allocation",
+  "es": "Distribución por país"
+ },
+ "De geografische verdeling van je aandelen.": {
+  "nl": "De geografische verdeling van je aandelen.",
+  "en": "The geographic distribution of your stocks.",
+  "es": "La distribución geográfica de tus acciones."
+ },
+ "Bekijk details met je muis of toetsenbord.": {
+  "nl": "Bekijk details met je muis of toetsenbord.",
+  "en": "Explore details with your mouse or keyboard.",
+  "es": "Consulta los detalles con el ratón o el teclado."
+ },
+ "Opgeslagen dagwaarden. Ontbrekende posities worden per dag overgeslagen; dit is geen rendementspercentage.": {
+  "nl": "Opgeslagen dagwaarden. Ontbrekende posities worden per dag overgeslagen; dit is geen rendementspercentage.",
+  "en": "Saved daily values. Holdings with missing data are skipped per day; this is not a rate of return.",
+  "es": "Valores diarios guardados. Las posiciones sin datos se omiten por día; no es una tasa de rentabilidad."
+ },
+ "inkomstenbronnen": {
+  "nl": "inkomstenbronnen",
+  "en": "income sources",
+  "es": "fuentes de ingresos"
+ },
+ "Gemiddeld per maand": {
+  "nl": "Gemiddeld per maand",
+  "en": "Monthly average",
+  "es": "Promedio mensual"
+ },
+ "Jaartotaal gedeeld door twaalf": {
+  "nl": "Jaartotaal gedeeld door twaalf",
+  "en": "Annual total divided by twelve",
+  "es": "Total anual dividido entre doce"
+ },
+ "aandelen meegenomen": {
+  "nl": "aandelen meegenomen",
+  "en": "stocks included",
+  "es": "acciones incluidas"
+ },
+ "Inclusief gerealiseerd resultaat en dividend": {
+  "nl": "Inclusief gerealiseerd resultaat en dividend",
+  "en": "Including realised gains and dividends",
+  "es": "Incluye resultados realizados y dividendos"
+ },
+ "Waar zit je vermogen?": {
+  "nl": "Waar zit je vermogen?",
+  "en": "Where is your wealth invested?",
+  "es": "¿Dónde está invertido tu patrimonio?"
+ },
+ "Weging op basis van bekende marktwaarde.": {
+  "nl": "Weging op basis van bekende marktwaarde.",
+  "en": "Weights based on known market value.",
+  "es": "Ponderaciones basadas en el valor de mercado conocido."
+ },
+ "Wat levert het op?": {
+  "nl": "Wat levert het op?",
+  "en": "What drives your results?",
+  "es": "¿Qué genera tus resultados?"
+ },
+ "De drie bouwstenen van je totale resultaat.": {
+  "nl": "De drie bouwstenen van je totale resultaat.",
+  "en": "The three building blocks of your total result.",
+  "es": "Los tres componentes de tu resultado total."
+ },
+ "Ongerealiseerd": {
+  "nl": "Ongerealiseerd",
+  "en": "Unrealised",
+  "es": "No realizado"
+ },
+ "Gerealiseerd": {
+  "nl": "Gerealiseerd",
+  "en": "Realised",
+  "es": "Realizado"
+ },
+ "Verdeling van je portefeuille": {
+  "nl": "Verdeling van je portefeuille",
+  "en": "Portfolio allocation",
+  "es": "Distribución de tu cartera"
+ },
+ "Alleen posities met een positieve marktwaarde.": {
+  "nl": "Alleen posities met een positieve marktwaarde.",
+  "en": "Only holdings with a positive market value.",
+  "es": "Solo posiciones con un valor de mercado positivo."
+ },
+ "De tien grootste posities; overige posities zijn gegroepeerd.": {
+  "nl": "De tien grootste posities; overige posities zijn gegroepeerd.",
+  "en": "The ten largest holdings; the rest are grouped.",
+  "es": "Las diez mayores posiciones; las demás se agrupan."
+ },
+ "Concentratie top 5": {
+  "nl": "Concentratie top 5",
+  "en": "Top 5 concentration",
+  "es": "Concentración de las 5 mayores"
+ },
+ "Aandeel van de vijf grootste posities in de bekende marktwaarde.": {
+  "nl": "Aandeel van de vijf grootste posities in de bekende marktwaarde.",
+  "en": "Share of the five largest holdings in the known market value.",
+  "es": "Peso de las cinco mayores posiciones en el valor de mercado conocido."
+ },
+ "Bijdrage per aandeel": {
+  "nl": "Bijdrage per aandeel",
+  "en": "Contribution by stock",
+  "es": "Contribución por acción"
+ },
+ "Totale winst in geld, inclusief gerealiseerd resultaat en dividend.": {
+  "nl": "Totale winst in geld, inclusief gerealiseerd resultaat en dividend.",
+  "en": "Total profit in money, including realised gains and dividends.",
+  "es": "Ganancia total en dinero, incluidos resultados realizados y dividendos."
+ },
+ "Resultaat in kleur": {
+  "nl": "Resultaat in kleur",
+  "en": "Results in colour",
+  "es": "Resultados en color"
+ },
+ "Tegels tonen winst of verlies in geld. Dit is geen perioderendement.": {
+  "nl": "Tegels tonen winst of verlies in geld. Dit is geen perioderendement.",
+  "en": "Tiles show profit or loss in money. This is not a period return.",
+  "es": "Las tarjetas muestran ganancias o pérdidas en dinero. No es una rentabilidad del período."
+ },
+ "Van koersresultaat naar totale winst": {
+  "nl": "Van koersresultaat naar totale winst",
+  "en": "From capital gains to total profit",
+  "es": "De la ganancia de capital a la ganancia total"
+ },
+ "Elke stap telt op bij de vorige; het laatste blok is de totale winst.": {
+  "nl": "Elke stap telt op bij de vorige; het laatste blok is de totale winst.",
+  "en": "Each step adds to the previous one; the final bar is total profit.",
+  "es": "Cada paso se suma al anterior; la última barra es la ganancia total."
+ },
+ "Gerealiseerd resultaat": {
+  "nl": "Gerealiseerd resultaat",
+  "en": "Realised result",
+  "es": "Resultado realizado"
+ },
+ "Resultaat uit geboekte verkopen binnen de meegenomen posities.": {
+  "nl": "Resultaat uit geboekte verkopen binnen de meegenomen posities.",
+  "en": "Results from recorded sales within the included holdings.",
+  "es": "Resultados de ventas registradas de las posiciones incluidas."
+ },
+ "Ongerealiseerd resultaat": {
+  "nl": "Ongerealiseerd resultaat",
+  "en": "Unrealised result",
+  "es": "Resultado no realizado"
+ },
+ "Bekende marktwaarde min de openstaande kostprijs.": {
+  "nl": "Bekende marktwaarde min de openstaande kostprijs.",
+  "en": "Known market value minus the remaining cost basis.",
+  "es": "Valor de mercado conocido menos el coste pendiente."
+ },
+ "Je maandelijkse dividend": {
+  "nl": "Je maandelijkse dividend",
+  "en": "Your monthly dividends",
+  "es": "Tus dividendos mensuales"
+ },
+ "Twaalf maanden naast elkaar, inclusief maanden zonder uitkering.": {
+  "nl": "Twaalf maanden naast elkaar, inclusief maanden zonder uitkering.",
+  "en": "Twelve months side by side, including months without payments.",
+  "es": "Doce meses comparados, incluidos los meses sin pagos."
+ },
+ "Dividend groeit door": {
+  "nl": "Dividend groeit door",
+  "en": "Dividends add up",
+  "es": "Los dividendos se acumulan"
+ },
+ "Cumulatief ontvangen dividend binnen het gekozen jaar.": {
+  "nl": "Cumulatief ontvangen dividend binnen het gekozen jaar.",
+  "en": "Cumulative dividends received in the selected year.",
+  "es": "Dividendos recibidos acumulados en el año seleccionado."
+ },
+ "Je grootste dividendbetalers": {
+  "nl": "Je grootste dividendbetalers",
+  "en": "Your largest dividend payers",
+  "es": "Tus mayores pagadores de dividendos"
+ },
+ "Ontvangen netto bedragen in het gekozen jaar.": {
+  "nl": "Ontvangen netto bedragen in het gekozen jaar.",
+  "en": "Net amounts received in the selected year.",
+  "es": "Importes netos recibidos en el año seleccionado."
+ },
+ "Verdeling van je dividend": {
+  "nl": "Verdeling van je dividend",
+  "en": "Dividend allocation",
+  "es": "Distribución de tus dividendos"
+ },
+ "Weging van iedere inkomstenbron in het ontvangen dividend.": {
+  "nl": "Weging van iedere inkomstenbron in het ontvangen dividend.",
+  "en": "Weight of each income source in the dividends received.",
+  "es": "Peso de cada fuente de ingresos en los dividendos recibidos."
+ },
+ "Dividend door de jaren": {
+  "nl": "Dividend door de jaren",
+  "en": "Dividends through the years",
+  "es": "Dividendos a lo largo de los años"
+ },
+ "Elke cel is één maand. Een helderder vak betekent meer ontvangen dividend.": {
+  "nl": "Elke cel is één maand. Een helderder vak betekent meer ontvangen dividend.",
+  "en": "Each cell is one month. A brighter cell means more dividends received.",
+  "es": "Cada celda es un mes. Una celda más brillante indica más dividendos recibidos."
+ },
+ "Jaarvergelijking": {
+  "nl": "Jaarvergelijking",
+  "en": "Year comparison",
+  "es": "Comparación anual"
+ },
+ "Ontvangen dividend per kalenderjaar; het lopende jaar kan nog onvolledig zijn.": {
+  "nl": "Ontvangen dividend per kalenderjaar; het lopende jaar kan nog onvolledig zijn.",
+  "en": "Dividends received by calendar year; the current year may still be incomplete.",
+  "es": "Dividendos recibidos por año natural; el año actual puede estar incompleto."
+ },
+ "Spreiding over sectoren": {
+  "nl": "Spreiding over sectoren",
+  "en": "Sector diversification",
+  "es": "Diversificación por sector"
+ },
+ "Spreiding over landen": {
+  "nl": "Spreiding over landen",
+  "en": "Country diversification",
+  "es": "Diversificación por país"
+ },
+ "Op basis van opgeslagen indelingen en bekende marktwaarde. Niet ingedeeld blijft apart zichtbaar.": {
+  "nl": "Op basis van opgeslagen indelingen en bekende marktwaarde. Niet ingedeeld blijft apart zichtbaar.",
+  "en": "Based on saved classifications and known market value. Unclassified holdings remain visible separately.",
+  "es": "Basado en clasificaciones guardadas y valores de mercado conocidos. Las posiciones sin clasificar se muestran por separado."
+ },
+ "Blootstelling in bedragen": {
+  "nl": "Blootstelling in bedragen",
+  "en": "Exposure by amount",
+  "es": "Exposición por importe"
+ },
+ "Directe indeling van je aandelen; geen doorkijk in onderliggende fondsposities.": {
+  "nl": "Directe indeling van je aandelen; geen doorkijk in onderliggende fondsposities.",
+  "en": "Direct classification of your stocks; no look-through into underlying fund holdings.",
+  "es": "Clasificación directa de tus acciones; sin desglose de las posiciones subyacentes de fondos."
+ },
+ "Historie laden mislukt. Probeer het opnieuw.": {
+  "nl": "Historie laden mislukt. Probeer het opnieuw.",
+  "en": "Could not load history. Please try again.",
+  "es": "No se pudo cargar el historial. Inténtalo de nuevo."
+ },
+ "Opnieuw proberen": {
+  "nl": "Opnieuw proberen",
+  "en": "Try again",
+  "es": "Reintentar"
+ },
+ "Marktwaarde naast kostprijs": {
+  "nl": "Marktwaarde naast kostprijs",
+  "en": "Market value versus cost basis",
+  "es": "Valor de mercado frente al coste"
+ },
+ "Bekende dagwaarden; aankopen en verkopen beïnvloeden de waarde. Ontbrekende posities tellen die dag niet mee.": {
+  "nl": "Bekende dagwaarden; aankopen en verkopen beïnvloeden de waarde. Ontbrekende posities tellen die dag niet mee.",
+  "en": "Known daily values; purchases and sales affect the value. Holdings with missing data are excluded that day.",
+  "es": "Valores diarios conocidos; las compras y ventas afectan al valor. Las posiciones sin datos se excluyen ese día."
+ },
+ "Dagen met overgeslagen gegevens:": {
+  "nl": "Dagen met overgeslagen gegevens:",
+  "en": "Days with skipped data:",
+  "es": "Días con datos omitidos:"
+ },
+ "bekend totaal": {
+  "nl": "bekend totaal",
+  "en": "known total",
+  "es": "total conocido"
+ },
+ "Grafiek. Gebruik de pijltjestoetsen voor details.": {
+  "nl": "Grafiek. Gebruik de pijltjestoetsen voor details.",
+  "en": "Chart. Use the arrow keys for details.",
+  "es": "Gráfico. Usa las flechas para ver los detalles."
+ },
+ "Overgeslagen:": {
+  "nl": "Overgeslagen:",
+  "en": "Skipped:",
+  "es": "Omitidos:"
+ },
+ "Laatste 250 dagwaarden per valuta": {
+  "nl": "Laatste 250 dagwaarden per valuta",
+  "en": "Latest 250 daily values per currency",
+  "es": "Últimos 250 valores diarios por divisa"
  }
 };

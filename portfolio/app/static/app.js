@@ -15,7 +15,7 @@ async function load(){
  if(location.hash==='#dividend')renderDividendPage();
  if(!rangeInitialized){chartRange=state.settings.default_range;rangeInitialized=true;syncRangeButtons();}
  renderPages();renderBrokerAccounts();if(document.body.classList.contains('home-page')){renderHomeDashboard();draw();}
- }catch{$('status').textContent=ui('Gegevens laden mislukt. Probeer de pagina opnieuw te openen.');}
+ }catch{$('status').textContent=ui('Gegevens laden mislukt. Probeer de pagina opnieuw te openen.');if(location.hash==='#rapporten')$('report-status').textContent=ui('Gegevens laden mislukt. Probeer de pagina opnieuw te openen.');}
 }
 let chartRange='1M',rangeInitialized=false;
 function syncRangeButtons(){for(const button of $('chart-ranges').querySelectorAll('button'))button.setAttribute('aria-pressed',String(button.dataset.range===chartRange));}

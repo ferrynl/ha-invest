@@ -65,7 +65,7 @@ function bindImports(){
  $('import-form').addEventListener('change',()=>{importPreview=null;$('import-preview').hidden=true;refreshImportAccounts();});
  $('account-filter').addEventListener('change',async()=>{
   currentBroker=$('account-filter').value;stateETag=null;stateRequest++;state=null;
-  clearHomeDashboard();clearStocksDashboard();clearCategoryOverview();clearDividendDashboard();clearStockDetail();clearTransactions();
+  clearHomeDashboard();clearStocksDashboard();clearCategoryOverview();clearDividendDashboard();clearStockDetail();clearTransactions();clearReports();
   for(const id of ['totals','chart','chart-days'])$(id).replaceChildren();
   await load();if(currentBroker!=='all')$('purchase-account').value=currentBroker;
  });

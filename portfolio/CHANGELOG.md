@@ -1,3 +1,10 @@
+# 0.28.0
+
+- Professioneel rapportencentrum met tien analyses: overzicht, waardeontwikkeling, spreiding, winnaars en verliezers, resultaatopbouw, maanddividend, dividendbetalers, dividendkalender, sectoren en landen.
+- Zeven interactieve grafiekvormen met details via muis en toetsenbord: donut, staaf, waterval, maandkolommen, lijn/oppervlak, resultaattegels en kalenderheatmap.
+- Broker-, aandeel-, valuta-, jaar- en periodefilters, samenvattingskaarten en uitklapbare onderliggende cijfers. Valuta blijven gescheiden en ontbrekende gegevens worden overgeslagen.
+- Waardehistorie wordt alleen bij openen van het rapport uit de lokale cache opgehaald; geen extra providerverzoeken of databaseschemaverandering.
+
 # 0.27.1
 
 - Rapporten slaan regels met ontbrekende koersen, bedragen of ongeldige gegevens over; geldige regels blijven berekend en zichtbaar.

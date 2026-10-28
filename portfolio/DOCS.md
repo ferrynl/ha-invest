@@ -667,3 +667,15 @@ Bovenaan Home, Aandelen en Dividend kies je een brokeraccount of **Alle accounts
 Kies de huidige portefeuille, resultaat per aandeel, dividend per maand of dividend per aandeel. Filter op brokeraccount, aandeel en valuta. De jaarkeuze geldt voor dividendrapporten; resultaat en portefeuille tonen de actuele stand inclusief alle geboekte dividenden. Bedragen blijven gescheiden per valuta.
 
 Rapporten slaan regels met ontbrekende of ongeldige gegevens over en tonen hoeveel regels niet zijn meegenomen. Totalen gelden alleen voor de meegenomen regels. Een dividenduitkering kan worden meegenomen zonder actuele aandelenkoers. De opgeslagen transacties blijven behouden.
+
+### Visuele rapporten
+
+Rapporten biedt tien perspectieven: portefeuilleoverzicht, waardeontwikkeling, spreiding en concentratie, winnaars en verliezers, resultaatopbouw, maanddividend, dividend per aandeel, dividendkalender, sectoren en landen. Selecteer een brokeraccount, aandeel en valuta. Dividendrapporten hebben een jaarkeuze; waardeontwikkeling heeft een periodekeuze. Alle valuta blijven apart, ook als je alle valuta kiest.
+
+Grafieken tonen details bij aanwijzen of toetsenbordfocus. Gebruik links en rechts op een lijngrafiek en Tab voor segmenten, staven en kalendercellen. Onderliggende cijfers toont de meegenomen bronregels. Donuts groeperen kleine posities onder Overige; ranglijsten en resultaattegels tonen maximaal de grootste bijdragen. Groene en rode tegels tonen winst/verlies in geld, geen perioderendement. De kalender toont ontvangen bedragen, geen verwachte uitkeringen. Het jaartotaal gedeeld door twaalf is een rekenkundig gemiddelde, geen voorspelling.
+
+Sectoren en landen zijn gebaseerd op opgeslagen instrumentindelingen, met Niet ingedeeld als aparte categorie. Dit is geen doorkijk in de onderliggende beleggingen van fondsen. Waardeontwikkeling toont bekende dagwaarden en openstaande kostprijs; aankopen en verkopen beïnvloeden de waarde. Dit is geen tijdgewogen rendement of benchmarkvergelijking. Ontbrekende posities worden per dag overgeslagen, inclusief hun kostprijs en dividend, zodat teller en noemer dezelfde dekking houden.
+
+De nieuwe alleen-lezen route `/api/reports/history` gebruikt dezelfde loginbeveiliging en brokerafbakening als het dashboard. Filters zijn `account_id`, optioneel `instrument` (JSON-lijst van ticker, beurs en valuta) en `currency`. Het resultaat bevat `data_revision` en histories per valuta. Berekeningen gebruiken Decimal; laden gebeurt uitsluitend bij openen van Waardeontwikkeling. De weergave negeert antwoorden voor oude filters of sessies.
+
+Ontwerpinspiratie: [Sharesight grafieken](https://help.sharesight.com/ca/show_portfolio/) en [getquin portfolio analytics](https://www.getquin.com/portfolio-tracker), met een eigen uitvoering in de Home Invest-stijl.

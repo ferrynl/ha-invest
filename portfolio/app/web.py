@@ -35,8 +35,8 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             return {**overview(store,snapshot,account,fetch_rates=False),'data_revision':snapshot['data_revision']}
         return cache.derived('home-euro:'+str(account),build)
     static=Path(__file__).parent/'static'
-    assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css')}
-    for name in ('i18n','translations','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports'):
+    assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css'),'/reports.css':('reports.css','text/css')}
+    for name in ('i18n','translations','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','report-charts'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass
@@ -147,6 +147,17 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 try:
                     result=home_euro(account)
                     return self.respond(compact(result) if query.get('compact')==['1'] else result,etag=True)
+                except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
+            if path=='/api/reports/history':
+                from reports import history as report_history
+                query=parse_qs(urlsplit(self.path).query)
+                account=query.get('account_id',['all'])[0]
+                instrument=query.get('instrument',[''])[0]
+                currency=query.get('currency',[''])[0]
+                try:
+                    selection=json.loads(instrument) if instrument else None
+                    key='reports-history:'+json.dumps([account,selection,currency],separators=(',',':'))
+                    return self.respond(cache.derived(key,lambda:report_history(cache.get(store.state),account,selection,currency)),etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
             if path=='/api/home/history':
                 from dashboard import histories

@@ -151,10 +151,12 @@ class TransactionHttpTests(unittest.TestCase):
  def test_roles_authentication_and_csrf_are_enforced_on_server(self):
   self.auth.enable('owner','Long-test-password-2026');token=self.auth.login('owner','Long-test-password-2026','test');csrf=self.auth.user(token)['csrf']
   self.assertEqual(self.request('/api/transactions')[0],401)
+  self.assertEqual(self.request('/api/reports/history')[0],401)
   self.assertEqual(self.request('/api/transactions/edit',{},token)[0],403)
   self.assertEqual(self.request('/api/portfolio/delete',{},token)[0],403)
   with self.store.connect() as db:db.execute("UPDATE users SET role='basic'")
   self.assertEqual(self.request('/api/transactions',token=token)[0],200)
+  self.assertEqual(self.request('/api/reports/history',token=token)[0],200)
   self.assertEqual(self.request('/api/transactions/edit',{},token,csrf)[0],403)
   for path in ('/api/portfolio/delete-preview','/api/portfolio/deletion-backup'):
    self.assertEqual(self.request(path,token=token)[0],403)

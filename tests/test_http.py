@@ -39,11 +39,18 @@ class HttpTests(unittest.TestCase):
             conn.close()
 
     def test_frontend_and_api(self):
-        for path in ['/', '/style.css', '/app.js', '/pages.js', '/chart.js', '/chart-view.js', '/api/state']:
+        for path in ['/', '/style.css', '/reports.css', '/reports.js', '/report-charts.js', '/app.js', '/pages.js', '/chart.js', '/chart-view.js', '/api/state']:
             status, body, headers = self.request('GET', path)
             self.assertEqual(status, 200)
             self.assertGreater(len(body), 0)
             self.assertEqual(headers['Cache-Control'], 'no-store' if path in ('/','/api/state') else 'private, max-age=86400, immutable')
+
+    def test_report_history_endpoint_validates_scope(self):
+        status, body, _ = self.request('GET', '/api/reports/history?account_id=all')
+        self.assertEqual(status, 200)
+        self.assertIn('currencies', json.loads(body))
+        self.assertEqual(self.request('GET', '/api/reports/history?account_id=999999')[0], 400)
+        self.assertEqual(self.request('GET', '/api/reports/history?instrument=invalid')[0], 400)
 
     def test_persistent_settings_and_version_information(self):
         headers={'Content-Type':'application/json','X-Portfolio-Request':'1'}

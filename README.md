@@ -106,3 +106,5 @@ De app ondersteunt Nederlands, Engels en Spaans. Kies je taal bij de eerste star
 Kies de huidige portefeuille, resultaat per aandeel, dividend per maand of dividend per aandeel. Filter op brokeraccount, aandeel en valuta. De jaarkeuze geldt voor dividendrapporten; resultaat en portefeuille tonen de actuele stand inclusief alle geboekte dividenden. Bedragen blijven gescheiden per valuta.
 
 Rapporten slaan regels met ontbrekende of ongeldige gegevens over en tonen hoeveel regels niet zijn meegenomen. Totalen gelden alleen voor de meegenomen regels. Een dividenduitkering kan worden meegenomen zonder actuele aandelenkoers. De opgeslagen transacties blijven behouden.
+
+Het rapportencentrum bevat tien analyses met interactieve grafieken, waaronder waardeontwikkeling, spreiding, resultaatopbouw, dividendkalender en sector- en landenverdeling. Open **Onderliggende cijfers** voor de bijbehorende tabel.
