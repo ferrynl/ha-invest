@@ -5,15 +5,20 @@ let currentProfile=typeof location!=='undefined'&&new URLSearchParams(location.s
 let accessSession=null,stateETag=null,stateETagUrl='';
 const nativeFetch=window.fetch.bind(window);
 async function apiFetch(url,options={}){
- const headers=new Headers(options.headers??{});
- headers.set('X-HomeInvest-Language',currentLanguage);
- headers.set('X-HomeInvest-Profile',currentProfile);
- if(options.method==='POST'&&accessSession?.user?.csrf)headers.set('X-CSRF-Token',accessSession.user.csrf);
- if(url.startsWith('api/state')&&stateETag&&stateETagUrl===url)headers.set('If-None-Match',stateETag);
- const response=await nativeFetch(url,{...options,headers,cache:'no-store'});
- if(url.startsWith('api/state')&&response.ok){stateETag=response.headers.get('ETag');stateETagUrl=url;}
- if(response.status===401){lockApp();throw Error(ui('Je sessie is verlopen. Meld je opnieuw aan.'));}
- return response;
+ const finish=beginPageLoading(),controller=(!options.signal&&(!options.method||options.method==='GET'))?new AbortController():null;
+ const timer=controller?setTimeout(()=>controller.abort(),30000):null;
+ try{
+  const headers=new Headers(options.headers??{});
+  headers.set('X-HomeInvest-Language',currentLanguage);headers.set('X-HomeInvest-Profile',currentProfile);
+  if(options.method==='POST'&&accessSession?.user?.csrf)headers.set('X-CSRF-Token',accessSession.user.csrf);
+  if(url.startsWith('api/state')&&stateETag&&stateETagUrl===url)headers.set('If-None-Match',stateETag);
+  const response=await nativeFetch(url,{...options,headers,signal:options.signal||controller?.signal,cache:'no-store'});
+  if(response.status===401){lockApp();throw Error(ui('Je sessie is verlopen. Meld je opnieuw aan.'));}
+  // Include body parsing in the loading state; each response is parsed only once.
+  if(response.status!==304&&response.status!==204&&response.headers.get('Content-Type')?.includes('application/json')){const data=await response.json();response.json=async()=>data;}
+  if(url.startsWith('api/state')&&response.ok){stateETag=response.headers.get('ETag');stateETagUrl=url;}
+  return response;
+ }finally{if(timer!==null)clearTimeout(timer);finish();}
 }
 function lockApp(){
  closeAllPopups();
@@ -46,7 +51,8 @@ function lockApp(){
  document.getElementById('login-open').hidden=false;document.getElementById('account-hint').textContent=ui('Meld je aan om je portefeuille te openen.');
 }
 async function startSession(){
- const response=await nativeFetch('api/session',{cache:'no-store'});if(!response.ok)throw Error(ui('Verbinding mislukt.'));
+ const finish=beginPageLoading();try{
+ const response=await nativeFetch('api/session',{cache:'no-store',signal:AbortSignal.timeout(15000)});if(!response.ok)throw Error(ui('Verbinding mislukt.'));
  accessSession=await response.json();
  if(currentProfile==='demo'&&accessSession.user)accessSession.user={...accessSession.user,role:'basic'};
  await initializeLanguage(accessSession.user);
@@ -68,6 +74,7 @@ async function startSession(){
  if(currentProfile==='demo')homeCurrency='ALL';
  stateETag=null;rangeInitialized=false;showPage();await load();
  if(admin&&accessSession?.enabled)await loadUsers();
+ }finally{finish();}
 }
 async function jsonAction(path,data){
  const response=await apiFetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(data)});

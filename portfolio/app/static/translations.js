@@ -6099,5 +6099,20 @@ const UI_TRANSLATIONS = {
   "nl": "Fictieve demogegevens. Geen actuele koersen.",
   "en": "Fictional demo data. Prices are not live.",
   "es": "Datos de demostración ficticios. Los precios no son actuales."
+ },
+ "Even geduld": {
+  "nl": "Even geduld",
+  "en": "One moment",
+  "es": "Un momento"
+ },
+ "Je portefeuille wordt geladen…": {
+  "nl": "Je portefeuille wordt geladen…",
+  "en": "Loading your portfolio…",
+  "es": "Cargando tu cartera…"
+ },
+ "Dit duurt iets langer. Je gegevens worden verwerkt…": {
+  "nl": "Dit duurt iets langer. Je gegevens worden verwerkt…",
+  "en": "This is taking a little longer. Your data is being processed…",
+  "es": "Esto tarda un poco más. Se están procesando tus datos…"
  }
 };

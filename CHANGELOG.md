@@ -1,3 +1,10 @@
+# 0.31.1
+
+- Portefeuilleopbouw indexeert koersen, transacties en dividend eenmaal in plaats van alle regels opnieuw te doorzoeken voor iedere positie.
+- Home gebruikt afzonderlijk gecachete, compacte overzichten. Het euro-overzicht bewaart geen volledige aandeelhistories in de overzichtcache. Geselecteerde grafieken laden en rekenen alleen de gekozen posities om.
+- Veelgebruikte cacheweergaven blijven in het geheugen beschikbaar bij paginawissels. Historische cijfers en brokerfilters blijven behouden.
+- Nieuwe niet-blokkerende laadanimatie met een munt en grafiekbalken, inclusief langere-wachttijdmelding, ondersteuning voor minder beweging en correcte afhandeling van fouten en paginawissels.
+
 # 0.31.0
 
 - Permanent kiesbaar demoprofiel met een eigen databasebestand onder data/demo/portfolio.sqlite3, gescheiden van de echte portefeuille en loginaccounts.

@@ -132,15 +132,19 @@ class Store:
             key = (p['account_id'],p['symbol'], p['exchange'], p['currency'])
             account=account_names[p['account_id']]
             groups.setdefault(key,dict(account_id=key[0],symbol=key[1],exchange=key[2],currency=key[3],categories=category_map.get((key[1],key[2],key[3]),{}),name=p['name'],account_name=account['name'],broker=account['broker'],quote=None))
-        for q in quotes:
-            for group in groups.values():
-                if all(q[k]==group[k] for k in ('symbol','exchange','currency')):group['quote']=q
+        # Index once instead of scanning every price/payment for every holding.
+        listing=lambda row:tuple(row[k] for k in ('symbol','exchange','currency'))
+        purchases_by_position={};daily_by_listing={};quotes_by_listing={};income_by_position={}
+        for row in purchases:purchases_by_position.setdefault((row['account_id'],*listing(row)),[]).append(row)
+        for row in daily:daily_by_listing.setdefault(listing(row),[]).append(row)
+        for row in quotes:quotes_by_listing.setdefault(listing(row),[]).append(row)
+        for row in dividends:income_by_position.setdefault((row['account_id'],*listing(row)),[]).append(row)
         positions = []
-        for group in groups.values():
-            def matches(row):
-                return all(row[k] == group[k] for k in ('symbol', 'exchange', 'currency'))
-            chart = daily_values([p for p in purchases if matches(p) and p['account_id']==group['account_id']], [d for d in daily if matches(d)], [q for q in quotes if matches(q)])
-            income = [d for d in dividends if matches(d) and d['account_id']==group['account_id']]
+        for key,group in groups.items():
+            instrument=key[1:];observations=quotes_by_listing.get(instrument,[])
+            group['quote']=observations[-1] if observations else None
+            chart = daily_values(purchases_by_position[key],daily_by_listing.get(instrument,[]),observations)
+            income = income_by_position.get(key,[])
             chart = with_dividends(chart, income)
             received = sum((Decimal(d['amount']) for d in income), Decimal(0))
             last=chart[-1];quantity,cost,realised=Decimal(last['quantity']),Decimal(last['cost']),Decimal(last['realised'])

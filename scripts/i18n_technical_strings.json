@@ -895,6 +895,11 @@
     "profile",
     "profile-control",
     "profile-personal",
-    "profile-select"
+    "profile-select",
+    "GET",
+    "#home",
+    "aria-busy",
+    "loading-description",
+    "loading-indicator"
   ]
 }

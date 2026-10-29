@@ -124,6 +124,17 @@ class DashboardCacheHttpTests(unittest.TestCase):
    with patch.object(self.store,'state',side_effect=AssertionError('No rebuild')):
     self.assertEqual(self.request('/api/state?compact=1')[0],200);self.assertEqual(self.request('/api/home/euro?compact=1')[0],200)
    network.assert_not_called();rates.assert_not_called()
+ def test_compact_views_are_cached_without_retaining_full_euro_histories(self):
+  self.store.quote('ASML.AS','AMSTERDAM','EUR','110','2026-10-24T00:00:00+00:00','test')
+  self.assertEqual(self.request('/api/state?compact=1')[0],200)
+  self.assertEqual(self.request('/api/home/euro?compact=1')[0],200)
+  self.assertIn('state-compact:all',self.cache.entries)
+  result=self.cache.entries['home-euro-compact:all'][1]
+  self.assertTrue(all(len(p['history'])==1 for p in result['positions']))
+  self.assertNotIn('home-euro:all',self.cache.entries)
+  with patch.object(self.store,'state',side_effect=AssertionError('Overview must use the small cached view')):
+   self.assertEqual(self.request('/api/state?compact=1')[0],200)
+   self.assertEqual(self.request('/api/home/euro?compact=1')[0],200)
  def test_history_is_limited_scoped_and_authenticated_even_when_cached(self):
   _,state=self.request('/api/state?compact=1');p=state['positions'][0]
   selection={k:p[k] for k in ('account_id','symbol','exchange','currency')}

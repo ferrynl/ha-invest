@@ -43,6 +43,8 @@ jobs:
       - run: node tests/test_stocks.cjs
       - run: node tests/test_categories.cjs
       - run: node tests/test_tables.cjs
+      - run: node --check portfolio/app/static/loading.js
+      - run: node tests/test_loading.cjs
       - run: node tests/test_home.cjs
       - run: node tests/test_chart.cjs
       - run: docker build portfolio -t aandelen-dashboard:test

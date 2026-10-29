@@ -80,7 +80,8 @@ def warm_dashboard():
     snapshot=state_cache.get(store.state)
     prepare_portfolio_rates(store,snapshot)
     snapshot=state_cache.get(store.state)
-    state_cache.derived('home-euro:all',lambda:{**euro_overview(store,snapshot,fetch_rates=False),'data_revision':snapshot['data_revision']})
+    from dashboard import compact
+    state_cache.derived('home-euro-compact:all',lambda:compact({**euro_overview(store,snapshot,fetch_rates=False),'data_revision':snapshot['data_revision']}))
 
 def background():
     last_backup = 0

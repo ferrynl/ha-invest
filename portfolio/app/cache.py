@@ -45,7 +45,9 @@ class StateCache:
             namespace='dashboard:'+APP_VERSION+':'+slot
             with self.lock:
                 existing=self.entries.get(slot) if self.store is store else None
-                if existing and existing[0]==key:return existing[1]
+                if existing and existing[0]==key:
+                    self.entries.pop(slot);self.entries[slot]=existing
+                    return existing[1]
             with store.read() as db:
                 saved=db.execute('SELECT payload FROM api_cache WHERE namespace=? AND cache_key=? AND expires_at>?',(namespace,key,time.time())).fetchone()
             result=None

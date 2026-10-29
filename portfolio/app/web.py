@@ -29,15 +29,19 @@ from forex import overview as fx_overview,convert as fx_convert,history as fx_hi
 
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested,integration_options=None,enable_demo=True):
     cache.bind(store)
-    def home_euro(account):
+    def home_euro(account,compact_view=False):
         from home_euro import overview
         def build():
             snapshot=cache.get(store.state)
-            return {**overview(store,snapshot,account,fetch_rates=False),'data_revision':snapshot['data_revision']}
-        return cache.derived('home-euro:'+str(account),build)
+            result={**overview(store,snapshot,account,fetch_rates=False),'data_revision':snapshot['data_revision']}
+            if compact_view:
+                from dashboard import compact
+                result=compact(result)
+            return result
+        return cache.derived(('home-euro-compact:' if compact_view else 'home-euro:')+str(account),build)
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css'),'/reports.css':('reports.css','text/css')}
-    for name in ('i18n','translations','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','report-charts'):
+    for name in ('i18n','translations','loading','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','report-charts'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass
@@ -152,8 +156,8 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 from dashboard import compact
                 query=parse_qs(urlsplit(self.path).query);account=query.get('account_id',['all'])[0]
                 try:
-                    result=home_euro(account)
-                    return self.respond(compact(result) if query.get('compact')==['1'] else result,etag=True)
+                    result=home_euro(account,compact_view=query.get('compact')==['1'])
+                    return self.respond(result,etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
             if path=='/api/reports/combined':
                 from reports import combined as report_combined
@@ -180,23 +184,34 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 query=parse_qs(urlsplit(self.path).query);account=query.get('account_id',['all'])[0]
                 try:
                     selections=json.loads(query.get('positions',['[]'])[0])
-                    snapshot=cache.get(store.state)
-                    if query.get('combined')==['1']:snapshot={**snapshot,**home_euro(account)}
-                    return self.respond(histories(snapshot,account,selections),etag=True)
+                    combined=query.get('combined')==['1']
+                    def selected_histories():
+                        snapshot=cache.get(store.state)
+                        if combined:
+                            histories(snapshot,account,selections)  # validate before work
+                            selected={tuple(row[k] for k in ('account_id','symbol','exchange','currency')) for row in selections}
+                            members=[p for p in snapshot['positions'] if tuple(p[k] for k in ('account_id','symbol','exchange','currency')) in selected]
+                            from home_euro import overview
+                            converted=overview(store,{**snapshot,'positions':members},account,fetch_rates=False)
+                            snapshot={**snapshot,'positions':converted['positions']}
+                        return histories(snapshot,account,selections)
+                    key='home-selected-history:'+json.dumps([account,combined,selections],separators=(',',':'))
+                    return self.respond(cache.derived(key,selected_histories),etag=True)
                 except (ValueError,TypeError,KeyError):return self.respond({'error':'Kies één tot zes bestaande posities in dit brokeraccount.'},400)
             if path=='/api/state':
-                state=cache.get(store.state)
-                account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
-                if account!='all':
-                    try:account_id=int(account)
-                    except ValueError:return self.respond({'error':'Ongeldig brokeraccount.'},400)
-                    if not any(a['id']==account_id for a in state['accounts']):return self.respond({'error':'Brokeraccount niet gevonden.'},404)
-                    state={**state,**{key:[r for r in state[key] if r['account_id']==account_id] for key in ('purchases','dividends','positions')}}
-                    state['portfolios']=portfolio_values(state['positions'])
-                # Raw quote observations are used internally; daily histories and
-                # the latest quote are enough for the dashboard.
-                from dashboard import compact
-                if parse_qs(urlsplit(self.path).query).get('compact')==['1']:state=compact(state)
+                query=parse_qs(urlsplit(self.path).query);account=query.get('account_id',['all'])[0]
+                def state_view():
+                    state=cache.get(store.state)
+                    if account!='all':
+                        account_id=int(account)
+                        if not any(a['id']==account_id for a in state['accounts']):raise LookupError()
+                        state={**state,**{key:[r for r in state[key] if r['account_id']==account_id] for key in ('purchases','dividends','positions')}}
+                        state['portfolios']=portfolio_values(state['positions'])
+                    from dashboard import compact
+                    return compact(state) if query.get('compact')==['1'] else state
+                try:state=cache.derived('state-compact:'+account,state_view) if query.get('compact')==['1'] else state_view()
+                except ValueError:return self.respond({'error':'Ongeldig brokeraccount.'},400)
+                except LookupError:return self.respond({'error':'Brokeraccount niet gevonden.'},404)
                 return self.respond({**{k:v for k,v in state.items() if k!='quotes'},'status':status,'refresh_minutes':interval//60,'app_version':APP_VERSION},etag=True)
             if path=='/api/backup':
                 backup=store.backup();return self.respond(backup.read_bytes(),kind='application/vnd.sqlite3',filename=backup.name)
