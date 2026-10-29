@@ -1,3 +1,9 @@
+# 0.29.1
+
+- Rapportpagina’s gebruiken de volledige beschikbare breedte en schalen mee op desktop, tablet en mobiel. Grafieken hebben geen vaste minimumbreedte meer.
+- Nieuwe dividendkalender met maandnavigatie, weekdagen, betaalmarkeringen en een detailagenda. Ontvangen en geschatte betalingen hebben eigen kleuren; selecteer een dag voor de uitkeringen en basisdatum.
+- Op kleine schermen blijven de kalenderdagen compact en verschijnen de bedragen en aandelen in de agenda eronder.
+
 # 0.29.0
 
 - Elk rapport heeft een eigen pagina-adres; het linkermenu toont alle tien rapporten zodra Rapporten wordt geopend.

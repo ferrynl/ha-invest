@@ -681,3 +681,5 @@ De nieuwe alleen-lezen route `/api/reports/history` gebruikt dezelfde loginbevei
 Ontwerpinspiratie: [Sharesight grafieken](https://help.sharesight.com/ca/show_portfolio/) en [getquin portfolio analytics](https://www.getquin.com/portfolio-tracker), met een eigen uitvoering in de Home Invest-stijl.
 
 Rapporten openen als afzonderlijke pagina via het uitklapmenu links. De dividendkalender toont per aandeel de betaaldatum en ontvangen of geschatte bedragen. Kies tot vijf jaar vooruit en 0%, 3%, 5% of 10% jaarlijkse groei. Standaard is 3% een scenario-aanname, geen gemeten groei. De basis is het netto ontvangen bedrag in de afgelopen twaalf maanden voor nog open posities, zonder correctie voor gewijzigd bezit, belasting of toekomstige valuta. Datums zijn indicatief; aangekondigde uitkeringen zijn niet gekoppeld.
+
+De dividendkalender heeft een maandraster met navigatie en een detailagenda. Klik op een betaaldag om bedragen, aandelen en de basis van schattingen te zien. Op mobiel staan de details onder de kalender. Rapporten benutten de volledige beschikbare breedte.

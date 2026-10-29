@@ -86,3 +86,8 @@ const reply=(request,revision=1)=>request.resolve({ok:true,json:async()=>({data_
  assert.equal(reportPaymentCalendar([holding],[{...payment,paid_on:'2024-01-12'}],'2027','','EUR',5,'2026-10-29').length,0);
  console.log('Payment dates, compounded growth, currency filters, closed positions and stale history passed.');
 }
+const {reportMonthGrid}=require('../portfolio/app/static/reports.js');
+for(let month=0;month<12;month++){const grid=reportMonthGrid('2026',month);assert.equal(grid.length%7,0);assert.equal(grid.filter(Boolean).length,new Date(Date.UTC(2026,month+1,0)).getUTCDate());}
+assert.equal(reportMonthGrid('2024',1).filter(Boolean).length,29);
+assert.equal(reportMonthGrid('2026',1)[6],'2026-02-01');
+console.log('Calendar month alignment and leap-year checks passed.');

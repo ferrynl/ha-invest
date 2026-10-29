@@ -5939,5 +5939,50 @@ const UI_TRANSLATIONS = {
   "nl": "Betaaldatum, aandeel, bedrag en basisdatum.",
   "en": "Payment date, stock, amount and reference date.",
   "es": "Fecha de pago, acción, importe y fecha de referencia."
+ },
+ "Kies een betaaldag voor de uitkeringen en details.": {
+  "nl": "Kies een betaaldag voor de uitkeringen en details.",
+  "en": "Select a payment day for payments and details.",
+  "es": "Selecciona un día de pago para ver los detalles."
+ },
+ "Vorige maand": {
+  "nl": "Vorige maand",
+  "en": "Previous month",
+  "es": "Mes anterior"
+ },
+ "Volgende maand": {
+  "nl": "Volgende maand",
+  "en": "Next month",
+  "es": "Mes siguiente"
+ },
+ "UITKERINGEN": {
+  "nl": "UITKERINGEN",
+  "en": "PAYMENTS",
+  "es": "PAGOS"
+ },
+ "Deze maand": {
+  "nl": "Deze maand",
+  "en": "This month",
+  "es": "Este mes"
+ },
+ "Geen dividendbetalingen voor deze selectie.": {
+  "nl": "Geen dividendbetalingen voor deze selectie.",
+  "en": "No dividend payments for this selection.",
+  "es": "No hay pagos de dividendos para esta selección."
+ },
+ "Basisdatum": {
+  "nl": "Basisdatum",
+  "en": "Reference date",
+  "es": "Fecha de referencia"
+ },
+ "jaarlijkse groei": {
+  "nl": "jaarlijkse groei",
+  "en": "annual growth",
+  "es": "crecimiento anual"
+ },
+ "uitkeringen": {
+  "nl": "uitkeringen",
+  "en": "payments",
+  "es": "pagos"
  }
 };

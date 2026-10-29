@@ -116,8 +116,7 @@ function renderReports(){
    card=reportChartCard(g,ui('Verdeling van je dividend'),ui('Weging van iedere inkomstenbron in het ontvangen dividend.'));reportDonut(card,g.income.map(p=>({name:p.name,value:p.dividend})),c);
   }else if(reportType==='calendar'){
    const events=reportPaymentCalendar(state.positions,state.dividends,year,$('report-stock').value,c,Number($('report-growth').value));
-   const card=reportChartCard(g,ui('Betaalagenda'),ui('Betaaldatum, aandeel, bedrag en basisdatum.'),true),table=homeNode('table'),head=homeNode('tr');for(const title of [ui('Betaaldatum'),ui('Aandeel'),ui('Bedrag'),ui('Status')])head.append(homeNode('th',title));table.append(head);
-   for(const event of events){const row=homeNode('tr');for(const value of [dayLabel(event.day),event.name,money(event.amount,c),event.estimated?ui('Geschat')+' · '+$('report-growth').value+'% · '+dayLabel(event.basis):ui('Ontvangen')])row.append(homeNode('td',value));table.append(row);}if(events.length)card.plot.append(table);else card.plot.append(homeNode('p',ui('Geen gegevens voor deze selectie.')));
+   renderPaymentCalendar(g,events,year);
    reportMetric(ui('Verwacht'),money(events.filter(e=>e.estimated).reduce((sum,e)=>sum+e.amount,0),c),year+' · '+$('report-growth').value+'%');
   }else if(reportType==='sectors'||reportType==='countries'){
    const values=reportType==='sectors'?g.sectors:g.countries;
@@ -159,7 +158,7 @@ if(typeof document!=='undefined'){
  $('report-growth').addEventListener('change',renderReports);
  $('report-range').addEventListener('change',()=>{reportRange=$('report-range').value;renderReports();});
 }
-if(typeof module!=='undefined')module.exports={reportPaymentCalendar,reportRows,reportData,reportAnalytics,reportCalendarWindow,reportHistoryWindow};
+if(typeof module!=='undefined')module.exports={reportMonthGrid,reportPaymentCalendar,reportRows,reportData,reportAnalytics,reportCalendarWindow,reportHistoryWindow};
 
 function reportPaymentCalendar(positions,dividends,year,stock='',currency='',growth=3,today=new Date().toISOString().slice(0,10)){
  const valid=dividends.filter(d=>reportInstrument(d)&&reportDate(d.paid_on)&&reportNumber(d.amount)&&(!stock||reportKey(d)===stock)&&(!currency||d.currency===currency));
@@ -172,4 +171,34 @@ function reportPaymentCalendar(positions,dividends,year,stock='',currency='',gro
   let day=String(year)+d.paid_on.slice(4);if(!reportDate(day))day=String(year)+'-02-28';if(day<=today)continue;
   events.push({day,name:position.name||d.symbol,amount:Number(d.amount)*Math.pow(1+growth/100,offset),estimated:true,basis:d.paid_on});
  }return events.sort((a,b)=>a.day.localeCompare(b.day)||a.name.localeCompare(b.name));
+}
+
+let reportCalendarMonth=new Date().getMonth(),reportCalendarDay='';
+function reportMonthGrid(year,month){
+ const first=new Date(Date.UTC(Number(year),month,1)),offset=(first.getUTCDay()+6)%7,days=new Date(Date.UTC(Number(year),month+1,0)).getUTCDate();
+ return Array.from({length:Math.ceil((offset+days)/7)*7},(_,i)=>i<offset||i>=offset+days?null:String(year)+'-'+String(month+1).padStart(2,'0')+'-'+String(i-offset+1).padStart(2,'0'));
+}
+function renderPaymentCalendar(group,events,year){
+ const card=reportChartCard(group,ui('Dividendkalender'),ui('Kies een betaaldag voor de uitkeringen en details.'),true);card.plot.classList.add('payment-calendar');card.detail.hidden=true;
+ const toolbar=homeNode('div',undefined,'payment-toolbar'),controls=homeNode('div',undefined,'payment-controls'),previous=homeNode('button','‹','secondary'),next=homeNode('button','›','secondary'),select=homeNode('select');
+ previous.type=next.type='button';previous.setAttribute('aria-label',ui('Vorige maand'));next.setAttribute('aria-label',ui('Volgende maand'));select.setAttribute('aria-label',ui('Maand'));
+ for(let month=0;month<12;month++){const option=homeNode('option',new Date(Date.UTC(Number(year),month,1)).toLocaleDateString(appLocale(),{month:'long',year:'numeric',timeZone:'UTC'}));option.value=String(month);select.append(option);}select.value=String(reportCalendarMonth);
+ previous.disabled=reportCalendarMonth===0;next.disabled=reportCalendarMonth===11;
+ const change=month=>{reportCalendarMonth=month;reportCalendarDay='';renderReports();};previous.onclick=()=>change(reportCalendarMonth-1);next.onclick=()=>change(reportCalendarMonth+1);select.onchange=()=>change(Number(select.value));controls.append(previous,select,next);
+ const legend=homeNode('div',undefined,'payment-legend');legend.append(homeNode('span',ui('Ontvangen'),'payment-received'),homeNode('span',ui('Geschat'),'payment-estimated'));toolbar.append(controls,legend);card.plot.append(toolbar);
+ const prefix=String(year)+'-'+String(reportCalendarMonth+1).padStart(2,'0'),monthly=events.filter(e=>e.day.startsWith(prefix)),layout=homeNode('div',undefined,'payment-layout'),calendar=homeNode('div',undefined,'payment-month'),week=homeNode('div',undefined,'payment-week');
+ for(let i=0;i<7;i++)week.append(homeNode('span',new Date(Date.UTC(2026,0,5+i)).toLocaleDateString(appLocale(),{weekday:'short',timeZone:'UTC'})));calendar.append(week);
+ const grid=homeNode('div',undefined,'payment-grid'),agenda=homeNode('div',undefined,'payment-agenda');agenda.setAttribute('aria-live','polite');const today=new Date().toLocaleDateString('en-CA');
+ function details(day){
+  reportCalendarDay=day||'';for(const button of grid.querySelectorAll('button'))button.setAttribute('aria-pressed',String(button.dataset.day===day));agenda.replaceChildren();
+  agenda.append(homeNode('small',ui('UITKERINGEN'),'eyebrow'),homeNode('h3',day?dayLabel(day):ui('Deze maand')));const rows=day?monthly.filter(e=>e.day===day):monthly;
+  const total=rows.reduce((sum,e)=>sum+e.amount,0);agenda.append(homeNode('strong',money(total,group.currency),'payment-total'));
+  if(!rows.length)agenda.append(homeNode('p',ui('Geen dividendbetalingen voor deze selectie.'),'home-muted'));
+  for(const event of rows){const item=homeNode('article',undefined,'payment-event '+(event.estimated?'payment-estimated':'payment-received')),heading=homeNode('div');heading.append(homeNode('strong',event.name),homeNode('strong',money(event.amount,group.currency)));item.append(heading,homeNode('small',dayLabel(event.day)+' / '+(event.estimated?ui('Geschat'):ui('Ontvangen'))));if(event.estimated)item.append(homeNode('small',ui('Basisdatum')+': '+dayLabel(event.basis)+' / '+$('report-growth').value+'% '+ui('jaarlijkse groei')));agenda.append(item);}
+ }
+ for(const day of reportMonthGrid(year,reportCalendarMonth)){
+  if(!day){grid.append(homeNode('div',undefined,'payment-day payment-padding'));continue;}
+  const rows=monthly.filter(e=>e.day===day),button=homeNode('button',undefined,'payment-day'+(day===today?' payment-today':'')+(rows.length?' payment-has-events':'')+(rows.length&&rows.every(e=>e.estimated)?' payment-has-estimates':''));button.type='button';button.dataset.day=day;button.setAttribute('aria-label',dayLabel(day)+' / '+rows.length+' '+ui('uitkeringen'));button.setAttribute('aria-pressed','false');button.append(homeNode('span',String(Number(day.slice(-2))),'payment-day-number'));
+  if(rows.length){const amount=homeNode('strong',money(rows.reduce((sum,e)=>sum+e.amount,0),group.currency),'payment-day-amount');button.append(amount);const dots=homeNode('span',undefined,'payment-dots');for(const event of rows.slice(0,4))dots.append(homeNode('i',undefined,event.estimated?'payment-dot-estimated':'payment-dot-received'));button.append(dots);button.append(homeNode('small',rows.map(e=>e.name).join(', '),'payment-day-names'));}button.onclick=()=>details(day);grid.append(button);
+ }calendar.append(grid);layout.append(calendar,agenda);card.plot.append(layout);details(reportCalendarDay.startsWith(prefix)?reportCalendarDay:'');
 }
