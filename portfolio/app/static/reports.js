@@ -1,6 +1,6 @@
 /* Reports retain broker scoping from state and keep currencies separate. */
 var ui=globalThis.HomeInvestTranslate||((value)=>value);
-function reportKey(p){return JSON.stringify([p.symbol,p.exchange,p.currency]);}
+function reportKey(p){return JSON.stringify([p.symbol,p.exchange,p.native_currency||p.currency]);}
 function reportNumber(value){return (typeof value==='number'||typeof value==='string'&&value.trim()!=='')&&Number.isFinite(Number(value));}
 function reportInstrument(p){return typeof p.symbol==='string'&&p.symbol.trim()!==''&&typeof p.exchange==='string'&&p.exchange.trim()!==''&&typeof p.currency==='string'&&/^[A-Z]{3}$/.test(p.currency);}
 function reportDate(value){if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;const date=new Date(value+'T00:00:00Z');return Number.isFinite(date.getTime())&&date.toISOString().slice(0,10)===value;}
@@ -57,7 +57,7 @@ function reportAnalytics(positions,dividends,year,stock='',currency=''){
  })};
 }
 function reportOptions(id,items,label){const select=$(id),previous=select.value;select.replaceChildren();for(const [value,text] of [['',label],...items]){const option=homeNode('option',text);option.value=value;select.append(option);}if(items.some(([value])=>value===previous))select.value=previous;}
-function clearReports(){reportHistoryGeneration++;reportHistory=null;reportHistoryKey='';reportHistoryPending=false;reportHistoryError=false;for(const id of ['report-charts','report-insights','report-metrics','report-rows','report-stock','report-currency'])$(id).replaceChildren();$('report-status').textContent='';$('report-count').textContent='';$('report-year').replaceChildren();}
+function clearReports(){reportCombinedGeneration++;reportCombined=null;reportCombinedKey='';reportCombinedPending=false;reportCombinedError=false;reportHistoryGeneration++;reportHistory=null;reportHistoryKey='';reportHistoryPending=false;reportHistoryError=false;for(const id of ['report-charts','report-insights','report-metrics','report-rows','report-stock','report-currency'])$(id).replaceChildren();$('report-status').textContent='';$('report-count').textContent='';$('report-year').replaceChildren();}
 function reportHistoryScope(){return JSON.stringify([String(currentBroker),state?.data_revision,$('report-stock').value,$('report-currency').value]);}
 async function loadReportHistory(){
  if(!state||!accessSession?.user||reportType!=='growth')return;
@@ -77,7 +77,7 @@ function reportInsight(label,value,detail){const box=homeNode('article',undefine
 function renderReportNavigation(){
  const nav=$('report-types');nav.replaceChildren();for(const [key,title] of reportDefinitions){const link=homeNode('a',title);link.href='#rapporten-'+key;if(key===reportType)link.setAttribute('aria-current','page');nav.append(link);}
 }
-function reportChartCard(group,title,note,wide=false){const card=homeNode('section',undefined,'panel report-chart-card'+(wide?' report-wide':''));const heading=homeNode('div',undefined,'section-head'),copy=homeNode('div');copy.append(homeNode('small',group.currency,'eyebrow'),homeNode('h3',title));heading.append(copy);card.append(heading,homeNode('p',note,'report-chart-note'));const plot=homeNode('div',undefined,'report-plot'),detail=homeNode('p',ui('Bekijk details met je muis of toetsenbord.'),'report-chart-detail');detail.setAttribute('aria-live','polite');card.append(plot,detail);$('report-charts').append(card);return {plot,detail};}
+function reportChartCard(group,title,note,wide=false){const card=homeNode('section',undefined,'panel report-chart-card'+(wide?' report-wide':''));const heading=homeNode('div',undefined,'section-head'),copy=homeNode('div');copy.append(homeNode('small',group.label||group.currency,'eyebrow'),homeNode('h3',title));heading.append(copy);card.append(heading,homeNode('p',note,'report-chart-note'));const plot=homeNode('div',undefined,'report-plot'),detail=homeNode('p',ui('Bekijk details met je muis of toetsenbord.'),'report-chart-detail');detail.setAttribute('aria-live','polite');card.append(plot,detail);$('report-charts').append(card);return {plot,detail};}
 function reportMoney(value,currency){return money(value,currency);}
 function renderReports(){
  if(!state)return;const income=reportIncome(reportType),year=$('report-year').value||String(new Date().getFullYear());
@@ -86,14 +86,23 @@ function renderReports(){
  reportOptions('report-currency',[...new Set([...state.positions,...state.dividends].filter(reportInstrument).map(p=>p.currency))].sort().map(c=>[c,c]),ui('Alle valuta’s'));
  renderReportNavigation();$('report-growth-filter').hidden=reportType!=='calendar';$('report-year-filter').hidden=!income;$('report-range-filter').hidden=reportType!=='growth';
  const definition=reportDefinitions.find(d=>d[0]===reportType);$('report-title').textContent=definition[1];$('report-active-description').textContent=definition[2];
- $('report-description').textContent=reportType==='calendar'?ui('Schatting op basis van de laatste twaalf maanden en jaarlijkse groei. Datums zijn indicatief. Aangekondigde uitkeringen zijn niet gekoppeld.'):income?ui('Ontvangen netto dividend in het gekozen jaar. Bedragen blijven per valuta gescheiden.'):reportType==='growth'?ui('Opgeslagen dagwaarden. Ontbrekende posities worden per dag overgeslagen; dit is geen rendementspercentage.'):ui('Actuele stand, inclusief gerealiseerde winst en alle geboekte dividenden. Geen historische jaarstand of fiscale jaaropgave.');
+ $('report-description').textContent=reportType==='calendar'?ui('Schatting op basis van de laatste twaalf maanden en jaarlijkse groei. Datums zijn indicatief. Aangekondigde uitkeringen zijn niet gekoppeld.'):income?ui('Ontvangen netto dividend in het gekozen jaar. Eerst het totaal in euro, daarna per valuta.'):reportType==='growth'?ui('Opgeslagen dagwaarden. Ontbrekende posities worden per dag overgeslagen; dit is geen rendementspercentage.'):ui('Actuele stand, inclusief gerealiseerde winst en alle geboekte dividenden. Geen historische jaarstand of fiscale jaaropgave.');
  const model=reportAnalytics(state.positions,state.dividends,year,$('report-stock').value,$('report-currency').value);
- const groups=model.groups.filter(g=>income?reportType==='calendar'?(g.calendar.length||g.holdings.length):g.income.length:g.holdings.length);
+ let groups=model.groups.filter(g=>income?reportType==='calendar'?(g.calendar.length||g.holdings.length):g.income.length:g.holdings.length);
  $('report-metrics').replaceChildren();$('report-charts').replaceChildren();$('report-insights').replaceChildren();
+ const combinedKey=reportCombinedScope();if(reportCombinedKey!==combinedKey){reportCombined=null;reportCombinedError=false;}
+ if(reportCombined){const total=reportAnalytics(reportCombined.positions,reportCombined.dividends,year).groups;for(const g of total){g.label=ui('Totaal alle valuta’s in EUR');g.combined=true;g.reportSource=reportCombined;}groups=[...total,...groups];}
+ else{reportMetric(ui('Totaal alle valuta’s in EUR'),reportCombinedError?ui('Niet beschikbaar'):ui('Laden…'),ui('Totaal in euro laden…'));const box=homeNode('section',undefined,'panel report-wide');box.append(homeNode('h3',ui('Totaal alle valuta’s in EUR')),homeNode('p',reportCombinedError?ui('Totaal laden mislukt. Probeer opnieuw.'):ui('Totaal in euro laden…')));if(reportCombinedError){const button=homeNode('button',ui('Opnieuw proberen'),'secondary');button.type='button';button.onclick=()=>{reportCombinedKey='';reportCombinedError=false;renderReports();};box.append(button);}$('report-charts').append(box);if(!reportCombinedError)loadReportCombined();}
+ const coverage=reportCombined?reportCombined.excluded.length+reportCombined.missing_dividends.length:0;
+ if(reportCombined&&!groups.some(g=>g.combined)){reportMetric(ui('Totaal alle valuta’s in EUR'),coverage?ui('Onvolledig'):ui('Geen gegevens voor deze selectie.'),ui('Totaal alle valuta’s in EUR'));$('report-charts').append(homeNode('h3',ui('Totaal alle valuta’s in EUR'),'report-group-heading report-wide'),homeNode('p',coverage?ui('Onvolledig totaal: regels zonder wisselkoers overgeslagen.'):ui('Geen gegevens voor deze selectie.'),'report-total-note report-wide'));}
+ if(reportCombined){const note=homeNode('p',(coverage?ui('Onvolledig totaal: regels zonder wisselkoers overgeslagen.')+' '+coverage+' / ':'')+ui('Dividend tegen de koers op betaaldatum; marktwaarde tegen beschikbare recente koersen.')+' '+ui('Koersdatum')+': '+dayLabel(reportCombined.fx_dates.map(p=>p.rate_on).sort().at(-1)||reportCombined.as_of),'report-total-note report-wide');$('report-charts').append(note);}
+
  for(const g of groups){
-  const c=g.currency;
-  if(income){reportMetric(ui('Ontvangen dividend'),money(g.annualIncome,c),year+' · '+g.income.length+' '+ui('inkomstenbronnen'));if(reportType!=='calendar')reportMetric(ui('Gemiddeld per maand'),money(g.annualIncome/12,c),ui('Jaartotaal gedeeld door twaalf'));}
-  else{reportMetric(ui('Marktwaarde'),money(g.total.value,c),g.holdings.length+' '+ui('aandelen meegenomen'));reportMetric(ui('Totale winst'),money(g.total.profit,c),ui('Inclusief gerealiseerd resultaat en dividend'),g.total.profit>=0?'positive':'negative');}
+  const c=g.currency,scope=(g.label||c)+(g.combined&&coverage?' · '+ui('Onvolledig'):'');
+  if(reportType!=='growth')$('report-charts').append(homeNode('h3',g.combined?scope:ui('Uitsplitsing per valuta')+' · '+c,'report-group-heading report-wide'));
+  $('report-metrics').append(homeNode('h3',g.combined?scope:ui('Uitsplitsing per valuta')+' · '+c,'report-metric-heading'));
+  if(income){reportMetric(ui('Ontvangen dividend'),money(g.annualIncome,c),scope+' · '+year+' · '+g.income.length+' '+ui('inkomstenbronnen'));if(reportType!=='calendar')reportMetric(ui('Gemiddeld per maand'),money(g.annualIncome/12,c),scope+' · '+ui('Jaartotaal gedeeld door twaalf'));}
+  else{reportMetric(ui('Marktwaarde'),money(g.total.value,c),scope+' · '+g.holdings.length+' '+ui('aandelen meegenomen'));reportMetric(ui('Totale winst'),money(g.total.profit,c),scope+' · '+ui('Inclusief gerealiseerd resultaat en dividend'),g.total.profit>=0?'positive':'negative');}
   if(reportType==='portfolio'){
    let card=reportChartCard(g,ui('Waar zit je vermogen?'),ui('Weging op basis van bekende marktwaarde.'));reportDonut(card,g.allocation.map(p=>({name:p.name,value:p.value})),c);
    card=reportChartCard(g,ui('Wat levert het op?'),ui('De drie bouwstenen van je totale resultaat.'));reportWaterfall(card,[{name:ui('Ongerealiseerd'),value:g.total.value-g.total.cost},{name:ui('Gerealiseerd'),value:g.total.realised},{name:ui('Dividend'),value:g.total.dividend}],c);
@@ -115,9 +124,9 @@ function renderReports(){
    let card=reportChartCard(g,ui('Je grootste dividendbetalers'),ui('Ontvangen netto bedragen in het gekozen jaar.'));reportBars(card,reportTop(g.income.map(p=>({name:p.name,value:p.dividend})),10),c);
    card=reportChartCard(g,ui('Verdeling van je dividend'),ui('Weging van iedere inkomstenbron in het ontvangen dividend.'));reportDonut(card,g.income.map(p=>({name:p.name,value:p.dividend})),c);
   }else if(reportType==='calendar'){
-   const events=reportPaymentCalendar(state.positions,state.dividends,year,$('report-stock').value,c,Number($('report-growth').value));
+   const source=g.reportSource||state,events=reportPaymentCalendar(source.positions,source.dividends,year,g.combined?'':$('report-stock').value,c,Number($('report-growth').value));
    renderPaymentCalendar(g,events,year);
-   reportMetric(ui('Verwacht'),money(events.filter(e=>e.estimated).reduce((sum,e)=>sum+e.amount,0),c),year+' · '+$('report-growth').value+'%');
+   reportMetric(ui('Verwacht'),money(events.filter(e=>e.estimated).reduce((sum,e)=>sum+e.amount,0),c),scope+' · '+year+' · '+$('report-growth').value+'%');
   }else if(reportType==='sectors'||reportType==='countries'){
    const values=reportType==='sectors'?g.sectors:g.countries;
    let card=reportChartCard(g,reportType==='sectors'?ui('Spreiding over sectoren'):ui('Spreiding over landen'),ui('Op basis van opgeslagen indelingen en bekende marktwaarde. Niet ingedeeld blijft apart zichtbaar.'));reportDonut(card,values,c);
@@ -127,7 +136,7 @@ function renderReports(){
  if(reportType==='growth')renderReportHistory();
  const skipped=reportType==='calendar'?model.calendarSkipped:income?model.incomeSkipped:model.skipped;
  $('report-status').textContent=[groups.length||reportType==='growth'?'':ui('Geen gegevens voor deze selectie.'),skipped?ui('Regels met ontbrekende of ongeldige gegevens overgeslagen:')+' '+new Intl.NumberFormat(appLocale()).format(skipped)+'. '+ui('De totalen zijn alleen gebaseerd op de meegenomen regels.'):''].filter(Boolean).join(' ');
- renderReportTable(model,year);
+ renderReportTable({...model,groups},year);
 }
 function renderReportHistory(){
  const key=reportHistoryScope();if(reportHistoryKey!==key){reportHistory=null;reportHistoryError=false;reportHistoryPending=false;}
@@ -136,7 +145,7 @@ function renderReportHistory(){
   if(reportHistoryError){const button=homeNode('button',ui('Opnieuw proberen'),'secondary');button.type='button';button.onclick=()=>{reportHistoryKey='';reportHistoryError=false;renderReports();};message.append(button);}
   $('report-charts').append(message);if(!reportHistoryError)loadReportHistory();return;
  }
- for(const g of reportHistory.currencies){const points=reportHistoryWindow(g,reportRange);const card=reportChartCard(g,ui('Marktwaarde naast kostprijs'),ui('Bekende dagwaarden; aankopen en verkopen beïnvloeden de waarde. Ontbrekende posities tellen die dag niet mee.'),true);reportLine(card,points,[{key:'value',name:ui('Marktwaarde'),color:'#47dcb0'},{key:'cost',name:ui('Openstaande kostprijs'),color:'#70b7ff'}],g.currency);
+ for(const g of [...(reportCombined?.history?[{...reportCombined.history,label:ui('Totaal alle valuta’s in EUR')}]:[]),...reportHistory.currencies]){$('report-charts').append(homeNode('h3',g.label||ui('Uitsplitsing per valuta')+' · '+g.currency,'report-group-heading report-wide'));const points=reportHistoryWindow(g,reportRange);const card=reportChartCard(g,ui('Marktwaarde naast kostprijs'),ui('Bekende dagwaarden; aankopen en verkopen beïnvloeden de waarde. Ontbrekende posities tellen die dag niet mee.'),true);reportLine(card,points,[{key:'value',name:ui('Marktwaarde'),color:'#47dcb0'},{key:'cost',name:ui('Openstaande kostprijs'),color:'#70b7ff'}],g.currency);
   const start=g.as_of?chartPeriodStart(g.as_of,reportRange):'0001-01-01',missing=points.filter(p=>p.skipped).length+(g.omitted_dates||[]).filter(day=>day>=start).length;if(missing)card.detail.textContent=ui('Dagen met overgeslagen gegevens:')+' '+missing+'. '+ui('De totalen zijn alleen gebaseerd op de meegenomen regels.');
  }
  if(!reportHistory.currencies.length)$('report-charts').append(homeNode('p',ui('Geen gegevens voor deze selectie.'),'report-wide'));
@@ -145,12 +154,12 @@ function renderReportTable(model,year){
  const income=reportIncome(reportType),head=$('report-head'),body=$('report-rows');head.replaceChildren();body.replaceChildren();
  if(reportType==='growth'){
   const header=document.createElement('tr');for(const label of [ui('Datum'),ui('Valuta'),ui('Marktwaarde'),ui('Openstaande kostprijs'),ui('Dividend'),ui('Overgeslagen:')]){const th=homeNode('th',label);th.scope='col';header.append(th);}head.append(header);
-  let count=0;for(const g of reportHistory?.currencies||[]){const points=reportHistoryWindow(g,reportRange);count+=points.length;for(const p of points.slice(-250)){const row=document.createElement('tr');for(const value of [new Date(p.day+'T00:00:00Z').toLocaleDateString(appLocale(),{timeZone:'UTC'}),g.currency,money(p.value,g.currency),money(p.cost,g.currency),money(p.dividend,g.currency),p.skipped])cell(row,value);body.append(row);}}
+  let count=0;for(const g of [...(reportCombined?.history?[{...reportCombined.history,label:ui('Totaal alle valuta’s in EUR')}]:[]),...(reportHistory?.currencies||[])]){const points=reportHistoryWindow(g,reportRange);count+=points.length;for(const p of points.slice(-250)){const row=document.createElement('tr');for(const value of [new Date(p.day+'T00:00:00Z').toLocaleDateString(appLocale(),{timeZone:'UTC'}),g.label||g.currency,money(p.value,g.currency),money(p.cost,g.currency),money(p.dividend,g.currency),p.skipped])cell(row,value);body.append(row);}}
   $('report-count').textContent=new Intl.NumberFormat(appLocale()).format(count)+' · '+ui('Laatste 250 dagwaarden per valuta');return;
  }
  const headings=income?[reportType==='calendar'?ui('Betaaldatum'):reportType==='months'?ui('Maand'):ui('Aandeel'),ui('Valuta'),ui('Netto dividend')]:[ui('Aandeel'),ui('Valuta'),ui('Inleg'),ui('Marktwaarde'),ui('Gerealiseerd'),ui('Dividend'),ui('Totale winst')];const tr=document.createElement('tr');for(const label of headings){const th=homeNode('th',label);th.scope='col';tr.append(th);}head.append(tr);
- let count=0;for(const g of model.groups){if(income&&!(reportType==='calendar'?(g.calendar.length||g.holdings.length):g.income.length))continue;let records;if(income){records=reportType==='months'?g.months.map(p=>({name:reportMonth(p.name),value:p.value})):reportType==='calendar'?reportPaymentCalendar(state.positions,state.dividends,year,$('report-stock').value,g.currency,Number($('report-growth').value)).map(p=>({name:dayLabel(p.day)+' / '+p.name+' / '+(p.estimated?ui('Geschat'):ui('Ontvangen')),value:p.amount})):g.income.map(p=>({name:p.name,value:p.dividend}));}else records=g.holdings;
-  for(const p of records){const row=document.createElement('tr'),values=income?[p.name,g.currency,money(p.value,g.currency)]:[p.name,g.currency,money(p.cost,g.currency),money(p.value,g.currency),money(p.realised,g.currency),money(p.dividend,g.currency),money(p.profit,g.currency)];for(const value of values)cell(row,value);body.append(row);count++;}
+ let count=0;for(const g of model.groups){if(income&&!(reportType==='calendar'?(g.calendar.length||g.holdings.length):g.income.length))continue;let records;if(income){records=reportType==='months'?g.months.map(p=>({name:reportMonth(p.name),value:p.value})):reportType==='calendar'?reportPaymentCalendar((g.reportSource||state).positions,(g.reportSource||state).dividends,year,g.combined?'':$('report-stock').value,g.currency,Number($('report-growth').value)).map(p=>({name:dayLabel(p.day)+' / '+p.name+' / '+(p.estimated?ui('Geschat'):ui('Ontvangen')),value:p.amount})):g.income.map(p=>({name:p.name,value:p.dividend}));}else records=g.holdings;
+  for(const p of records){const row=document.createElement('tr'),values=income?[p.name,g.label||g.currency,money(p.value,g.currency)]:[p.name,g.label||g.currency,money(p.cost,g.currency),money(p.value,g.currency),money(p.realised,g.currency),money(p.dividend,g.currency),money(p.profit,g.currency)];for(const value of values)cell(row,value);body.append(row);count++;}
  }$('report-count').textContent=new Intl.NumberFormat(appLocale()).format(count)+' · '+ui('regels');
 }
 if(typeof document!=='undefined'){
@@ -201,4 +210,15 @@ function renderPaymentCalendar(group,events,year){
   const rows=monthly.filter(e=>e.day===day),button=homeNode('button',undefined,'payment-day'+(day===today?' payment-today':'')+(rows.length?' payment-has-events':'')+(rows.length&&rows.every(e=>e.estimated)?' payment-has-estimates':''));button.type='button';button.dataset.day=day;button.setAttribute('aria-label',dayLabel(day)+' / '+rows.length+' '+ui('uitkeringen'));button.setAttribute('aria-pressed','false');button.append(homeNode('span',String(Number(day.slice(-2))),'payment-day-number'));
   if(rows.length){const amount=homeNode('strong',money(rows.reduce((sum,e)=>sum+e.amount,0),group.currency),'payment-day-amount');button.append(amount);const dots=homeNode('span',undefined,'payment-dots');for(const event of rows.slice(0,4))dots.append(homeNode('i',undefined,event.estimated?'payment-dot-estimated':'payment-dot-received'));button.append(dots);button.append(homeNode('small',rows.map(e=>e.name).join(', '),'payment-day-names'));}button.onclick=()=>details(day);grid.append(button);
  }calendar.append(grid);layout.append(calendar,agenda);card.plot.append(layout);details(reportCalendarDay.startsWith(prefix)?reportCalendarDay:'');
+}
+
+let reportCombined=null,reportCombinedKey='',reportCombinedPending=false,reportCombinedError=false,reportCombinedGeneration=0;
+function reportCombinedScope(){return JSON.stringify([String(currentBroker),state?.data_revision,$('report-stock').value,$('report-currency').value,reportType==='growth']);}
+async function loadReportCombined(){
+ if(!state||!accessSession?.user)return;const key=reportCombinedScope();if(key===reportCombinedKey&&(reportCombined||reportCombinedPending||reportCombinedError))return;
+ const source=state,generation=++reportCombinedGeneration;reportCombinedKey=key;reportCombinedPending=true;reportCombinedError=false;reportCombined=null;
+ try{const response=await apiFetch('api/reports/combined?account_id='+encodeURIComponent(currentBroker)+'&instrument='+encodeURIComponent($('report-stock').value)+'&currency='+encodeURIComponent($('report-currency').value)+'&history='+(reportType==='growth'?'1':'0'));if(!response.ok)throw Error();const data=await response.json();if(generation!==reportCombinedGeneration||!accessSession?.user||key!==reportCombinedScope())return;
+ if(data.data_revision!==source.data_revision){reportCombinedKey='';stateETag=null;await load();return;}reportCombined=data;
+ }catch{if(generation===reportCombinedGeneration)reportCombinedError=true;}
+ finally{if(generation===reportCombinedGeneration){reportCombinedPending=false;if(state&&location.hash.startsWith('#rapporten'))renderReports();}}
 }

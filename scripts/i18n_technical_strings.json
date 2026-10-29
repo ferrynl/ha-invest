@@ -880,6 +880,11 @@
     "select",
     "‹",
     "›",
-    " payment-has-estimates"
+    " payment-has-estimates",
+    "&history=",
+    "api/reports/combined?account_id=",
+    "report-group-heading report-wide",
+    "report-total-note report-wide",
+    "report-metric-heading"
   ]
 }

@@ -148,6 +148,15 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     result=home_euro(account)
                     return self.respond(compact(result) if query.get('compact')==['1'] else result,etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
+            if path=='/api/reports/combined':
+                from reports import combined as report_combined
+                query=parse_qs(urlsplit(self.path).query);account=query.get('account_id',['all'])[0]
+                try:
+                    instrument=query.get('instrument',[''])[0];selection=json.loads(instrument) if instrument else None
+                    currency=query.get('currency',[''])[0];with_history=query.get('history')==['1']
+                    key='reports-combined:'+json.dumps([account,selection,currency,with_history],separators=(',',':'))
+                    return self.respond(cache.derived(key,lambda:report_combined(store,cache.get(store.state),account,selection,currency,with_history)),etag=True)
+                except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
             if path=='/api/reports/history':
                 from reports import history as report_history
                 query=parse_qs(urlsplit(self.path).query)

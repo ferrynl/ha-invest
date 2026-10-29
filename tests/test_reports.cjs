@@ -91,3 +91,28 @@ for(let month=0;month<12;month++){const grid=reportMonthGrid('2026',month);asser
 assert.equal(reportMonthGrid('2024',1).filter(Boolean).length,29);
 assert.equal(reportMonthGrid('2026',1)[6],'2026-02-01');
 console.log('Calendar month alignment and leap-year checks passed.');
+// Converted rows retain the source instrument identity when the filter is active.
+{
+ const key=JSON.stringify(['AAA','AMS','USD']);
+ const converted={...p,currency:'EUR',native_currency:'USD',value:'50',cost:'25'};
+ assert.equal(reportAnalytics([converted],[],'2026',key).groups[0].total.value,50);
+ assert.equal(reportAnalytics([converted],[],'2026',JSON.stringify(['AAA','AMS','EUR'])).groups.length,0);
+}
+// Ignore combined responses from an older broker/filter scope and invalidate on logout.
+{
+ const combinedRequests=[],fields=new Map();
+ const combinedContext=vm.createContext({state:{data_revision:1},currentBroker:'1',accessSession:{user:{}},location:{hash:'#rapporten'},stateETag:'old',loads:0,
+  $:id=>{if(!fields.has(id))fields.set(id,{value:'',textContent:'',replaceChildren(){}});return fields.get(id);},
+  apiFetch:url=>new Promise(resolve=>combinedRequests.push({url,resolve})),load:async()=>{combinedContext.loads++;}});
+ vm.runInContext(fs.readFileSync(path.join(__dirname,'../portfolio/app/static/reports.js'),'utf8'),combinedContext);
+ vm.runInContext('renderReports=()=>{};',combinedContext);
+ const respond=(request,revision=1)=>request.resolve({ok:true,json:async()=>({data_revision:revision,positions:[],dividends:[],excluded:[],missing_dividends:[]})});
+ (async()=>{
+  const old=combinedContext.loadReportCombined();combinedContext.currentBroker='2';const latest=combinedContext.loadReportCombined();
+  respond(combinedRequests[1]);await latest;const accepted=vm.runInContext('reportCombined',combinedContext);respond(combinedRequests[0]);await old;
+  assert.equal(vm.runInContext('reportCombined',combinedContext),accepted);
+  fields.get('report-currency').value='USD';const changed=combinedContext.loadReportCombined();respond(combinedRequests[2],2);await changed;assert.equal(combinedContext.loads,1);
+  combinedContext.clearReports();assert.equal(vm.runInContext('reportCombined',combinedContext),null);
+  console.log('Combined totals ignore stale broker responses and changed data revisions.');
+ })().catch(error=>{console.error(error);process.exitCode=1;});
+}

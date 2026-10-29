@@ -39,3 +39,46 @@ def history(snapshot, account='all', instrument=None, currency=''):
              omitted_dates=[day for day, point in sorted(days.items()) if not point['count']])
         for code, days in sorted(groups.items())
     ])
+
+
+def combined(store, snapshot, account='all', instrument=None, currency='', include_history=False, today=None):
+    """Convert report inputs using saved, dated FX; never fetch providers here."""
+    from bisect import bisect_right
+    from datetime import date
+    from home_euro import build
+    from forex import unit
+    today = today or date.today()
+    owner = None if str(account) == 'all' else int(account)
+    if owner is not None and not any(a['id'] == owner for a in snapshot['accounts']):
+        raise ValueError('Brokeraccount niet gevonden.')
+    if instrument is not None and (not isinstance(instrument, list) or len(instrument) != 3
+                                  or any(not isinstance(v, str) for v in instrument)):
+        raise ValueError('Ongeldige positie.')
+    def matches(row):
+        return (owner is None or row['account_id'] == owner) and (not currency or row['currency'] == currency) and (instrument is None or [row[k] for k in ('symbol','exchange','currency')] == instrument)
+    scoped = {**snapshot, **{key: [row for row in snapshot[key] if matches(row)] for key in ('positions','purchases','dividends')}}
+    with store.connect() as db:
+        rates = [dict(row) for row in db.execute("SELECT base,quote,day,rate FROM fx_rates WHERE base='EUR' ORDER BY day")]
+    euro = build(scoped, rates, account, today)
+    indexed = {}
+    for row in rates:
+        indexed.setdefault(row['quote'], []).append(row)
+    days = {code: [row['day'] for row in rows] for code, rows in indexed.items()}
+    dividends = []; missing = []; used = list(euro['fx_dates'])
+    for row in scoped['dividends']:
+        if row['paid_on'] > today.isoformat():
+            continue
+        base, scale = unit(row['currency']); factor = scale; rate_day = row['paid_on']
+        if base != 'EUR':
+            index = bisect_right(days.get(base, []), row['paid_on']) - 1
+            if index < 0 or (date.fromisoformat(row['paid_on']) - date.fromisoformat(indexed[base][index]['day'])).days > 7:
+                missing.append(dict(symbol=row['symbol'], currency=row['currency'], day=row['paid_on'])); continue
+            fx = indexed[base][index]; factor /= Decimal(fx['rate']); rate_day = fx['day']
+        dividends.append({**row, 'native_currency':row['currency'], 'currency':'EUR', 'source_amount':row['amount'], 'amount':str(Decimal(row['amount']) * factor), 'fx_day':rate_day})
+        used.append(dict(currency=row['currency'], requested_on=row['paid_on'], rate_on=rate_day))
+    result = dict(data_revision=snapshot.get('data_revision'), as_of=today.isoformat(), positions=[{**p, 'history':[]} for p in euro['positions']], dividends=dividends,
+                  excluded=euro['excluded'], missing_dividends=missing, fx_dates=used)
+    if include_history:
+        converted = history({**scoped, 'positions':euro['positions']}, account)
+        result['history'] = converted['currencies'][0] if converted['currencies'] else None
+    return result

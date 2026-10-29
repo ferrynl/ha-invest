@@ -1,3 +1,9 @@
+# 0.30.0
+
+- Alle rapporten beginnen met het totaal van alle geselecteerde valuta’s omgerekend naar EUR, gevolgd door de uitsplitsing per bronvaluta. Dit geldt ook voor grafieken, dividendkalender, waardehistorie en onderliggende cijfers.
+- Dividend gebruikt opgeslagen wisselkoersen op de betaaldatum; kostprijs en gerealiseerd resultaat gebruiken historische transactiedatums. Marktwaarde gebruikt beschikbare recente wisselkoersen.
+- Ontbrekende wisselkoersen worden overgeslagen en als onvolledig totaal aangegeven. Geen 1-op-1-fallback, providerverzoeken bij laden of schemawijziging.
+
 # 0.29.1
 
 - Rapportpagina’s gebruiken de volledige beschikbare breedte en schalen mee op desktop, tablet en mobiel. Grafieken hebben geen vaste minimumbreedte meer.

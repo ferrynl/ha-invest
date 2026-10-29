@@ -99,3 +99,7 @@
 @media(prefers-reduced-motion:reduce){.payment-day{transition:none}}
 
 .payment-has-estimates{background:linear-gradient(145deg,#1c3353,#19253b);border-color:#405f8c}.payment-has-estimates .payment-day-amount{color:#b9d5ff}
+
+.report-group-heading{font-size:18px;color:#b9d2eb;margin:20px 0 0;padding-top:18px;border-top:1px solid #30445f}.report-total-note{font-size:12px;line-height:1.7;color:#a8bfd7;background:#19352f66;padding:14px 18px;border-radius:10px;margin:0}.report-metrics-total{grid-column:1/-1}
+
+.report-metric-heading{grid-column:1/-1;font-size:14px;font-weight:600;color:#a6c8c0;margin:12px 0 0}.reports-dashboard .home-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:400px){.reports-dashboard .home-metrics{grid-template-columns:1fr}}

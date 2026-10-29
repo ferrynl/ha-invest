@@ -5984,5 +5984,45 @@ const UI_TRANSLATIONS = {
   "nl": "uitkeringen",
   "en": "payments",
   "es": "pagos"
+ },
+ "Totaal alle valuta’s in EUR": {
+  "nl": "Totaal alle valuta’s in EUR",
+  "en": "Total of all currencies in EUR",
+  "es": "Total de todas las divisas en EUR"
+ },
+ "Totaal laden mislukt. Probeer opnieuw.": {
+  "nl": "Totaal laden mislukt. Probeer opnieuw.",
+  "en": "Unable to load the total. Try again.",
+  "es": "No se pudo cargar el total. Inténtalo de nuevo."
+ },
+ "Totaal in euro laden…": {
+  "nl": "Totaal in euro laden…",
+  "en": "Loading total in euros…",
+  "es": "Cargando el total en euros…"
+ },
+ "Onvolledig totaal: regels zonder wisselkoers overgeslagen.": {
+  "nl": "Onvolledig totaal: regels zonder wisselkoers overgeslagen.",
+  "en": "Incomplete total: rows without exchange rates excluded.",
+  "es": "Total incompleto: se excluyen filas sin tipo de cambio."
+ },
+ "Dividend tegen de koers op betaaldatum; marktwaarde tegen beschikbare recente koersen.": {
+  "nl": "Dividend tegen de koers op betaaldatum; marktwaarde tegen beschikbare recente koersen.",
+  "en": "Dividends use payment-date exchange rates; market values use available recent rates.",
+  "es": "Dividendos al tipo de cambio de la fecha de pago; valor de mercado con tipos recientes disponibles."
+ },
+ "Uitsplitsing per valuta": {
+  "nl": "Uitsplitsing per valuta",
+  "en": "Breakdown by currency",
+  "es": "Desglose por divisa"
+ },
+ "Totaal in EUR · uitsplitsing per valuta": {
+  "nl": "Totaal in EUR · uitsplitsing per valuta",
+  "en": "Total in EUR · breakdown by currency",
+  "es": "Total en EUR · desglose por divisa"
+ },
+ "Ontvangen netto dividend in het gekozen jaar. Eerst het totaal in euro, daarna per valuta.": {
+  "nl": "Ontvangen netto dividend in het gekozen jaar. Eerst het totaal in euro, daarna per valuta.",
+  "en": "Net dividends received in the selected year. Total in euros first, then by currency.",
+  "es": "Dividendos netos recibidos en el año seleccionado. Primero el total en euros y después por divisa."
  }
 };
