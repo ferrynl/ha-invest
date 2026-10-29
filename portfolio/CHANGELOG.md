@@ -1,3 +1,11 @@
+# 0.31.0
+
+- Permanent kiesbaar demoprofiel met een eigen databasebestand onder data/demo/portfolio.sqlite3, gescheiden van de echte portefeuille en loginaccounts.
+- Demo met 10 brokers, 150 verschillende aandelen, 10 valuta’s, circa EUR 150.000 marktwaarde, twee jaar koershistorie, aankopen, verkopen en dividend. Alle bedragen en koersen zijn fictief.
+- Compacte overdracht van scripts en grotere dashboardantwoorden vermindert het laden van uitgebreide demo’s.
+- Profielkeuze in het linkermenu en een zichtbare demobanner. Wisselen herlaadt het profiel en voorkomt vermenging van lopende aanvragen.
+- Demo is alleen-lezen en werkt zonder marktproviderverzoeken. De bestaande aanmelding blijft vereist. De demo wordt automatisch aangemaakt en ververst alleen zijn eigen voorbeeldgegevens.
+
 # 0.30.2
 
 - Eurototalen sluiten posities met ontbrekende of ongeldige brongegevens uit voordat ze worden omgerekend. Een fout in een positie, transactie of dividendregel laat geldige, onafhankelijke regels beschikbaar. Gebruikersgegevens blijven behouden.

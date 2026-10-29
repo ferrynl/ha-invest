@@ -885,6 +885,16 @@
     "api/reports/combined?account_id=",
     "report-group-heading report-wide",
     "report-total-note report-wide",
-    "report-metric-heading"
+    "report-metric-heading",
+    "X-HomeInvest-Profile",
+    "basic",
+    "demo",
+    "demo-banner",
+    "demo-profile",
+    "personal",
+    "profile",
+    "profile-control",
+    "profile-personal",
+    "profile-select"
   ]
 }

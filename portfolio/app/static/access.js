@@ -1,11 +1,13 @@
 /* UI strings use the shared catalogue; pure Node tests retain Dutch defaults. */
 var ui=globalThis.HomeInvestTranslate||((value)=>value);
 /* Session credentials stay in HttpOnly cookies; only the CSRF token is in memory. */
+let currentProfile=typeof location!=='undefined'&&new URLSearchParams(location.search).get('profile')==='demo'?'demo':'personal';
 let accessSession=null,stateETag=null,stateETagUrl='';
 const nativeFetch=window.fetch.bind(window);
 async function apiFetch(url,options={}){
  const headers=new Headers(options.headers??{});
  headers.set('X-HomeInvest-Language',currentLanguage);
+ headers.set('X-HomeInvest-Profile',currentProfile);
  if(options.method==='POST'&&accessSession?.user?.csrf)headers.set('X-CSRF-Token',accessSession.user.csrf);
  if(url.startsWith('api/state')&&stateETag&&stateETagUrl===url)headers.set('If-None-Match',stateETag);
  const response=await nativeFetch(url,{...options,headers,cache:'no-store'});
@@ -15,6 +17,7 @@ async function apiFetch(url,options={}){
 }
 function lockApp(){
  closeAllPopups();
+ $('profile-control').hidden=true;$('demo-banner').hidden=true;
  languageUser=null;accessSession=null;stateETag=null;stateETagUrl='';state=null;stateRequest++;
  if(typeof clearCategoryOverview==='function')clearCategoryOverview();
  if(typeof clearTableControls==='function')clearTableControls();
@@ -45,8 +48,10 @@ function lockApp(){
 async function startSession(){
  const response=await nativeFetch('api/session',{cache:'no-store'});if(!response.ok)throw Error(ui('Verbinding mislukt.'));
  accessSession=await response.json();
+ if(currentProfile==='demo'&&accessSession.user)accessSession.user={...accessSession.user,role:'basic'};
  await initializeLanguage(accessSession.user);
  if(!accessSession.user){lockApp();return;}
+ document.body.classList.toggle('demo-profile',currentProfile==='demo');$('demo-banner').hidden=currentProfile!=='demo';$('profile-control').hidden=false;$('profile-select').value=currentProfile;
  document.body.classList.remove('booting','locked');document.getElementById('login-panel').hidden=true;
  const admin=accessSession.user.role==='admin';
  document.querySelector('[data-route="instellingen"]').hidden=!admin;document.querySelector('[data-route="imports"]').hidden=!admin;
@@ -60,6 +65,7 @@ async function startSession(){
  document.getElementById('disable-auth').hidden=!accessSession.enabled;
  document.getElementById('security-status').textContent=accessSession.enabled?ui('Ingeschakeld. Accounts en rollen worden door de server gecontroleerd.'):ui('Uitgeschakeld. Toegang loopt momenteel via Home Assistant.');
  document.getElementById('user-management').hidden=!admin||!accessSession.enabled;
+ if(currentProfile==='demo')homeCurrency='ALL';
  stateETag=null;rangeInitialized=false;showPage();await load();
  if(admin&&accessSession?.enabled)await loadUsers();
 }
@@ -72,7 +78,13 @@ async function loadUsers(){
  $('users-list').replaceChildren();for(const user of data.users){const row=document.createElement('tr');cell(row,user.username);cell(row,user.role);cell(row,user.active?ui('Actief'):ui('Inactief'));const action=cell(row,'');const button=document.createElement('button');button.type='button';button.textContent=ui('Bewerken');button.addEventListener('click',()=>{const form=$('user-form');form.elements.namedItem('id').value=user.id;form.elements.namedItem('username').value=user.username;form.elements.namedItem('username').readOnly=true;form.elements.namedItem('password').value='';form.elements.namedItem('password').required=false;form.elements.namedItem('role').value=user.role;form.elements.namedItem('active').checked=Boolean(user.active);$('users-feedback').textContent=ui('Laat het wachtwoord leeg om het bestaande te behouden.');openPopup('user-form-editor');});action.append(button);$('users-list').append(row);}
 }
 function newUser(){const form=$('user-form');form.reset();form.elements.namedItem('id').value='';form.elements.namedItem('username').readOnly=false;form.elements.namedItem('password').required=true;}
+function switchProfile(profile){
+ const target=new URL(location.href);target.searchParams.set('profile',profile);target.hash='home';location.assign(target.href);
+}
 function bindAccess(){
+ $('profile-select').addEventListener('change',()=>switchProfile($('profile-select').value));
+ $('profile-personal').addEventListener('click',()=>switchProfile('personal'));
+
  function formAction(id,callback,feedback){$(id).addEventListener('submit',async event=>{event.preventDefault();const button=event.target.querySelector('button[type="submit"]');button.disabled=true;try{await callback(event.target);}catch(error){$(feedback).textContent=error.message;}finally{button.disabled=false;}});}
  formAction('login-form',async form=>{await jsonAction('api/auth/login',Object.fromEntries(new FormData(form)));form.reset();await startSession();},'login-feedback');
  formAction('enable-auth',async form=>{await jsonAction('api/auth/enable',Object.fromEntries(new FormData(form)));form.reset();await startSession();$('security-feedback').textContent=ui('Gebruikersbeveiliging ingeschakeld.');},'security-feedback');

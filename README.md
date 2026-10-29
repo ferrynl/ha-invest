@@ -114,3 +114,9 @@ Rapporten openen als afzonderlijke pagina via het uitklapmenu links. De dividend
 De dividendkalender heeft een maandraster met navigatie en een detailagenda. Klik op een betaaldag om bedragen, aandelen en de basis van schattingen te zien. Op mobiel staan de details onder de kalender. Rapporten benutten de volledige beschikbare breedte.
 
 Rapporten starten met een gecombineerd totaal in EUR en tonen daarna de geselecteerde bronvaluta afzonderlijk. Ook filters voor broker, aandeel en bronvaluta gelden voor het totaal. Bedragen worden op de server met opgeslagen, gedateerde wisselkoersen omgerekend; ontbrekende omrekeningen worden vermeld. Onderliggende cijfers bevatten het totaal en de uitsplitsing als afzonderlijke regels en mogen niet bij elkaar worden opgeteld.
+
+## Demoprofiel
+
+Kies links bij **Profiel** voor **Demoportefeuille**. De demo toont 10 brokers, 150 aandelen in EUR, USD, GBP, CHF, JPY, CAD, AUD, HKD, DKK en SEK, met circa EUR 150.000 marktwaarde en twee jaar fictieve koersen en dividend. De demo is alleen-lezen en gebruikt geen live marktdata.
+
+De eigen portefeuille blijft in `data/portfolio.sqlite3`; de demo krijgt een afzonderlijk bestand `data/demo/portfolio.sqlite3` (in Home Assistant `/data/demo/portfolio.sqlite3`). Loginaccounts en sessies blijven van de eigen installatie. Bij de eerste opening wordt de demo aangemaakt; op een volgende dag worden alleen de fictieve demogegevens vernieuwd. Wissel terug via de profielkeuze of **Eigen portefeuille openen**. Het gekozen profiel staat in het pagina-adres en blijft daardoor bij herladen behouden.

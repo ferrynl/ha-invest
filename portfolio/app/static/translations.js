@@ -6039,5 +6039,65 @@ const UI_TRANSLATIONS = {
   "nl": "Ontbrekende of ongeldige dividendgegevens",
   "en": "Missing or invalid dividend data",
   "es": "Datos de dividendos ausentes o no válidos"
+ },
+ "Profiel": {
+  "nl": "Profiel",
+  "en": "Profile",
+  "es": "Perfil"
+ },
+ "Eigen portefeuille": {
+  "nl": "Eigen portefeuille",
+  "en": "My portfolio",
+  "es": "Mi cartera"
+ },
+ "Demoportefeuille": {
+  "nl": "Demoportefeuille",
+  "en": "Demo portfolio",
+  "es": "Cartera de demostración"
+ },
+ "Demoprofiel": {
+  "nl": "Demoprofiel",
+  "en": "Demo profile",
+  "es": "Perfil de demostración"
+ },
+ "Eigen portefeuille openen": {
+  "nl": "Eigen portefeuille openen",
+  "en": "Open my portfolio",
+  "es": "Abrir mi cartera"
+ },
+ "10 brokers · 150 aandelen · circa €150.000 · fictieve koersen · alleen-lezen": {
+  "nl": "10 brokers · 150 aandelen · circa €150.000 · fictieve koersen · alleen-lezen",
+  "en": "10 brokers · 150 stocks · around €150,000 · fictional prices · read-only",
+  "es": "10 brókeres · 150 acciones · unos 150.000 € · precios ficticios · solo lectura"
+ },
+ "Demo-opslag bevat onbekende gegevens.": {
+  "nl": "Demo-opslag bevat onbekende gegevens.",
+  "en": "Demo storage contains unrecognised data.",
+  "es": "El almacenamiento de demostración contiene datos desconocidos."
+ },
+ "Deze functie is niet beschikbaar in het demoprofiel.": {
+  "nl": "Deze functie is niet beschikbaar in het demoprofiel.",
+  "en": "This feature is not available in the demo profile.",
+  "es": "Esta función no está disponible en el perfil de demostración."
+ },
+ "Het demoprofiel is alleen-lezen. Kies je eigen portefeuille om gegevens te wijzigen.": {
+  "nl": "Het demoprofiel is alleen-lezen. Kies je eigen portefeuille om gegevens te wijzigen.",
+  "en": "The demo profile is read-only. Choose your own portfolio to make changes.",
+  "es": "El perfil de demostración es de solo lectura. Elige tu cartera para realizar cambios."
+ },
+ "Ongeldig profiel.": {
+  "nl": "Ongeldig profiel.",
+  "en": "Invalid profile.",
+  "es": "Perfil no válido."
+ },
+ "Ongeldige datum.": {
+  "nl": "Ongeldige datum.",
+  "en": "Invalid date.",
+  "es": "Fecha no válida."
+ },
+ "Fictieve demogegevens. Geen actuele koersen.": {
+  "nl": "Fictieve demogegevens. Geen actuele koersen.",
+  "en": "Fictional demo data. Prices are not live.",
+  "es": "Datos de demostración ficticios. Los precios no son actuales."
  }
 };

@@ -1,4 +1,5 @@
 """HTTP boundary: authorization is enforced here, independent of page visibility."""
+import gzip
 import hashlib
 import hmac
 import json
@@ -26,7 +27,7 @@ from history import portfolio_values
 from diagnostics import read_logs,record,DiagnosticError,ActionError
 from forex import overview as fx_overview,convert as fx_convert,history as fx_history
 
-def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested,integration_options=None):
+def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested,integration_options=None,enable_demo=True):
     cache.bind(store)
     def home_euro(account):
         from home_euro import overview
@@ -55,11 +56,16 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if kind=='application/json':
                 language=self.headers.get('X-HomeInvest-Language','nl')
                 content=json.dumps(localize(content,language),separators=(',',':')).encode()
+            compressible=public or (self.command=='GET' and kind=='application/json' and urlsplit(self.path).path not in ('/api/session','/api/users'))
+            compressed=compressible and 'gzip' in [part.strip().lower() for part in self.headers.get('Accept-Encoding','').split(',')]
+            if compressed:content=gzip.compress(content,mtime=0)
             digest='"'+hashlib.sha256(content).hexdigest()+'"' if etag else None
             if digest and self.headers.get('If-None-Match')==digest:code=304;content=b''
             self.send_response(code)
             self.send_header('Content-Type',kind);self.send_header('Content-Length',str(len(content)))
             self.send_header('Cache-Control','private, max-age=86400, immutable' if public else 'no-store')
+            if compressible:self.send_header('Vary','Accept-Encoding')
+            if compressed:self.send_header('Content-Encoding','gzip')
             self.send_header('X-Content-Type-Options','nosniff')
             self.send_header('Referrer-Policy','same-origin')
             self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https://www.google.com https://t0.gstatic.com https://t1.gstatic.com https://t2.gstatic.com https://t3.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'")
@@ -327,4 +333,9 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             except (KeyError,TypeError,sqlite3.Error):
                 record(store,'ERROR','web','request_failed','Aanvraag kon niet worden verwerkt.',{'endpoint':path})
                 self.respond({'error':'Aanvraag mislukt. Controleer velden, wachtwoord (12–128 tekens), rollen of het back-upbestand.'},400)
+    if enable_demo:
+        from demo import profile_handler
+        from cache import StateCache
+        import threading
+        return profile_handler(Handler,store,auth,lambda demo:make_handler(demo,auth,StateCache(store=demo),{'message':'Fictieve demogegevens. Geen actuele koersen.','last_attempt':None},interval,threading.Lock(),threading.Event(),None,enable_demo=False))
     return Handler

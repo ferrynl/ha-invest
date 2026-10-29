@@ -689,3 +689,9 @@ Rapporten starten met een gecombineerd totaal in EUR en tonen daarna de geselect
 Eurototalen berekenen de actuele stand zonder daghistorie opnieuw op te bouwen. Alleen Waardeontwikkeling vraagt volledige historie op. Rapportaanvragen hebben een wachttijd van maximaal 15 seconden; bij een fout verschijnt Opnieuw proberen. Berekeningen blokkeren andere opgeslagen dashboardweergaven niet.
 
 Rapporten sluiten onvolledige of ongeldige bronposities ook voor de eurototalen uit. Een onbetrouwbare transactie sluit de bijbehorende positieberekening uit; geldige dividendregels kunnen onafhankelijk worden meegenomen. Een onvolledig totaal wordt vermeld. Er worden geen boekingen verwijderd.
+
+## Demoprofiel
+
+Kies links bij **Profiel** voor **Demoportefeuille**. De demo toont 10 brokers, 150 aandelen in EUR, USD, GBP, CHF, JPY, CAD, AUD, HKD, DKK en SEK, met circa EUR 150.000 marktwaarde en twee jaar fictieve koersen en dividend. De demo is alleen-lezen en gebruikt geen live marktdata.
+
+De eigen portefeuille blijft in `data/portfolio.sqlite3`; de demo krijgt een afzonderlijk bestand `data/demo/portfolio.sqlite3` (in Home Assistant `/data/demo/portfolio.sqlite3`). Loginaccounts en sessies blijven van de eigen installatie. Bij de eerste opening wordt de demo aangemaakt; op een volgende dag worden alleen de fictieve demogegevens vernieuwd. Wissel terug via de profielkeuze of **Eigen portefeuille openen**. Het gekozen profiel staat in het pagina-adres en blijft daardoor bij herladen behouden.
