@@ -687,3 +687,5 @@ De dividendkalender heeft een maandraster met navigatie en een detailagenda. Kli
 Rapporten starten met een gecombineerd totaal in EUR en tonen daarna de geselecteerde bronvaluta afzonderlijk. Ook filters voor broker, aandeel en bronvaluta gelden voor het totaal. Bedragen worden op de server met opgeslagen, gedateerde wisselkoersen omgerekend; ontbrekende omrekeningen worden vermeld. Onderliggende cijfers bevatten het totaal en de uitsplitsing als afzonderlijke regels en mogen niet bij elkaar worden opgeteld.
 
 Eurototalen berekenen de actuele stand zonder daghistorie opnieuw op te bouwen. Alleen Waardeontwikkeling vraagt volledige historie op. Rapportaanvragen hebben een wachttijd van maximaal 15 seconden; bij een fout verschijnt Opnieuw proberen. Berekeningen blokkeren andere opgeslagen dashboardweergaven niet.
+
+Rapporten sluiten onvolledige of ongeldige bronposities ook voor de eurototalen uit. Een onbetrouwbare transactie sluit de bijbehorende positieberekening uit; geldige dividendregels kunnen onafhankelijk worden meegenomen. Een onvolledig totaal wordt vermeld. Er worden geen boekingen verwijderd.

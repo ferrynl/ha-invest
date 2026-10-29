@@ -69,6 +69,27 @@ class CombinedReportTests(unittest.TestCase):
   try:self.assertTrue(done.wait(1),'The report waited for the provider writer lock')
   finally:release.set();writer.join();request.join()
   self.assertEqual(errors,[])
+ def test_invalid_source_positions_are_excluded_without_changing_good_rows(self):
+  for field,bad in [('value',None),('cost','NaN'),('realised','Infinity'),('dividend','bad'),('quantity','')]:
+   for full in (False,True):
+    snapshot=self.store.state();snapshot['positions'][0][field]=bad;before=deepcopy(snapshot)
+    result=combined(self.store,snapshot,today=date(2026,10,3),include_history=full)
+    self.assertEqual(len(result['positions']),2,(field,full));self.assertEqual(result['excluded'][0]['symbol'],snapshot['positions'][0]['symbol'])
+    self.assertEqual(len(result['dividends']),3);self.assertEqual(snapshot,before)
+ def test_bad_trade_or_history_does_not_abort_the_other_positions(self):
+  for kind in ('trade','history'):
+   snapshot=self.store.state();symbol=snapshot['positions'][0]['symbol']
+   if kind=='trade':
+    next(row for row in snapshot['purchases'] if row['symbol']==symbol)['price']='NaN'
+   else:snapshot['positions'][0]['history']=[]
+   result=combined(self.store,snapshot,today=date(2026,10,3))
+   self.assertEqual(len(result['positions']),2);self.assertEqual(result['excluded'][0]['symbol'],symbol)
+ def test_invalid_dividend_rows_are_excluded_independently(self):
+  for field,bad in [('amount','NaN'),('amount','Infinity'),('amount','bad'),('paid_on','2026-99-01')]:
+   snapshot=self.store.state();snapshot['dividends'][0][field]=bad
+   result=combined(self.store,snapshot,today=date(2026,10,3))
+   self.assertEqual(len(result['dividends']),2);self.assertEqual(len(result['missing_dividends']),1)
+   self.assertEqual(len(result['positions']),2)
 import test_transactions as report_http_support
 class CombinedReportHttpTests(unittest.TestCase):
  setUp=report_http_support.TransactionHttpTests.setUp
@@ -76,7 +97,12 @@ class CombinedReportHttpTests(unittest.TestCase):
  request=report_http_support.TransactionHttpTests.request
  def test_combined_endpoint_cache_and_account_validation(self):
   status,result=self.request('/api/reports/combined?history=1')
-  self.assertEqual(status,200);self.assertEqual(result['positions'][0]['currency'],'EUR')
+  self.assertEqual(status,200);self.assertEqual(result['positions'],[]);self.assertEqual(len(result['excluded']),1)
   self.assertIn('history',result);self.assertIn('data_revision',result)
   self.assertEqual(self.request('/api/reports/combined?account_id=999')[0],400)
   self.assertEqual(self.request('/api/reports/combined?instrument=%5B1%5D')[0],400)
+
+ def test_primary_stylesheet_contains_report_layout(self):
+  status,css=self.request('/style.css?v=test')
+  self.assertEqual(status,200);self.assertIn(b'.report-metric-heading{grid-column:1/-1',css)
+  self.assertIn(b'.payment-grid',css)

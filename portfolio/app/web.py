@@ -77,6 +77,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             path=urlsplit(self.path).path
             if path in assets:
                 name,kind=assets[path];content=(static/name).read_bytes()
+                if path=='/style.css':content+=b'\n'+(static/'reports.css').read_bytes()
                 if path=='/':
                     language=(auth.user(self.token()) or {}).get('language','')
                     content=content.replace(b'__ASSET_VERSION__',APP_VERSION.encode()).replace(b'__ACCOUNT_LANGUAGE__',(language if language in LANGUAGES else '').encode())

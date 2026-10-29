@@ -1,3 +1,9 @@
+# 0.30.2
+
+- Eurototalen sluiten posities met ontbrekende of ongeldige brongegevens uit voordat ze worden omgerekend. Een fout in een positie, transactie of dividendregel laat geldige, onafhankelijke regels beschikbaar. Gebruikersgegevens blijven behouden.
+- Ongeldige dividendbedragen, datums en wisselkoersen worden overgeslagen. Het rapport vermeldt dat het totaal onvolledig is.
+- Rapportopmaak wordt samen met het hoofdstylesheet geleverd, zodat koppen boven hun bedragen blijven staan.
+
 # 0.30.1
 
 - Eurototalen berekenen alleen de actuele stand; volledige daghistorie wordt alleen voor Waardeontwikkeling opgebouwd. Historische kostprijs, verkopen, splitsingen en gedateerde wisselkoersen blijven behouden.

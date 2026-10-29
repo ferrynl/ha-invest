@@ -59,23 +59,35 @@ def combined(store, snapshot, account='all', instrument=None, currency='', inclu
     scoped = {**snapshot, **{key: [row for row in snapshot[key] if matches(row)] for key in ('positions','purchases','dividends')}}
     with store.read() as db:
         rates = [dict(row) for row in db.execute("SELECT base,quote,day,rate FROM fx_rates WHERE base='EUR' ORDER BY day")]
-    euro = build(scoped, rates, account, today, include_history=include_history)
+    valid_rates=[]
+    for row in rates:
+        try:
+            date.fromisoformat(row['day']);number=Decimal(row['rate'])
+            if number.is_finite() and number>0:valid_rates.append(row)
+        except (ArithmeticError,ValueError,TypeError,KeyError):continue
+    rates=valid_rates
+    euro = build(scoped, rates, account, today, include_history=include_history, skip_invalid=True)
     indexed = {}
     for row in rates:
         indexed.setdefault(row['quote'], []).append(row)
     days = {code: [row['day'] for row in rows] for code, rows in indexed.items()}
     dividends = []; missing = []; used = list(euro['fx_dates'])
     for row in scoped['dividends']:
-        if row['paid_on'] > today.isoformat():
-            continue
-        base, scale = unit(row['currency']); factor = scale; rate_day = row['paid_on']
-        if base != 'EUR':
-            index = bisect_right(days.get(base, []), row['paid_on']) - 1
-            if index < 0 or (date.fromisoformat(row['paid_on']) - date.fromisoformat(indexed[base][index]['day'])).days > 7:
-                missing.append(dict(symbol=row['symbol'], currency=row['currency'], day=row['paid_on'])); continue
-            fx = indexed[base][index]; factor /= Decimal(fx['rate']); rate_day = fx['day']
-        dividends.append({**row, 'native_currency':row['currency'], 'currency':'EUR', 'source_amount':row['amount'], 'amount':str(Decimal(row['amount']) * factor), 'fx_day':rate_day})
-        used.append(dict(currency=row['currency'], requested_on=row['paid_on'], rate_on=rate_day))
+        try:
+            parsed=date.fromisoformat(row['paid_on'])
+            if not Decimal(row['amount']).is_finite():raise ValueError()
+            if row['paid_on'] > today.isoformat():
+                continue
+            base, scale = unit(row['currency']); factor = scale; rate_day = row['paid_on']
+            if base != 'EUR':
+                index = bisect_right(days.get(base, []), row['paid_on']) - 1
+                if index < 0 or (date.fromisoformat(row['paid_on']) - date.fromisoformat(indexed[base][index]['day'])).days > 7:
+                    missing.append(dict(symbol=row['symbol'], currency=row['currency'], day=row['paid_on'])); continue
+                fx = indexed[base][index]; factor /= Decimal(fx['rate']); rate_day = fx['day']
+            dividends.append({**row, 'native_currency':row['currency'], 'currency':'EUR', 'source_amount':row['amount'], 'amount':str(Decimal(row['amount']) * factor), 'fx_day':rate_day})
+            used.append(dict(currency=row['currency'], requested_on=row['paid_on'], rate_on=rate_day))
+        except (ArithmeticError,ValueError,TypeError,KeyError):
+            missing.append(dict(symbol=row.get('symbol',''),currency=row.get('currency',''),day=row.get('paid_on',''),reason='Ontbrekende of ongeldige dividendgegevens'))
     result = dict(data_revision=snapshot.get('data_revision'), as_of=today.isoformat(), positions=[{**p, 'history':[]} for p in euro['positions']], dividends=dividends,
                   excluded=euro['excluded'], missing_dividends=missing, fx_dates=used)
     if include_history:

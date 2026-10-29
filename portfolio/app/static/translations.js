@@ -6024,5 +6024,20 @@ const UI_TRANSLATIONS = {
   "nl": "Ontvangen netto dividend in het gekozen jaar. Eerst het totaal in euro, daarna per valuta.",
   "en": "Net dividends received in the selected year. Total in euros first, then by currency.",
   "es": "Dividendos netos recibidos en el año seleccionado. Primero el total en euros y después por divisa."
+ },
+ "Onvolledig totaal: regels met ontbrekende of ongeldige gegevens overgeslagen.": {
+  "nl": "Onvolledig totaal: regels met ontbrekende of ongeldige gegevens overgeslagen.",
+  "en": "Incomplete total: rows with missing or invalid data excluded.",
+  "es": "Total incompleto: se excluyen filas con datos ausentes o no válidos."
+ },
+ "Ontbrekende of ongeldige positiegegevens": {
+  "nl": "Ontbrekende of ongeldige positiegegevens",
+  "en": "Missing or invalid position data",
+  "es": "Datos de posición ausentes o no válidos"
+ },
+ "Ontbrekende of ongeldige dividendgegevens": {
+  "nl": "Ontbrekende of ongeldige dividendgegevens",
+  "en": "Missing or invalid dividend data",
+  "es": "Datos de dividendos ausentes o no válidos"
  }
 };

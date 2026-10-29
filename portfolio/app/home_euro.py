@@ -7,7 +7,7 @@ from history import daily_values,with_dividends
 from diagnostics import record
 
 def identity(row):return tuple(row[k] for k in ('account_id','symbol','exchange','currency'))
-def build(snapshot,rates,account='all',today=None,include_history=True):
+def build(snapshot,rates,account='all',today=None,include_history=True,skip_invalid=False):
     today=today or date.today();owner=None
     if str(account)!='all':
         try:owner=int(account)
@@ -31,28 +31,41 @@ def build(snapshot,rates,account='all',today=None,include_history=True):
     for row in snapshot['dividends']:income.setdefault(identity(row),[]).append(row)
     for p in snapshot['positions']:
         if owner is not None and p['account_id']!=owner:continue
-        key=identity(p);lots=trades[key];dividends=income.get(key,[]);converted=[];converted_income=[];missing=[]
-        for row in lots:
-            fx=(Decimal(1),row['purchased_on']) if row['split_before'] else rate(p['currency'],row['purchased_on'])
-            if fx is None:missing.append(row['purchased_on']);continue
-            converted.append({**row,'price':str(Decimal(row['price'])*fx[0]),'currency':'EUR'})
-        for row in dividends:
-            fx=rate(p['currency'],row['paid_on'])
-            if fx is None:missing.append(row['paid_on']);continue
-            converted_income.append({**row,'amount':str(Decimal(row['amount'])*fx[0]),'currency':'EUR'})
-        current=rate(p['currency'],today.isoformat()) if p['value'] is not None and Decimal(p['value'])!=0 else (Decimal(1),today.isoformat())
-        if current is None:missing.append(today.isoformat())
-        if missing:
-            excluded.append({**{field:p[field] for field in ('symbol','exchange','currency','account_id','name','account_name')},'reason':'Geen opgeslagen wisselkoers','dates':sorted(set(missing))});continue
-        basis={point['day']:point for point in daily_values(converted,[],[],today,summary_only=not include_history)};history=[]
-        source_points=p['history'] if include_history else [{**p['history'][-1],'day':today.isoformat()}]
-        for point in source_points:
-            if point['day'] not in basis:continue
-            cost=basis[point['day']]
-            fx=rate(p['currency'],point['day']);value=Decimal(point['value'])*fx[0] if point['value'] is not None and fx else (Decimal(0) if point['value'] is not None and Decimal(point['value'])==0 else None)
-            history.append({**point,'cost':cost['cost'],'realised':cost['realised'],'invested':cost['invested'],'value':str(value) if value is not None else None,'price':str(Decimal(point['price'])*fx[0]) if point['price'] is not None and fx else None})
-        with_dividends(history,converted_income);last=history[-1];value=Decimal(p['value'])*current[0] if p['value'] is not None else None;cost=Decimal(last['cost']);realised=Decimal(last['realised']);received=Decimal(last['dividend'])
-        positions.append({**p,'native_currency':p['currency'],'currency':'EUR','fx_day':current[1],'cost':str(cost),'value':str(value) if value is not None else None,'dividend':str(received),'realised':str(realised),'gain':str(value-cost+realised) if value is not None else None,'total_gain':str(value-cost+realised+received) if value is not None else None,'history':history})
+        try:
+            if skip_invalid:
+                for field in ('quantity','cost','value','realised','dividend'):
+                    raw=p.get(field)
+                    if raw is None or str(raw).strip()=='' or not Decimal(str(raw)).is_finite():raise ValueError()
+                if Decimal(p['quantity'])<0:raise ValueError()
+            key=identity(p);lots=trades[key];dividends=income.get(key,[]);converted=[];converted_income=[];missing=[]
+            for row in lots:
+                if skip_invalid and (not Decimal(row['price']).is_finite() or not Decimal(row['quantity']).is_finite() or Decimal(row['quantity'])<=0):raise ValueError()
+                fx=(Decimal(1),row['purchased_on']) if row['split_before'] else rate(p['currency'],row['purchased_on'])
+                if fx is None:missing.append(row['purchased_on']);continue
+                converted.append({**row,'price':str(Decimal(row['price'])*fx[0]),'currency':'EUR'})
+            for row in dividends:
+                if skip_invalid:
+                    date.fromisoformat(row['paid_on'])
+                    if not Decimal(row['amount']).is_finite():raise ValueError()
+                fx=rate(p['currency'],row['paid_on'])
+                if fx is None:missing.append(row['paid_on']);continue
+                converted_income.append({**row,'amount':str(Decimal(row['amount'])*fx[0]),'currency':'EUR'})
+            current=rate(p['currency'],today.isoformat()) if p['value'] is not None and Decimal(p['value'])!=0 else (Decimal(1),today.isoformat())
+            if current is None:missing.append(today.isoformat())
+            if missing:
+                excluded.append({**{field:p[field] for field in ('symbol','exchange','currency','account_id','name','account_name')},'reason':'Geen opgeslagen wisselkoers','dates':sorted(set(missing))});continue
+            basis={point['day']:point for point in daily_values(converted,[],[],today,summary_only=not include_history)};history=[]
+            source_points=p['history'] if include_history else [{**p['history'][-1],'day':today.isoformat()}]
+            for point in source_points:
+                if point['day'] not in basis:continue
+                cost=basis[point['day']]
+                fx=rate(p['currency'],point['day']);value=Decimal(point['value'])*fx[0] if point['value'] is not None and fx else (Decimal(0) if point['value'] is not None and Decimal(point['value'])==0 else None)
+                history.append({**point,'cost':cost['cost'],'realised':cost['realised'],'invested':cost['invested'],'value':str(value) if value is not None else None,'price':str(Decimal(point['price'])*fx[0]) if point['price'] is not None and fx else None})
+            with_dividends(history,converted_income);last=history[-1];value=Decimal(p['value'])*current[0] if p['value'] is not None else None;cost=Decimal(last['cost']);realised=Decimal(last['realised']);received=Decimal(last['dividend'])
+            positions.append({**p,'native_currency':p['currency'],'currency':'EUR','fx_day':current[1],'cost':str(cost),'value':str(value) if value is not None else None,'dividend':str(received),'realised':str(realised),'gain':str(value-cost+realised) if value is not None else None,'total_gain':str(value-cost+realised+received) if value is not None else None,'history':history})
+        except (ArithmeticError,ValueError,TypeError,KeyError,IndexError):
+            if not skip_invalid:raise
+            excluded.append({**{field:p.get(field,'') for field in ('symbol','exchange','currency','account_id','name','account_name')},'reason':'Ontbrekende of ongeldige positiegegevens','dates':[]})
     maps=[{point['day']:point for point in p['history']} for p in positions];history=[]
     for day in sorted({day for rows in maps for day in rows}):
         active=[rows[day] for rows in maps if day in rows];known=[point for point in active if point['value'] is not None];value=sum((Decimal(p['value']) for p in known),Decimal(0)) if known else None
