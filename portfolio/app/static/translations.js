@@ -1,4 +1,4 @@
-/* Central UI catalogue: source Dutch, English, Spanish. Keep all three complete. */
+/* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
  "1 eenheid in EUR": {
   "nl": "1 eenheid in EUR",
@@ -5919,5 +5919,25 @@ const UI_TRANSLATIONS = {
   "nl": "Laatste 250 dagwaarden per valuta",
   "en": "Latest 250 daily values per currency",
   "es": "Últimos 250 valores diarios por divisa"
+ },
+ "Jaarlijkse dividendgroei": {
+  "nl": "Jaarlijkse dividendgroei",
+  "en": "Annual dividend growth",
+  "es": "Crecimiento anual del dividendo"
+ },
+ "Schatting op basis van de laatste twaalf maanden en jaarlijkse groei. Datums zijn indicatief. Aangekondigde uitkeringen zijn niet gekoppeld.": {
+  "nl": "Schatting op basis van de laatste twaalf maanden en jaarlijkse groei. Datums zijn indicatief. Aangekondigde uitkeringen zijn niet gekoppeld.",
+  "en": "Estimate based on the last twelve months and annual growth. Dates are indicative. Announced payments are not connected.",
+  "es": "Estimación basada en los últimos doce meses y crecimiento anual. Fechas orientativas. Sin conexión a pagos anunciados."
+ },
+ "Betaalagenda": {
+  "nl": "Betaalagenda",
+  "en": "Payment schedule",
+  "es": "Calendario de pagos"
+ },
+ "Betaaldatum, aandeel, bedrag en basisdatum.": {
+  "nl": "Betaaldatum, aandeel, bedrag en basisdatum.",
+  "en": "Payment date, stock, amount and reference date.",
+  "es": "Fecha de pago, acción, importe y fecha de referencia."
  }
 };

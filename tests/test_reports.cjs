@@ -70,3 +70,19 @@ const reply=(request,revision=1)=>request.resolve({ok:true,json:async()=>({data_
  context.clearReports();assert.equal(vm.runInContext('reportHistory',context),null);
  console.log('Report history ignores stale scopes and refreshes changed data revisions.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
+
+// Future payments retain their reference date and compound the selected scenario.
+{
+ const {reportPaymentCalendar}=require('../portfolio/app/static/reports.js');
+ const holding={...p,account_id:1,quantity:'10'};
+ const payment={...p,account_id:1,paid_on:'2026-01-12',amount:'100'};
+ let calendar=reportPaymentCalendar([holding],[payment],'2027','','EUR',5,'2026-10-29');
+ assert.equal(calendar.length,1);assert.equal(calendar[0].amount,105);assert.equal(calendar[0].day,'2027-01-12');assert.equal(calendar[0].basis,payment.paid_on);assert.equal(calendar[0].estimated,true);
+ assert.ok(Math.abs(reportPaymentCalendar([holding],[payment],'2028','','EUR',5,'2026-10-29')[0].amount-110.25)<1e-9);
+ assert.equal(reportPaymentCalendar([holding],[payment],'2027','','EUR',0,'2026-10-29')[0].amount,100);
+ assert.equal(reportPaymentCalendar([{...holding,quantity:'0'}],[payment],'2027','','EUR',5,'2026-10-29').length,0);
+ assert.equal(reportPaymentCalendar([holding],[payment],'2027','','USD',5,'2026-10-29').length,0);
+ assert.equal(reportPaymentCalendar([holding],[payment],'2026','','EUR',5,'2026-10-29')[0].estimated,false);
+ assert.equal(reportPaymentCalendar([holding],[{...payment,paid_on:'2024-01-12'}],'2027','','EUR',5,'2026-10-29').length,0);
+ console.log('Payment dates, compounded growth, currency filters, closed positions and stale history passed.');
+}

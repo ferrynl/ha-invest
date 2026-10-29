@@ -843,6 +843,14 @@
     "◉",
     "◎",
     "◫",
-    "group"
+    "group",
+    "[data-route=rapporten]",
+    "rapporten-",
+    "#rapporten-",
+    "% / ",
+    "-02-28",
+    "report-growth",
+    "report-growth-filter",
+    "% · "
   ]
 }

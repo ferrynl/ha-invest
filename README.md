@@ -108,3 +108,5 @@ Kies de huidige portefeuille, resultaat per aandeel, dividend per maand of divid
 Rapporten slaan regels met ontbrekende of ongeldige gegevens over en tonen hoeveel regels niet zijn meegenomen. Totalen gelden alleen voor de meegenomen regels. Een dividenduitkering kan worden meegenomen zonder actuele aandelenkoers. De opgeslagen transacties blijven behouden.
 
 Het rapportencentrum bevat tien analyses met interactieve grafieken, waaronder waardeontwikkeling, spreiding, resultaatopbouw, dividendkalender en sector- en landenverdeling. Open **Onderliggende cijfers** voor de bijbehorende tabel.
+
+Rapporten openen als afzonderlijke pagina via het uitklapmenu links. De dividendkalender toont per aandeel de betaaldatum en ontvangen of geschatte bedragen. Kies tot vijf jaar vooruit en 0%, 3%, 5% of 10% jaarlijkse groei. Standaard is 3% een scenario-aanname, geen gemeten groei. De basis is het netto ontvangen bedrag in de afgelopen twaalf maanden voor nog open posities, zonder correctie voor gewijzigd bezit, belasting of toekomstige valuta. Datums zijn indicatief; aangekondigde uitkeringen zijn niet gekoppeld.

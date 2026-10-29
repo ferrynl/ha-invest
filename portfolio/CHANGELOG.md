@@ -1,3 +1,9 @@
+# 0.29.0
+
+- Elk rapport heeft een eigen pagina-adres; het linkermenu toont alle tien rapporten zodra Rapporten wordt geopend.
+- Dividendkalender toont betaaldatums en aandelen, ontvangen bedragen en toekomstige schattingen met instelbare jaarlijkse groei (standaard 3%).
+- Schattingen gebruiken betalingen uit de afgelopen twaalf maanden voor nog open posities. De basisdatum blijft zichtbaar; toekomstige datums zijn indicatief en aangekondigde uitkeringen zijn niet gekoppeld.
+
 # 0.28.0
 
 - Professioneel rapportencentrum met tien analyses: overzicht, waardeontwikkeling, spreiding, winnaars en verliezers, resultaatopbouw, maanddividend, dividendbetalers, dividendkalender, sectoren en landen.
