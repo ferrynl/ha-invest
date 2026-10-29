@@ -57,9 +57,9 @@ def combined(store, snapshot, account='all', instrument=None, currency='', inclu
     def matches(row):
         return (owner is None or row['account_id'] == owner) and (not currency or row['currency'] == currency) and (instrument is None or [row[k] for k in ('symbol','exchange','currency')] == instrument)
     scoped = {**snapshot, **{key: [row for row in snapshot[key] if matches(row)] for key in ('positions','purchases','dividends')}}
-    with store.connect() as db:
+    with store.read() as db:
         rates = [dict(row) for row in db.execute("SELECT base,quote,day,rate FROM fx_rates WHERE base='EUR' ORDER BY day")]
-    euro = build(scoped, rates, account, today)
+    euro = build(scoped, rates, account, today, include_history=include_history)
     indexed = {}
     for row in rates:
         indexed.setdefault(row['quote'], []).append(row)

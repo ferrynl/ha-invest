@@ -685,3 +685,5 @@ Rapporten openen als afzonderlijke pagina via het uitklapmenu links. De dividend
 De dividendkalender heeft een maandraster met navigatie en een detailagenda. Klik op een betaaldag om bedragen, aandelen en de basis van schattingen te zien. Op mobiel staan de details onder de kalender. Rapporten benutten de volledige beschikbare breedte.
 
 Rapporten starten met een gecombineerd totaal in EUR en tonen daarna de geselecteerde bronvaluta afzonderlijk. Ook filters voor broker, aandeel en bronvaluta gelden voor het totaal. Bedragen worden op de server met opgeslagen, gedateerde wisselkoersen omgerekend; ontbrekende omrekeningen worden vermeld. Onderliggende cijfers bevatten het totaal en de uitsplitsing als afzonderlijke regels en mogen niet bij elkaar worden opgeteld.
+
+Eurototalen berekenen de actuele stand zonder daghistorie opnieuw op te bouwen. Alleen Waardeontwikkeling vraagt volledige historie op. Rapportaanvragen hebben een wachttijd van maximaal 15 seconden; bij een fout verschijnt Opnieuw proberen. Berekeningen blokkeren andere opgeslagen dashboardweergaven niet.

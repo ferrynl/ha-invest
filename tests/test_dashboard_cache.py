@@ -88,6 +88,29 @@ class DashboardCacheTests(unittest.TestCase):
    first=self.cache.get(self.store.state);self.assertEqual(self.cache.entries,{})
    self.assertEqual(self.cache.get(Mock(side_effect=AssertionError('Use the database'))),first)
 
+ def test_slow_report_does_not_block_cached_home_and_builds_once_per_slot(self):
+  import threading
+  self.cache.get(self.store.state);started=threading.Event();release=threading.Event();read_done=threading.Event();results=[];errors=[];calls=[]
+  def slow():
+   calls.append(1);started.set();release.wait(3);return {'report':True}
+  def report():
+   try:results.append(self.cache.derived('slow-report',slow))
+   except Exception as error:errors.append(error)
+  def home():
+   try:self.cache.get(self.store.state)
+   except Exception as error:errors.append(error)
+   finally:read_done.set()
+  first=threading.Thread(target=report);second=threading.Thread(target=report);first.start();self.assertTrue(started.wait(1));second.start();reader=threading.Thread(target=home);reader.start()
+  try:self.assertTrue(read_done.wait(1),'A report held the shared dashboard cache lock')
+  finally:release.set();first.join();second.join();reader.join()
+  self.assertEqual(errors,[]);self.assertEqual(len(calls),1);self.assertEqual(results,[{'report':True},{'report':True}])
+ def test_invalidated_inflight_build_is_not_saved_as_current(self):
+  def invalidated():
+   self.cache.invalidate();return {'obsolete':True}
+  self.cache.derived('report',invalidated)
+  self.assertNotIn('report',self.cache.entries)
+  self.assertEqual(self.cache.derived('report',lambda:{'fresh':True}),{'fresh':True})
+
 import test_transactions as support
 class DashboardCacheHttpTests(unittest.TestCase):
  setUp=support.TransactionHttpTests.setUp

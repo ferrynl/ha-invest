@@ -7,7 +7,7 @@ from history import daily_values,with_dividends
 from diagnostics import record
 
 def identity(row):return tuple(row[k] for k in ('account_id','symbol','exchange','currency'))
-def build(snapshot,rates,account='all',today=None):
+def build(snapshot,rates,account='all',today=None,include_history=True):
     today=today or date.today();owner=None
     if str(account)!='all':
         try:owner=int(account)
@@ -44,8 +44,9 @@ def build(snapshot,rates,account='all',today=None):
         if current is None:missing.append(today.isoformat())
         if missing:
             excluded.append({**{field:p[field] for field in ('symbol','exchange','currency','account_id','name','account_name')},'reason':'Geen opgeslagen wisselkoers','dates':sorted(set(missing))});continue
-        basis={point['day']:point for point in daily_values(converted,[],[],today)};history=[]
-        for point in p['history']:
+        basis={point['day']:point for point in daily_values(converted,[],[],today,summary_only=not include_history)};history=[]
+        source_points=p['history'] if include_history else [{**p['history'][-1],'day':today.isoformat()}]
+        for point in source_points:
             if point['day'] not in basis:continue
             cost=basis[point['day']]
             fx=rate(p['currency'],point['day']);value=Decimal(point['value'])*fx[0] if point['value'] is not None and fx else (Decimal(0) if point['value'] is not None and Decimal(point['value'])==0 else None)
@@ -71,5 +72,5 @@ def prepare_portfolio_rates(store,snapshot,account='all'):
 def overview(store,snapshot,account='all',fetch_rates=True):
     if str(account)!='all' and not any(str(a['id'])==str(account) for a in snapshot['accounts']):raise ValueError('Brokeraccount niet gevonden.')
     if fetch_rates:prepare_portfolio_rates(store,snapshot,account)
-    with store.connect() as db:rates=[dict(row) for row in db.execute("SELECT base,quote,day,rate FROM fx_rates WHERE base='EUR'")]
+    with store.read() as db:rates=[dict(row) for row in db.execute("SELECT base,quote,day,rate FROM fx_rates WHERE base='EUR'")]
     return build(snapshot,rates,account)

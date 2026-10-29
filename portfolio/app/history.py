@@ -3,9 +3,9 @@ from datetime import date, timedelta
 from decimal import Decimal
 from diagnostics import ActionError
 
-def daily_values(purchases, daily, quotes, today=None):
+def daily_values(purchases, daily, quotes, today=None, summary_only=False):
     end = today or date.today()
-    start = date.fromisoformat(min(p['purchased_on'] for p in purchases))
+    start = end if summary_only else date.fromisoformat(min(p['purchased_on'] for p in purchases))
     prices = {r['day']: r['price'] for r in daily}
     # Prefer historical daily closes to old intraday observations on past days.
     quote_days = {q['quoted_at'][:10]: q['price'] for q in sorted(quotes, key=lambda q: q['quoted_at'])}

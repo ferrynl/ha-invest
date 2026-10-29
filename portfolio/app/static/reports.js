@@ -57,18 +57,17 @@ function reportAnalytics(positions,dividends,year,stock='',currency=''){
  })};
 }
 function reportOptions(id,items,label){const select=$(id),previous=select.value;select.replaceChildren();for(const [value,text] of [['',label],...items]){const option=homeNode('option',text);option.value=value;select.append(option);}if(items.some(([value])=>value===previous))select.value=previous;}
-function clearReports(){reportCombinedGeneration++;reportCombined=null;reportCombinedKey='';reportCombinedPending=false;reportCombinedError=false;reportHistoryGeneration++;reportHistory=null;reportHistoryKey='';reportHistoryPending=false;reportHistoryError=false;for(const id of ['report-charts','report-insights','report-metrics','report-rows','report-stock','report-currency'])$(id).replaceChildren();$('report-status').textContent='';$('report-count').textContent='';$('report-year').replaceChildren();}
+function clearReports(){reportCombinedRequest?.cancel();reportHistoryRequest?.cancel();reportCombinedRefreshes=0;reportHistoryRefreshes=0;reportCombinedGeneration++;reportCombined=null;reportCombinedKey='';reportCombinedPending=false;reportCombinedError=false;reportHistoryGeneration++;reportHistory=null;reportHistoryKey='';reportHistoryPending=false;reportHistoryError=false;for(const id of ['report-charts','report-insights','report-metrics','report-rows','report-stock','report-currency'])$(id).replaceChildren();$('report-status').textContent='';$('report-count').textContent='';$('report-year').replaceChildren();}
 function reportHistoryScope(){return JSON.stringify([String(currentBroker),state?.data_revision,$('report-stock').value,$('report-currency').value]);}
 async function loadReportHistory(){
  if(!state||!accessSession?.user||reportType!=='growth')return;
  const key=reportHistoryScope();if(key===reportHistoryKey&&(reportHistory||reportHistoryPending||reportHistoryError))return;
  const source=state,generation=++reportHistoryGeneration;reportHistoryKey=key;reportHistory=null;reportHistoryPending=true;reportHistoryError=false;
  try{
-  const response=await apiFetch('api/reports/history?account_id='+encodeURIComponent(currentBroker)+'&instrument='+encodeURIComponent($('report-stock').value)+'&currency='+encodeURIComponent($('report-currency').value));
-  if(!response.ok)throw Error();const result=await response.json();
+  reportHistoryRequest?.cancel();const request=reportHistoryRequest=reportRequest('api/reports/history?account_id='+encodeURIComponent(currentBroker)+'&instrument='+encodeURIComponent($('report-stock').value)+'&currency='+encodeURIComponent($('report-currency').value));const result=await request.promise;
   if(generation!==reportHistoryGeneration||!accessSession?.user||key!==reportHistoryScope())return;
-  if(result.data_revision!==source.data_revision){reportHistoryKey='';stateETag=null;await load();return;}
-  reportHistory=result;
+  if(result.data_revision!==source.data_revision){if(reportHistoryRefreshes>=1)throw Error();reportHistoryRefreshes++;reportHistoryKey='';stateETag=null;await load();return;}
+  reportHistoryRefreshes=0;reportHistory=result;
  }catch{if(generation===reportHistoryGeneration)reportHistoryError=true;}
  finally{if(generation===reportHistoryGeneration){reportHistoryPending=false;if(state&&location.hash.startsWith('#rapporten'))renderReports();}}
 }
@@ -92,7 +91,7 @@ function renderReports(){
  $('report-metrics').replaceChildren();$('report-charts').replaceChildren();$('report-insights').replaceChildren();
  const combinedKey=reportCombinedScope();if(reportCombinedKey!==combinedKey){reportCombined=null;reportCombinedError=false;}
  if(reportCombined){const total=reportAnalytics(reportCombined.positions,reportCombined.dividends,year).groups;for(const g of total){g.label=ui('Totaal alle valuta’s in EUR');g.combined=true;g.reportSource=reportCombined;}groups=[...total,...groups];}
- else{reportMetric(ui('Totaal alle valuta’s in EUR'),reportCombinedError?ui('Niet beschikbaar'):ui('Laden…'),ui('Totaal in euro laden…'));const box=homeNode('section',undefined,'panel report-wide');box.append(homeNode('h3',ui('Totaal alle valuta’s in EUR')),homeNode('p',reportCombinedError?ui('Totaal laden mislukt. Probeer opnieuw.'):ui('Totaal in euro laden…')));if(reportCombinedError){const button=homeNode('button',ui('Opnieuw proberen'),'secondary');button.type='button';button.onclick=()=>{reportCombinedKey='';reportCombinedError=false;renderReports();};box.append(button);}$('report-charts').append(box);if(!reportCombinedError)loadReportCombined();}
+ else{reportMetric(ui('Totaal alle valuta’s in EUR'),reportCombinedError?ui('Niet beschikbaar'):ui('Laden…'),ui('Totaal in euro laden…'));const box=homeNode('section',undefined,'panel report-wide');box.append(homeNode('h3',ui('Totaal alle valuta’s in EUR')),homeNode('p',reportCombinedError?ui('Totaal laden mislukt. Probeer opnieuw.'):ui('Totaal in euro laden…')));if(reportCombinedError){const button=homeNode('button',ui('Opnieuw proberen'),'secondary');button.type='button';button.onclick=()=>{reportCombinedKey='';reportCombinedError=false;reportCombinedRefreshes=0;renderReports();};box.append(button);}$('report-charts').append(box);if(!reportCombinedError)loadReportCombined();}
  const coverage=reportCombined?reportCombined.excluded.length+reportCombined.missing_dividends.length:0;
  if(reportCombined&&!groups.some(g=>g.combined)){reportMetric(ui('Totaal alle valuta’s in EUR'),coverage?ui('Onvolledig'):ui('Geen gegevens voor deze selectie.'),ui('Totaal alle valuta’s in EUR'));$('report-charts').append(homeNode('h3',ui('Totaal alle valuta’s in EUR'),'report-group-heading report-wide'),homeNode('p',coverage?ui('Onvolledig totaal: regels zonder wisselkoers overgeslagen.'):ui('Geen gegevens voor deze selectie.'),'report-total-note report-wide'));}
  if(reportCombined){const note=homeNode('p',(coverage?ui('Onvolledig totaal: regels zonder wisselkoers overgeslagen.')+' '+coverage+' / ':'')+ui('Dividend tegen de koers op betaaldatum; marktwaarde tegen beschikbare recente koersen.')+' '+ui('Koersdatum')+': '+dayLabel(reportCombined.fx_dates.map(p=>p.rate_on).sort().at(-1)||reportCombined.as_of),'report-total-note report-wide');$('report-charts').append(note);}
@@ -142,7 +141,7 @@ function renderReportHistory(){
  const key=reportHistoryScope();if(reportHistoryKey!==key){reportHistory=null;reportHistoryError=false;reportHistoryPending=false;}
  if(!reportHistory){
   const message=homeNode('div',undefined,'panel report-wide');message.append(homeNode('p',reportHistoryError?ui('Historie laden mislukt. Probeer het opnieuw.'):ui('Opgeslagen koershistorie laden…')));
-  if(reportHistoryError){const button=homeNode('button',ui('Opnieuw proberen'),'secondary');button.type='button';button.onclick=()=>{reportHistoryKey='';reportHistoryError=false;renderReports();};message.append(button);}
+  if(reportHistoryError){const button=homeNode('button',ui('Opnieuw proberen'),'secondary');button.type='button';button.onclick=()=>{reportHistoryKey='';reportHistoryError=false;reportHistoryRefreshes=0;renderReports();};message.append(button);}
   $('report-charts').append(message);if(!reportHistoryError)loadReportHistory();return;
  }
  for(const g of [...(reportCombined?.history?[{...reportCombined.history,label:ui('Totaal alle valuta’s in EUR')}]:[]),...reportHistory.currencies]){$('report-charts').append(homeNode('h3',g.label||ui('Uitsplitsing per valuta')+' · '+g.currency,'report-group-heading report-wide'));const points=reportHistoryWindow(g,reportRange);const card=reportChartCard(g,ui('Marktwaarde naast kostprijs'),ui('Bekende dagwaarden; aankopen en verkopen beïnvloeden de waarde. Ontbrekende posities tellen die dag niet mee.'),true);reportLine(card,points,[{key:'value',name:ui('Marktwaarde'),color:'#47dcb0'},{key:'cost',name:ui('Openstaande kostprijs'),color:'#70b7ff'}],g.currency);
@@ -217,8 +216,18 @@ function reportCombinedScope(){return JSON.stringify([String(currentBroker),stat
 async function loadReportCombined(){
  if(!state||!accessSession?.user)return;const key=reportCombinedScope();if(key===reportCombinedKey&&(reportCombined||reportCombinedPending||reportCombinedError))return;
  const source=state,generation=++reportCombinedGeneration;reportCombinedKey=key;reportCombinedPending=true;reportCombinedError=false;reportCombined=null;
- try{const response=await apiFetch('api/reports/combined?account_id='+encodeURIComponent(currentBroker)+'&instrument='+encodeURIComponent($('report-stock').value)+'&currency='+encodeURIComponent($('report-currency').value)+'&history='+(reportType==='growth'?'1':'0'));if(!response.ok)throw Error();const data=await response.json();if(generation!==reportCombinedGeneration||!accessSession?.user||key!==reportCombinedScope())return;
- if(data.data_revision!==source.data_revision){reportCombinedKey='';stateETag=null;await load();return;}reportCombined=data;
+ try{reportCombinedRequest?.cancel();const request=reportCombinedRequest=reportRequest('api/reports/combined?account_id='+encodeURIComponent(currentBroker)+'&instrument='+encodeURIComponent($('report-stock').value)+'&currency='+encodeURIComponent($('report-currency').value)+'&history='+(reportType==='growth'?'1':'0'));const data=await request.promise;if(generation!==reportCombinedGeneration||!accessSession?.user||key!==reportCombinedScope())return;
+ if(data.data_revision!==source.data_revision){if(reportCombinedRefreshes>=1)throw Error();reportCombinedRefreshes++;reportCombinedKey='';stateETag=null;await load();return;}reportCombinedRefreshes=0;reportCombined=data;
  }catch{if(generation===reportCombinedGeneration)reportCombinedError=true;}
  finally{if(generation===reportCombinedGeneration){reportCombinedPending=false;if(state&&location.hash.startsWith('#rapporten'))renderReports();}}
+}
+
+let reportCombinedRequest=null,reportHistoryRequest=null,reportCombinedRefreshes=0,reportHistoryRefreshes=0;
+function reportRequest(url){
+ const controller=typeof AbortController==='function'?new AbortController():null;let timer,rejectWait;
+ const pending=(async()=>{const response=await apiFetch(url,controller?{signal:controller.signal}:{});if(!response.ok)throw Error();return await response.json();})();
+ const stopped=new Promise((resolve,reject)=>{rejectWait=reject;});
+ const cancel=()=>{controller?.abort();rejectWait(Error());};
+ if(typeof setTimeout==='function')timer=setTimeout(cancel,15000);
+ return {cancel,promise:Promise.race([pending,stopped]).finally(()=>{if(timer!==undefined)clearTimeout(timer);})};
 }

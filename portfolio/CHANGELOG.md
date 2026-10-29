@@ -1,3 +1,9 @@
+# 0.30.1
+
+- Eurototalen berekenen alleen de actuele stand; volledige daghistorie wordt alleen voor Waardeontwikkeling opgebouwd. Historische kostprijs, verkopen, splitsingen en gedateerde wisselkoersen blijven behouden.
+- Langzame rapportberekeningen blokkeren andere dashboardpagina’s niet langer via de gedeelde cache. Het lezen van rapportwisselkoersen wacht niet op de providervergrendeling.
+- Rapportaanvragen stoppen na 15 seconden met een herhaaloptie. Verouderde aanvragen worden afgebroken en gewijzigde gegevens veroorzaken geen eindeloze herlaadlus.
+
 # 0.30.0
 
 - Alle rapporten beginnen met het totaal van alle geselecteerde valuta’s omgerekend naar EUR, gevolgd door de uitsplitsing per bronvaluta. Dit geldt ook voor grafieken, dividendkalender, waardehistorie en onderliggende cijfers.

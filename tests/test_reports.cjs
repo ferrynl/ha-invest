@@ -116,3 +116,21 @@ console.log('Calendar month alignment and leap-year checks passed.');
   console.log('Combined totals ignore stale broker responses and changed data revisions.');
  })().catch(error=>{console.error(error);process.exitCode=1;});
 }
+// A hanging server must leave loading after the deadline; revision churn is bounded.
+{
+ const timeoutFields=new Map(),timers=[];let requests=0,refreshes=0;
+ const timeoutContext=vm.createContext({state:{data_revision:1},currentBroker:'all',accessSession:{user:{}},location:{hash:'#rapporten'},AbortController,
+  setTimeout:callback=>{timers.push(callback);return timers.length;},clearTimeout:()=>{},
+  $:id=>{if(!timeoutFields.has(id))timeoutFields.set(id,{value:'',textContent:'',replaceChildren(){}});return timeoutFields.get(id);},
+  apiFetch:()=>{requests++;return new Promise(()=>{});},load:async()=>{refreshes++;}});
+ vm.runInContext(fs.readFileSync(path.join(__dirname,'../portfolio/app/static/reports.js'),'utf8'),timeoutContext);
+ vm.runInContext('renderReports=()=>{};',timeoutContext);
+ (async()=>{
+  const pending=timeoutContext.loadReportCombined();timers.shift()();await pending;
+  assert.equal(vm.runInContext('reportCombinedPending',timeoutContext),false);assert.equal(vm.runInContext('reportCombinedError',timeoutContext),true);
+  timeoutContext.clearReports();timeoutContext.apiFetch=async()=>{requests++;return {ok:true,json:async()=>({data_revision:2})};};
+  await timeoutContext.loadReportCombined();await timeoutContext.loadReportCombined();await timeoutContext.loadReportCombined();
+  assert.equal(refreshes,1);assert.equal(requests,3);assert.equal(vm.runInContext('reportCombinedError',timeoutContext),true);
+  console.log('Hanging totals time out and repeated revision changes do not reload endlessly.');
+ })().catch(error=>{console.error(error);process.exitCode=1;});
+}

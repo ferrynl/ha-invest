@@ -37,6 +37,38 @@ class CombinedReportTests(unittest.TestCase):
   self.assertIn('DOLLAR',[p['symbol'] for p in result['dividends']])
   with self.store.connect() as db:db.execute("DELETE FROM fx_rates WHERE quote='USD' AND day<='2026-10-02'")
   result=self.build();self.assertIn('DOLLAR',[p['symbol'] for p in result['missing_dividends']])
+ def test_summary_matches_history_without_expanding_calendar_days(self):
+  from unittest.mock import patch
+  from history import daily_values
+  self.store.add(dict(symbol='DOLLAR',exchange='TEST',currency='USD',name='DOLLAR',quantity='1',price='120',purchased_on='2026-10-02',side='SELL'))
+  full=self.build(include_history=True)
+  with patch('home_euro.daily_values',wraps=daily_values) as daily:
+   summary=self.build()
+  self.assertTrue(all(call.kwargs.get('summary_only') for call in daily.call_args_list))
+  for result in (summary,full):
+   self.assertEqual(result['dividends'],full['dividends'])
+   self.assertEqual([{k:p[k] for k in ('symbol','cost','value','realised','dividend')} for p in result['positions']], [{k:p[k] for k in ('symbol','cost','value','realised','dividend')} for p in full['positions']])
+ def test_summary_replays_sales_and_splits_with_the_same_cost_basis(self):
+  from history import daily_values
+  lots=[dict(purchased_on='2016-01-01',quantity='2',price='100',side='BUY',split_before=''),
+        dict(purchased_on='2026-10-01',quantity='4',price='1',side='BUY',split_before='2'),
+        dict(purchased_on='2026-10-02',quantity='1',price='120',side='SELL',split_before='')]
+  full=daily_values(lots,[],[],date(2026,10,3))
+  summary=daily_values(lots,[],[],date(2026,10,3),summary_only=True)
+  self.assertEqual(summary,[full[-1]]);self.assertEqual(summary[0]['cost'],'150');self.assertEqual(summary[0]['realised'],'70')
+ def test_summary_does_not_wait_for_the_provider_writer_lock(self):
+  import threading
+  snapshot=self.store.state();held=threading.Event();release=threading.Event();done=threading.Event();errors=[]
+  def provider():
+   with self.store.lock:held.set();release.wait(3)
+  def reader():
+   try:combined(self.store,snapshot,today=date(2026,10,3))
+   except Exception as error:errors.append(error)
+   finally:done.set()
+  writer=threading.Thread(target=provider);writer.start();self.assertTrue(held.wait(1));request=threading.Thread(target=reader);request.start()
+  try:self.assertTrue(done.wait(1),'The report waited for the provider writer lock')
+  finally:release.set();writer.join();request.join()
+  self.assertEqual(errors,[])
 import test_transactions as report_http_support
 class CombinedReportHttpTests(unittest.TestCase):
  setUp=report_http_support.TransactionHttpTests.setUp
