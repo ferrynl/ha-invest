@@ -1,3 +1,10 @@
+# 0.31.4
+
+- Dashboard aanpassen schakelt nu een bewerkmodus op Home zelf in. Elk onderdeel krijgt een eigen versleepgreep, verplaatsknoppen en tandwiel voor de module-instellingen.
+- Modules direct op het dashboard verplaatsen met muis, aanraking of pijltjestoetsen; automatisch scrollen tijdens het slepen. De cijfers en grafieken blijven zichtbaar tijdens het indelen.
+- Zichtbaarheid en breedte per onderdeel aanpassen via het eigen tandwiel, met directe voorvertoning. Uitgeschakelde onderdelen blijven in de bewerkmodus als herkenbare, instelbare plekken beschikbaar.
+- Indeling opslaan, Annuleren en Standaardindeling staan op het dashboard zelf. Annuleren en navigeren herstellen de opgeslagen indeling. De bestaande opslag per gebruiker en profiel blijft behouden.
+
 # 0.31.3
 
 - Home bestaat uit tien losse modules: valutakeuze, vier afzonderlijke cijferkaarten, koers- en valuta-informatie, grafiek, grootste posities, resultaten en positietabel.

@@ -6224,5 +6224,50 @@ const UI_TRANSLATIONS = {
   "nl": "Indeling opslaan mislukt. Probeer opnieuw.",
   "en": "Could not save the layout. Try again.",
   "es": "No se pudo guardar el diseño. Inténtalo de nuevo."
+ },
+ "Bekijk je wijzigingen op het dashboard. Kies daarna Indeling opslaan om alles te bewaren.": {
+  "nl": "Bekijk je wijzigingen op het dashboard. Kies daarna Indeling opslaan om alles te bewaren.",
+  "en": "Preview your changes on the dashboard. Then choose Save layout to keep everything.",
+  "es": "Revisa los cambios en el panel. Después elige Guardar diseño para conservarlos."
+ },
+ "Module tonen": {
+  "nl": "Module tonen",
+  "en": "Show module",
+  "es": "Mostrar módulo"
+ },
+ "Module-instellingen": {
+  "nl": "Module-instellingen",
+  "en": "Module settings",
+  "es": "Ajustes del módulo"
+ },
+ "Toepassen": {
+  "nl": "Toepassen",
+  "en": "Apply",
+  "es": "Aplicar"
+ },
+ "Indeling laden mislukt. Probeer Dashboard aanpassen opnieuw.": {
+  "nl": "Indeling laden mislukt. Probeer Dashboard aanpassen opnieuw.",
+  "en": "Could not load the layout. Choose Customize dashboard again.",
+  "es": "No se pudo cargar el diseño. Vuelve a elegir Personalizar panel."
+ },
+ "Instellingen voor {name}": {
+  "nl": "Instellingen voor {name}",
+  "en": "Settings for {name}",
+  "es": "Ajustes de {name}"
+ },
+ "Uitgeschakeld": {
+  "nl": "Uitgeschakeld",
+  "en": "Disabled",
+  "es": "Desactivado"
+ },
+ "Versleep of gebruik de pijltjestoetsen": {
+  "nl": "Versleep of gebruik de pijltjestoetsen",
+  "en": "Drag or use the arrow keys",
+  "es": "Arrastra o usa las teclas de flecha"
+ },
+ "Versleep onderdelen op je dashboard. Gebruik de instellingenknop per onderdeel.": {
+  "nl": "Versleep onderdelen op je dashboard. Gebruik de instellingenknop per onderdeel.",
+  "en": "Drag items on your dashboard. Use each item’s settings button.",
+  "es": "Arrastra elementos en tu panel. Usa el botón de ajustes de cada elemento."
  }
 };

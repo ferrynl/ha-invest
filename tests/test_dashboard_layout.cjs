@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const {defaultDashboardLayout,moveDashboardModule}=require('../portfolio/app/static/dashboard-layout.js');
+const {defaultDashboardLayout,moveDashboardModule,updateDashboardModule,dashboardDragTarget}=require('../portfolio/app/static/dashboard-layout.js');
 const original=defaultDashboardLayout();
 original[2].enabled=false;original[2].width='full';
 const moved=moveDashboardModule(original,'cost',0);
@@ -14,3 +14,13 @@ assert.deepEqual(moveDashboardModule(original,'missing',0),original);
 assert.equal(moveDashboardModule(moved,'cost',9).at(-1).id,'cost');
 assert.equal(defaultDashboardLayout()[2].enabled,true,'reset creates fresh defaults');
 console.log('Dashboard modules: reordering, boundary moves, hidden state, widths and reset passed.');
+
+const changed=updateDashboardModule(original,'market',{enabled:false,width:'half'});
+assert.equal(changed.find(row=>row.id==='market').enabled,false);
+assert.equal(changed.find(row=>row.id==='market').width,'half');
+assert.equal(original.find(row=>row.id==='market').enabled,true);
+assert.equal(dashboardDragTarget(original,'market','holdings').at(-1).id,'market');
+assert.deepEqual(dashboardDragTarget(original,'missing','holdings'),original);
+assert.deepEqual(dashboardDragTarget(original,'market','missing'),original);
+assert.deepEqual(dashboardDragTarget(original,'market','market'),original);
+console.log('Inline dashboard settings and pointer target ordering passed.');

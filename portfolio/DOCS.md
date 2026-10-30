@@ -75,9 +75,11 @@ kosten. Ontvangen dividend kan apart worden geboekt, zoals hieronder beschreven.
 
 ### Je dashboard indelen
 
-Open op Home **Dashboard aanpassen**. Elk onderdeel is een module, ook elke cijferkaart. Zet modules aan of uit, wijzig hun volgorde met **Omhoog/Omlaag** of versleep de handgreep op desktop. Kies per module **Klein**, **Halfbreed** of **Volle breedte**. Op kleinere schermen past de indeling zich aan; op mobiel staan modules onder elkaar.
+Klik op Home op **Dashboard aanpassen**. De bewerkmodus verschijnt op het dashboard zelf: ieder onderdeel krijgt een versleepgreep, twee verplaatsknoppen en een tandwiel. Versleep het onderdeel met de muis of met je vinger. Dicht bij de boven- of onderrand schuift de pagina automatisch mee. Je kunt ook de verplaatsknoppen gebruiken, of de versleepgreep met Tab selecteren en de pijltjestoetsen gebruiken.
 
-Kies **Indeling opslaan** om de wijzigingen toe te passen. **Annuleren**, **Sluiten** en Escape bewaren de vorige indeling. **Standaardindeling** zet de oorspronkelijke indeling klaar; sla op om die te herstellen. Ook wanneer alles uitstaat, blijft Dashboard aanpassen bereikbaar. De brokerkeuze en de knop om het dashboard aan te passen blijven bovenaan beschikbaar.
+Open het tandwiel van een onderdeel om **Module tonen** en de **Breedte** te kiezen. **Toepassen** toont het resultaat direct op het dashboard. Verborgen onderdelen blijven tijdens het aanpassen als herkenbare plekken staan, zodat je ze weer kunt inschakelen. Op kleinere schermen past de breedte zich aan; op mobiel staan modules onder elkaar.
+
+Boven de onderdelen staan **Indeling opslaan**, **Annuleren** en **Standaardindeling**. Pas bij opslaan worden alle wijzigingen bewaard. Annuleren, Escape buiten een pop-up en het verlaten van Home herstellen de opgeslagen indeling. Escape tijdens een sleepbeweging maakt alleen die beweging ongedaan. Het sluiten of annuleren van de module-instellingen wijzigt dat onderdeel niet. Ook wanneer alles uitstaat, blijft Dashboard aanpassen bereikbaar.
 
 De indeling wordt op de server bewaard per loginaccount, apart voor demo en eigen portefeuille. Zonder loginaccounts delen bezoekers de Home Assistant-indeling. Portefeuilleherstel behoudt de huidige voorkeuren; voorkeuren uit een geüploade back-up worden niet geïmporteerd. Het verbergen van een module verandert geen beleggingen of toegangsrechten.
 
