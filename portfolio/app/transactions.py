@@ -20,7 +20,7 @@ def ledger(store,account='all'):
             clause='' if account_id is None else ' WHERE account_id=?'
             for source in db.execute('SELECT * FROM '+table+clause,() if account_id is None else (account_id,)):
                 row=dict(source);broker=accounts[row['account_id']]
-                rows.append(dict(row,kind=kind,revision=revision(row),account_name=broker['name'],broker=broker['broker'],day=row.get('purchased_on',row.get('paid_on')),type='SPLIT' if row.get('split_before','') else row.get('side','DIVIDEND' if kind=='dividend' else 'CAPITAL_RETURN')))
+                rows.append(dict(row,kind=kind,revision=revision(row),account_name=broker['name'],broker=broker['broker'],day=row.get('purchased_on',row.get('paid_on')),type='TRANSFER' if row.get('transfer_id') else 'SPLIT' if row.get('split_before','') else row.get('side','DIVIDEND' if kind=='dividend' else 'CAPITAL_RETURN')))
         return dict(transactions=sorted(rows,key=lambda r:(r['day'],r['id']),reverse=True))
 
 def scope(db,value):
@@ -39,6 +39,7 @@ def edit(store,data,actor):
         source=db.execute('SELECT * FROM '+table+' WHERE id=?',(record_id,)).fetchone()
         if not source:raise ValueError('Transactie niet gevonden. Vernieuw het overzicht.')
         before=dict(source)
+        if before.get('transfer_id'):raise ValueError('Een omboeking kan niet als losse aankoop of verkoop worden gewijzigd. Gebruik de herstelback-up om de omboeking terug te draaien.')
         if not hmac.compare_digest(str(data.get('revision','')),revision(before)):raise ValueError('Deze transactie is intussen gewijzigd. Vernieuw het overzicht en open de transactie opnieuw.')
         # Identity and account remain fixed, so source-ID deduplication stays valid.
         for field in ('account_id','symbol','exchange','currency','ticker','split_before'):

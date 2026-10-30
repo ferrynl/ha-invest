@@ -1,12 +1,12 @@
 /* UI strings use the shared catalogue; pure Node tests retain Dutch defaults. */
 var ui=globalThis.HomeInvestTranslate||((value)=>value);
-const pageNames={account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
+const pageNames={'tmx-omboeken':ui('TMX omboeken naar TDT'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
 for(const [key,title] of reportDefinitions)pageNames['rapporten-'+key]=title;
 function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches&&!document.body.classList.contains('locked');$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label',ui('Menu openen'));}
 function showPage(){
  closeAllPopups();
  const requested=location.hash.slice(1).split('?')[0];let page=Object.hasOwn(pageNames,requested)?requested:'home';
- if((page==='instellingen'||page==='imports'||page==='import-koppelingen'||page==='import-beoordeling'||page==='import-api')&&accessSession?.user?.role!=='admin')page='home';
+ if((page==='tmx-omboeken'||page==='instellingen'||page==='imports'||page==='import-koppelingen'||page==='import-beoordeling'||page==='import-api')&&accessSession?.user?.role!=='admin')page='home';
  if(page==='logs'&&(accessSession?.user?.role!=='admin'||!accessSession?.enabled))page='home';
  const isReport=page==='rapporten'||page.startsWith('rapporten-');
  if(isReport){reportType=page==='rapporten'?'portfolio':page.slice(10);renderReportNavigation();}
@@ -35,6 +35,7 @@ function showPage(){
  if(page==='import-beoordeling')loadImportIssues();
  if(page==='valuta')loadCurrencies();
  if(page==='instellingen'&&state)loadHomeAssistant();
+ if(page==='tmx-omboeken')loadConversions();
  window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',showPage);
@@ -52,6 +53,7 @@ function renderPages(){
  $('report-year').replaceChildren();for(const year of years){const option=document.createElement('option');option.value=year;option.textContent=year;$('report-year').append(option);}$('report-year').value=years.includes(selected)?selected:String(new Date().getFullYear());
  if(location.hash.startsWith('#rapporten'))renderReports();
  if(location.hash==='#instellingen')loadHomeAssistant();
+ if(location.hash==='#tmx-omboeken')loadConversions();
 }
 async function loadHomeAssistant(){
  const request=stateRequest;

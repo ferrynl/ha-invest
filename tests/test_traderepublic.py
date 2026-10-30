@@ -83,7 +83,7 @@ class TradeRepublicTests(unittest.TestCase):
             enrich_categories(self.store,('LU3170240538','PRIVATE','EUR'))
             self.assertIn('Niet-beursgenoteerd',fetch_company(self.store,('LU3170240538','PRIVATE','EUR'))['description']);download.assert_not_called()
         target=dict(symbol='LU3170240538',exchange='PRIVATE',currency='EUR')
-        with self.assertRaises(ValueError):save(self.store,dict(**target,automatic=True))
+        save(self.store,dict(**target,automatic=True))
         save(self.store,dict(**target,automatic=False,price='110',day='2026-01-03'))
         self.assertEqual(Decimal(self.store.state()['positions'][0]['value']),Decimal('1.10'))
         from restore import restore_backup

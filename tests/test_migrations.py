@@ -31,7 +31,7 @@ class MigrationTests(unittest.TestCase):
             self.assertEqual(db.execute('SELECT price FROM purchases').fetchone()[0],'999')
             self.assertEqual(db.execute('SELECT amount FROM dividends').fetchone()[0],'5.25')
             self.assertEqual(db.execute('SELECT price FROM daily_prices').fetchone()[0],'1000')
-        self.assertTrue(list((self.path.parent/'backups/migrations').glob('before-v17-to-v18-*.sqlite3')))
+        self.assertTrue(list((self.path.parent/'backups/migrations').glob(f'before-v17-to-v{SCHEMA_VERSION}-*.sqlite3')))
 
     def test_dashboard_revision_upgrade_rolls_back_preserves_ledger_and_is_idempotent(self):
         self.create_old(16)

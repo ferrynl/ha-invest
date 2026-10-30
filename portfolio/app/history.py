@@ -23,7 +23,15 @@ def daily_values(purchases, daily, quotes, today=None, summary_only=False):
         while cursor < len(lots) and lots[cursor]['purchased_on'] <= key:
             lot = lots[cursor]
             units,price_at_trade=Decimal(lot['quantity']),Decimal(lot['price'])
-            if lot.get('split_before','')!='':
+            if lot.get('transfer_id'):
+                moved_cost,moved_invested=Decimal(lot['transfer_cost']),Decimal(lot['transfer_invested'])
+                if lot['side']=='SELL':
+                    if units!=quantity or moved_cost!=cost or moved_invested!=invested:
+                        raise ValueError('De omboeking sluit niet aan op het voorafgaande bezit. Controleer de transactiehistorie.')
+                    quantity=cost=invested=Decimal(0)
+                else:
+                    quantity+=units;cost+=moved_cost;invested+=moved_invested
+            elif lot.get('split_before','')!='':
                 before=Decimal(lot['split_before'])
                 if quantity<=0:raise ValueError('Splitsing zonder voorafgaand bezit. Importeer de volledige aankoopgeschiedenis.')
                 if before and before!=quantity:raise ActionError('Aantal voor splitsing wijkt af van het bezit. Controleer de aankoopgeschiedenis.','split_quantity_mismatch',{'held_quantity':format(quantity,'f'),'expected_quantity':format(before,'f'),'new_quantity':format(units,'f'),'day':key})

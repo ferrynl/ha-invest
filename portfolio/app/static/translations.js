@@ -6269,5 +6269,200 @@ const UI_TRANSLATIONS = {
   "nl": "Versleep onderdelen op je dashboard. Gebruik de instellingenknop per onderdeel.",
   "en": "Drag items on your dashboard. Use each item’s settings button.",
   "es": "Arrastra elementos en tu panel. Usa el botón de ajustes de cada elemento."
+ },
+ "TMX omboeken naar TDT": {
+  "nl": "TMX omboeken naar TDT",
+  "en": "Convert TMX to TDT",
+  "es": "Convertir TMX a TDT"
+ },
+ "TMX-omboekpagina openen": {
+  "nl": "TMX-omboekpagina openen",
+  "en": "Open TMX conversion page",
+  "es": "Abrir página de conversión de TMX"
+ },
+ "Verwerk de fusie van de VanEck AMX ETF naar de VanEck AEX ETF per brokeraccount.": {
+  "nl": "Verwerk de fusie van de VanEck AMX ETF naar de VanEck AEX ETF per brokeraccount.",
+  "en": "Process the merger of the VanEck AMX ETF into the VanEck AEX ETF for each broker account.",
+  "es": "Procesa la fusión del ETF VanEck AMX en el ETF VanEck AEX por cuenta de bróker."
+ },
+ "VanEck AMX UCITS ETF (TMX, NL0009272756) is samengevoegd met VanEck AEX UCITS ETF (TDT, NL0009272749). De officiële verhouding is 0,937630 TDT per TMX. De afwikkeling was op 2 oktober 2025.": {
+  "nl": "VanEck AMX UCITS ETF (TMX, NL0009272756) is samengevoegd met VanEck AEX UCITS ETF (TDT, NL0009272749). De officiële verhouding is 0,937630 TDT per TMX. De afwikkeling was op 2 oktober 2025.",
+  "en": "VanEck AMX UCITS ETF (TMX, NL0009272756) merged into VanEck AEX UCITS ETF (TDT, NL0009272749). The official ratio is 0.937630 TDT per TMX. Settlement was on 2 October 2025.",
+  "es": "VanEck AMX UCITS ETF (TMX, NL0009272756) se fusionó con VanEck AEX UCITS ETF (TDT, NL0009272749). La proporción oficial es 0,937630 TDT por TMX. La liquidación fue el 2 de octubre de 2025."
+ },
+ "Boek per brokeraccount om met behoud van kostprijs en inleg. Aankopen, verkopen en dividend blijven op hun oorspronkelijke datum staan. De omboeking voegt twee gekoppelde gebeurtenissen toe en telt niet als verkoopwinst of nieuwe inleg.": {
+  "nl": "Boek per brokeraccount om met behoud van kostprijs en inleg. Aankopen, verkopen en dividend blijven op hun oorspronkelijke datum staan. De omboeking voegt twee gekoppelde gebeurtenissen toe en telt niet als verkoopwinst of nieuwe inleg.",
+  "en": "Convert each broker account while preserving cost basis and invested capital. Purchases, sales and dividends retain their original dates. The conversion adds two linked events and does not count as realised profit or new capital.",
+  "es": "Convierte cada cuenta conservando el coste y el capital invertido. Las compras, ventas y dividendos mantienen sus fechas originales. La conversión añade dos eventos vinculados y no cuenta como beneficio realizado ni nueva aportación."
+ },
+ "Controleer eerst of de ontvangen TDT-aandelen al als aankoop zijn geïmporteerd. Boek ze niet dubbel. Een eventuele contante vergoeding voor fracties valt buiten deze omboeking.": {
+  "nl": "Controleer eerst of de ontvangen TDT-aandelen al als aankoop zijn geïmporteerd. Boek ze niet dubbel. Een eventuele contante vergoeding voor fracties valt buiten deze omboeking.",
+  "en": "First check whether the received TDT shares have already been imported as a purchase. Do not book them twice. Any cash compensation for fractions is outside this conversion.",
+  "es": "Comprueba primero si las participaciones TDT recibidas ya se importaron como compra. No las registres dos veces. La compensación en efectivo por fracciones queda fuera de esta conversión."
+ },
+ "Officiële omruilverhouding van VanEck": {
+  "nl": "Officiële omruilverhouding van VanEck",
+  "en": "Official VanEck exchange ratio",
+  "es": "Proporción de canje oficial de VanEck"
+ },
+ "Omboeking instellen": {
+  "nl": "Omboeking instellen",
+  "en": "Set up conversion",
+  "es": "Configurar conversión"
+ },
+ "Geboekte omboekingen": {
+  "nl": "Geboekte omboekingen",
+  "en": "Recorded conversions",
+  "es": "Conversiones registradas"
+ },
+ "Kostprijs": {
+  "nl": "Kostprijs",
+  "en": "Cost basis",
+  "es": "Coste de adquisición"
+ },
+ "Omboekdatum": {
+  "nl": "Omboekdatum",
+  "en": "Conversion date",
+  "es": "Fecha de conversión"
+ },
+ "Ontvangen aantal TDT (leeg = officiële verhouding)": {
+  "nl": "Ontvangen aantal TDT (leeg = officiële verhouding)",
+  "en": "TDT units received (blank = official ratio)",
+  "es": "Participaciones TDT recibidas (vacío = proporción oficial)"
+ },
+ "Gebruik het ontvangen aantal uit je brokeroverzicht. Laat het leeg om met 0,937630 te rekenen. De gehele open TMX-positie gaat over; er wordt vooraf een herstelback-up gemaakt.": {
+  "nl": "Gebruik het ontvangen aantal uit je brokeroverzicht. Laat het leeg om met 0,937630 te rekenen. De gehele open TMX-positie gaat over; er wordt vooraf een herstelback-up gemaakt.",
+  "en": "Use the units received from your broker statement. Leave blank to use 0.937630. The entire open TMX position is transferred; a recovery backup is created first.",
+  "es": "Usa la cantidad recibida que figura en tu extracto. Déjalo vacío para usar 0,937630. Se transfiere toda la posición abierta de TMX; primero se crea una copia de recuperación."
+ },
+ "Omboeking controleren": {
+  "nl": "Omboeking controleren",
+  "en": "Review conversion",
+  "es": "Revisar conversión"
+ },
+ "Omboeking definitief opslaan": {
+  "nl": "Omboeking definitief opslaan",
+  "en": "Confirm and save conversion",
+  "es": "Confirmar y guardar conversión"
+ },
+ "Omboeking": {
+  "nl": "Omboeking",
+  "en": "Conversion",
+  "es": "Conversión"
+ },
+ "Afgeboekt": {
+  "nl": "Afgeboekt",
+  "en": "Transferred out",
+  "es": "Transferido"
+ },
+ "Geen TMX-transacties gevonden.": {
+  "nl": "Geen TMX-transacties gevonden.",
+  "en": "No TMX transactions found.",
+  "es": "No se encontraron operaciones de TMX."
+ },
+ "TMX omgeboekt naar TDT. De oorspronkelijke transacties zijn behouden.": {
+  "nl": "TMX omgeboekt naar TDT. De oorspronkelijke transacties zijn behouden.",
+  "en": "TMX converted to TDT. Original transactions have been preserved.",
+  "es": "TMX convertido a TDT. Se han conservado las operaciones originales."
+ },
+ "De omboeking is gewijzigd. Controleer eerst een nieuw voorbeeld.": {
+  "nl": "De omboeking is gewijzigd. Controleer eerst een nieuw voorbeeld.",
+  "en": "The conversion has changed. Review a new preview first.",
+  "es": "La conversión ha cambiado. Revisa primero una nueva vista previa."
+ },
+ "Er is geen open TMX-positie om te boeken.": {
+  "nl": "Er is geen open TMX-positie om te boeken.",
+  "en": "There is no open TMX position to convert.",
+  "es": "No hay ninguna posición abierta de TMX para convertir."
+ },
+ "Er staan TMX-transacties na de omboekdatum. Controleer eerst de datum en de historie.": {
+  "nl": "Er staan TMX-transacties na de omboekdatum. Controleer eerst de datum en de historie.",
+  "en": "There are TMX transactions after the conversion date. Check the date and history first.",
+  "es": "Hay operaciones de TMX posteriores a la fecha de conversión. Comprueba primero la fecha y el historial."
+ },
+ "Geen TMX-transacties gevonden in dit brokeraccount.": {
+  "nl": "Geen TMX-transacties gevonden in dit brokeraccount.",
+  "en": "No TMX transactions found in this broker account.",
+  "es": "No se encontraron operaciones de TMX en esta cuenta."
+ },
+ "Kies een omboekdatum vanaf 1 oktober 2025 tot en met vandaag.": {
+  "nl": "Kies een omboekdatum vanaf 1 oktober 2025 tot en met vandaag.",
+  "en": "Choose a conversion date between 1 October 2025 and today.",
+  "es": "Elige una fecha de conversión entre el 1 de octubre de 2025 y hoy."
+ },
+ "Kies één brokeraccount voor de omboeking.": {
+  "nl": "Kies één brokeraccount voor de omboeking.",
+  "en": "Choose one broker account for the conversion.",
+  "es": "Elige una cuenta de bróker para la conversión."
+ },
+ "Ongeldige omboeking in back-up.": {
+  "nl": "Ongeldige omboeking in back-up.",
+  "en": "Invalid conversion in backup.",
+  "es": "Conversión no válida en la copia de seguridad."
+ },
+ "TMX is in dit brokeraccount al omgeboekt.": {
+  "nl": "TMX is in dit brokeraccount al omgeboekt.",
+  "en": "TMX has already been converted in this broker account.",
+  "es": "TMX ya se ha convertido en esta cuenta."
+ },
+ "De omboeking sluit niet aan op het voorafgaande bezit. Controleer de transactiehistorie.": {
+  "nl": "De omboeking sluit niet aan op het voorafgaande bezit. Controleer de transactiehistorie.",
+  "en": "The conversion does not match the preceding holdings. Check the transaction history.",
+  "es": "La conversión no coincide con las tenencias anteriores. Comprueba el historial de operaciones."
+ },
+ "Een omboeking kan niet als losse aankoop of verkoop worden gewijzigd. Gebruik de herstelback-up om de omboeking terug te draaien.": {
+  "nl": "Een omboeking kan niet als losse aankoop of verkoop worden gewijzigd. Gebruik de herstelback-up om de omboeking terug te draaien.",
+  "en": "A conversion cannot be edited as an individual purchase or sale. Use the recovery backup to undo it.",
+  "es": "Una conversión no se puede editar como una compra o venta individual. Usa la copia de recuperación para deshacerla."
+ },
+ "Inleg behouden:": {
+  "nl": "Inleg behouden:",
+  "en": "Invested capital preserved:",
+  "es": "Capital invertido conservado:"
+ },
+ "Kostprijs behouden:": {
+  "nl": "Kostprijs behouden:",
+  "en": "Cost basis preserved:",
+  "es": "Coste conservado:"
+ },
+ "Apollo · automatisch via DivvyDiary. De bron vermeldt geen koersdatum; de getoonde datum is het ophaalmoment.": {
+  "nl": "Apollo · automatisch via DivvyDiary. De bron vermeldt geen koersdatum; de getoonde datum is het ophaalmoment.",
+  "en": "Apollo · automatic via DivvyDiary. The source does not provide a price date; the displayed date is the observation time.",
+  "es": "Apollo · automático mediante DivvyDiary. La fuente no indica la fecha de cotización; la fecha mostrada es el momento de consulta."
+ },
+ "Automatisch gebruikt de openbare DivvyDiary-koers voor dit ISIN in EUR, maximaal elke zes uur. De bron vermeldt geen koersdatum. Een handmatige fondswaardering heeft voorrang.": {
+  "nl": "Automatisch gebruikt de openbare DivvyDiary-koers voor dit ISIN in EUR, maximaal elke zes uur. De bron vermeldt geen koersdatum. Een handmatige fondswaardering heeft voorrang.",
+  "en": "Automatic mode uses the public DivvyDiary quote for this ISIN in EUR, at most every six hours. The source does not provide a price date. A manual fund valuation takes precedence.",
+  "es": "El modo automático usa la cotización pública de DivvyDiary de este ISIN en EUR, como máximo cada seis horas. La fuente no indica la fecha de cotización. Una valoración manual tiene prioridad."
+ },
+ "De Apollo-koers kon niet met ISIN en valuta worden gecontroleerd. De vorige koers blijft behouden.": {
+  "nl": "De Apollo-koers kon niet met ISIN en valuta worden gecontroleerd. De vorige koers blijft behouden.",
+  "en": "The Apollo quote could not be verified by ISIN and currency. The previous quote is retained.",
+  "es": "No se pudo verificar la cotización de Apollo por ISIN y divisa. Se conserva la cotización anterior."
+ },
+ "De koersbron gaf een te groot antwoord.": {
+  "nl": "De koersbron gaf een te groot antwoord.",
+  "en": "The quote source returned an oversized response.",
+  "es": "La fuente de cotizaciones devolvió una respuesta demasiado grande."
+ },
+ "Omboeking bekijken; wijzigen kan alleen door de herstelback-up terug te zetten.": {
+  "nl": "Omboeking bekijken; wijzigen kan alleen door de herstelback-up terug te zetten.",
+  "en": "View conversion; changes require restoring the recovery backup.",
+  "es": "Consulta de conversión; los cambios requieren restaurar la copia de recuperación."
+ },
+ "De veiligheidsback-up kon niet worden gemaakt. De omboeking is niet opgeslagen.": {
+  "nl": "De veiligheidsback-up kon niet worden gemaakt. De omboeking is niet opgeslagen.",
+  "en": "The recovery backup could not be created. The conversion has not been saved.",
+  "es": "No se pudo crear la copia de recuperación. La conversión no se ha guardado."
+ },
+ "Niet-beursgenoteerd Apollo-fonds. Automatische waardering via DivvyDiary in EUR; de bron vermeldt geen koersdatum. Handmatige waarderingen hebben voorrang.": {
+  "nl": "Niet-beursgenoteerd Apollo-fonds. Automatische waardering via DivvyDiary in EUR; de bron vermeldt geen koersdatum. Handmatige waarderingen hebben voorrang.",
+  "en": "Unlisted Apollo fund. Automatic valuation via DivvyDiary in EUR; the source does not provide a price date. Manual valuations take precedence.",
+  "es": "Fondo Apollo no cotizado. Valoración automática mediante DivvyDiary en EUR; la fuente no indica la fecha de cotización. Las valoraciones manuales tienen prioridad."
+ },
+ "DivvyDiary · waargenomen koers; koersdatum niet vermeld": {
+  "nl": "DivvyDiary · waargenomen koers; koersdatum niet vermeld",
+  "en": "DivvyDiary · observed quote; price date not provided",
+  "es": "DivvyDiary · cotización observada; fecha de cotización no indicada"
  }
 };

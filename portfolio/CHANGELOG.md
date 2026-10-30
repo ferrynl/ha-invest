@@ -1,3 +1,10 @@
+# 0.32.0
+
+- Aparte pagina Instellingen → TMX omboeken naar TDT, ook bereikbaar vanuit het TMX-aandeel. Officiële VanEck-omruilverhouding 0,937630, met eigen ontvangen aantal en datum per brokeraccount.
+- Omboekingen voegen twee gekoppelde gebeurtenissen toe. Oorspronkelijke aankopen, verkopen, dividend en koershistorie blijven behouden; kostprijs en inleg gaan mee zonder extra verkoopwinst of nieuwe inleg. Eerst controleren, daarna opslaan met herstelback-up. Reeds geïmporteerde TDT-aankopen en eventuele contante fractievergoedingen moeten apart worden gecontroleerd.
+- Apollo LU3170240538 (PRIVATE, EUR) haalt automatisch de openbare koers op bij DivvyDiary, met controle op ISIN en valuta en een blijvende cache van zes uur. De bron vermeldt geen koersdatum: de app benoemt de datum expliciet als ophaalmoment. Geen verzonnen historische NAV-reeks; bij fouten blijft de vorige koers behouden. Handmatige waarderingen houden voorrang.
+- Databaseschema 19 voegt omboekgegevens toe; upgrades maken vooraf een back-up. Herstel controleert beide gekoppelde boekingen. Servercontrole op adminrechten, CSRF, dubbele boekingen en gewijzigde voorbeelden; Nederlandse, Engelse en Spaanse schermteksten.
+
 # 0.31.4
 
 - Dashboard aanpassen schakelt nu een bewerkmodus op Home zelf in. Elk onderdeel krijgt een eigen versleepgreep, verplaatsknoppen en tandwiel voor de module-instellingen.

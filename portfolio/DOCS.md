@@ -707,3 +707,35 @@ Kies links bij **Profiel** voor **Demoportefeuille**. De demo toont 10 brokers, 
 De eigen portefeuille blijft in `data/portfolio.sqlite3`; de demo krijgt een afzonderlijk bestand `data/demo/portfolio.sqlite3` (in Home Assistant `/data/demo/portfolio.sqlite3`). Loginaccounts en sessies blijven van de eigen installatie. Bij de eerste opening wordt de demo aangemaakt; op een volgende dag worden alleen de fictieve demogegevens vernieuwd. Wissel terug via de profielkeuze of **Eigen portefeuille openen**. Het gekozen profiel staat in het pagina-adres en blijft daardoor bij herladen behouden.
 
 Home bewaart compacte weergaven afzonderlijk van volledige aandeelhistories. Vergelijken vraagt alleen de geselecteerde posities op. Een munt- en grafiekanimatie toont na korte vertraging dat de huidige pagina laadt, zonder bestaande gegevens te blokkeren. Bij verminderde beweging blijft de illustratie stil. Leesaanvragen stoppen na maximaal 30 seconden; rapporten behouden hun kortere eigen wachttijd.
+
+
+## TMX-fusie en Apollo-fondskoers (0.32.0)
+
+Open **Instellingen → TMX omboeken naar TDT** of de link op het TMX-aandeel.
+Kies een brokeraccount en de afwikkeldatum (standaard 2 oktober 2025). Laat het
+ontvangen aantal leeg voor de officiële verhouding van 0,937630 TDT per TMX, of
+vul het werkelijk ontvangen aantal in. Controleer eerst of de TDT-ontvangst niet
+al als aankoop is geïmporteerd; een contante vergoeding voor fracties valt buiten
+deze omboeking. Bekijk het voorbeeld en sla daarna definitief op.
+
+De volledige open TMX-positie wordt afgeboekt en bij TDT bijgeboekt, met dezelfde
+kostprijs en inleg. De oorspronkelijke transacties en dividend blijven bestaan.
+De twee gebeurtenissen veroorzaken geen verkoopwinst of extra storting. Bestaand
+TDT-bezit wordt samengevoegd; eventuele latere verkopen worden opnieuw gevalideerd.
+Een omboeking kan niet als losse aankoop of verkoop worden gewijzigd. Download
+de automatisch gemaakte herstelback-up om de gehele administratie van vóór de
+omboeking terug te kunnen zetten. Dit herstel vervangt ook latere portefeuillewijzigingen.
+
+Voor Apollo **LU3170240538**, beurs **PRIVATE**, valuta **EUR**, gebruikt de app
+[de openbare DivvyDiary-vermelding](https://divvydiary.com/en/apollo-private-markets-aligned-alternatives-a2-eur-acc-LU3170240538).
+De achtergrondcontrole gebruikt een blijvende cache van zes uur en controleert
+ISIN en valuta. DivvyDiary geeft geen koersdatum bij deze waarde; het opgeslagen
+tijdstip is het moment waarop de waarde is waargenomen, geen bevestigde NAV-datum.
+De bronvermelding en aandeelpagina maken dat onderscheid zichtbaar. Alleen
+werkelijke waarnemingen worden opgeslagen; er wordt geen historische NAV ingevuld.
+Een eerdere handmatige waardering blijft gelden totdat je bij **Koers instellen**
+weer **Automatisch** kiest. Bij een bronfout blijft de vorige waarneming behouden.
+
+Schema 19 voegt drie omboekvelden aan de transactietabel toe. Migratie en herstel
+behouden oude gegevens en controleren dat iedere omboeking twee consistente
+boekingen in hetzelfde account en dezelfde valuta heeft.

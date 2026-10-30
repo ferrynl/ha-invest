@@ -41,7 +41,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
         return cache.derived(('home-euro-compact:' if compact_view else 'home-euro:')+str(account),build)
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css'),'/reports.css':('reports.css','text/css')}
-    for name in ('i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','report-charts'):
+    for name in ('i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','report-charts','conversions'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass
@@ -99,6 +99,15 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if path=='/api/account/dashboard':
                 from dashboard_layout import read
                 try:return self.respond(read(store,user,self.headers.get('X-HomeInvest-Profile','personal')))
+                except ValueError as error:return self.respond({'error':str(error)},400)
+            if path=='/api/portfolio/conversions':
+                from conversions import overview
+                return self.respond(overview(store))
+            if path=='/api/portfolio/conversion-backup':
+                from conversions import safety_backup
+                try:
+                    backup=safety_backup(store,parse_qs(urlsplit(self.path).query).get('name',[''])[0])
+                    return self.respond(backup.read_bytes(),kind='application/vnd.sqlite3',filename=backup.name)
                 except ValueError as error:return self.respond({'error':str(error)},400)
             if path=='/api/home-assistant':
                 from ha_export import overview,configuration,valid_token
@@ -272,6 +281,13 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     with refresh_lock:
                         result=save_valuation(store,data);cache.invalidate()
                     refresh_requested.set()
+                    return self.respond(result)
+                if path in ('/api/portfolio/conversion-preview','/api/portfolio/conversion'):
+                    from conversions import preview,commit
+                    with refresh_lock:
+                        try:result=preview(store,data) if path.endswith('-preview') else commit(store,data,user['username'])
+                        except OSError:return self.respond({'error':'De veiligheidsback-up kon niet worden gemaakt. De omboeking is niet opgeslagen.'},500)
+                        if not path.endswith('-preview'):cache.invalidate();refresh_requested.set()
                     return self.respond(result)
                 if path=='/api/instrument/categories':
                     with refresh_lock:

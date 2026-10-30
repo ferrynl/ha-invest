@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.26.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.32.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -34,7 +34,7 @@ toegang tot de app. Wijzigen en instellen gebeurt in pop-ups; Home opent direct 
 - **Instellingen** (admin): accounts, beveiliging, back-ups en versiecontrole.
 - **Logs** (admin): afgeschermde foutdetails en Log-ID zoeken.
 
-Koersen komen van Yahoo Finance en kunnen vertraagd of tijdelijk onbeschikbaar zijn.
+Koersen komen van Yahoo Finance en kunnen vertraagd of tijdelijk onbeschikbaar zijn. Apollo LU3170240538 in EUR gebruikt de openbare DivvyDiary-koers, zonder vermelde koersdatum; de app toont het ophaalmoment. Bij Instellingen → TMX omboeken naar TDT kun je de VanEck-fusie per brokeraccount verwerken met behoud van kostprijs en een herstelback-up.
 Bedragen in verschillende valuta blijven gescheiden. De app voert geen orders uit. Home gebruikt opgeslagen databasegegevens en een blijvende overzichtcache; koersen worden op de achtergrond ververst.
 
 ## Waarden in je Home Assistant-dashboard
@@ -77,8 +77,8 @@ niet in het portefeuillerendement verwerkt.
 
 ## Opslag en back-ups
 
-De database en instellingen staan in de app-datafolder. Appversie **0.26.0** gebruikt
-databaseschema **18**. Upgrades maken vooraf een consistente back-up en voeren alleen
+De database en instellingen staan in de app-datafolder. Appversie **0.32.0** gebruikt
+databaseschema **19**. Upgrades maken vooraf een consistente back-up en voeren alleen
 ontbrekende migraties transactioneel uit. Bestaande aankopen, dividend en historie blijven
 behouden. Neem voor opgeslagen API-verbindingen de volledige app op in een Home Assistant-back-up.
 

@@ -30,6 +30,7 @@ function lockApp(){
  if(typeof clearStockDetail==='function')clearStockDetail();
  if(typeof clearStocksDashboard==='function')clearStocksDashboard();
  if(typeof clearTransactions==='function')clearTransactions();
+ if(typeof clearConversions==='function')clearConversions();
  if(typeof clearHomeDashboard==='function')clearHomeDashboard();
  if(typeof clearDividendDashboard==='function')clearDividendDashboard();
  if(typeof clearReports==='function')clearReports();

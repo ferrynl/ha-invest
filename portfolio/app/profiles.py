@@ -124,6 +124,8 @@ def company_data(payload):
 
 def fetch_profile(store,key,company=False):
     if key[1]=='PRIVATE':
+        from fund_quotes import supported
+        if company and supported(*key):return dict(description='Niet-beursgenoteerd Apollo-fonds. Automatische waardering via DivvyDiary in EUR; de bron vermeldt geen koersdatum. Handmatige waarderingen hebben voorrang.',domain='')
         if company:return dict(description='Niet-beursgenoteerd fonds. Vul de actuele intrinsieke waarde per aandeel en de koersdatum handmatig in; aankoopprijzen worden niet als actuele koers gebruikt.',domain='')
         return dict(sector='',country='',asset_type='Beleggingsfonds')
     def load():

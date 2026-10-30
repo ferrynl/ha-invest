@@ -3,6 +3,7 @@ import logging
 import os
 import threading
 import time
+from decimal import Decimal
 from pathlib import Path
 from http.server import ThreadingHTTPServer
 from storage import Store
@@ -37,9 +38,19 @@ def refresh():
         seen=set()
         for p in snapshot['positions']:
             instrument=(p['symbol'],p['exchange'],p['currency'])
+            if Decimal(p['quantity'])==0 and any(row.get('transfer_id') and row['side']=='SELL' and (row['symbol'],row['exchange'],row['currency'])==instrument for row in snapshot['purchases']):continue
             if instrument in seen:continue
             seen.add(instrument)
             if p['exchange']=='PRIVATE':
+                from fund_quotes import supported,fetch_quote as fetch_fund_quote
+                if supported(*instrument) and not (p.get('quote') or {}).get('manual'):
+                    try:
+                        quote=fetch_fund_quote(store)
+                        if not p.get('quote') or p['quote']['quoted_at']!=quote['observed_at']:
+                            store.quote(*instrument,quote['price'],quote['observed_at'],quote['source']);state_cache.invalidate()
+                    except Exception as error:
+                        record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],'error_type':type(error).__name__,'code':'fund_provider_failed'})
+                        errors+=1
                 if enrich_categories(store,instrument):state_cache.invalidate()
                 continue
             if p.get('quote',{} ) and p['quote'].get('manual'):

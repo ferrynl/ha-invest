@@ -1,13 +1,13 @@
 /* UI strings use the shared catalogue; pure Node tests retain Dutch defaults. */
 var ui=globalThis.HomeInvestTranslate||((value)=>value);
 let transactionRows=[],editingTransaction=null,transactionPage=0,transactionLoad=0,deletePreview=null;
-const transactionLabels={BUY:ui('Aankoop'),SELL:ui('Verkoop'),DIVIDEND:ui('Dividend'),CAPITAL_RETURN:ui('Kapitaalterugbetaling'),SPLIT:ui('Aandelensplitsing')};
+const transactionLabels={TRANSFER:ui('Omboeking'),BUY:ui('Aankoop'),SELL:ui('Verkoop'),DIVIDEND:ui('Dividend'),CAPITAL_RETURN:ui('Kapitaalterugbetaling'),SPLIT:ui('Aandelensplitsing')};
 function clearTransactions(){transactionLoad++;transactionRows=[];editingTransaction=null;transactionPage=0;$('transaction-list').replaceChildren();closePopup('transaction-editor');$('transaction-form').reset();$('transaction-edit-title').textContent='';$('transaction-identity').textContent='';$('transaction-edit-feedback').textContent='';$('delete-backup').hidden=true;$('delete-backup').removeAttribute('href');$('transaction-feedback').textContent='';$('transaction-changes').replaceChildren();deletePreview=null;$('delete-review').hidden=true;$('delete-summary').textContent='';$('delete-confirmation').value='';$('delete-submit').disabled=true;$('delete-feedback').textContent='';}
 async function loadTransactions(){
  const version=++transactionLoad,account=currentBroker;
  try{const response=await apiFetch('api/transactions?account_id='+encodeURIComponent(account));const result=await response.json();if(!response.ok)throw Error(result.error);if(version!==transactionLoad||!accessSession?.user)return;transactionRows=result.transactions;transactionPage=0;renderTransactions();}catch(error){if(version===transactionLoad)$('transaction-feedback').textContent=error.message;}
 }
-function transactionColumnValues(entry){return [entry.day,transactionLabels[entry.type],entry.name||entry.symbol||entry.ticker,entry.account_name,entry.currency,entry.quantity==null?'—':quantityLabel(entry.quantity),entry.amount?money(entry.amount,entry.currency):entry.type==='SPLIT'?'—':money(entry.price,entry.currency),ui('Bekijken')];}
+function transactionColumnValues(entry){return [entry.day,transactionLabels[entry.type],entry.name||entry.symbol||entry.ticker,entry.account_name,entry.currency,entry.quantity==null?'—':quantityLabel(entry.quantity),entry.amount?money(entry.amount,entry.currency):(entry.type==='SPLIT'||entry.type==='TRANSFER')?'—':money(entry.price,entry.currency),ui('Bekijken')];}
 function renderTransactions(){
  const query=$('transaction-search').value.trim().toLocaleLowerCase(),type=$('transaction-type').value;
  const filtered=sortTableData('transaction-list',transactionRows.filter(r=>(!type||r.type===type)&&[r.symbol,r.ticker,r.name,r.account_name,r.broker,r.day].join(' ').toLocaleLowerCase().includes(query)&&matchesTableColumns('transaction-list',transactionColumnValues(r))),transactionColumnValues);
@@ -20,13 +20,13 @@ function renderTransactions(){
  $('transaction-prev').disabled=transactionPage===0;$('transaction-next').disabled=transactionPage>=pages-1;
 }
 async function openTransaction(entry){
- editingTransaction=entry;const form=$('transaction-form'),admin=accessSession?.user?.role==='admin',trade=entry.kind==='trade',split=entry.type==='SPLIT';
+ editingTransaction=entry;const form=$('transaction-form'),admin=accessSession?.user?.role==='admin'&&!entry.transfer_id,trade=entry.kind==='trade',split=entry.type==='SPLIT';
  openPopup('transaction-editor');$('transaction-edit-title').textContent=transactionLabels[entry.type]+' · '+(entry.name||entry.symbol||entry.ticker)+' · '+entry.account_name;
  $('transaction-identity').textContent=ui('Registratie ')+entry.id+' · '+(entry.symbol||entry.ticker)+' · '+(entry.exchange||ui('bronvaluta'))+' · '+entry.currency+(split?ui(' · Aantal vóór splitsing: ')+(entry.split_before==='0'?ui('niet in bronbestand'):entry.split_before):'');
  $('transaction-day').value=entry.day;$('transaction-time').value=entry.trade_time?.slice(11,19)||'';$('transaction-side').value=entry.side||'BUY';$('transaction-quantity').value=entry.quantity||'';$('transaction-price').value=entry.price||'';$('transaction-amount').value=entry.amount||'';$('transaction-note').value=entry.note||'';
- $('transaction-time-label').hidden=!trade;$('transaction-side-label').hidden=!trade||split;$('transaction-quantity-label').hidden=!trade;$('transaction-price-label').hidden=!trade||split;$('transaction-amount-label').hidden=trade;$('transaction-note-label').hidden=entry.kind!=='dividend';
+ $('transaction-time-label').hidden=!trade;$('transaction-side-label').hidden=!trade||split||Boolean(entry.transfer_id);$('transaction-quantity-label').hidden=!trade;$('transaction-price-label').hidden=!trade||split||Boolean(entry.transfer_id);$('transaction-amount-label').hidden=trade;$('transaction-note-label').hidden=entry.kind!=='dividend';
  for(const field of form.querySelectorAll('input,select,textarea'))field.disabled=!admin||field.closest('label').hidden;
- $('transaction-save').hidden=!admin;$('transaction-edit-feedback').textContent=admin?ui('Pas de gegevens aan en kies Wijzigingen opslaan.'):ui('Je kunt deze transactie bekijken. Alleen een admin kan wijzigingen opslaan.');
+ $('transaction-save').hidden=!admin;$('transaction-edit-feedback').textContent=entry.transfer_id?ui('Omboeking bekijken; wijzigen kan alleen door de herstelback-up terug te zetten.'):admin?ui('Pas de gegevens aan en kies Wijzigingen opslaan.'):ui('Je kunt deze transactie bekijken. Alleen een admin kan wijzigingen opslaan.');
  $('transaction-changes').replaceChildren();
  try{const response=await apiFetch('api/transactions/changes?kind='+entry.kind+'&id='+entry.id);const result=await response.json();if(!response.ok)throw Error(result.error);if(editingTransaction!==entry)return;
   for(const change of result.changes){const before=JSON.parse(change.before_payload),after=JSON.parse(change.after_payload),item=document.createElement('li');const diffs=Object.keys(after).filter(key=>before[key]!==after[key]).map(key=>( {quantity:ui('Aantal'),price:ui('Prijs'),amount:ui('Bedrag'),paid_on:ui('Datum'),purchased_on:ui('Datum'),trade_time:ui('Tijd'),side:ui('Type'),note:ui('Notitie')}[key]||key)+': '+before[key]+' → '+after[key]);item.textContent=new Date(change.created_at).toLocaleString((typeof appLocale==='function'?appLocale():'nl-NL'))+' · '+change.changed_by+' · '+diffs.join('; ');$('transaction-changes').append(item);}

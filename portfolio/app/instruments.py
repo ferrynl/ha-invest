@@ -63,7 +63,7 @@ def details(store,data,account='all',include_pending=True):
             return targets=={key}
         events=[]
         for row in trades:
-            events.append(dict(row,kind='trade',type='SPLIT' if row['split_before'] else row['side'],day=row['purchased_on'],status='Geboekt'))
+            events.append(dict(row,kind='trade',type='TRANSFER' if row.get('transfer_id') else 'SPLIT' if row['split_before'] else row['side'],day=row['purchased_on'],status='Geboekt'))
         for row in dividends:events.append(dict(row,kind='dividend',type='DIVIDEND',day=row['paid_on'],status='Geboekt'))
         capital_sql='SELECT c.*,r.raw FROM capital_returns c LEFT JOIN import_records r ON r.account_id=c.account_id AND r.provider=c.provider AND r.external_id=c.external_id'
         for source in db.execute(capital_sql):
@@ -88,7 +88,7 @@ def details(store,data,account='all',include_pending=True):
         day=quote['quoted_at'][:10] if quote else date.today().isoformat()
         base,scale=unit(key[2]);fx=observation(store,base,day)
         euro=value*scale/Decimal(fx['rate']) if value is not None and fx else None
-        invested=sum((Decimal(row['quantity'])*Decimal(row['price']) for row in trades if row['side']=='BUY' and not row['split_before']),Decimal(0))
+        invested=sum((Decimal(daily_values([r for r in trades if r['account_id']==owner],[],[],summary_only=True)[-1]['invested']) for owner in {r['account_id'] for r in trades}),Decimal(0))
         received=sum((Decimal(row['amount']) for row in dividends),Decimal(0))
         summary=dict(invested=str(invested),first_purchase=min((row['purchased_on'] for row in trades),default=None),dividend_percent=str(received/invested*100) if invested else None,quantity=str(quantity),value=str(value) if value is not None else None,value_eur=str(euro) if euro is not None else None,fx_day=fx['day'] if fx else None,dividend=str(sum((Decimal(row['amount']) for row in dividends),Decimal(0))))
         return dict(manual_valuation=dict(manual) if manual else None,summary=summary,category_sync=dict(sync) if sync else {'status':'pending'},symbol=key[0],exchange=key[1],currency=key[2],name=trades[0]['name'] if trades else key[0],categories=dict(categories) if categories else {field:'' for field in FIELDS},prices=prices,quote=dict(quote) if quote else None,events=events,account_id=account)

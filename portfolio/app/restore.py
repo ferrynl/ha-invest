@@ -12,7 +12,7 @@ from migrations import SCHEMA_VERSION
 TABLES={
  'instrument_valuations':(15,('symbol','exchange','currency','price','day','updated_at')),
  'broker_accounts':(6,('id','name','broker','created_at')),
- 'purchases':(1,('id','symbol','exchange','name','quantity','price','currency','purchased_on','created_at','account_id','side','trade_time','split_before')),
+ 'purchases':(1,('id','symbol','exchange','name','quantity','price','currency','purchased_on','created_at','account_id','side','trade_time','split_before','transfer_id','transfer_cost','transfer_invested')),
  'instrument_categories':(13,('symbol','exchange','currency','sector','country','asset_type','category','updated_at','manual_sector','manual_country','manual_asset_type')),
  'instrument_category_sync':(14,('symbol','exchange','currency','status','attempted_at','retry_at','attempts','error_code')),
  'quotes':(1,('id','symbol','exchange','currency','price','quoted_at','fetched_at','source')),
@@ -50,8 +50,8 @@ def restore_backup(store,content):
                 if not definition or 'VIRTUAL' in definition[0].upper():raise ValueError('De back-up bevat geen geldig portefeuilleschema.')
                 source_columns=columns
                 if table=='instrument_categories' and version<14:source_columns=columns[:-3]
-                if table=='purchases' and version<11:source_columns=columns[:-1]
-                if version<6 and table=='purchases':source_columns=columns[:-4]
+                if table=='purchases':
+                    source_columns=columns if version>=19 else columns[:-3] if version>=11 else columns[:-4] if version>=6 else columns[:-7]
                 if version<6 and table=='dividends':source_columns=columns[:-1]
                 data=source.execute(f'SELECT {",".join(source_columns)} FROM {table} LIMIT 250001').fetchall()
                 # Derived financial snapshots from uploads must never be trusted.
@@ -60,6 +60,7 @@ def restore_backup(store,content):
                 if version<6 and table=='purchases':data=[(*r,1,'BUY','') for r in data]
                 if version<6 and table=='dividends':data=[(*r,1) for r in data]
                 if table=='purchases' and version<11:data=[(*r,'') for r in data]
+                if table=='purchases' and version<19:data=[(*r,'','','') for r in data]
                 if len(data)>250000:raise ValueError('Te veel regels in deze back-up.')
                 for values in data:
                     row=dict(zip(columns,values))
@@ -110,6 +111,8 @@ def restore_backup(store,content):
                         elif not isinstance(value,str) or len(value)>(20*1024*1024 if key in ('payload','raw','before_payload','after_payload') else 500):raise ValueError('Ongeldige gegevens in back-up.')
                 rows[table]=data
             default_range='1M'
+            from conversions import validate_pairs
+            validate_pairs([dict(zip(TABLES['purchases'][1],r)) for r in rows['purchases']])
             if version>=4:
                 setting=source.execute("SELECT value FROM app_settings WHERE key='default_range'").fetchone()
                 if setting and setting[0] in ('1W','1M','3M','6M','YTD','1Y','ALL'):default_range=setting[0]

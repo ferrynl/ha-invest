@@ -27,6 +27,7 @@ function formPopup(id,title,label,feedbackIds=[]){
 }
 function bindPopups(){
  registerPopup('import-api-report',ui('Trading 212-rapport ophalen'));
+ registerPopup('conversion-editor',ui('TMX omboeken naar TDT'));
  registerPopup('stock-valuation-editor',ui('Koers instellen'));
  registerPopup('stock-category-editor',ui('Categorieën aanpassen'));
  registerPopup('transaction-editor',ui('Transactie bekijken en wijzigen'));
