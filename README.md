@@ -24,7 +24,7 @@ Home Invest houdt aankopen, verkopen, dividend en koershistorie bij in SQLite.
 Brokeraccounts zijn afzonderlijke portefeuillerekeningen; gebruikersaccounts regelen
 toegang tot de app. Wijzigen en instellen gebeurt in pop-ups; Home opent direct met het portefeuilleoverzicht.
 
-- **Home**: overzicht per valuta, posities zoeken/filteren en maximaal zes posities vergelijken.
+- **Home**: overzicht per valuta, posities zoeken/filteren en maximaal zes posities vergelijken. Via **Dashboard aanpassen** zet je tien modules aan of uit, verplaats je ze en kies je hun breedte. De indeling blijft per gebruiker en profiel bewaard.
 - **Transacties**: alle boekingen bekijken, zoeken en als admin wijzigen, met wijzigingshistorie.
 - **Aandelen**: posities en transacties bekijken; handmatig aankopen toevoegen.
 - **Dividend**: netto ontvangen dividend boeken en bekijken.

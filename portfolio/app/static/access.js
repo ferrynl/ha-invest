@@ -22,6 +22,7 @@ async function apiFetch(url,options={}){
 }
 function lockApp(){
  closeAllPopups();
+ if(typeof clearDashboardLayout==='function')clearDashboardLayout();
  $('profile-control').hidden=true;$('demo-banner').hidden=true;
  languageUser=null;accessSession=null;stateETag=null;stateETagUrl='';state=null;stateRequest++;
  if(typeof clearCategoryOverview==='function')clearCategoryOverview();
@@ -72,6 +73,7 @@ async function startSession(){
  document.getElementById('security-status').textContent=accessSession.enabled?ui('Ingeschakeld. Accounts en rollen worden door de server gecontroleerd.'):ui('Uitgeschakeld. Toegang loopt momenteel via Home Assistant.');
  document.getElementById('user-management').hidden=!admin||!accessSession.enabled;
  if(currentProfile==='demo')homeCurrency='ALL';
+ await loadDashboardLayout();
  stateETag=null;rangeInitialized=false;showPage();await load();
  if(admin&&accessSession?.enabled)await loadUsers();
  }finally{finish();}

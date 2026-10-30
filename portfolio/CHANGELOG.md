@@ -1,3 +1,11 @@
+# 0.31.3
+
+- Home bestaat uit tien losse modules: valutakeuze, vier afzonderlijke cijferkaarten, koers- en valuta-informatie, grafiek, grootste posities, resultaten en positietabel.
+- Iedere gebruiker kan via Dashboard aanpassen modules aan- of uitzetten, de volgorde wijzigen en kiezen voor kleine, halve of volle breedte. Verslepen werkt op desktop; verplaatsknoppen ondersteunen toetsenbord en mobiel.
+- Indelingen worden op de server per loginaccount opgeslagen, apart voor demo en eigen portefeuille. Zonder loginaccounts geldt de indeling voor de gedeelde Home Assistant-toegang. Portefeuilleherstel behoudt de huidige indelingen.
+- Wijzigingen worden pas na Indeling opslaan toegepast; Annuleren behoudt de vorige indeling. Een standaardindeling en herstelbare lege weergave zijn beschikbaar. Uitgeschakelde grafieken laden geen lange positiehistorie.
+- Servercontrole op modules, breedtes, gebruikerssessie en CSRF. Persoonlijke indelingen worden niet opgenomen in gedeelde portefeuilleantwoorden of browseropslag. Geen databaseschemawijziging.
+
 # 0.31.2
 
 - Profielkeuze verplaatst naar Mijn account en een modale pop-up; bij gebruikers zonder loginaccount is de keuze ook beschikbaar naast de taal in de taalpopup.

@@ -73,6 +73,14 @@ Historische koersen zijn Yahoo-dagsluitingen; vandaag kan de laatste beschikbare
 koers zijn. Yahoo kan historische prijzen aanpassen voor splitsingen. De Trading 212-import verwerkt aandelensplitsingen met behoud van de totale kostprijs. Winst/verlies is exclusief
 kosten. Ontvangen dividend kan apart worden geboekt, zoals hieronder beschreven.
 
+### Je dashboard indelen
+
+Open op Home **Dashboard aanpassen**. Elk onderdeel is een module, ook elke cijferkaart. Zet modules aan of uit, wijzig hun volgorde met **Omhoog/Omlaag** of versleep de handgreep op desktop. Kies per module **Klein**, **Halfbreed** of **Volle breedte**. Op kleinere schermen past de indeling zich aan; op mobiel staan modules onder elkaar.
+
+Kies **Indeling opslaan** om de wijzigingen toe te passen. **Annuleren**, **Sluiten** en Escape bewaren de vorige indeling. **Standaardindeling** zet de oorspronkelijke indeling klaar; sla op om die te herstellen. Ook wanneer alles uitstaat, blijft Dashboard aanpassen bereikbaar. De brokerkeuze en de knop om het dashboard aan te passen blijven bovenaan beschikbaar.
+
+De indeling wordt op de server bewaard per loginaccount, apart voor demo en eigen portefeuille. Zonder loginaccounts delen bezoekers de Home Assistant-indeling. Portefeuilleherstel behoudt de huidige voorkeuren; voorkeuren uit een geüploade back-up worden niet geïmporteerd. Het verbergen van een module verandert geen beleggingen of toegangsrechten.
+
 ### Alle aandelen en dividend
 
 De grafiek opent standaard met **Alle aandelen**. Elk aandeel heeft een eigen lijn

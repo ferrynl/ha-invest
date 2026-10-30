@@ -45,6 +45,8 @@ jobs:
       - run: node tests/test_tables.cjs
       - run: node --check portfolio/app/static/loading.js
       - run: node tests/test_loading.cjs
+      - run: node --check portfolio/app/static/dashboard-layout.js
+      - run: node tests/test_dashboard_layout.cjs
       - run: node tests/test_home.cjs
       - run: node tests/test_chart.cjs
       - run: docker build portfolio -t aandelen-dashboard:test

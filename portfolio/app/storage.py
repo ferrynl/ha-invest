@@ -114,7 +114,7 @@ class Store:
         with self.read() as db:
             db.execute('BEGIN')
             revision=db.execute('SELECT revision FROM dashboard_revision WHERE id=1').fetchone()[0]
-            settings=dict(db.execute('SELECT key,value FROM app_settings'))
+            settings=dict(db.execute("SELECT key,value FROM app_settings WHERE key NOT LIKE 'dashboard_layout:%'"))
             purchases = [dict(row) for row in db.execute('SELECT * FROM purchases ORDER BY purchased_on,id')]
             quotes = [dict(row) for row in db.execute('SELECT * FROM quotes ORDER BY quoted_at,id')]
             daily = [dict(row) for row in db.execute('SELECT * FROM daily_prices ORDER BY day')]

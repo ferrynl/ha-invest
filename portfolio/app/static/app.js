@@ -21,7 +21,7 @@ let chartRange='1M',rangeInitialized=false;
 function syncRangeButtons(){for(const button of $('chart-ranges').querySelectorAll('button'))button.setAttribute('aria-pressed',String(button.dataset.range===chartRange));}
 const dayLabel=day=>new Date(day+'T00:00:00Z').toLocaleDateString((typeof appLocale==='function'?appLocale():'nl-NL'),{timeZone:'UTC'});
 function draw(){
- if(!state||!document.body.classList.contains('home-page'))return;
+ if(!state||!document.body.classList.contains('home-page')||(typeof dashboardModuleEnabled==='function'&&!dashboardModuleEnabled('chart')))return;
  const view=homeViewState(),selection=$('instrument').value;
  const members=selection==='all'?homeChartMembers():selection.startsWith('portfolio:')?[]:[view.positions[Number(selection)]].filter(Boolean);
  if(members.some(p=>p.history_loaded===false)){loadHomePositionHistory(members);return;}

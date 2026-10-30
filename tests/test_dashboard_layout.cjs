@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');
+const {defaultDashboardLayout,moveDashboardModule}=require('../portfolio/app/static/dashboard-layout.js');
+const original=defaultDashboardLayout();
+original[2].enabled=false;original[2].width='full';
+const moved=moveDashboardModule(original,'cost',0);
+assert.equal(moved[0].id,'cost');
+assert.equal(moved[0].enabled,false);
+assert.equal(moved[0].width,'full');
+assert.equal(original[2].id,'cost','draft movement must not mutate the saved layout');
+assert.equal(new Set(moved.map(row=>row.id)).size,10);
+assert.deepEqual(moveDashboardModule(original,'cost',-1),original);
+assert.deepEqual(moveDashboardModule(original,'cost',10),original);
+assert.deepEqual(moveDashboardModule(original,'missing',0),original);
+assert.equal(moveDashboardModule(moved,'cost',9).at(-1).id,'cost');
+assert.equal(defaultDashboardLayout()[2].enabled,true,'reset creates fresh defaults');
+console.log('Dashboard modules: reordering, boundary moves, hidden state, widths and reset passed.');

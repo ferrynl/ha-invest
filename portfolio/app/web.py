@@ -41,7 +41,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
         return cache.derived(('home-euro-compact:' if compact_view else 'home-euro:')+str(account),build)
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css'),'/reports.css':('reports.css','text/css')}
-    for name in ('i18n','translations','loading','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','report-charts'):
+    for name in ('i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','report-charts'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_):pass
@@ -96,6 +96,10 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
             if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/home-assistant','/api/users','/api/backup','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
+            if path=='/api/account/dashboard':
+                from dashboard_layout import read
+                try:return self.respond(read(store,user,self.headers.get('X-HomeInvest-Profile','personal')))
+                except ValueError as error:return self.respond({'error':str(error)},400)
             if path=='/api/home-assistant':
                 from ha_export import overview,configuration,valid_token
                 summary=overview(store,cache)
@@ -258,6 +262,9 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))
                 data=json.loads(body)
                 if not isinstance(data,dict):raise ValueError('Ongeldige aanvraag.')
+                if path=='/api/account/dashboard':
+                    from dashboard_layout import save
+                    return self.respond(save(store,user,self.headers.get('X-HomeInvest-Profile','personal'),data))
                 if path=='/api/account/language':
                     return self.respond({'language':auth.set_language(user,data.get('language'))})
                 if path=='/api/instrument/valuation':

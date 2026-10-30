@@ -90,7 +90,7 @@ def profile_handler(primary,store,auth,factory):
             if path=='/api/profiles':
                 if not self.allowed(auth.user(self.token())):return
                 return self.respond({'profiles':[{'id':'personal','name':'Eigen portefeuille'},{'id':'demo','name':'Demoportefeuille'}]})
-            if profile!='demo' or not path.startswith('/api/') or path=='/api/session':return super().do_GET()
+            if profile!='demo' or not path.startswith('/api/') or path in ('/api/session','/api/account/dashboard'):return super().do_GET()
             if not self.allowed(auth.user(self.token())):return
             try:handler=demo_handler()
             except ValueError as error:return self.respond({'error':str(error)},400)
@@ -113,9 +113,9 @@ def profile_handler(primary,store,auth,factory):
             if 0<length<=65536:self.rfile.read(length)
         def do_POST(self):
             profile=self.headers.get('X-HomeInvest-Profile','personal')
-            if profile not in ('personal','demo') or (profile=='demo' and urlsplit(self.path).path not in ('/api/auth/login','/api/auth/logout','/api/auth/password','/api/account/language')):self.discard_demo_body()
+            if profile not in ('personal','demo') or (profile=='demo' and urlsplit(self.path).path not in ('/api/auth/login','/api/auth/logout','/api/auth/password','/api/account/language','/api/account/dashboard')):self.discard_demo_body()
             if self.headers.get('X-HomeInvest-Profile','personal') not in ('personal','demo'):return self.respond({'error':'Ongeldig profiel.'},400)
-            if self.headers.get('X-HomeInvest-Profile')=='demo' and urlsplit(self.path).path not in ('/api/auth/login','/api/auth/logout','/api/auth/password','/api/account/language'):
+            if self.headers.get('X-HomeInvest-Profile')=='demo' and urlsplit(self.path).path not in ('/api/auth/login','/api/auth/logout','/api/auth/password','/api/account/language','/api/account/dashboard'):
                 if not self.allowed(auth.user(self.token())):return
                 return self.respond({'error':'Het demoprofiel is alleen-lezen. Kies je eigen portefeuille om gegevens te wijzigen.'},403)
             return super().do_POST()

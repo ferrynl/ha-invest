@@ -1,6 +1,15 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
-"Profiel kiezen":{"nl": "Profiel kiezen", "en": "Choose profile", "es": "Elegir perfil"},"Voorbeeldportefeuille · providerkoersen mogelijk vertraagd · fictieve transacties en historie":{"nl": "Voorbeeldportefeuille · providerkoersen mogelijk vertraagd · fictieve transacties en historie", "en": "Example portfolio · provider quotes may be delayed · fictional trades and history", "es": "Cartera de ejemplo · cotizaciones posiblemente retrasadas · operaciones e historial ficticios"},
+ "Profiel kiezen": {
+  "nl": "Profiel kiezen",
+  "en": "Choose profile",
+  "es": "Elegir perfil"
+ },
+ "Voorbeeldportefeuille · providerkoersen mogelijk vertraagd · fictieve transacties en historie": {
+  "nl": "Voorbeeldportefeuille · providerkoersen mogelijk vertraagd · fictieve transacties en historie",
+  "en": "Example portfolio · provider quotes may be delayed · fictional trades and history",
+  "es": "Cartera de ejemplo · cotizaciones posiblemente retrasadas · operaciones e historial ficticios"
+ },
  "1 eenheid in EUR": {
   "nl": "1 eenheid in EUR",
   "en": "1 unit in EUR",
@@ -6115,5 +6124,105 @@ const UI_TRANSLATIONS = {
   "nl": "Dit duurt iets langer. Je gegevens worden verwerkt…",
   "en": "This is taking a little longer. Your data is being processed…",
   "es": "Esto tarda un poco más. Se están procesando tus datos…"
+ },
+ "Indeling opslaan": {
+  "nl": "Indeling opslaan",
+  "en": "Save layout",
+  "es": "Guardar diseño"
+ },
+ "Standaardindeling": {
+  "nl": "Standaardindeling",
+  "en": "Default layout",
+  "es": "Diseño predeterminado"
+ },
+ "Zet modules aan of uit, versleep ze of gebruik de pijlen. Kies hoeveel ruimte elke module krijgt.": {
+  "nl": "Zet modules aan of uit, versleep ze of gebruik de pijlen. Kies hoeveel ruimte elke module krijgt.",
+  "en": "Enable or disable modules, drag them or use the arrows. Choose how much space each module gets.",
+  "es": "Activa o desactiva módulos, arrástralos o usa las flechas. Elige cuánto espacio ocupa cada módulo."
+ },
+ "Breedte": {
+  "nl": "Breedte",
+  "en": "Width",
+  "es": "Anchura"
+ },
+ "Dashboardmodules": {
+  "nl": "Dashboardmodules",
+  "en": "Dashboard modules",
+  "es": "Módulos del panel"
+ },
+ "Halfbreed": {
+  "nl": "Halfbreed",
+  "en": "Half width",
+  "es": "Media anchura"
+ },
+ "Volle breedte": {
+  "nl": "Volle breedte",
+  "en": "Full width",
+  "es": "Anchura completa"
+ },
+ "Klein": {
+  "nl": "Klein",
+  "en": "Small",
+  "es": "Pequeño"
+ },
+ "Indeling laden mislukt. Sluit dit venster en probeer opnieuw.": {
+  "nl": "Indeling laden mislukt. Sluit dit venster en probeer opnieuw.",
+  "en": "Could not load the layout. Close this window and try again.",
+  "es": "No se pudo cargar el diseño. Cierra esta ventana e inténtalo de nuevo."
+ },
+ "Je dashboard is leeg. Kies Dashboard aanpassen om modules aan te zetten.": {
+  "nl": "Je dashboard is leeg. Kies Dashboard aanpassen om modules aan te zetten.",
+  "en": "Your dashboard is empty. Choose Customize dashboard to enable modules.",
+  "es": "Tu panel está vacío. Elige Personalizar panel para activar módulos."
+ },
+ "Koers- en valuta-informatie": {
+  "nl": "Koers- en valuta-informatie",
+  "en": "Price and currency information",
+  "es": "Información de cotizaciones y divisas"
+ },
+ "Module {name} verplaatst naar plek {position}.": {
+  "nl": "Module {name} verplaatst naar plek {position}.",
+  "en": "Module {name} moved to position {position}.",
+  "es": "Módulo {name} movido a la posición {position}."
+ },
+ "Omhoog": {
+  "nl": "Omhoog",
+  "en": "Move up",
+  "es": "Subir"
+ },
+ "Omlaag": {
+  "nl": "Omlaag",
+  "en": "Move down",
+  "es": "Bajar"
+ },
+ "Standaardindeling klaargezet. Kies Indeling opslaan om te bewaren.": {
+  "nl": "Standaardindeling klaargezet. Kies Indeling opslaan om te bewaren.",
+  "en": "Default layout prepared. Choose Save layout to keep it.",
+  "es": "Diseño predeterminado preparado. Elige Guardar diseño para conservarlo."
+ },
+ "Valutakeuze": {
+  "nl": "Valutakeuze",
+  "en": "Currency selector",
+  "es": "Selector de divisa"
+ },
+ "Versleep module {name}": {
+  "nl": "Versleep module {name}",
+  "en": "Drag module {name}",
+  "es": "Arrastrar módulo {name}"
+ },
+ "Verslepen": {
+  "nl": "Verslepen",
+  "en": "Drag",
+  "es": "Arrastrar"
+ },
+ "Ongeldige dashboardindeling.": {
+  "nl": "Ongeldige dashboardindeling.",
+  "en": "Invalid dashboard layout.",
+  "es": "Diseño del panel no válido."
+ },
+ "Indeling opslaan mislukt. Probeer opnieuw.": {
+  "nl": "Indeling opslaan mislukt. Probeer opnieuw.",
+  "en": "Could not save the layout. Try again.",
+  "es": "No se pudo guardar el diseño. Inténtalo de nuevo."
  }
 };
