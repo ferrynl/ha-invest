@@ -5,7 +5,7 @@ function performancePercent(value){return new Intl.NumberFormat(appLocale(),{min
 function clearPerformance(){performanceGeneration++;performanceRequest?.cancel();performanceRequest=null;performanceData=null;performanceKey='';performanceError=false;performanceErrorDetails='';performancePages.clear();}
 async function loadPerformance(key){
  const generation=++performanceGeneration;
- performanceRequest=reportRequest('api/reports/performance?account_id='+encodeURIComponent(currentBroker)+'&instrument='+encodeURIComponent($('report-stock').value)+'&currency='+encodeURIComponent($('report-currency').value),60000);
+ performanceRequest=reportRequest('api/reports/performance?account_id='+encodeURIComponent(currentBroker)+'&currency='+encodeURIComponent($('report-currency').value),60000);
  // All figures come from this one server snapshot. A quote update since the
  // selector list loaded does not invalidate a complete report response.
  try{const data=await performanceRequest.promise;if(generation!==performanceGeneration||key!==reportHistoryScope()||!accessSession?.user)return;performanceData=data;}

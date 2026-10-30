@@ -45,6 +45,14 @@ class HttpTests(unittest.TestCase):
             self.assertGreater(len(body), 0)
             self.assertEqual(headers['Cache-Control'], 'no-store' if path in ('/','/api/state') else 'private, max-age=86400, immutable')
 
+    def test_world_map_data_and_flags_are_served_locally(self):
+        code,body,headers=self.request('GET','/world-countries.json')
+        self.assertEqual(code,200);self.assertTrue(headers['Content-Type'].startswith('application/json'))
+        countries=json.loads(body);self.assertTrue(any(c['code']=='NL' and c['path'] for c in countries))
+        code,body,headers=self.request('GET','/flags/nl.svg');self.assertEqual(code,200)
+        self.assertEqual(headers['Content-Type'],'image/svg+xml');self.assertIn(b'<svg',body)
+        self.assertEqual(self.request('GET','/country-map.js')[0],200)
+
     def test_report_history_endpoint_validates_scope(self):
         status, body, _ = self.request('GET', '/api/reports/history?account_id=all')
         self.assertEqual(status, 200)

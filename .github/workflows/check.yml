@@ -43,6 +43,8 @@ jobs:
       - run: node --check portfolio/app/static/reports.js
       - run: node tests/test_reports.cjs
       - run: node tests/test_performance.cjs
+      - run: node tests/test_country_map.cjs
+      - run: node --check portfolio/app/static/country-map.js
       - run: node tests/test_stocks.cjs
       - run: node tests/test_categories.cjs
       - run: node tests/test_tables.cjs

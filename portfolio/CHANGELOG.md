@@ -1,3 +1,11 @@
+# 0.33.0
+
+- Rendementsoverzicht staat direct onder Portefeuilleoverzicht in het rapportmenu. De aandelenkeuze bovenaan is verwijderd; broker-, valuta-, jaar- en periodekeuzes blijven beschikbaar waar ze relevant zijn.
+- Algemene marktwaarde-/winstkaarten worden alleen nog op Portefeuilleoverzicht getoond. Andere rapporten tonen hun eigen analyses, zonder herhaalde algemene totalen of irrelevante dividend-/valutatoelichting.
+- Landenverdeling toont een interactieve wereldkaart met ingekleurde landen, lokale SVG-vlaggen en percentages. Wereld- en Europaweergave, aanklikbare landen, toetsenbordbediening, bedragen en een landenlijst met gewichten.
+- Landnamen en landcodes worden samengevoegd. Onbekende indelingen en landen zonder kaartlocatie blijven zichtbaar en tellen mee in de procentbasis. Verdeling volgt de opgeslagen indeling en marktwaarde, zonder fictieve doorkijk in fondsposities.
+- Natural Earth-kaartgegevens en flag-icons-vlaggen zijn lokaal gebundeld; geen externe kaartdienst of overdracht van portefeuilledata. Nederlandse, Engelse en Spaanse schermteksten; mobiele en brede layouts. Geen databaseschemawijziging.
+
 # 0.32.2
 
 - Herstelt Rendementsrapport laden mislukt wanneer een achtergrondkoersupdate het gegevensnummer vernieuwt tussen het laden van de keuzelijst en het rapport. Het rapport gebruikt één consistente servermomentopname; oude filters, brokeraccounts en uitgelogde sessies blijven afgeschermd.

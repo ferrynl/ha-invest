@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.32.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.33.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -77,7 +77,7 @@ niet in het portefeuillerendement verwerkt.
 
 ## Opslag en back-ups
 
-De database en instellingen staan in de app-datafolder. Appversie **0.32.0** gebruikt
+De database en instellingen staan in de app-datafolder. Appversie **0.33.0** gebruikt
 databaseschema **19**. Upgrades maken vooraf een consistente back-up en voeren alleen
 ontbrekende migraties transactioneel uit. Bestaande aankopen, dividend en historie blijven
 behouden. Neem voor opgeslagen API-verbindingen de volledige app op in een Home Assistant-back-up.
@@ -103,7 +103,7 @@ De app ondersteunt Nederlands, Engels en Spaans. Kies je taal bij de eerste star
 
 ## Rapporten
 
-Kies de huidige portefeuille, resultaat per aandeel, dividend per maand of dividend per aandeel. Filter op brokeraccount, aandeel en valuta. De jaarkeuze geldt voor dividendrapporten; resultaat en portefeuille tonen de actuele stand inclusief alle geboekte dividenden. Bedragen blijven gescheiden per valuta.
+Kies de huidige portefeuille, resultaat per aandeel, dividend per maand of dividend per aandeel. Filter op brokeraccount en valuta. De jaarkeuze geldt voor dividendrapporten; resultaat en portefeuille tonen de actuele stand inclusief alle geboekte dividenden. Bedragen blijven gescheiden per valuta.
 
 Rapporten slaan regels met ontbrekende of ongeldige gegevens over en tonen hoeveel regels niet zijn meegenomen. Totalen gelden alleen voor de meegenomen regels. Een dividenduitkering kan worden meegenomen zonder actuele aandelenkoers. De opgeslagen transacties blijven behouden.
 
@@ -113,10 +113,12 @@ Rapporten openen als afzonderlijke pagina via het uitklapmenu links. De dividend
 
 De dividendkalender heeft een maandraster met navigatie en een detailagenda. Klik op een betaaldag om bedragen, aandelen en de basis van schattingen te zien. Op mobiel staan de details onder de kalender. Rapporten benutten de volledige beschikbare breedte.
 
-Rapporten starten met een gecombineerd totaal in EUR en tonen daarna de geselecteerde bronvaluta afzonderlijk. Ook filters voor broker, aandeel en bronvaluta gelden voor het totaal. Bedragen worden op de server met opgeslagen, gedateerde wisselkoersen omgerekend; ontbrekende omrekeningen worden vermeld. Onderliggende cijfers bevatten het totaal en de uitsplitsing als afzonderlijke regels en mogen niet bij elkaar worden opgeteld.
+Rapporten starten met een gecombineerd totaal in EUR en tonen daarna de geselecteerde bronvaluta afzonderlijk. Ook filters voor broker en bronvaluta gelden voor het totaal. Bedragen worden op de server met opgeslagen, gedateerde wisselkoersen omgerekend; ontbrekende omrekeningen worden vermeld. Onderliggende cijfers bevatten het totaal en de uitsplitsing als afzonderlijke regels en mogen niet bij elkaar worden opgeteld.
 
 ## Demoprofiel
 
 Open **Mijn account → Profiel kiezen** om te wisselen tussen je eigen portefeuille en de demo. Zonder loginaccount kun je de keuze ook maken in de taalpopup. De demo toont 10 brokers en 150 aandelen in 10 valuta’s. Transacties, dividend en daghistorie zijn fictieve voorbeelden; actuele koersen worden op de achtergrond bij Yahoo Finance opgehaald en kunnen vertraagd of onbeschikbaar zijn. Bij een fout blijft de vorige koers zichtbaar, aanvankelijk de fictieve demokoers (bron DEMO).
 
 De eigen portefeuille blijft in `data/portfolio.sqlite3`; de demo gebruikt `data/demo/portfolio.sqlite3` (in Home Assistant `/data/demo/portfolio.sqlite3`). Loginaccounts en sessies blijven van de eigen installatie. De demo wordt op de achtergrond voorbereid en hergebruikt, zonder dagelijkse herbouw. Succesvolle providerantwoorden worden gecachet; verversen gebeurt op zijn vroegst na vijf minuten en kan bij veel aandelen langer duren. De gekozen portefeuille staat in het pagina-adres en blijft bij herladen behouden. De demo is alleen-lezen.
+
+Landenverdeling heeft een interactieve wereldkaart met lokale vlaggen, percentages en een Europaweergave. Rapporten tonen alleen relevante cijfers; de algemene waarde-/winstkaarten staan op Portefeuilleoverzicht, met Rendementsoverzicht direct daaronder in het menu.

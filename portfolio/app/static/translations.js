@@ -6654,5 +6654,70 @@ const UI_TRANSLATIONS = {
   "nl": "Rendementsrapport berekenen mislukt.",
   "en": "Could not calculate the performance report.",
   "es": "No se pudo calcular el informe de rentabilidad."
+ },
+ "Europa": {
+  "nl": "Europa",
+  "en": "Europe",
+  "es": "Europa"
+ },
+ "Wereld": {
+  "nl": "Wereld",
+  "en": "World",
+  "es": "Mundo"
+ },
+ "Klik op een land of vlag voor de waarde en weging. De lijst bevat ook landen zonder kaartlocatie.": {
+  "nl": "Klik op een land of vlag voor de waarde en weging. De lijst bevat ook landen zonder kaartlocatie.",
+  "en": "Select a country or flag for its value and weight. The list also includes countries without a map location.",
+  "es": "Selecciona un país o bandera para ver su valor y peso. La lista también incluye países sin ubicación en el mapa."
+ },
+ "Land van de belegging": {
+  "nl": "Land van de belegging",
+  "en": "Country of the investment",
+  "es": "País de la inversión"
+ },
+ "Niet op de kaart geplaatst": {
+  "nl": "Niet op de kaart geplaatst",
+  "en": "Not placed on the map",
+  "es": "Sin ubicación en el mapa"
+ },
+ "Waar je beleggingen zitten": {
+  "nl": "Waar je beleggingen zitten",
+  "en": "Where your investments are",
+  "es": "Dónde están tus inversiones"
+ },
+ "Wereldkaart laden mislukt.": {
+  "nl": "Wereldkaart laden mislukt.",
+  "en": "Could not load the world map.",
+  "es": "No se pudo cargar el mapa mundial."
+ },
+ "Wereldkaart laden…": {
+  "nl": "Wereldkaart laden…",
+  "en": "Loading world map…",
+  "es": "Cargando mapa mundial…"
+ },
+ "Wereldkaart met landenverdeling": {
+  "nl": "Wereldkaart met landenverdeling",
+  "en": "World map of country allocation",
+  "es": "Mapa mundial de distribución por países"
+ },
+ "Je beleggingen op de wereldkaart": {
+  "nl": "Je beleggingen op de wereldkaart",
+  "en": "Your investments on the world map",
+  "es": "Tus inversiones en el mapa mundial"
+ },
+ "Weging naar marktwaarde en opgeslagen land van de belegging. Geen doorkijk in onderliggende fondsposities.": {
+  "nl": "Weging naar marktwaarde en opgeslagen land van de belegging. Geen doorkijk in onderliggende fondsposities.",
+  "en": "Weights use market value and the recorded country of each investment. Underlying fund holdings are not included.",
+  "es": "La ponderación utiliza el valor de mercado y el país registrado de cada inversión. No incluye las posiciones subyacentes de los fondos."
+ },
+ "Verdeling naar bekende marktwaarde. Ontbrekende indelingen blijven apart zichtbaar.": {
+  "nl": "Verdeling naar bekende marktwaarde. Ontbrekende indelingen blijven apart zichtbaar.",
+  "en": "Allocation by known market value. Missing classifications remain visible separately.",
+  "es": "Distribución según el valor de mercado conocido. Las clasificaciones pendientes se muestran por separado."
+ },
+ "Je open posities naar marktwaarde en weging.": {
+  "nl": "Je open posities naar marktwaarde en weging.",
+  "en": "Your open positions by market value and weight.",
+  "es": "Tus posiciones abiertas por valor de mercado y ponderación."
  }
 };

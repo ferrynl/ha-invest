@@ -66,7 +66,7 @@ const reply=(request,revision=1)=>request.resolve({ok:true,json:async()=>({data_
  const slow=context.loadReportHistory();context.currentBroker='1';const latest=context.loadReportHistory();
  reply(pendingHistory[1]);await latest;const accepted=vm.runInContext('reportHistory',context);reply(pendingHistory[0]);await slow;
  assert.equal(vm.runInContext('reportHistory',context),accepted);
- pendingHistory.length=0;elements.get('report-stock').value='changed';const stale=context.loadReportHistory();reply(pendingHistory.shift(),2);await stale;assert.equal(context.loads,1);
+ pendingHistory.length=0;elements.get('report-currency').value='USD';const stale=context.loadReportHistory();reply(pendingHistory.shift(),2);await stale;assert.equal(context.loads,1);
  context.clearReports();assert.equal(vm.runInContext('reportHistory',context),null);
  console.log('Report history ignores stale scopes and refreshes changed data revisions.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

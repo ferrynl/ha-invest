@@ -680,7 +680,7 @@ Rapporten slaan regels met ontbrekende of ongeldige gegevens over en tonen hoeve
 
 ### Visuele rapporten
 
-Rapporten biedt tien perspectieven: portefeuilleoverzicht, waardeontwikkeling, spreiding en concentratie, winnaars en verliezers, resultaatopbouw, maanddividend, dividend per aandeel, dividendkalender, sectoren en landen. Selecteer een brokeraccount, aandeel en valuta. Dividendrapporten hebben een jaarkeuze; waardeontwikkeling heeft een periodekeuze. Alle valuta blijven apart, ook als je alle valuta kiest.
+Rapporten biedt tien perspectieven: portefeuilleoverzicht, waardeontwikkeling, spreiding en concentratie, winnaars en verliezers, resultaatopbouw, maanddividend, dividend per aandeel, dividendkalender, sectoren en landen. Selecteer een brokeraccount en valuta. Dividendrapporten hebben een jaarkeuze; waardeontwikkeling heeft een periodekeuze. Alle valuta blijven apart, ook als je alle valuta kiest.
 
 Grafieken tonen details bij aanwijzen of toetsenbordfocus. Gebruik links en rechts op een lijngrafiek en Tab voor segmenten, staven en kalendercellen. Onderliggende cijfers toont de meegenomen bronregels. Donuts groeperen kleine posities onder Overige; ranglijsten en resultaattegels tonen maximaal de grootste bijdragen. Groene en rode tegels tonen winst/verlies in geld, geen perioderendement. De kalender toont ontvangen bedragen, geen verwachte uitkeringen. Het jaartotaal gedeeld door twaalf is een rekenkundig gemiddelde, geen voorspelling.
 
@@ -694,7 +694,7 @@ Rapporten openen als afzonderlijke pagina via het uitklapmenu links. De dividend
 
 De dividendkalender heeft een maandraster met navigatie en een detailagenda. Klik op een betaaldag om bedragen, aandelen en de basis van schattingen te zien. Op mobiel staan de details onder de kalender. Rapporten benutten de volledige beschikbare breedte.
 
-Rapporten starten met een gecombineerd totaal in EUR en tonen daarna de geselecteerde bronvaluta afzonderlijk. Ook filters voor broker, aandeel en bronvaluta gelden voor het totaal. Bedragen worden op de server met opgeslagen, gedateerde wisselkoersen omgerekend; ontbrekende omrekeningen worden vermeld. Onderliggende cijfers bevatten het totaal en de uitsplitsing als afzonderlijke regels en mogen niet bij elkaar worden opgeteld.
+Rapporten starten met een gecombineerd totaal in EUR en tonen daarna de geselecteerde bronvaluta afzonderlijk. Ook filters voor broker en bronvaluta gelden voor het totaal. Bedragen worden op de server met opgeslagen, gedateerde wisselkoersen omgerekend; ontbrekende omrekeningen worden vermeld. Onderliggende cijfers bevatten het totaal en de uitsplitsing als afzonderlijke regels en mogen niet bij elkaar worden opgeteld.
 
 Eurototalen berekenen de actuele stand zonder daghistorie opnieuw op te bouwen. Alleen Waardeontwikkeling vraagt volledige historie op. Rapportaanvragen hebben een wachttijd van maximaal 15 seconden; bij een fout verschijnt Opnieuw proberen. Berekeningen blokkeren andere opgeslagen dashboardweergaven niet.
 
@@ -744,8 +744,7 @@ boekingen in hetzelfde account en dezelfde valuta heeft.
 ## Rendementsoverzicht (0.32.1)
 
 Open **Rapporten → Rendementsoverzicht**. Het rapport toont eerst het gecombineerde
-totaal in EUR en daarna de geselecteerde bronvaluta’s. Brokeraccount, aandeel en
-valutafilter gelden voor alle onderdelen. De periode loopt vanaf de eerste aankoop.
+totaal in EUR en daarna de geselecteerde bronvaluta’s. Brokeraccount en valutafilter gelden voor alle onderdelen. De periode loopt vanaf de eerste aankoop.
 Groene/rode balken tonen het resultaat per kalenderjaar; grijze balken de aankoopbedragen.
 Het lopende jaar loopt tot vandaag. Navigeer per negen jaren (vijf op mobiel); details zijn ook met
 het toetsenbord bereikbaar en staan in Onderliggende cijfers.
@@ -783,3 +782,33 @@ De jaarberekening gebruikt alleen de bestaande jaargrenzen en de actuele stand.
 Op tragere apparaten kan de aanvraag maximaal zestig seconden duren. Een time-out,
 verbindingsfout of servermelding wordt toegelicht; onverwachte rekenfouten krijgen
 een Log-ID voor de afgeschermde Logs-pagina. Opnieuw proberen start een nieuwe aanvraag.
+
+
+## Opgeschoonde rapporten en wereldkaart (0.33.0)
+
+Het rapportmenu begint met Portefeuilleoverzicht en daarna Rendementsoverzicht.
+Er is geen aandelenkeuze bovenaan de rapporten. Brokeraccount en valuta blijven
+beschikbaar; jaar-, periode- en groeikeuzes verschijnen alleen op relevante pagina’s.
+Algemene marktwaarde en totale winst staan alleen op Portefeuilleoverzicht.
+Andere rapporten tonen hun eigen cijfers en visualisaties.
+
+**Landenverdeling** gebruikt een lokale wereldkaart. Landen met een bekende
+marktwaarde zijn ingekleurd; vlaggen en percentages tonen hun weging. Klik op een
+land, vlag of landenregel voor het bedrag. De Europa-knop vergroot de kleine landen;
+Wereld herstelt de gehele kaart. De lijst en Onderliggende cijfers bevatten alle
+landen, ook wanneer een vlaglabel op een drukke kaart niet past. Bediening met
+Tab en Enter is mogelijk. Op mobiel staat de landenlijst onder de kaart.
+
+Landen volgen de opgeslagen indeling van de belegging, niet de locatie van de
+beurs. Landcodes en Nederlandse, Engelse en Spaanse landnamen worden herkend.
+Bijvoorbeeld US, USA en Verenigde Staten tellen als hetzelfde land. Niet herkende
+landen blijven onder hun eigen naam apart in de lijst; ze worden niet aan een
+willekeurige locatie toegewezen en tellen wel mee in de procentbasis. De verdeling
+is naar bekende marktwaarde; ontbrekende koersen en EUR-omrekeningen blijven
+vermeld. Eerst wordt de EUR-verdeling getoond, daarna de bronvaluta afzonderlijk.
+Er is geen doorkijk in de onderliggende posities van ETF’s of fondsen.
+
+De kaart (Natural Earth, publiek domein) en vlaggen (flag-icons, MIT) worden vanuit
+de app geleverd. Er zijn geen externe kaartaanvragen en er wordt geen
+portefeuille-informatie naar een kaartdienst gestuurd. Bronnen en licentie staan
+bij de gebundelde bestanden in portfolio/app/static/WORLD_MAP_SOURCES.md.
