@@ -37,6 +37,7 @@ EXCHANGES = {'AMS': ('AMSTERDAM', 'EUR'), 'BRU': ('BRUSSELS', 'EUR'), 'MCE': ('M
              'PCX': ('NYSEARCA','USD'), 'ASE': ('AMEX','USD'),
              'GER': ('XETRA','EUR'), 'PAR': ('PARIS','EUR'), 'MIL': ('MILAN','EUR'),
              'LSE': ('LONDON','GBP'), 'EBS': ('SWISS','CHF'), 'FRA': ('FRANKFURT','EUR'),
+             'JPX':('TOKYO','JPY'),'TOR':('TORONTO','CAD'),'ASX':('ASX','AUD'),'HKG':('HONG KONG','HKD'),'CPH':('COPENHAGEN','DKK'),'STO':('STOCKHOLM','SEK'),
              'PRIVATE': ('PRIVATE','EUR')}
 
 def search_stocks(query,store=None):
@@ -70,16 +71,28 @@ def listing(symbol,store=None):
     if not market or meta.get('symbol','').upper()!=symbol.upper():raise ValueError('Notering of beurs kon niet worden gecontroleerd.')
     return {'symbol':symbol.upper(),'exchange':market[0],'currency':currency_code(meta['currency']),'name':str(meta.get('longName') or meta.get('shortName') or symbol)[:100]}
 
+# Resolve internal listing identifiers without changing booked transactions.
+def quote_symbol(symbol,exchange):
+    suffix={'AMSTERDAM':'.AS','BRUSSELS':'.BR','MADRID':'.MC','XETRA':'.DE','PARIS':'.PA','MILAN':'.MI','LONDON':'.L','SWISS':'.SW','TOKYO':'.T','TORONTO':'.TO','ASX':'.AX','HONG KONG':'.HK','COPENHAGEN':'.CO','STOCKHOLM':'.ST'}.get(exchange,'')
+    if suffix and symbol.endswith(suffix):return symbol
+    if exchange=='HONG KONG':symbol=symbol.lstrip('0').zfill(4)
+    if exchange in ('COPENHAGEN','STOCKHOLM'):symbol=symbol.replace('.','-')
+    if exchange=='LONDON' and symbol=='BA':symbol='BA.'
+    return symbol if not suffix or symbol.endswith(suffix) else symbol+suffix
+
 def fetch_quote(key, symbol, exchange, currency,store=None,ttl=900):
-    request = Request('https://query1.finance.yahoo.com/v8/finance/chart/' + quote(symbol, safe='') + '?interval=1d&range=1d', headers={'User-Agent': 'Mozilla/5.0'})
+    request = Request('https://query1.finance.yahoo.com/v8/finance/chart/' + quote(quote_symbol(symbol,exchange), safe='') + '?interval=1d&range=1d', headers={'User-Agent': 'Mozilla/5.0'})
     result=_payload(request,20,store,'yahoo-quote','|'.join((symbol,exchange,currency)),ttl)['chart']['result'][0]['meta']
-    if currency_code(result.get('currency','')) != currency_code(currency):
+    from decimal import Decimal
+    source_currency=currency_code(result.get('currency',''))
+    pence_to_pounds=source_currency=='GBX' and currency_code(currency)=='GBP'
+    if source_currency != currency_code(currency) and not pence_to_pounds:
         raise ValueError('Koersvaluta wijkt af van de aankoop; koers niet opgeslagen.')
     market=EXCHANGES.get(result.get('exchangeName','').upper())
-    if result.get('symbol', '').upper() != symbol or not market or market[0]!=exchange:
+    if result.get('symbol', '').upper() != quote_symbol(symbol,exchange).upper() or not market or market[0]!=exchange:
         raise ValueError('Koersdienst retourneerde een ander symbool of andere beurs.')
     timestamp = datetime.fromtimestamp(int(result['regularMarketTime']), timezone.utc).isoformat()
-    return result['regularMarketPrice'], timestamp
+    return str(Decimal(str(result['regularMarketPrice']))*Decimal('.01')) if pence_to_pounds else result['regularMarketPrice'], timestamp
 
 def fetch_history(symbol, exchange, currency, start,store=None):
     # Include a preceding trading day so a weekend purchase has a reference price.

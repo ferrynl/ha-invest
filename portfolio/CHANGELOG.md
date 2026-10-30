@@ -1,3 +1,11 @@
+# 0.31.2
+
+- Profielkeuze verplaatst naar Mijn account en een modale pop-up; bij gebruikers zonder loginaccount is de keuze ook beschikbaar naast de taal in de taalpopup.
+- Demo haalt actuele Yahoo-providerkoersen op in een eigen achtergrondtaak met SQLite-cache, behoud van de laatst geslaagde koers en respect voor providerwachttijden. Koersen kunnen vertraagd zijn; transacties, dividend en daghistorie blijven fictieve voorbeelden.
+- Beursnoteringen gebruiken de juiste marktsuffixen; Britse pence worden voor GBP-koersen omgerekend. Demogegevens blijven gescheiden van de eigen portefeuille.
+- Demo wordt voorbereid op de achtergrond en niet dagelijks opnieuw opgebouwd. Bestaande demo en overzichtcaches blijven bruikbaar. Actuele eigen koersen worden vóór historie opgehaald.
+- Grotere laadanimatie centraal in beeld op mobiel, tablet en desktop, met ondersteuning voor minder beweging.
+
 # 0.31.1
 
 - Portefeuilleopbouw indexeert koersen, transacties en dividend eenmaal in plaats van alle regels opnieuw te doorzoeken voor iedere positie.

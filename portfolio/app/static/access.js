@@ -89,6 +89,8 @@ function switchProfile(profile){
  const target=new URL(location.href);target.searchParams.set('profile',profile);target.hash='home';location.assign(target.href);
 }
 function bindAccess(){
+ $('profile-open').addEventListener('click',()=>$('profile-dialog').showModal());
+ $('profile-close').addEventListener('click',()=>$('profile-dialog').close());
  $('profile-select').addEventListener('change',()=>switchProfile($('profile-select').value));
  $('profile-personal').addEventListener('click',()=>switchProfile('personal'));
 

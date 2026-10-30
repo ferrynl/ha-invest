@@ -84,3 +84,32 @@ class ProfileResponseTests(unittest.TestCase):
   self.assertEqual(status,200);self.assertEqual(headers.get('Cache-Control'),'no-store');self.assertTrue(json.loads(gzip.decompress(body))['compact'])
   status,headers,body=fetch('/api/session',{'Accept-Encoding':'gzip'})
   self.assertEqual(status,200);self.assertNotIn('Content-Encoding',headers);self.assertEqual(headers.get('Cache-Control'),'no-store')
+
+
+class LiveDemoTests(unittest.TestCase):
+ def test_updates_latest_once_and_reuses_on_next_day(self):
+  from demo import refresh_demo_quotes
+  from provider import ProviderBusy,quote_symbol
+  with tempfile.TemporaryDirectory() as folder:
+   store=ensure_demo(Path(folder)/'demo');before=len(store.state()['purchases'])
+   stamp='2026-10-29T12:00:00+00:00'
+   calls=[]
+   def fetch(key,symbol,exchange,currency,**kwargs):
+    calls.append(symbol)
+    if symbol=='MSFT':raise ValueError('offline')
+    return '123.45',stamp
+   refresh_demo_quotes(store,fetch=fetch)
+   self.assertEqual(len(calls),150)
+   with store.read() as db:
+    self.assertEqual(db.execute("SELECT price FROM quotes WHERE symbol='AAPL' ORDER BY id DESC LIMIT 1").fetchone()[0],'123.45')
+    self.assertEqual(db.execute("SELECT source FROM quotes WHERE symbol='MSFT' ORDER BY id DESC LIMIT 1").fetchone()[0],'DEMO')
+   calls.clear();refresh_demo_quotes(store,fetch=fetch);self.assertEqual(calls,['MSFT'])
+   again=ensure_demo(store.root,today=date(2030,1,1))
+   self.assertEqual(len(again.state()['purchases']),before)
+   self.assertEqual(quote_symbol('ASML','AMSTERDAM'),'ASML.AS')
+   self.assertEqual(quote_symbol('ASML.AS','AMSTERDAM'),'ASML.AS')
+   self.assertEqual(quote_symbol('NOVO.B','COPENHAGEN'),'NOVO-B.CO')
+   self.assertEqual(quote_symbol('0700','HONG KONG'),'0700.HK')
+   calls.clear()
+   def busy(*args,**kwargs):calls.append(1);raise ProviderBusy('busy')
+   refresh_demo_quotes(store,ttl=0,fetch=busy);self.assertEqual(len(calls),1)

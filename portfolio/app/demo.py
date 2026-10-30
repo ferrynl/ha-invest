@@ -28,7 +28,7 @@ def ensure_demo(root,today=None):
         with store.read() as db:
             settings=dict(db.execute('SELECT key,value FROM app_settings'))
             count=db.execute('SELECT COUNT(*) FROM purchases').fetchone()[0]
-        if settings.get('demo_seed_version')==SEED_VERSION and settings.get('demo_day')==today.isoformat():return store
+        if settings.get('demo_seed_version')==SEED_VERSION:return store
         if count and 'demo_seed_version' not in settings:raise ValueError('Demo-opslag bevat onbekende gegevens.')
         seed(store,today)
     return store
@@ -80,7 +80,7 @@ def profile_handler(primary,store,auth,factory):
     def demo_handler():
         with lock:
             today=date.today().isoformat()
-            if active.get('day')!=today:
+            if 'handler' not in active:
                 demo=ensure_demo(store.root/'demo');active.update(day=today,store=demo,handler=factory(demo))
             return active['handler']
     class ProfileHandler(primary):
@@ -120,3 +120,27 @@ def profile_handler(primary,store,auth,factory):
                 return self.respond({'error':'Het demoprofiel is alleen-lezen. Kies je eigen portefeuille om gegevens te wijzigen.'},403)
             return super().do_POST()
     return ProfileHandler
+
+
+def refresh_demo_quotes(store,ttl=300,fetch=None):
+    """Update only the isolated demo, preserving seed history and last good quotes."""
+    import time
+    from datetime import datetime,timezone
+    from provider import fetch_quote,ProviderBusy
+    fetch=fetch or fetch_quote
+    with store.read() as db:
+        rows=[dict(row) for row in db.execute('SELECT symbol,exchange,currency,source,fetched_at FROM quotes WHERE id IN (SELECT MAX(id) FROM quotes GROUP BY symbol,exchange,currency)')]
+    for row in rows:
+        if row['source']!='DEMO' and (datetime.now(timezone.utc)-datetime.fromisoformat(row['fetched_at'])).total_seconds()<ttl:continue
+        symbol,exchange,currency=(row[k] for k in ('symbol','exchange','currency'))
+        # Older seeds used Amsterdam for every EUR listing. Route only verified listings.
+        listing_exchange={'AIR':'PARIS','SAP':'XETRA','SIE':'XETRA','MC':'PARIS','OR':'PARIS'}.get(symbol,exchange) if currency=='EUR' else exchange
+        listing_symbol={'SHELL':'SHELL','DSM':'DSFIR'}.get(symbol,symbol) if currency=='EUR' else symbol
+        try:
+            price,stamp=fetch('',listing_symbol,listing_exchange,currency,store=store,ttl=ttl)
+            store.quote(symbol,exchange,currency,price,stamp,'Yahoo Finance (mogelijk vertraagd)')
+        except ProviderBusy:break
+        except Exception as error:
+            from diagnostics import record
+            record(store,'WARNING','market','demo_quote_failed','Demokoers ophalen mislukt.',{'symbol':symbol,'error_type':type(error).__name__})
+        if fetch is fetch_quote:time.sleep(1)

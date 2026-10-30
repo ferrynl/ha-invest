@@ -83,7 +83,8 @@ class ForexTests(unittest.TestCase):
   payload={'chart':{'result':[{'meta':{'symbol':'EQGB.L','exchangeName':'LSE','currency':'GBp','regularMarketPrice':50000,'regularMarketTime':1792164600}}]}}
   with patch('provider._payload',return_value=payload):
    price,_=fetch_quote('','EQGB.L','LONDON','GBX');self.assertEqual(price,50000)
-   with self.assertRaises(ValueError):fetch_quote('','EQGB.L','LONDON','GBP')
+   price,_=fetch_quote('','EQGB.L','LONDON','GBP');self.assertEqual(Decimal(str(price)),Decimal('500'))
+   with self.assertRaises(ValueError):fetch_quote('','EQGB.L','LONDON','USD')
  def test_overview_persists_currency_list_and_remains_useful_offline(self):
   catalog=[{'iso_code':'EUR','name':'Euro'},{'iso_code':'USD','name':'US Dollar'},{'iso_code':'GBP','name':'Pound sterling'}]
   with patch('forex.load_json',side_effect=[catalog,rates()]):

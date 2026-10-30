@@ -352,5 +352,5 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
         from demo import profile_handler
         from cache import StateCache
         import threading
-        return profile_handler(Handler,store,auth,lambda demo:make_handler(demo,auth,StateCache(store=demo),{'message':'Fictieve demogegevens. Geen actuele koersen.','last_attempt':None},interval,threading.Lock(),threading.Event(),None,enable_demo=False))
+        return profile_handler(Handler,store,auth,lambda demo:make_handler(demo,auth,StateCache(store=demo),{'message':'Voorbeeldportefeuille · providerkoersen mogelijk vertraagd · fictieve transacties en historie','last_attempt':None},interval,threading.Lock(),threading.Event(),None,enable_demo=False))
     return Handler

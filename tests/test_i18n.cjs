@@ -18,7 +18,7 @@ function browser({account='',saved=null,cookie='',storageBlocked=false}={}){
   createTreeWalker(){return {nextNode(){this.currentNode=[label,option][index++];return !!this.currentNode;}};},
   querySelectorAll:()=>[],getElementById:element};
  const calls=[];
- const context=vm.createContext({document,URL,NodeFilter:{SHOW_TEXT:4},localStorage:{getItem:key=>{if(storageBlocked)throw Error('blocked');return preferences.get(key)||null;},setItem:(key,value)=>{if(storageBlocked)throw Error('blocked');preferences.set(key,value);}},location:{href:'http://localhost/ingress/test/',reload(){calls.push('reload');}},jsonAction:async(...args)=>calls.push(args)});
+ const context=vm.createContext({currentProfile:'personal',switchProfile:profile=>calls.push(profile),document,URL,NodeFilter:{SHOW_TEXT:4},localStorage:{getItem:key=>{if(storageBlocked)throw Error('blocked');return preferences.get(key)||null;},setItem:(key,value)=>{if(storageBlocked)throw Error('blocked');preferences.set(key,value);}},location:{href:'http://localhost/ingress/test/',reload(){calls.push('reload');}},jsonAction:async(...args)=>calls.push(args)});
  vm.runInContext(fs.readFileSync(path.join(root,'translations.js'),'utf8'),context);
  vm.runInContext(fs.readFileSync(path.join(root,'i18n.js'),'utf8'),context);
  return {context,document,label,option,userText,element,calls,preferences};
@@ -41,6 +41,8 @@ function browser({account='',saved=null,cookie='',storageBlocked=false}={}){
  const started=vm.runInContext('initializeLanguage(null)',first.context);
  assert.equal(first.element('language-dialog').open,true,'first launch asks for a language');
  assert.equal(first.element('language-cancel').hidden,true);
+ assert.equal(first.element('welcome-profile-control').hidden,false);
+ const account=browser();vm.runInContext('initializeLanguage({id:2})',account.context);assert.equal(account.element('welcome-profile-control').hidden,true);
  let cancelled=false;first.element('language-dialog').events.cancel({preventDefault(){cancelled=true;}});
  assert.equal(cancelled,true,'first launch requires a choice');
  first.element('language-choice').value='nl';

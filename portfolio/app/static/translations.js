@@ -1,5 +1,6 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+"Profiel kiezen":{"nl": "Profiel kiezen", "en": "Choose profile", "es": "Elegir perfil"},"Voorbeeldportefeuille · providerkoersen mogelijk vertraagd · fictieve transacties en historie":{"nl": "Voorbeeldportefeuille · providerkoersen mogelijk vertraagd · fictieve transacties en historie", "en": "Example portfolio · provider quotes may be delayed · fictional trades and history", "es": "Cartera de ejemplo · cotizaciones posiblemente retrasadas · operaciones e historial ficticios"},
  "1 eenheid in EUR": {
   "nl": "1 eenheid in EUR",
   "en": "1 unit in EUR",

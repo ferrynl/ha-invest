@@ -45,6 +45,14 @@ def refresh():
             if p.get('quote',{} ) and p['quote'].get('manual'):
                 if enrich_categories(store,instrument):state_cache.invalidate()
                 continue
+            try:
+                fresh = p['quote'] and (datetime.now(timezone.utc)-datetime.fromisoformat(p['quote']['fetched_at'])).total_seconds()<interval
+                if not fresh:
+                    price, stamp = fetch_quote('', p['symbol'], p['exchange'], p['currency'],store=store,ttl=interval)
+                    store.quote(p['symbol'], p['exchange'], p['currency'], price, stamp, 'Yahoo Finance (mogelijk vertraagd)')
+            except Exception as error:
+                record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],'error_type':type(error).__name__,'code':getattr(error,'code','provider_failed')})
+                errors += 1
             start = min(l['purchased_on'] for l in snapshot['purchases'] if all(l[k] == p[k] for k in ('symbol', 'exchange', 'currency')))
             try:
                 if store.history_needed(p['symbol'], p['exchange'], p['currency'], start):
@@ -54,14 +62,6 @@ def refresh():
             except Exception as error:
                 record(store,'WARNING','market','history_failed','Koershistorie ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],'error_type':type(error).__name__,'code':getattr(error,'code','provider_failed')})
                 history_errors += 1
-            try:
-                fresh = p['quote'] and (datetime.now(timezone.utc)-datetime.fromisoformat(p['quote']['fetched_at'])).total_seconds()<interval
-                if not fresh:
-                    price, stamp = fetch_quote('', p['symbol'], p['exchange'], p['currency'],store=store,ttl=interval)
-                    store.quote(p['symbol'], p['exchange'], p['currency'], price, stamp, 'Yahoo Finance (mogelijk vertraagd)')
-            except Exception as error:
-                record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],'error_type':type(error).__name__,'code':getattr(error,'code','provider_failed')})
-                errors += 1
             # Profile lookup runs once per listing, including existing holdings.
             if enrich_categories(store,instrument):state_cache.invalidate()
             # Space requests to avoid bursts; plan limits still apply.
@@ -82,6 +82,13 @@ def warm_dashboard():
     snapshot=state_cache.get(store.state)
     from dashboard import compact
     state_cache.derived('home-euro-compact:all',lambda:compact({**euro_overview(store,snapshot,fetch_rates=False),'data_revision':snapshot['data_revision']}))
+
+def demo_background():
+    from demo import ensure_demo,refresh_demo_quotes
+    while True:
+        try:refresh_demo_quotes(ensure_demo(store.root/'demo'),ttl=300)
+        except Exception as error:record(store,'WARNING','market','demo_refresh_failed','Demokoersen bijwerken mislukt.',{'error_type':type(error).__name__})
+        time.sleep(300)
 
 def background():
     last_backup = 0
@@ -124,5 +131,6 @@ def start_export():
 if __name__ == '__main__':
     start_export()
     threading.Thread(target=background, daemon=True).start()
+    threading.Thread(target=demo_background, daemon=True).start()
     # The dashboard stays ingress-only; optional sensors use a separate read-only port.
     ThreadingHTTPServer((os.environ.get('BIND', '0.0.0.0'), int(os.environ.get('PORT', 8099))), Handler).serve_forever()

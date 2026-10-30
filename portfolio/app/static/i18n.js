@@ -53,6 +53,8 @@ async function initializeLanguage(user){
 }
 function openLanguageDialog(first=false){
  document.getElementById('language-choice').value=currentLanguage;
+ document.getElementById('welcome-profile-control').hidden=Boolean(languageUser?.id);
+ document.getElementById('welcome-profile').value=currentProfile;
  document.getElementById('language-cancel').hidden=first;
  document.getElementById('language-feedback').textContent='';
  document.getElementById('language-dialog').showModal();
@@ -66,6 +68,8 @@ document.getElementById('language-form').addEventListener('submit',async event=>
   const language=document.getElementById('language-choice').value;
   if(languageUser)await jsonAction('api/account/language',{language});
   rememberLanguage(language);
+  const profile=document.getElementById('welcome-profile-control').hidden?currentProfile:document.getElementById('welcome-profile').value;
+  if(profile!==currentProfile){switchProfile(profile);return;}
   if(language!==currentLanguage){location.reload();return;}
   document.getElementById('language-dialog').close();
   if(firstLanguageChoice){const resolve=firstLanguageChoice;firstLanguageChoice=null;resolve();}

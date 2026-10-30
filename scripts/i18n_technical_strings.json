@@ -900,6 +900,11 @@
     "#home",
     "aria-busy",
     "loading-description",
-    "loading-indicator"
+    "loading-indicator",
+    "profile-close",
+    "profile-dialog",
+    "profile-open",
+    "welcome-profile",
+    "welcome-profile-control"
   ]
 }
