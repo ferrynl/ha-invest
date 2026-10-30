@@ -10,6 +10,14 @@ from transactions import scope
 
 ZERO=Decimal(0)
 
+def annual_points(points):
+    """Keep each year's last saved day, including the current incomplete year."""
+    annual={}
+    for point in points:
+        year=point['day'][:4]
+        if year not in annual or point['day']>annual[year]['day']:annual[year]=point
+    return [annual[year] for year in sorted(annual)]
+
 def xirr(flows):
     """365-day XIRR; decline ambiguous cash-flow schedules instead of guessing."""
     totals=defaultdict(lambda:ZERO)
@@ -90,12 +98,15 @@ def overview(store,snapshot,account='all',instrument=None,currency='',today=None
     if instrument is not None and (not isinstance(instrument,list) or len(instrument)!=3 or any(not isinstance(v,str) for v in instrument)):raise ValueError('Ongeldige positie.')
     def matches(r):return (owner is None or r['account_id']==owner) and (not currency or r['currency']==currency) and (instrument is None or [r[k] for k in ('symbol','exchange','currency')]==instrument)
     selected={**snapshot,**{k:[r for r in snapshot[k] if matches(r)] for k in ('positions','purchases','dividends')}}
+    # The report needs year boundaries and today's totals, not a second daily
+    # portfolio simulation. Keep stored historical observations at those dates.
+    selected['positions']=[{**p,'history':annual_points(p['history'])} for p in selected['positions']]
     valid_rates=[]
     for r in rates:
         try:
             if Decimal(r['rate']).is_finite() and Decimal(r['rate'])>0:date.fromisoformat(r['day']);valid_rates.append(r)
         except (ArithmeticError,ValueError,TypeError):continue
-    euro=build(selected,valid_rates,account,today,include_history=True,skip_invalid=True)
+    euro=build(selected,valid_rates,account,today,include_history=True,skip_invalid=True,sparse_history=True)
     indexed=defaultdict(list)
     for r in valid_rates:indexed[r['quote']].append(r)
     dates={c:[r['day'] for r in rows] for c,rows in indexed.items()}
@@ -107,7 +118,7 @@ def overview(store,snapshot,account='all',instrument=None,currency='',today=None
         return scale/Decimal(indexed[base][i]['rate'])
     converted_trades=[];converted_income=[];missing=len(euro['excluded'])
     for t in selected['purchases']:
-        fx=factor(t['currency'],t['purchased_on'])
+        fx=Decimal(1) if t.get('split_before') else factor(t['currency'],t['purchased_on'])
         if fx is None:missing+=1;continue
         converted_trades.append({**t,'price':str(Decimal(t['price'])*fx),'currency':'EUR'})
     for d in selected['dividends']:

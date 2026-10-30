@@ -1031,6 +1031,8 @@
     "ⓘ",
     "performance-help",
     " 280",
-    "(max-width:600px)"
+    "(max-width:600px)",
+    "report_server",
+    "report_timeout"
   ]
 }

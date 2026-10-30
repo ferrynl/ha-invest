@@ -4,9 +4,10 @@ import unittest
 from pathlib import Path
 from datetime import date
 from decimal import Decimal
+from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'portfolio/app'))
 from storage import Store
-from performance import overview,xirr
+from performance import overview,xirr,summarize,annual_points
 from conversions import preview,commit
 import test_transactions as support
 
@@ -58,11 +59,50 @@ class PerformanceTests(unittest.TestCase):
   self.assertIsNone(self.report(instrument=['TDT.AS','AMSTERDAM','EUR'])['groups'][0]['irr'])
  def test_account_filter_rejects_unknown_accounts(self):
   with self.assertRaises(ValueError):self.report(account='999')
+ def test_sparse_year_boundaries_match_full_daily_report_with_dated_fx(self):
+  from home_euro import build
+  self.stock.update(currency='USD',exchange='NYSE')
+  self.trade('10','10','2025-01-01');self.trade('2','15','2026-01-02',side='SELL')
+  self.store.add_dividend(dict(**self.stock,amount='5',paid_on='2026-02-01'))
+  self.store.save_history('TEST','NYSE','USD','2025-01-01',[dict(day='2025-12-31',price='12')])
+  self.store.quote('TEST','NYSE','USD','20','2026-10-30T10:00:00+00:00','Test')
+  rates=[]
+  for day,rate in [('2025-01-01','2'),('2025-12-31','3'),('2026-01-02','3'),('2026-02-01','4'),('2026-10-30','5')]:
+   rates.append(dict(base='EUR',quote='USD',day=day,rate=rate))
+   with self.store.connect() as db:db.execute("INSERT INTO fx_rates VALUES('EUR','USD',?,?,'Test','2026-10-30T10:00:00+00:00')",(day,rate))
+  snapshot=self.store.state();today=date(2026,10,30)
+  full=build(snapshot,rates,today=today,skip_invalid=True)
+  sparse=build({**snapshot,'positions':[{**p,'history':annual_points(p['history'])} for p in snapshot['positions']]},rates,today=today,skip_invalid=True,sparse_history=True)
+  self.assertEqual(sparse['positions'][0]['history'],annual_points(full['positions'][0]['history']))
+  converted=[{**t,'price':str(Decimal(t['price'])/Decimal('2' if t['side']=='BUY' else '3'))} for t in snapshot['purchases']]
+  income=[{**d,'amount':str(Decimal(d['amount'])/4)} for d in snapshot['dividends']]
+  expected=summarize(full['positions'],converted,income,today)
+  actual=self.report()['groups'][0]
+  for key,value in expected.items():
+   if key=='years':
+    for observed,wanted in zip(actual[key],value):
+     self.assertEqual((observed['year'],observed['day']),(wanted['year'],wanted['day']))
+     for field in ('gain','invested'):self.assertEqual(Decimal(observed[field]) if observed[field] is not None else None,Decimal(wanted[field]) if wanted[field] is not None else None)
+   elif isinstance(value,str):self.assertEqual(Decimal(actual[key]),Decimal(value),key)
+   else:self.assertEqual(actual[key],value,key)
+ def test_neutral_split_does_not_require_an_fx_rate_on_split_day(self):
+  self.stock.update(currency='USD',exchange='NYSE');self.trade('1','100','2026-01-01')
+  with self.store.connect() as db:
+   db.execute("INSERT INTO purchases(symbol,exchange,currency,name,quantity,price,purchased_on,created_at,split_before) VALUES('TEST','NYSE','USD','Test','2','1','2026-08-01','2026-08-01T00:00:00+00:00','1')")
+   for day in ('2026-01-01','2026-10-30'):db.execute("INSERT INTO fx_rates VALUES('EUR','USD',?,'2','Test','2026-10-30T10:00:00+00:00')",(day,))
+  self.store.quote('TEST','NYSE','USD','55','2026-10-30T10:00:00+00:00','Test')
+  group=self.report()['groups'][0];self.assertTrue(group['complete']);self.assertEqual(Decimal(group['total']),5)
 
 class PerformanceHttpTests(unittest.TestCase):
  setUp=support.TransactionHttpTests.setUp
  tearDown=support.TransactionHttpTests.tearDown
  request=support.TransactionHttpTests.request
+ def test_unexpected_server_failure_returns_safe_diagnostic_reference(self):
+  with patch('performance.overview',side_effect=RuntimeError('private provider response')):
+   code,data=self.request('/api/reports/performance')
+  self.assertEqual(code,500);self.assertIn('Log-ID',data['error']);self.assertNotIn('private',data['error'])
+  with self.store.read() as db:log=db.execute("SELECT message,details FROM app_logs WHERE event='performance_failed'").fetchone()
+  self.assertIsNotNone(log);self.assertNotIn('private',str(tuple(log)));self.assertIn('RuntimeError',log['details'])
  def test_report_is_read_only_authenticated_and_validates_filters(self):
   code,data=self.request('/api/reports/performance');self.assertEqual(code,200);self.assertTrue(data['groups'][0]['combined'])
   self.assertEqual(self.request('/api/reports/performance?account_id=999')[0],400)

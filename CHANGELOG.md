@@ -1,3 +1,10 @@
+# 0.32.2
+
+- Herstelt Rendementsrapport laden mislukt wanneer een achtergrondkoersupdate het gegevensnummer vernieuwt tussen het laden van de keuzelijst en het rapport. Het rapport gebruikt één consistente servermomentopname; oude filters, brokeraccounts en uitgelogde sessies blijven afgeschermd.
+- De EUR-jaarberekening verwerkt alleen opgeslagen jaargrenzen en de huidige stand. Dagreeksen worden niet opnieuw opgebouwd. Bestaande bedragen, gedateerde FX, splitsingen, omboekingen, dividend en XIRR blijven behouden; neutrale splitsingen vereisen geen onnodige wisselkoers op de splitsingsdatum.
+- Het rendementsrapport krijgt zestig seconden laadtijd op tragere apparaten. Overige rapporten houden hun bestaande limiet. Bij een fout wordt onderscheid gemaakt tussen verbinding, time-out en servermelding; onverwachte rekenfouten geven een veilig Log-ID.
+- Nieuwe regressiecontroles voor gelijktijdige koersupdates, filterwissels, opnieuw proberen, uitloggen, foutdetails en gelijke jaarstanden ten opzichte van volledige dagberekeningen.
+
 # 0.32.1
 
 - Nieuw rapport Rendementsoverzicht met winst/verlies per kalenderjaar, aankoopbedragen, kapitaal en uitsplitsing van koersresultaat, netto dividend en gerealiseerde winst. Eerst het gecombineerde EUR-totaal, daarna per bronvaluta; broker-, aandeel- en valutafilters blijven gelden.

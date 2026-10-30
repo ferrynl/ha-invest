@@ -1,13 +1,15 @@
 /* Performance is fetched only when its report is opened. */
 var ui=globalThis.HomeInvestTranslate||((value)=>value);
-let performanceData=null,performanceKey='',performanceRequest=null,performanceGeneration=0,performanceError=false,performancePages=new Map();
+let performanceData=null,performanceKey='',performanceRequest=null,performanceGeneration=0,performanceError=false,performanceErrorDetails='',performancePages=new Map();
 function performancePercent(value){return new Intl.NumberFormat(appLocale(),{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(value))+'%';}
-function clearPerformance(){performanceGeneration++;performanceRequest?.cancel();performanceRequest=null;performanceData=null;performanceKey='';performanceError=false;performancePages.clear();}
+function clearPerformance(){performanceGeneration++;performanceRequest?.cancel();performanceRequest=null;performanceData=null;performanceKey='';performanceError=false;performanceErrorDetails='';performancePages.clear();}
 async function loadPerformance(key){
  const generation=++performanceGeneration;
- performanceRequest=reportRequest('api/reports/performance?account_id='+encodeURIComponent(currentBroker)+'&instrument='+encodeURIComponent($('report-stock').value)+'&currency='+encodeURIComponent($('report-currency').value));
- try{const data=await performanceRequest.promise;if(generation!==performanceGeneration||key!==reportHistoryScope()||!accessSession?.user)return;if(data.data_revision!==state.data_revision)throw Error();performanceData=data;}
- catch{if(generation===performanceGeneration)performanceError=true;}
+ performanceRequest=reportRequest('api/reports/performance?account_id='+encodeURIComponent(currentBroker)+'&instrument='+encodeURIComponent($('report-stock').value)+'&currency='+encodeURIComponent($('report-currency').value),60000);
+ // All figures come from this one server snapshot. A quote update since the
+ // selector list loaded does not invalidate a complete report response.
+ try{const data=await performanceRequest.promise;if(generation!==performanceGeneration||key!==reportHistoryScope()||!accessSession?.user)return;performanceData=data;}
+ catch(error){if(generation===performanceGeneration){performanceError=true;performanceErrorDetails=['report_timeout','report_server'].includes(error.code)?error.message:ui('Controleer de verbinding en probeer opnieuw.');}}
  finally{if(generation===performanceGeneration){performanceRequest=null;if(state&&reportType==='performance')renderReports();}}
 }
 function performanceRow(list,label,value,percent=null,note='',emphasis=false){
@@ -36,7 +38,7 @@ function renderPerformanceReport(){
  $('report-metrics').replaceChildren();$('report-charts').replaceChildren();$('report-insights').replaceChildren();$('report-head').replaceChildren();$('report-rows').replaceChildren();$('report-count').textContent='';
  $('report-description').textContent=ui('Sinds de eerste aankoop. Eerst het totaal in EUR, daarna per bronvaluta. Percentages bij de onderdelen gebruiken de totale aankoopinleg als basis.');
  const key=reportHistoryScope();if(performanceKey!==key){clearPerformance();performanceKey=key;}
- if(!performanceData){const panel=homeNode('section',undefined,'panel report-wide');panel.append(homeNode('p',performanceError?ui('Rendementsrapport laden mislukt.'):ui('Rendement berekenen…')));$('report-charts').append(panel);if(performanceError){const retry=homeNode('button',ui('Opnieuw proberen'),'secondary');retry.type='button';retry.onclick=()=>{clearPerformance();renderReports();};panel.append(retry);}else if(!performanceRequest)loadPerformance(key);return;}
+ if(!performanceData){const panel=homeNode('section',undefined,'panel report-wide');panel.append(homeNode('p',performanceError?ui('Rendementsrapport laden mislukt.'):ui('Rendement berekenen…')));$('report-charts').append(panel);if(performanceError){if(performanceErrorDetails)panel.append(homeNode('p',performanceErrorDetails));const retry=homeNode('button',ui('Opnieuw proberen'),'secondary');retry.type='button';retry.onclick=()=>{clearPerformance();renderReports();};panel.append(retry);}else if(!performanceRequest)loadPerformance(key);return;}
  $('report-status').textContent=ui('Kosten en belasting zijn niet afzonderlijk geregistreerd. Het resultaat is vóór eventuele aanvullende kosten; dividend is het geboekte nettobedrag.');
  const header=homeNode('tr');for(const label of [ui('Valuta'),ui('Jaar'),ui('Aankoopbedrag'),ui('Jaarresultaat')])header.append(homeNode('th',label));$('report-head').append(header);
  let count=0;

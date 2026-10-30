@@ -771,3 +771,15 @@ Kosten en belasting worden nog niet apart opgeslagen en staan daarom als niet
 netto geboekt dividend bevat al de inhoudingen uit de bron. Exact tijdgewogen
 rendement kan zonder waarderingen op ieder extern geldstroommoment niet betrouwbaar
 worden berekend en wordt niet door een benadering vervangen.
+
+
+### Laden van het rendementsrapport (0.32.2)
+
+De keuzelijst en het rapport mogen een verschillend gegevensnummer hebben wanneer
+op de achtergrond koersen zijn bijgewerkt. Het rapport gebruikt uitsluitend de
+cijfers uit zijn eigen consistente servermomentopname. Antwoorden voor een eerder
+brokeraccount of filter en antwoorden na uitloggen worden nog steeds genegeerd.
+De jaarberekening gebruikt alleen de bestaande jaargrenzen en de actuele stand.
+Op tragere apparaten kan de aanvraag maximaal zestig seconden duren. Een time-out,
+verbindingsfout of servermelding wordt toegelicht; onverwachte rekenfouten krijgen
+een Log-ID voor de afgeschermde Logs-pagina. Opnieuw proberen start een nieuwe aanvraag.

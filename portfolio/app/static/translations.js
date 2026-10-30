@@ -6634,5 +6634,25 @@ const UI_TRANSLATIONS = {
   "nl": "Winst en verlies per kalenderjaar, naast de aankoopbedragen.",
   "en": "Profit and loss by calendar year alongside purchase amounts.",
   "es": "Beneficios y pérdidas por año natural junto con los importes de compras."
+ },
+ "Rapportaanvraag mislukt.": {
+  "nl": "Rapportaanvraag mislukt.",
+  "en": "Report request failed.",
+  "es": "La solicitud del informe ha fallado."
+ },
+ "De rapportaanvraag duurde te lang. Probeer opnieuw.": {
+  "nl": "De rapportaanvraag duurde te lang. Probeer opnieuw.",
+  "en": "The report request took too long. Please try again.",
+  "es": "La solicitud del informe tardó demasiado. Vuelve a intentarlo."
+ },
+ "Controleer de verbinding en probeer opnieuw.": {
+  "nl": "Controleer de verbinding en probeer opnieuw.",
+  "en": "Check the connection and try again.",
+  "es": "Comprueba la conexión y vuelve a intentarlo."
+ },
+ "Rendementsrapport berekenen mislukt.": {
+  "nl": "Rendementsrapport berekenen mislukt.",
+  "en": "Could not calculate the performance report.",
+  "es": "No se pudo calcular el informe de rentabilidad."
  }
 };

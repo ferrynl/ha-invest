@@ -188,8 +188,13 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     instrument=query.get('instrument',[''])[0];selection=json.loads(instrument) if instrument else None
                     currency=query.get('currency',[''])[0]
                     key='performance:'+json.dumps([account,selection,currency],separators=(',',':'))
-                    return self.respond(cache.derived(key,lambda:overview(store,cache.get(store.state),account,selection,currency)),etag=True)
+                    result=cache.derived(key,lambda:overview(store,cache.get(store.state),account,selection,currency))
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
+                except Exception as error:
+                    reference=record(store,'ERROR','reports','performance_failed','Rendementsrapport berekenen mislukt.',{'error_type':type(error).__name__})
+                    message='Rendementsrapport berekenen mislukt.'+' · Log-ID '+reference
+                    return self.respond({'error':message},500)
+                return self.respond(result,etag=True)
             if path=='/api/reports/history':
                 from reports import history as report_history
                 query=parse_qs(urlsplit(self.path).query)

@@ -225,11 +225,11 @@ async function loadReportCombined(){
 }
 
 let reportCombinedRequest=null,reportHistoryRequest=null,reportCombinedRefreshes=0,reportHistoryRefreshes=0;
-function reportRequest(url){
+function reportRequest(url,timeout=15000){
  const controller=typeof AbortController==='function'?new AbortController():null;let timer,rejectWait;
- const pending=(async()=>{const response=await apiFetch(url,controller?{signal:controller.signal}:{});if(!response.ok)throw Error();return await response.json();})();
+ const pending=(async()=>{const response=await apiFetch(url,controller?{signal:controller.signal}:{});if(!response.ok){let result;try{result=await response.json();}catch{}const error=Error(result?.error||ui('Rapportaanvraag mislukt.'));error.code='report_server';throw error;}return await response.json();})();
  const stopped=new Promise((resolve,reject)=>{rejectWait=reject;});
- const cancel=()=>{controller?.abort();rejectWait(Error());};
- if(typeof setTimeout==='function')timer=setTimeout(cancel,15000);
+ const cancel=()=>{controller?.abort();const error=Error(ui('De rapportaanvraag duurde te lang. Probeer opnieuw.'));error.code='report_timeout';rejectWait(error);};
+ if(typeof setTimeout==='function')timer=setTimeout(cancel,timeout);
  return {cancel,promise:Promise.race([pending,stopped]).finally(()=>{if(timer!==undefined)clearTimeout(timer);})};
 }

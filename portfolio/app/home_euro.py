@@ -7,7 +7,7 @@ from history import daily_values,with_dividends
 from diagnostics import record
 
 def identity(row):return tuple(row[k] for k in ('account_id','symbol','exchange','currency'))
-def build(snapshot,rates,account='all',today=None,include_history=True,skip_invalid=False):
+def build(snapshot,rates,account='all',today=None,include_history=True,skip_invalid=False,sparse_history=False):
     today=today or date.today();owner=None
     if str(account)!='all':
         try:owner=int(account)
@@ -54,8 +54,11 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
             if current is None:missing.append(today.isoformat())
             if missing:
                 excluded.append({**{field:p[field] for field in ('symbol','exchange','currency','account_id','name','account_name')},'reason':'Geen opgeslagen wisselkoers','dates':sorted(set(missing))});continue
-            basis={point['day']:point for point in daily_values(converted,[],[],today,summary_only=not include_history)};history=[]
             source_points=p['history'] if include_history else [{**p['history'][-1],'day':today.isoformat()}]
+            if sparse_history:
+                basis={point['day']:daily_values(converted,[],[],date.fromisoformat(point['day']),summary_only=True)[-1] for point in source_points}
+            else:basis={point['day']:point for point in daily_values(converted,[],[],today,summary_only=not include_history)}
+            history=[]
             for point in source_points:
                 if point['day'] not in basis:continue
                 cost=basis[point['day']]
