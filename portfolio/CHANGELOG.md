@@ -1,3 +1,10 @@
+# 0.32.1
+
+- Nieuw rapport Rendementsoverzicht met winst/verlies per kalenderjaar, aankoopbedragen, kapitaal en uitsplitsing van koersresultaat, netto dividend en gerealiseerde winst. Eerst het gecombineerde EUR-totaal, daarna per bronvaluta; broker-, aandeel- en valutafilters blijven gelden.
+- Intern rendement (XIRR) op jaarbasis uit gedateerde beleggingsgeldstromen en de actuele eindwaarde, met een 365-dagenbasis. Niet-eenduidige uitkomsten, ontbrekende koersen/FX en onvolledige omboekselecties krijgen geen percentage.
+- Kosten en belasting worden expliciet als niet afzonderlijk geregistreerd getoond. Exact tijdgewogen rendement blijft niet berekenbaar zolang waarderingen rond iedere externe geldstroom ontbreken. Geen geschatte nulbedragen of fictieve percentages.
+- Jaarbalken met eerdere/latere jaren, toetsenborddetails, onderliggende cijfers en een brede, mobiele rapportindeling. Nederlandse, Engelse en Spaanse vertalingen. Berekeningen laden uitsluitend bij openen van dit rapport; geen databaseschemawijziging.
+
 # 0.32.0
 
 - Aparte pagina Instellingen → TMX omboeken naar TDT, ook bereikbaar vanuit het TMX-aandeel. Officiële VanEck-omruilverhouding 0,937630, met eigen ontvangen aantal en datum per brokeraccount.

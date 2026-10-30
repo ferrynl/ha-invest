@@ -739,3 +739,35 @@ weer **Automatisch** kiest. Bij een bronfout blijft de vorige waarneming behoude
 Schema 19 voegt drie omboekvelden aan de transactietabel toe. Migratie en herstel
 behouden oude gegevens en controleren dat iedere omboeking twee consistente
 boekingen in hetzelfde account en dezelfde valuta heeft.
+
+
+## Rendementsoverzicht (0.32.1)
+
+Open **Rapporten → Rendementsoverzicht**. Het rapport toont eerst het gecombineerde
+totaal in EUR en daarna de geselecteerde bronvaluta’s. Brokeraccount, aandeel en
+valutafilter gelden voor alle onderdelen. De periode loopt vanaf de eerste aankoop.
+Groene/rode balken tonen het resultaat per kalenderjaar; grijze balken de aankoopbedragen.
+Het lopende jaar loopt tot vandaag. Navigeer per negen jaren (vijf op mobiel); details zijn ook met
+het toetsenbord bereikbaar en staan in Onderliggende cijfers.
+
+Totale aankoopinleg bevat alle aankoopbedragen zonder verkoopsommen af te trekken.
+Omboekingen verdubbelen de inleg niet. Koersresultaat is actuele waarde minus
+openstaande kostprijs; gerealiseerd resultaat volgt de geboekte verkopen en
+netto dividend volgt de ontvangen boekingen. Componentpercentages delen door de
+totale aankoopinleg. Jaarresultaat is het verschil tussen de cumulatieve resultaten
+op twee jaargrenzen. Ontbreekt een betrouwbare grenswaarde, dan blijft de balk leeg.
+
+XIRR gebruikt negatieve aankoopbedragen, positieve verkopen en ontvangen dividenden,
+en de huidige waarde als laatste positieve geldstroom. Datums tellen op een basis
+van 365 dagen. Het percentage is op jaarbasis, geen rendement van het brokersaldo.
+De berekening zoekt nulpunten op een logaritmische schaal; meerdere gevonden
+oplossingen of geen oplossing blijven niet berekenbaar. Interne omboekingen tellen
+niet als geldstroom; bij een selectie van slechts één zijde blijft XIRR leeg.
+EUR-omrekening gebruikt opgeslagen koersen van de geldstroomdatum en historische
+waarderingsdatum, zonder toekomstige wisselkoersen of 1:1-fallback.
+
+Kosten en belasting worden nog niet apart opgeslagen en staan daarom als niet
+(afzonderlijk) geregistreerd. Het totaal is vóór eventuele aanvullende kosten;
+netto geboekt dividend bevat al de inhoudingen uit de bron. Exact tijdgewogen
+rendement kan zonder waarderingen op ieder extern geldstroommoment niet betrouwbaar
+worden berekend en wordt niet door een benadering vervangen.

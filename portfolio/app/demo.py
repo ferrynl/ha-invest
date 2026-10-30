@@ -73,7 +73,7 @@ def seed(store,today):
         db.executemany('INSERT INTO fx_currencies VALUES(?,?,?)',[(currency,currency,stamp) for currency,*rest in MARKETS])
         db.executemany('INSERT INTO app_settings VALUES(?,?)',[('auth_enabled','false'),('default_range','1Y'),('demo_seed_version',SEED_VERSION),('demo_day',today.isoformat())])
 
-DEMO_READS={'/api/state','/api/home/euro','/api/home/history','/api/stocks','/api/dividends/overview','/api/reports/combined','/api/reports/history','/api/transactions','/api/transactions/changes','/api/instruments/categories','/api/instrument','/api/fx/history'}
+DEMO_READS={'/api/state','/api/home/euro','/api/home/history','/api/stocks','/api/dividends/overview','/api/reports/combined','/api/reports/performance','/api/reports/history','/api/transactions','/api/transactions/changes','/api/instruments/categories','/api/instrument','/api/fx/history'}
 
 def profile_handler(primary,store,auth,factory):
     lock=RLock();active={}

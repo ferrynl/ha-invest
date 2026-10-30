@@ -6464,5 +6464,175 @@ const UI_TRANSLATIONS = {
   "nl": "DivvyDiary · waargenomen koers; koersdatum niet vermeld",
   "en": "DivvyDiary · observed quote; price date not provided",
   "es": "DivvyDiary · cotización observada; fecha de cotización no indicada"
+ },
+ "Rendementsoverzicht": {
+  "nl": "Rendementsoverzicht",
+  "en": "Performance overview",
+  "es": "Resumen de rentabilidad"
+ },
+ "Jaarresultaat, inleg en rendementsopbouw.": {
+  "nl": "Jaarresultaat, inleg en rendementsopbouw.",
+  "en": "Annual results, capital and performance breakdown.",
+  "es": "Resultados anuales, capital y desglose de rentabilidad."
+ },
+ "Aankoopbedrag": {
+  "nl": "Aankoopbedrag",
+  "en": "Purchase amount",
+  "es": "Importe de compras"
+ },
+ "Alle aankoopbedragen; verkopen worden hier niet afgetrokken. Omboekingen tellen niet dubbel.": {
+  "nl": "Alle aankoopbedragen; verkopen worden hier niet afgetrokken. Omboekingen tellen niet dubbel.",
+  "en": "All purchase amounts; sales are not deducted here. Conversions are not counted twice.",
+  "es": "Todos los importes de compras; aquí no se descuentan las ventas. Las conversiones no se cuentan dos veces."
+ },
+ "Belasting": {
+  "nl": "Belasting",
+  "en": "Tax",
+  "es": "Impuestos"
+ },
+ "Eerdere jaren": {
+  "nl": "Eerdere jaren",
+  "en": "Earlier years",
+  "es": "Años anteriores"
+ },
+ "Latere jaren": {
+  "nl": "Latere jaren",
+  "en": "Later years",
+  "es": "Años posteriores"
+ },
+ "Exact tijdgewogen rendement": {
+  "nl": "Exact tijdgewogen rendement",
+  "en": "True time-weighted return",
+  "es": "Rentabilidad ponderada por tiempo exacta"
+ },
+ "Geboekt netto ontvangen dividend.": {
+  "nl": "Geboekt netto ontvangen dividend.",
+  "en": "Recorded net dividends received.",
+  "es": "Dividendos netos recibidos registrados."
+ },
+ "Groen/rood: jaarresultaat. Grijs: aankopen in dat jaar. Het lopende jaar is tot vandaag.": {
+  "nl": "Groen/rood: jaarresultaat. Grijs: aankopen in dat jaar. Het lopende jaar is tot vandaag.",
+  "en": "Green/red: annual profit or loss. Grey: purchases in that year. The current year runs to today.",
+  "es": "Verde/rojo: resultado anual. Gris: compras de ese año. El año actual comprende hasta hoy."
+ },
+ "Hiervoor ontbreken portefeuillewaarderingen op ieder moment van een externe geldstroom.": {
+  "nl": "Hiervoor ontbreken portefeuillewaarderingen op ieder moment van een externe geldstroom.",
+  "en": "Portfolio valuations at every external cash-flow event are not available.",
+  "es": "Faltan valoraciones de la cartera en cada momento de un flujo de efectivo externo."
+ },
+ "Intern rendement (XIRR)": {
+  "nl": "Intern rendement (XIRR)",
+  "en": "Internal rate of return (XIRR)",
+  "es": "Tasa interna de retorno (XIRR)"
+ },
+ "Jaarresultaat": {
+  "nl": "Jaarresultaat",
+  "en": "Annual result",
+  "es": "Resultado anual"
+ },
+ "Jaren zonder betrouwbare begin- of eindwaarde tonen geen resultaatbalk.": {
+  "nl": "Jaren zonder betrouwbare begin- of eindwaarde tonen geen resultaatbalk.",
+  "en": "Years without a reliable opening or closing value have no result bar.",
+  "es": "Los años sin un valor inicial o final fiable no muestran barra de resultado."
+ },
+ "Kapitaal": {
+  "nl": "Kapitaal",
+  "en": "Capital",
+  "es": "Capital"
+ },
+ "Koersresultaat plus gerealiseerd resultaat en netto dividend, vóór aanvullende kosten.": {
+  "nl": "Koersresultaat plus gerealiseerd resultaat en netto dividend, vóór aanvullende kosten.",
+  "en": "Price gain plus realised gain and net dividends, before additional costs.",
+  "es": "Resultado de cotización más resultado realizado y dividendos netos, antes de costes adicionales."
+ },
+ "Koersresultaat": {
+  "nl": "Koersresultaat",
+  "en": "Price gain",
+  "es": "Resultado de cotización"
+ },
+ "Kosten en belasting zijn niet afzonderlijk geregistreerd. Het resultaat is vóór eventuele aanvullende kosten; dividend is het geboekte nettobedrag.": {
+  "nl": "Kosten en belasting zijn niet afzonderlijk geregistreerd. Het resultaat is vóór eventuele aanvullende kosten; dividend is het geboekte nettobedrag.",
+  "en": "Costs and taxes are not recorded separately. Returns are before any additional costs; dividends are recorded net amounts.",
+  "es": "Los costes e impuestos no se registran por separado. El resultado es anterior a posibles costes adicionales; los dividendos son importes netos registrados."
+ },
+ "Kosten en belasting": {
+  "nl": "Kosten en belasting",
+  "en": "Costs and taxes",
+  "es": "Costes e impuestos"
+ },
+ "Marktwaarde min openstaande kostprijs.": {
+  "nl": "Marktwaarde min openstaande kostprijs.",
+  "en": "Market value less remaining cost basis.",
+  "es": "Valor de mercado menos coste de adquisición pendiente."
+ },
+ "Niet afzonderlijk geregistreerd": {
+  "nl": "Niet afzonderlijk geregistreerd",
+  "en": "Not recorded separately",
+  "es": "No registrado por separado"
+ },
+ "Niet berekenbaar": {
+  "nl": "Niet berekenbaar",
+  "en": "Cannot be calculated",
+  "es": "No se puede calcular"
+ },
+ "Niet geregistreerd": {
+  "nl": "Niet geregistreerd",
+  "en": "Not recorded",
+  "es": "No registrado"
+ },
+ "Onvolledig: ontbrekende koersen of omrekeningen. Totaalrendement en XIRR zijn niet berekend.": {
+  "nl": "Onvolledig: ontbrekende koersen of omrekeningen. Totaalrendement en XIRR zijn niet berekend.",
+  "en": "Incomplete: missing prices or currency conversions. Total return and XIRR have not been calculated.",
+  "es": "Incompleto: faltan cotizaciones o conversiones de divisas. No se han calculado el resultado total ni la XIRR."
+ },
+ "Op jaarbasis uit gedateerde aankopen, verkopen, dividend en de actuele eindwaarde. Geen rendement op brokersaldo. Een niet-eenduidige uitkomst blijft leeg.": {
+  "nl": "Op jaarbasis uit gedateerde aankopen, verkopen, dividend en de actuele eindwaarde. Geen rendement op brokersaldo. Een niet-eenduidige uitkomst blijft leeg.",
+  "en": "Annualised from dated purchases, sales, dividends and current terminal value. Excludes broker cash balances. Ambiguous results remain unavailable.",
+  "es": "Anualizada a partir de compras, ventas y dividendos fechados y del valor final actual. Excluye el saldo en efectivo del bróker. Los resultados ambiguos quedan sin calcular."
+ },
+ "Rendement berekenen…": {
+  "nl": "Rendement berekenen…",
+  "en": "Calculating performance…",
+  "es": "Calculando rentabilidad…"
+ },
+ "Rendementsrapport laden mislukt.": {
+  "nl": "Rendementsrapport laden mislukt.",
+  "en": "Could not load the performance report.",
+  "es": "No se pudo cargar el informe de rentabilidad."
+ },
+ "Resultaatopbouw": {
+  "nl": "Resultaatopbouw",
+  "en": "Performance breakdown",
+  "es": "Desglose de rentabilidad"
+ },
+ "Sinds de eerste aankoop. Eerst het totaal in EUR, daarna per bronvaluta. Percentages bij de onderdelen gebruiken de totale aankoopinleg als basis.": {
+  "nl": "Sinds de eerste aankoop. Eerst het totaal in EUR, daarna per bronvaluta. Percentages bij de onderdelen gebruiken de totale aankoopinleg als basis.",
+  "en": "Since the first purchase. Combined EUR total first, then each source currency. Component percentages use total purchase capital as their basis.",
+  "es": "Desde la primera compra. Primero el total combinado en EUR y después cada divisa de origen. Los porcentajes de los componentes se basan en el capital total de compras."
+ },
+ "Totaal resultaat": {
+  "nl": "Totaal resultaat",
+  "en": "Total return",
+  "es": "Resultado total"
+ },
+ "Totale aankoopinleg": {
+  "nl": "Totale aankoopinleg",
+  "en": "Total purchase capital",
+  "es": "Capital total de compras"
+ },
+ "Transactiekosten": {
+  "nl": "Transactiekosten",
+  "en": "Transaction costs",
+  "es": "Costes de transacción"
+ },
+ "Verkoopopbrengst min de afgeboekte kostprijs.": {
+  "nl": "Verkoopopbrengst min de afgeboekte kostprijs.",
+  "en": "Sale proceeds less the removed cost basis.",
+  "es": "Ingresos de ventas menos el coste de adquisición dado de baja."
+ },
+ "Winst en verlies per kalenderjaar, naast de aankoopbedragen.": {
+  "nl": "Winst en verlies per kalenderjaar, naast de aankoopbedragen.",
+  "en": "Profit and loss by calendar year alongside purchase amounts.",
+  "es": "Beneficios y pérdidas por año natural junto con los importes de compras."
  }
 };

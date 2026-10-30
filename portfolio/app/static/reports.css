@@ -103,3 +103,22 @@
 .report-group-heading{font-size:18px;color:#b9d2eb;margin:20px 0 0;padding-top:18px;border-top:1px solid #30445f}.report-total-note{font-size:12px;line-height:1.7;color:#a8bfd7;background:#19352f66;padding:14px 18px;border-radius:10px;margin:0}.report-metrics-total{grid-column:1/-1}
 
 .report-metric-heading{grid-column:1/-1;font-size:14px;font-weight:600;color:#a6c8c0;margin:12px 0 0}.reports-dashboard .home-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:400px){.reports-dashboard .home-metrics{grid-template-columns:1fr}}
+
+.performance-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.performance-toolbar button{width:42px;min-width:0;padding:8px}
+.performance-breakdown{width:100%;margin-top:22px}
+.performance-breakdown h4{font-size:17px;margin:30px 0 8px}
+.performance-row{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;padding:15px 0;border-bottom:1px solid #263348;font-size:14px}
+.performance-row>div:first-child{flex:1;min-width:0}
+.performance-row small{display:block;max-width:75ch;color:#91a4bf;font-size:11px;line-height:1.6;margin-top:6px}
+.performance-amount{display:flex;gap:18px;align-items:baseline;justify-content:flex-end;flex-wrap:wrap;text-align:right;max-width:48%}
+.performance-amount strong{font-variant-numeric:tabular-nums}
+.performance-total{font-size:18px;border-top:1px solid #41516b;margin-top:20px;padding-top:24px;font-weight:700}
+@media(max-width:600px){.performance-row{gap:12px;font-size:12px}.performance-amount{gap:5px;flex-direction:column;align-items:flex-end;max-width:46%}.performance-total{font-size:15px}.performance-row small{font-size:10px}}
+
+.performance-help{display:inline;margin-left:7px}
+.performance-help summary{display:inline;color:#91a4bf;cursor:pointer;list-style:none;font-size:13px}
+.performance-help summary::-webkit-details-marker{display:none}
+.performance-help[open]{display:block;margin:6px 0 0}
+.performance-help[open] summary{color:#61e8be}
+.performance-help small{padding:8px 10px;background:#0c1626;border-radius:6px}

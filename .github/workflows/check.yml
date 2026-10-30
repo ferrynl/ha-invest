@@ -33,6 +33,7 @@ jobs:
       - run: node --check portfolio/app/static/stock-detail.js
       - run: node --check portfolio/app/static/transactions.js
       - run: node --check portfolio/app/static/conversions.js
+      - run: node --check portfolio/app/static/performance.js
       - run: node --check portfolio/app/static/category-status.js
       - run: node --check portfolio/app/static/dividends.js
       - run: node --check portfolio/app/static/stocks.js
