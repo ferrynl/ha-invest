@@ -56,6 +56,21 @@ class AccessTests(unittest.TestCase):
   basic=self.auth.login('viewer',self.password,'test')
   self.assertEqual(self.request('GET','/api/logs',token=basic)[0],403)
   self.assertEqual(self.request('GET','/api/logs?download=1',token=basic)[0],403)
+ def test_feedback_requires_session_and_allows_basic_readers(self):
+  self.activate()
+  self.auth.save_user({'username':'feedbackreader','password':self.password,'role':'basic'})
+  basic=self.auth.login('feedbackreader',self.password,'test')
+  payload={'issues':[{'number':1,'title':'Open','url':'https://github.com/ferrynl/ha-invest/issues/1'}]}
+  with patch('web.feedback_overview',return_value=payload) as read:
+   self.assertEqual(self.request('GET','/api/feedback')[0],401)
+   read.assert_not_called()
+   code,body,headers=self.request('GET','/api/feedback',token=basic,extra={'X-HomeInvest-Language':'es'})
+   self.assertEqual(code,200)
+   self.assertEqual(json.loads(body),payload)
+   self.assertEqual(headers['Cache-Control'],'no-store')
+   self.assertEqual(self.request('GET','/api/feedback',token=basic,extra={'X-HomeInvest-Profile':'demo'})[0],200)
+  with patch('web.feedback_overview',side_effect=ValueError('GitHub is tijdelijk niet beschikbaar. Probeer het later opnieuw.')):
+   self.assertEqual(self.request('GET','/api/feedback',token=basic)[0],503)
  def test_mapping_registry_is_admin_only_and_csrf_protected(self):
   admin,csrf=self.activate()
   self.auth.save_user({'username':'mappingviewer','password':self.password,'role':'basic'})

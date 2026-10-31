@@ -1,3 +1,9 @@
+## 0.38.0
+
+- Aparte pagina Wensen & bugs met zoeken, type- en statusfilters en een tijdelijk opgeslagen GitHub-overzicht.
+- Nieuwe melding via een pop-up; controleren en publiceren met het eigen GitHub-account, zonder schrijftoken in Home Invest.
+- Geen automatische verzending van portefeuilledata, logs of accountgegevens.
+
 ## 0.37.0
 
 - Menu-items met dezelfde rijafstand als Home Assistant.

@@ -24,6 +24,7 @@ jobs:
       - run: node --check portfolio/app/static/pages.js
       - run: node --check portfolio/app/static/access.js
       - run: node --check portfolio/app/static/imports.js
+      - run: node --check portfolio/app/static/feedback.js
       - run: node --check portfolio/app/static/logs.js
       - run: node --check portfolio/app/static/currencies.js
       - run: node --check portfolio/app/static/import-mappings.js

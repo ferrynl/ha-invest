@@ -90,7 +90,7 @@ def profile_handler(primary,store,auth,factory):
             if path=='/api/profiles':
                 if not self.allowed(auth.user(self.token())):return
                 return self.respond({'profiles':[{'id':'personal','name':'Eigen portefeuille'},{'id':'demo','name':'Demoportefeuille'}]})
-            if profile!='demo' or not path.startswith('/api/') or path in ('/api/session','/api/account/dashboard'):return super().do_GET()
+            if profile!='demo' or not path.startswith('/api/') or path in ('/api/session','/api/account/dashboard','/api/feedback'):return super().do_GET()
             if not self.allowed(auth.user(self.token())):return
             try:handler=demo_handler()
             except ValueError as error:return self.respond({'error':str(error)},400)

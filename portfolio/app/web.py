@@ -15,6 +15,7 @@ from security import verify_password,SESSION_TTL
 from version import APP_VERSION
 from i18n import localize,LANGUAGES
 from updates import check_updates
+from feedback import overview as feedback_overview
 from imports import ADAPTERS
 from imports.service import preview as import_preview,open_preview
 from imports.partial import commit_partial,list_issues,resolve_issue
@@ -44,7 +45,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
     assets['/fonts/Roboto.ttf']=('fonts/Roboto.ttf','font/ttf')
     assets['/world-countries.json']=('world-countries.json','application/json; charset=utf-8')
     for flag in (static/'flags').glob('*.svg'):assets['/flags/'+flag.name]=('flags/'+flag.name,'image/svg+xml')
-    for name in ('i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','report-charts','conversions','performance'):
+    for name in ('feedback','i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','report-charts','conversions','performance'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     assets['/country-map.js']=('country-map.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
@@ -100,6 +101,9 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
             if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/home-assistant','/api/users','/api/backup','/api/export','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
+            if path=='/api/feedback':
+                try:return self.respond(feedback_overview(store))
+                except ValueError as error:return self.respond({'error':str(error)},503)
             if path=='/api/export':
                 if not auth.enabled():return self.respond({'error':'Alleen een admin heeft toegang tot deze functie.'},403)
                 from exports import export

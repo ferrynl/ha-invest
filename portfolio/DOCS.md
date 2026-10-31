@@ -812,3 +812,7 @@ De kaart (Natural Earth, publiek domein) en vlaggen (flag-icons, MIT) worden van
 de app geleverd. Er zijn geen externe kaartaanvragen en er wordt geen
 portefeuille-informatie naar een kaartdienst gestuurd. Bronnen en licentie staan
 bij de gebundelde bestanden in portfolio/app/static/WORLD_MAP_SOURCES.md.
+
+## Wensen & bugs
+
+Open **Wensen & bugs** voor het openbare GitHub-overzicht met zoek-, type- en statusfilters. De server bewaart maximaal 100 recent bijgewerkte GitHub-items tien minuten; pull requests worden niet getoond. Via **Nieuwe melding** vul je een wens of bug in. **Verder op GitHub** opent een nieuwe tab; controleer en publiceer daar met je eigen GitHub-account. Alleen je tekst en de appversie worden meegenomen. Meldingen zijn openbaar: deel geen persoonlijke gegevens. De koppeling gebruikt geen GitHub-sleutels. Bij een storing blijven de GitHub-link en het meldformulier bruikbaar.

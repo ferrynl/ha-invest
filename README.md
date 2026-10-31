@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.37.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.38.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -77,7 +77,7 @@ niet in het portefeuillerendement verwerkt.
 
 ## Opslag en back-ups
 
-De database en instellingen staan in de app-datafolder. Appversie **0.37.0** gebruikt
+De database en instellingen staan in de app-datafolder. Appversie **0.38.0** gebruikt
 databaseschema **19**. Upgrades maken vooraf een consistente back-up en voeren alleen
 ontbrekende migraties transactioneel uit. Bestaande aankopen, dividend en historie blijven
 behouden. Neem voor opgeslagen API-verbindingen de volledige app op in een Home Assistant-back-up.
@@ -128,3 +128,7 @@ Landenverdeling opent zonder bovenste header met een paginabrede interactieve we
 Open **Imports → Exporteren** en kies CSV of PDF. De export bevat de transacties, dividend en kapitaalterugbetalingen van de geselecteerde brokerrekening (of alle accounts), met bronvaluta.
 
 Open **Imports → Revolut** en upload de Engelstalige beleggings-CSV, niet het bankrekeningafschrift. Zowel het formaat met Ticker, Price per share en Total Amount als dat met Reference, CCY, Price/share en Net Amt. wordt herkend. Aankopen, verkopen en dividend worden verwerkt; onbekende acties blijven ter beoordeling. Bewaar en importeer de volledige historie. Regels zonder bron-ID worden op hun inhoud vergeleken; identieke regels binnen één bestand vereisen beoordeling.
+
+## Wensen & bugs
+
+Open **Wensen & bugs** voor het openbare GitHub-overzicht met zoek-, type- en statusfilters. De server bewaart maximaal 100 recent bijgewerkte GitHub-items tien minuten; pull requests worden niet getoond. Via **Nieuwe melding** vul je een wens of bug in. **Verder op GitHub** opent een nieuwe tab; controleer en publiceer daar met je eigen GitHub-account. Alleen je tekst en de appversie worden meegenomen. Meldingen zijn openbaar: deel geen persoonlijke gegevens. De koppeling gebruikt geen GitHub-sleutels. Bij een storing blijven de GitHub-link en het meldformulier bruikbaar.

@@ -6794,5 +6794,95 @@ const UI_TRANSLATIONS = {
   "nl": "Totaal in euro berekenen mislukt.",
   "en": "Unable to calculate the total in euros.",
   "es": "No se pudo calcular el total en euros."
+ },
+ "Wensen & bugs": {
+  "nl": "Wensen & bugs",
+  "en": "Wishes & bugs",
+  "es": "Deseos y errores"
+ },
+ "Volg wensen en bugs op GitHub. De lijst wordt maximaal iedere tien minuten bijgewerkt.": {
+  "nl": "Volg wensen en bugs op GitHub. De lijst wordt maximaal iedere tien minuten bijgewerkt.",
+  "en": "Follow wishes and bugs on GitHub. The list refreshes at most every ten minutes.",
+  "es": "Consulta deseos y errores en GitHub. La lista se actualiza como máximo cada diez minutos."
+ },
+ "Alle meldingen op GitHub": {
+  "nl": "Alle meldingen op GitHub",
+  "en": "All issues on GitHub",
+  "es": "Todas las incidencias en GitHub"
+ },
+ "Wens": {
+  "nl": "Wens",
+  "en": "Wish",
+  "es": "Deseo"
+ },
+ "Bug": {
+  "nl": "Bug",
+  "en": "Bug",
+  "es": "Error"
+ },
+ "Alle statussen": {
+  "nl": "Alle statussen",
+  "en": "All statuses",
+  "es": "Todos los estados"
+ },
+ "Gesloten": {
+  "nl": "Gesloten",
+  "en": "Closed",
+  "es": "Cerrado"
+ },
+ "Nieuwe melding": {
+  "nl": "Nieuwe melding",
+  "en": "New issue",
+  "es": "Nueva incidencia"
+ },
+ "Je melding wordt openbaar op GitHub. Deel geen bedragen, accountgegevens, sleutels of andere persoonlijke informatie. Alleen je tekst en de appversie worden meegenomen. Je controleert en publiceert de melding zelf op GitHub; een GitHub-account is vereist.": {
+  "nl": "Je melding wordt openbaar op GitHub. Deel geen bedragen, accountgegevens, sleutels of andere persoonlijke informatie. Alleen je tekst en de appversie worden meegenomen. Je controleert en publiceert de melding zelf op GitHub; een GitHub-account is vereist.",
+  "en": "Your issue will be public on GitHub. Do not share amounts, account details, keys or other personal information. Only your text and the app version are included. Review and publish the issue on GitHub yourself; a GitHub account is required.",
+  "es": "Tu incidencia será pública en GitHub. No compartas importes, datos de cuentas, claves ni otra información personal. Solo se incluyen tu texto y la versión de la aplicación. Revisa y publica la incidencia en GitHub; se requiere una cuenta de GitHub."
+ },
+ "Titel": {
+  "nl": "Titel",
+  "en": "Title",
+  "es": "Título"
+ },
+ "Beschrijving": {
+  "nl": "Beschrijving",
+  "en": "Description",
+  "es": "Descripción"
+ },
+ "Verder op GitHub": {
+  "nl": "Verder op GitHub",
+  "en": "Continue on GitHub",
+  "es": "Continuar en GitHub"
+ },
+ "Geen meldingen voor deze filters.": {
+  "nl": "Geen meldingen voor deze filters.",
+  "en": "No issues match these filters.",
+  "es": "No hay incidencias con estos filtros."
+ },
+ "Meldingen laden…": {
+  "nl": "Meldingen laden…",
+  "en": "Loading issues…",
+  "es": "Cargando incidencias…"
+ },
+ "De 100 recent bijgewerkte GitHub-items. Bekijk GitHub voor het volledige overzicht.": {
+  "nl": "De 100 recent bijgewerkte GitHub-items. Bekijk GitHub voor het volledige overzicht.",
+  "en": "The 100 most recently updated GitHub items. See GitHub for the full list.",
+  "es": "Los 100 elementos de GitHub actualizados más recientemente. Consulta GitHub para ver la lista completa."
+ },
+ "GitHub is tijdelijk niet beschikbaar. Probeer het later opnieuw.": {
+  "nl": "GitHub is tijdelijk niet beschikbaar. Probeer het later opnieuw.",
+  "en": "GitHub is temporarily unavailable. Please try again later.",
+  "es": "GitHub no está disponible temporalmente. Inténtalo más tarde."
+ },
+ "Bijgewerkt:": {
+  "nl": "Bijgewerkt:",
+  "en": "Updated:",
+  "es": "Actualizado:"
+ },
+ "Open": {
+  "nl": "Open",
+  "en": "Open",
+  "es": "Abierto"
  }
 };

@@ -33,7 +33,7 @@ document.querySelector('[data-route="transacties"]').after(transactionNav);
 for(const [route,title] of [['transacties-dividend',ui('Dividend')],['transacties-omzettingen',ui('Splitsingen en omzettingen')]]){
  const link=document.createElement('a');link.href='#'+route;link.dataset.route=route;link.textContent=title;transactionNav.append(link);
 }
-const pageNames={'tmx-omboeken':ui('TMX omboeken naar TDT'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
+const pageNames={feedback:ui('Wensen & bugs'),'tmx-omboeken':ui('TMX omboeken naar TDT'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
 for(const a of [...settingsNav.querySelectorAll('a'),...importNav.querySelectorAll('a'),...transactionNav.querySelectorAll('a')])pageNames[a.dataset.route]=a.textContent;
 for(const [key,title] of reportDefinitions)pageNames['rapporten-'+key]=title;
 function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches&&!document.body.classList.contains('locked');$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label',ui('Menu openen'));}
@@ -55,6 +55,7 @@ function showPage(){
  for(const link of document.querySelectorAll('[data-route]')){if(link.dataset.route===page||(isReport&&link.dataset.route==='rapporten')||(isTransactions&&link.dataset.route==='transacties')||(isSettings&&link.dataset.route==='instellingen')||(brokerPage&&link.dataset.route==='imports')||(page==='aandeel'&&link.dataset.route==='aandelen')||(page.startsWith('import-')&&link.dataset.route==='imports'))link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  for(const link of document.querySelectorAll('.import-nav a')){if(link.hash==='#'+page)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  document.body.classList.toggle('home-page',page==='home');
+ document.body.classList.toggle('feedback-page',page==='feedback');
  document.body.classList.toggle('reports-page',isReport);
  document.body.classList.toggle('countries-page',page==='rapporten-countries');
  document.body.classList.toggle('dividend-page',page==='dividend');
@@ -72,6 +73,7 @@ function showPage(){
  if(page==='home'&&state){renderHomeDashboard();requestAnimationFrame(draw);}
  if(isReport&&state)renderReports();
  if((page==='imports'||brokerPage)&&state&&accessSession?.user?.role==='admin')loadImportHistory().catch(error=>{$('import-feedback').textContent=error.message;});
+ if(page==='feedback')loadFeedback();
  if(page==='logs')loadLogs().catch(error=>{$('logs-feedback').textContent=error.message;});
  if(page==='import-koppelingen')loadImportMappings();
  if(page==='import-beoordeling')loadImportIssues();
@@ -114,7 +116,7 @@ let settingsDirty=false;
 $('settings-form').addEventListener('input',()=>{settingsDirty=true;});
 $('report-year').addEventListener('change',renderReports);
 $('settings-form').addEventListener('submit',async event=>{event.preventDefault();const button=event.target.querySelector('button');button.disabled=true;try{const response=await apiFetch('api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(Object.fromEntries(new FormData(event.target)))});if(!response.ok)throw Error(ui('Instellingen opslaan mislukt.'));settingsDirty=false;chartRange=event.target.elements.namedItem('default_range').value;syncRangeButtons();await load();$('settings-feedback').textContent=ui('Instellingen opgeslagen.');}catch(error){$('settings-feedback').textContent=error.message;}finally{button.disabled=false;}});
-bindPopups();showPage();
+bindPopups();bindFeedback();showPage();
 bindTransactions();bindHomeDashboard();bindImportIssues();bindImportMappings();bindImports();bindAccess();bindLogs();bindCurrencies();startSession().catch(()=>{$('status').textContent=ui('Verbinding mislukt. Herlaad de pagina.');document.body.classList.remove('booting');refreshPageLoading();});
 setInterval(()=>{if(!document.hidden&&accessSession?.user)load();},120000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&accessSession?.user)load();});
