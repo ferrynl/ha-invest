@@ -23,6 +23,7 @@ TABLES={
  'import_issues':(10,('id','batch_id','line','state','reason','payload','resolution','updated_at')),
  'capital_returns':(10,('id','batch_id','account_id','provider','external_id','ticker','isin','amount','currency','paid_on','created_at')),
  'charges':(20,('id','batch_id','account_id','provider','external_id','component','category','ticker','amount','currency','paid_on','included_in_net','description','created_at')),
+ 'transaction_charge_links':(21,('charge_id','kind','record_id')),
  'transaction_edits':(12,('id','kind','record_id','account_id','before_payload','after_payload','changed_by','created_at')),
  'instrument_mappings':(9,('id','account_id','provider','identity','ticker','isin','source_currency','symbol','exchange','currency','name','origin','updated_at')),
  'import_records':(6,('id','batch_id','account_id','provider','external_id','digest','raw')),
@@ -80,11 +81,12 @@ def restore_backup(store,content):
                         from instruments import validate_categories
                         validate_categories(row)
                     if table=='transaction_edits':
-                        if row['kind'] not in ('trade','dividend','capital'):raise ValueError('Ongeldig transactietype in wijzigingshistorie.')
+                        if row['kind'] not in ('trade','dividend','capital','charge'):raise ValueError('Ongeldig transactietype in wijzigingshistorie.')
                         for field in ('before_payload','after_payload'):
                             try:value=json.loads(row[field])
                             except (ValueError,TypeError):raise ValueError('Ongeldige wijzigingshistorie.')
-                            if not isinstance(value,dict) or value.get('id')!=row['record_id'] or value.get('account_id')!=row['account_id']:raise ValueError('Ongeldige wijzigingshistorie.')
+                            if not isinstance(value,dict) or value.get('id')!=row['record_id'] or type(value.get('account_id')) is not int or value['account_id']<1 or (field=='before_payload' and value['account_id']!=row['account_id']):raise ValueError('Ongeldige wijzigingshistorie.')
+                    if table=='transaction_charge_links' and row['kind'] not in ('trade','dividend','capital'):raise ValueError('Ongeldige kostenreferentie.')
                     for key in ('code','base','quote','currency','source_currency','target_currency'):
                         if key in row and not (table=='instrument_mappings' and key=='currency' and row[key]=='') and not re.fullmatch('[A-Z]{3}',str(row[key])):raise ValueError('Ongeldige valutacode in back-up.')
                     if 'symbol' in row and not (table=='instrument_mappings' and row['symbol']=='') and (not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',str(row['symbol'])) or not re.fullmatch(r'[A-Z0-9 _-]{1,40}',str(row['exchange'])) or not re.fullmatch(r'[A-Z]{3}',str(row['currency']))):raise ValueError('Ongeldige beursnotering in back-up.')
@@ -108,7 +110,7 @@ def restore_backup(store,content):
                         if key in ('manual_sector','manual_country','manual_asset_type','included_in_net'):
                             if not isinstance(value,int) or value not in (0,1):raise ValueError('Ongeldige handmatige categorie in back-up.')
                         elif table=='instrument_category_sync' and key=='attempts':pass
-                        elif key in ('id','account_id','batch_id','line','record_id'):
+                        elif key in ('id','account_id','batch_id','line','record_id','charge_id'):
                             if not isinstance(value,int) or value<1:raise ValueError('Ongeldig recordnummer in back-up.')
                         elif key in ('fetched_at','expires_at') and table=='api_cache':
                             if not isinstance(value,(int,float)):raise ValueError('Ongeldige cachetijd.')
@@ -131,6 +133,10 @@ def restore_backup(store,content):
                 target.execute("UPDATE app_settings SET value=? WHERE key='default_range'",(default_range,))
                 if target.execute('PRAGMA foreign_key_check').fetchone():raise ValueError('De back-up verwijst naar ontbrekende accounts of importbatches.')
                 if target.execute('SELECT 1 FROM charges c JOIN import_batches b ON b.id=c.batch_id WHERE c.account_id!=b.account_id OR c.provider!=b.provider LIMIT 1').fetchone():raise ValueError('Ongeldige kostenreferentie.')
+                for kind,table in (('trade','purchases'),('dividend','dividends'),('capital','capital_returns')):
+                    if target.execute('SELECT 1 FROM transaction_charge_links l JOIN charges c ON c.id=l.charge_id LEFT JOIN '+table+' t ON t.id=l.record_id WHERE l.kind=? AND (t.id IS NULL OR t.account_id!=c.account_id) LIMIT 1',(kind,)).fetchone():raise ValueError('Ongeldige kostenreferentie.')
+                if version<21:
+                    target.execute("INSERT INTO transaction_charge_links SELECT c.id,'trade',p.id FROM charges c JOIN purchases p ON c.external_id='manual-trade:'||p.id AND c.account_id=p.account_id AND c.provider='charges' JOIN import_batches b ON b.id=c.batch_id AND b.filename='manual-trade-'||p.id AND json_extract(CASE WHEN json_valid(b.payload) THEN b.payload ELSE '[]' END,'$[0].trade_id')=p.id")
                 from history import daily_values
                 for key in target.execute('SELECT DISTINCT account_id,symbol,exchange,currency FROM purchases').fetchall():
                     lots=[dict(row) for row in target.execute('SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',tuple(key))]

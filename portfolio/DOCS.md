@@ -446,7 +446,7 @@ Bij aankopen en verkopen kun je datum, tijd, aantal, prijs en aankoop/verkooptyp
 Bij dividend kun je datum, netto bedrag en notitie wijzigen. Bij kapitaalterugbetalingen
 zijn datum en bedrag aanpasbaar; ze blijven buiten dividendwinst.
 Bij splitsingen kun je datum, tijd en het nieuwe aantal aanpassen. Het oude aantal
-uit de bron blijft als controle behouden. Brokeraccount, aandeel en valuta blijven vaststaan.
+uit de bron blijft als controle behouden. Aandeel en handelsvaluta blijven vaststaan. Het brokeraccount kan vanaf 0.44.0 worden gecorrigeerd, samen met de gekoppelde kosten.
 Een wijziging die latere verkopen of splitsingen ongeldig maakt, wordt volledig teruggedraaid.
 
 De oorspronkelijke importregel, gebruikte bron-ID en oorspronkelijke valutaomrekening
@@ -985,3 +985,30 @@ koersdatum en handelsprijs blijven bij de bronverwijzing bewaard in `import_fx` 
 handmatige transactiebron. Herstel neemt deze gegevens mee; een mislukte verkoop laat
 geen losse omrekening of kosten achter. De kosten- en btw-velden behouden hun eigen
 valutakeuze en worden niet door het EUR-prijsveld omgerekend.
+
+### Bestaande transacties en kosten wijzigen (0.44.0)
+
+Open **Transacties → Bekijken** bij de gewenste boeking. Als beheerder kun je het
+brokeraccount, de datum en de beschikbare transactiegegevens aanpassen. Voeg onder
+**Kosten en belastingen** afzonderlijke regels toe voor transactiekosten, btw, bewaarloon,
+valutakosten of andere belastingen. Bedragen en valuta blijven expliciet; percentages
+worden niet geschat. Negatieve bedragen zijn terugbetalingen. **Reeds netto verwerkt**
+voorkomt dat reeds ingehouden bedragen dubbel van het resultaat worden afgetrokken.
+
+Gekoppelde kosten staan direct in de pop-up en volgen wijzigingen van broker en datum.
+Oudere, los geïmporteerde kosten kun je met **Bestaande kosten koppelen** expliciet kiezen
+of rechtstreeks als losse boeking openen en wijzigen. Een gekoppelde kostenregel krijgt
+een ander brokeraccount via de bovenliggende transactie. Verwijderen uit het formulier
+boekt een nulcorrectie met behoud van de bronreferentie.
+
+**Wijzigingen opslaan** verwerkt alles samen en berekent portefeuille en rapporten opnieuw.
+Een verouderde wijziging, ongeldige verkoopgeschiedenis of ongeldige kostenregel slaat
+niets op. Bij verplaatsen controleert de app beide brokeraccounts. Originele importregels
+en hun rekening blijven bewaard voor deduplicatie; handmatige correcties worden bij
+herimport niet teruggedraaid. Elke wijziging blijft terug te zien in de wijzigingshistorie.
+Aandeel, handelsvaluta en splitsingscontrole blijven vaststaan. Omboekingen blijven
+alleen via hun herstelback-up terug te draaien.
+
+Databaseversie 21 koppelt bestaande handmatige kosten aan hun transactie en bewaart
+ook wijzigingen aan losse kosten. De upgrade maakt vooraf een veiligheidskopie.
+Back-upherstel valideert de koppelingen en ondersteunt ook eerdere databaseversies.

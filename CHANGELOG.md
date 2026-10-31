@@ -1,3 +1,10 @@
+## 0.44.0
+
+- Bestaande transacties wijzigen inclusief brokeraccount, datum, aantal, prijs, kosten, btw en andere belastingen.
+- Kosten afzonderlijk bewerken of expliciet aan een transactie koppelen; gekoppelde bedragen gaan mee met broker- en datumcorrecties.
+- Bewaar bronreferenties en volledige wijzigingshistorie. Voorkom dubbele kosten na herimport en verouderde overschrijvingen.
+- Databaseversie 21 bewaart kostenkoppelingen en ondersteunt wijzigingshistorie voor losse kosten; bestaande administratie en back-ups blijven behouden.
+
 ## 0.43.2 — 31 oktober 2026
 
 - Bij handmatige transacties in een andere handelsvaluta verschijnt een optioneel veld Prijs per aandeel in EUR. JavaScript rekent automatisch om na het kiezen van de transactiedatum; handmatig opnieuw omrekenen blijft mogelijk.

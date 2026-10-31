@@ -10,6 +10,16 @@ from forex import code,unit,prepare_rates
 CATEGORIES=('COMMISSION','CUSTODY','FX_FEE','OTHER_FEE','VAT','WITHHOLDING_TAX','TRANSACTION_TAX','OTHER_TAX')
 FEES=set(CATEGORIES[:4])
 
+def source_charge(db,account_id,provider,external_id,component):
+    # Corrections retain the original source identity even after a broker move.
+    row=db.execute('SELECT * FROM charges WHERE account_id=? AND provider=? AND external_id=? AND component=?',(account_id,provider,external_id,component)).fetchone()
+    if row:return row,False
+    row=db.execute("SELECT c.* FROM transaction_edits e JOIN charges c ON c.id=e.record_id WHERE e.kind='charge' AND json_extract(e.before_payload,'$.account_id')=? AND json_extract(e.before_payload,'$.provider')=? AND json_extract(e.before_payload,'$.external_id')=? AND json_extract(e.before_payload,'$.component')=? ORDER BY e.id LIMIT 1",(account_id,provider,external_id,component)).fetchone()
+    return row,bool(row)
+
+def corrected(db,row):
+    return bool(db.execute("SELECT 1 FROM transaction_edits WHERE kind='charge' AND record_id=? LIMIT 1",(row['id'],)).fetchone())
+
 def number(value):
     try:value=Decimal(str(value))
     except (InvalidOperation,ValueError,TypeError):raise ValueError('Ongeldig kosten- of belastingbedrag.') from None
@@ -32,8 +42,9 @@ def pending(db,account_id,provider,row):
     if ignored:return False
     missing=False
     for item in row['charges']:
-        existing=db.execute('SELECT * FROM charges WHERE account_id=? AND provider=? AND external_id=? AND component=?',(account_id,provider,row['external_id'],item['component'])).fetchone()
+        existing,moved=source_charge(db,account_id,provider,row['external_id'],item['component'])
         if not existing:missing=True;continue
+        if moved or corrected(db,existing):continue
         if any(str(existing[k])!=str(item[k]) for k in ('category','currency','included_in_net')) or existing['paid_on']!=row['day'] or number(existing['amount'])!=number(item['amount']):raise ValueError('Deze kostenreferentie is eerder met andere gegevens verwerkt.')
     return missing
 
@@ -43,8 +54,9 @@ def book(db,batch_id,account_id,provider,row):
         item={**charge,'external_id':row['external_id'],'ticker':row.get('ticker',''),'paid_on':row['day']}
         validate_charge(item)
         values=(batch_id,account_id,provider,row['external_id'],charge['component'],charge['category'],row.get('ticker',''),str(number(charge['amount'])),code(charge['currency']),row['day'],charge['included_in_net'],charge.get('description',''),now())
-        existing=db.execute('SELECT * FROM charges WHERE account_id=? AND provider=? AND external_id=? AND component=?',(account_id,provider,row['external_id'],charge['component'])).fetchone()
+        existing,moved=source_charge(db,account_id,provider,row['external_id'],charge['component'])
         if existing:
+            if moved or corrected(db,existing):continue
             if any(str(existing[k])!=str(item[k]) for k in ('category','currency','included_in_net','paid_on')) or number(existing['amount'])!=number(item['amount']):raise ValueError('Deze kostenreferentie is eerder met andere gegevens verwerkt.')
             continue
         db.execute('INSERT INTO charges(batch_id,account_id,provider,external_id,component,category,ticker,amount,currency,paid_on,included_in_net,description,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',values)
@@ -72,6 +84,7 @@ def book_manual_trade(db,trade,components,fx_trace=None):
     row=dict(kind='CHARGE',ticker=trade['symbol'],day=trade['purchased_on'],currency=trade['currency'],trade_id=trade['id'],raw=raw,digest=digest,external_id='manual-trade:'+str(trade['id']),charges=[dict(item,description=trade['name']) for item in components])
     batch=db.execute("INSERT INTO import_batches(account_id,provider,filename,digest,payload,status,created_at) VALUES(?,'charges',?,?,?,'imported',?)",(trade['account_id'],'manual-trade-'+str(trade['id']),digest,json.dumps([row]),now())).lastrowid
     book(db,batch,trade['account_id'],'charges',row)
+    db.execute("INSERT OR IGNORE INTO transaction_charge_links SELECT id,'trade',? FROM charges WHERE batch_id=?",(trade['id'],batch))
     db.execute("INSERT INTO import_records(batch_id,account_id,provider,external_id,digest,raw) VALUES(?,?,'charges',?,?,?)",(batch,trade['account_id'],row['external_id'],digest,json.dumps(raw)))
     if fx_trace:
         db.execute('INSERT INTO import_fx(batch_id,external_id,kind,source_currency,target_currency,original_amount,converted_amount,rate,requested_on,rate_on,source) VALUES(?,?,?,?,?,?,?,?,?,?,?)',(batch,row['external_id'],trade['side'],fx_trace['from'],fx_trace['to'],fx_trace['amount'],fx_trace['converted'],fx_trace['rate'],fx_trace['requested_on'],fx_trace['rate_on'],fx_trace['source']))

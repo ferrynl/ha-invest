@@ -37,6 +37,8 @@ class ChargeTests(unittest.TestCase):
   _,result=self.book(text,'revolut');self.assertEqual(result['pending'],0)
   self.assertEqual(self.store.state()['dividends'][0]['amount'],'0.80')
   rows=entries(self.store);self.assertEqual([(r['category'],r['amount'],r['included_in_net']) for r in rows],[('COMMISSION','1',0),('WITHHOLDING_TAX','0.20',1)])
+  linked=[r for r in ledger(self.store)['transactions'] if r['kind'] in ('trade','dividend')]
+  self.assertEqual({r['kind']:[c['category'] for c in r['charges']] for r in linked},{'trade':['COMMISSION'],'dividend':['WITHHOLDING_TAX']})
   self.assertEqual(self.book(text,'revolut')[1]['imported'],0)
  def test_legacy_custody_and_signed_tax_corrections_are_postings(self):
   text='Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency\n2025-12-01,,CUSTODY FEE,,,USD -0.02,USD\n2025-12-18,TEST,DIVIDEND TAX (CORRECTION),,,USD -0.05,USD\n2025-12-18T10:00:00Z,TEST,DIVIDEND TAX (CORRECTION),,,USD 0.05,USD\n'
@@ -96,8 +98,8 @@ class ChargeTests(unittest.TestCase):
   old_content=path.read_bytes();older=Store(Path(self.store.root)/'from-old');restore_backup(older,old_content)
   self.assertEqual(older.state()['purchases'][0]['quantity'],'2')
   migrate(path);migrate(path)
-  with closing(sqlite3.connect(path)) as db, db:self.assertEqual(db.execute('SELECT amount FROM dividends').fetchone()[0],'2');self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],20);self.assertEqual(db.execute('SELECT quantity FROM purchases').fetchone()[0],'2');self.assertEqual(db.execute('SELECT price FROM daily_prices').fetchone()[0],'11')
-  self.assertTrue(list((path.parent/'backups/migrations').glob('before-v19-to-v20-*.sqlite3')))
+  with closing(sqlite3.connect(path)) as db, db:self.assertEqual(db.execute('SELECT amount FROM dividends').fetchone()[0],'2');self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],SCHEMA_VERSION);self.assertEqual(db.execute('SELECT quantity FROM purchases').fetchone()[0],'2');self.assertEqual(db.execute('SELECT price FROM daily_prices').fetchone()[0],'11')
+  self.assertTrue(list((path.parent/'backups/migrations').glob(f'before-v19-to-v{SCHEMA_VERSION}-*.sqlite3')))
  def test_migration20_failure_rolls_back_to19(self):
   path=Path(self.store.root)/'rollback.sqlite3'
   with closing(sqlite3.connect(path)) as db, db:

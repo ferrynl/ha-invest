@@ -71,7 +71,7 @@ class TransactionTests(unittest.TestCase):
   self.assertEqual(float(self.store.state()['positions'][0]['cost']),200)
  def test_invalid_amount_date_and_identity_rejected(self):
   row=self.trade()
-  for fields in (dict(price='NaN'),dict(quantity='0'),dict(day='2099-01-01'),dict(account_id=3),dict(symbol='OTHER')):
+  for fields in (dict(price='NaN'),dict(quantity='0'),dict(day='2099-01-01'),dict(account_id=999),dict(symbol='OTHER')):
    with self.subTest(fields=fields),self.assertRaises(ValueError):self.save(row,**fields)
   self.assertEqual(transactions.changes(self.store,'trade',row['id'])['changes'],[])
  def test_scoped_reset_keeps_other_broker_and_allows_reimport(self):

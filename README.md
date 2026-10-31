@@ -25,7 +25,7 @@ Brokeraccounts zijn afzonderlijke portefeuillerekeningen; gebruikersaccounts reg
 toegang tot de app. Wijzigen en instellen gebeurt in pop-ups; Home opent direct met het portefeuilleoverzicht.
 
 - **Home**: overzicht per valuta, posities zoeken/filteren en maximaal zes posities vergelijken. Via **Dashboard aanpassen** krijgt ieder onderdeel op Home zelf een versleepgreep en tandwiel. Verplaats de tien modules direct en kies per onderdeel zichtbaarheid en breedte. De indeling blijft per gebruiker en profiel bewaard.
-- **Transacties**: alle boekingen bekijken, zoeken en als admin wijzigen, met wijzigingshistorie. Subpagina’s voor dividend en splitsingen/omzettingen.
+- **Transacties**: alle boekingen bekijken, zoeken en als admin wijzigen, inclusief brokeraccount, kosten, btw en andere belastingen, met wijzigingshistorie. Subpagina’s voor dividend en splitsingen/omzettingen.
 - **Aandelen**: posities en transacties bekijken; handmatig aankopen toevoegen.
 - **Dividend**: netto ontvangen dividend boeken en bekijken.
 - **Instellingen → Valuta**: historische omrekening en opgeslagen dagreferentiekoersen.

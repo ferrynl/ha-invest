@@ -5,8 +5,9 @@ import json
 from datetime import date,datetime
 from history import daily_values
 from storage import now,positive
+from transaction_costs import snapshot,audit,save_charge,save_components
 
-TABLES={'trade':'purchases','dividend':'dividends','capital':'capital_returns'}
+TABLES={'trade':'purchases','dividend':'dividends','capital':'capital_returns','charge':'charges'}
 
 def revision(row):
     return hashlib.sha256(json.dumps(dict(row),sort_keys=True).encode()).hexdigest()
@@ -17,15 +18,17 @@ def ledger(store,account='all'):
         accounts={r['id']:dict(r) for r in db.execute('SELECT * FROM broker_accounts')}
         rows=[]
         for kind,table in TABLES.items():
+            if kind=='charge':continue
             clause='' if account_id is None else ' WHERE account_id=?'
             for source in db.execute('SELECT * FROM '+table+clause,() if account_id is None else (account_id,)):
-                row=dict(source);broker=accounts[row['account_id']]
+                row=snapshot(db,kind,source);broker=accounts[row['account_id']]
                 rows.append(dict(row,kind=kind,revision=revision(row),account_name=broker['name'],broker=broker['broker'],day=row.get('purchased_on',row.get('paid_on')),type='TRANSFER' if row.get('transfer_id') else 'SPLIT' if row.get('split_before','') else row.get('side','DIVIDEND' if kind=='dividend' else 'CAPITAL_RETURN')))
         clause='' if account_id is None else ' WHERE account_id=?'
         from charges import FEES
         for source in db.execute('SELECT * FROM charges'+clause,() if account_id is None else (account_id,)):
             row=dict(source);broker=accounts[row['account_id']]
-            rows.append(dict(row,kind='charge',revision=revision(row),account_name=broker['name'],broker=broker['broker'],day=row['paid_on'],symbol=row['ticker'],exchange='',name=row['description'],type='COST' if row['category'] in FEES else 'TAX'))
+            row['linked_transaction']=dict(db.execute('SELECT kind,record_id FROM transaction_charge_links WHERE charge_id=?',(row['id'],)).fetchone() or {})
+            rows.append(dict(row,kind='charge',revision=revision(source),account_name=broker['name'],broker=broker['broker'],day=row['paid_on'],symbol=row['ticker'],exchange='',name=row['description'],type='COST' if row['category'] in FEES else 'TAX'))
         return dict(transactions=sorted(rows,key=lambda r:(r['day'],r['id']),reverse=True))
 
 def scope(db,value):
@@ -43,14 +46,23 @@ def edit(store,data,actor):
         db.execute('BEGIN IMMEDIATE')
         source=db.execute('SELECT * FROM '+table+' WHERE id=?',(record_id,)).fetchone()
         if not source:raise ValueError('Transactie niet gevonden. Vernieuw het overzicht.')
-        before=dict(source)
+        before=snapshot(db,kind,source)
         if before.get('transfer_id'):raise ValueError('Een omboeking kan niet als losse aankoop of verkoop worden gewijzigd. Gebruik de herstelback-up om de omboeking terug te draaien.')
         if not hmac.compare_digest(str(data.get('revision','')),revision(before)):raise ValueError('Deze transactie is intussen gewijzigd. Vernieuw het overzicht en open de transactie opnieuw.')
-        # Identity and account remain fixed, so source-ID deduplication stays valid.
-        for field in ('account_id','symbol','exchange','currency','ticker','split_before'):
-            if field in data and str(data[field])!=str(before.get(field,'')):raise ValueError('Brokeraccount, aandeel, valuta en splitsingscontrole kunnen hier niet worden verplaatst.')
+        # Source import records stay on their original account for deduplication.
+        for field in ('symbol','exchange','ticker','split_before')+(() if kind=='charge' else ('currency',)):
+            if field in data and str(data[field])!=str(before.get(field,'')):raise ValueError('Aandeel, handelsvaluta en splitsingscontrole kunnen hier niet worden gewijzigd.')
         day=date.fromisoformat(str(data['day']))
         if day>date.today():raise ValueError('Transactiedatum mag niet in de toekomst liggen.')
+        account_id=int(data.get('account_id',before['account_id']));store.require_account(db,account_id)
+        if kind=='charge':
+            link=db.execute('SELECT * FROM transaction_charge_links WHERE charge_id=?',(record_id,)).fetchone()
+            if link:
+                owner=db.execute('SELECT account_id FROM '+TABLES[link['kind']]+' WHERE id=?',(link['record_id'],)).fetchone()
+                if not owner or account_id!=owner['account_id']:raise ValueError('Wijzig het brokeraccount via de bijbehorende transactie.')
+            save_charge(db,before,data,account_id,day.isoformat(),actor)
+            return dict(ok=True)
+        db.execute('UPDATE '+table+' SET account_id=? WHERE id=?',(account_id,record_id))
         if kind=='trade':
             split=bool(before['split_before'])
             side=before['side'] if split else str(data.get('side',before['side']))
@@ -60,8 +72,9 @@ def edit(store,data,actor):
             stamp=datetime.fromisoformat(day.isoformat()+'T'+clock).isoformat() if clock else ''
             if clock and (len(clock) not in (5,8) or any(c not in '0123456789:' for c in clock)):raise ValueError('Gebruik een tijd als 10:30 of 10:30:00.')
             db.execute('UPDATE purchases SET quantity=?,price=?,side=?,purchased_on=?,trade_time=? WHERE id=?',(quantity,price,side,day.isoformat(),stamp,record_id))
-            lots=[dict(r) for r in db.execute('SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',(before['account_id'],before['symbol'],before['exchange'],before['currency']))]
-            daily_values(lots,[],[])
+            for owner in {before['account_id'],account_id}:
+                lots=[dict(r) for r in db.execute('SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',(owner,before['symbol'],before['exchange'],before['currency']))]
+                if lots:daily_values(lots,[],[])
         else:
             amount=positive(data['amount'])
             if kind=='dividend':
@@ -69,8 +82,10 @@ def edit(store,data,actor):
                 if len(note)>200:raise ValueError('Notitie mag maximaal 200 tekens bevatten.')
                 db.execute('UPDATE dividends SET amount=?,paid_on=?,note=? WHERE id=?',(amount,day.isoformat(),note,record_id))
             else:db.execute('UPDATE capital_returns SET amount=?,paid_on=? WHERE id=?',(amount,day.isoformat(),record_id))
-        after=dict(db.execute('SELECT * FROM '+table+' WHERE id=?',(record_id,)).fetchone())
-        db.execute('INSERT INTO transaction_edits(kind,record_id,account_id,before_payload,after_payload,changed_by,created_at) VALUES(?,?,?,?,?,?,?)',(kind,record_id,before['account_id'],json.dumps(before),json.dumps(after),actor,now()))
+        if 'charges' not in data and (account_id!=before['account_id'] or day.isoformat()!=before.get('purchased_on',before.get('paid_on'))):data={**data,'charges':before['charges']}
+        save_components(db,kind,before,data,account_id,day.isoformat(),actor)
+        after=snapshot(db,kind,db.execute('SELECT * FROM '+table+' WHERE id=?',(record_id,)).fetchone())
+        audit(db,kind,before,after,actor)
     return dict(ok=True)
 
 def changes(store,kind,record_id):
@@ -78,11 +93,12 @@ def changes(store,kind,record_id):
     with store.connect() as db:
         return dict(changes=[dict(r) for r in db.execute('SELECT * FROM transaction_edits WHERE kind=? AND record_id=? ORDER BY id DESC',(kind,int(record_id)))])
 
-RESET_TABLES=('charges','transaction_edits','import_issues','import_fx','import_records','capital_returns','instrument_mappings','import_batches','dividends','purchases')
+RESET_TABLES=('transaction_charge_links','charges','transaction_edits','import_issues','import_fx','import_records','capital_returns','instrument_mappings','import_batches','dividends','purchases')
 SHARED_TABLES=('instrument_valuations','instrument_category_sync','instrument_categories','quotes','daily_prices','history_sync','api_cache')
 
 def reset_where(table,account_id):
     if account_id is None:return '',()
+    if table=='transaction_charge_links':return ' WHERE charge_id IN (SELECT id FROM charges WHERE account_id=?)',(account_id,)
     if table in ('import_issues','import_fx'):return ' WHERE batch_id IN (SELECT id FROM import_batches WHERE account_id=?)',(account_id,)
     return ' WHERE account_id=?',(account_id,)
 

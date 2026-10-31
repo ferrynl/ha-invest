@@ -133,7 +133,8 @@ def book_row(db,batch_id,account_id,provider,row,mapping,trace):
         return 0
     if row['kind']=='CAPITAL_RETURN':
         from storage import positive
-        db.execute('INSERT INTO capital_returns(batch_id,account_id,provider,external_id,ticker,isin,amount,currency,paid_on,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',(batch_id,account_id,provider,row['external_id'],row['ticker'],row['raw'].get('ISIN',''),positive(row['amount']),row['currency'],row['day'],now()))
+        record_id=db.execute('INSERT INTO capital_returns(batch_id,account_id,provider,external_id,ticker,isin,amount,currency,paid_on,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',(batch_id,account_id,provider,row['external_id'],row['ticker'],row['raw'].get('ISIN',''),positive(row['amount']),row['currency'],row['day'],now())).lastrowid
+        db.execute("INSERT OR IGNORE INTO transaction_charge_links SELECT id,'capital',? FROM charges WHERE account_id=? AND provider=? AND external_id=?",(record_id,account_id,provider,row['external_id']))
         db.execute('INSERT INTO import_records(batch_id,account_id,provider,external_id,digest,raw) VALUES(?,?,?,?,?,?)',(batch_id,account_id,provider,row['external_id'],row['digest'],json.dumps(row['raw'])))
         return 0
     base=dict(account_id=account_id,symbol=mapping.get('symbol'),exchange=mapping.get('exchange'),currency=mapping.get('currency'))
@@ -145,7 +146,7 @@ def book_row(db,batch_id,account_id,provider,row,mapping,trace):
             standalone_dividends=1
             note+=' - bij import geen voorafgaande aankoop in dit brokeraccount gevonden; aankoophistorie kan ontbreken.'
         from storage import positive
-        db.execute('INSERT INTO dividends(symbol,exchange,currency,amount,paid_on,note,created_at,account_id) VALUES(?,?,?,?,?,?,?,?)',(base['symbol'],base['exchange'],base['currency'],positive(row['amount']),row['day'],note,now(),base['account_id']))
+        record_id=db.execute('INSERT INTO dividends(symbol,exchange,currency,amount,paid_on,note,created_at,account_id) VALUES(?,?,?,?,?,?,?,?)',(base['symbol'],base['exchange'],base['currency'],positive(row['amount']),row['day'],note,now(),base['account_id'])).lastrowid
     else:
         from storage import positive
         import re
@@ -171,8 +172,9 @@ def book_row(db,batch_id,account_id,provider,row,mapping,trace):
                 row={**row,'quantity':str(before*ratio),'split_before':str(before)}
             # Store the preserved cost per new share, never an invented cash price.
             row={**row,'price':str(Decimal(point['cost'])/Decimal(row['quantity']))}
-        db.execute('INSERT INTO purchases(symbol,exchange,name,quantity,price,currency,purchased_on,created_at,account_id,side,trade_time) VALUES(?,?,?,?,?,?,?,?,?,?,?)',(base['symbol'],base['exchange'],str(mapping.get('name') or row['name'])[:100],positive(row['quantity']),positive(row['price']),base['currency'],row['day'],now(),base['account_id'],'BUY' if row['kind']=='SPLIT' else row['kind'],row['trade_time']))
+        record_id=db.execute('INSERT INTO purchases(symbol,exchange,name,quantity,price,currency,purchased_on,created_at,account_id,side,trade_time) VALUES(?,?,?,?,?,?,?,?,?,?,?)',(base['symbol'],base['exchange'],str(mapping.get('name') or row['name'])[:100],positive(row['quantity']),positive(row['price']),base['currency'],row['day'],now(),base['account_id'],'BUY' if row['kind']=='SPLIT' else row['kind'],row['trade_time'])).lastrowid
         if row['kind']=='SPLIT':db.execute('UPDATE purchases SET split_before=? WHERE id=last_insert_rowid()',(row.get('split_before','0'),))
+    db.execute('INSERT OR IGNORE INTO transaction_charge_links SELECT id,?,? FROM charges WHERE account_id=? AND provider=? AND external_id=?',('dividend' if row['kind']=='DIVIDEND' else 'trade',record_id,account_id,provider,row['external_id']))
     db.execute('INSERT INTO import_records(batch_id,account_id,provider,external_id,digest,raw) VALUES(?,?,?,?,?,?)',(batch_id,account_id,provider,row['external_id'],row['digest'],json.dumps(row['raw'])))
     if trace:
         db.execute('INSERT INTO import_fx(batch_id,external_id,kind,source_currency,target_currency,original_amount,converted_amount,rate,requested_on,rate_on,source) VALUES(?,?,?,?,?,?,?,?,?,?,?)',(batch_id,row['external_id'],row['kind'],trace['from'],trace['to'],trace['amount'],trace['converted'],trace['rate'],trace['requested_on'],trace['rate_on'],trace['source']))

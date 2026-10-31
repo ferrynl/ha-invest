@@ -7965,4 +7965,27 @@ const UI_TRANSLATIONS = {
   "en": "Enter a positive EUR price.",
   "es": "Introduce un precio en EUR positivo."
 }
+,
+ "Wijzig het brokeraccount via de bijbehorende transactie.": {
+  "nl": "Wijzig het brokeraccount via de bijbehorende transactie.",
+  "en": "Change the broker account through the associated transaction.",
+  "es": "Cambia la cuenta del bróker desde la operación correspondiente."
+}
+,
+"Aandeel, handelsvaluta en het oude aantal bij een splitsing blijven vaststaan. Gekoppelde kosten gaan mee bij een wijziging van brokeraccount of datum. Originele importregels en bron-ID’s blijven bewaard; de portefeuille wordt opnieuw berekend.": {
+  "nl": "Aandeel, handelsvaluta en het oude aantal bij een splitsing blijven vaststaan. Gekoppelde kosten gaan mee bij een wijziging van brokeraccount of datum. Originele importregels en bron-ID’s blijven bewaard; de portefeuille wordt opnieuw berekend.",
+  "en": "The instrument, trading currency and original split quantity remain fixed. Linked charges follow changes to broker account or date. Original import rows and source IDs are preserved; the portfolio is recalculated.",
+  "es": "El instrumento, la moneda de cotización y la cantidad anterior al desdoblamiento se mantienen. Los gastos vinculados siguen los cambios de cuenta del bróker o fecha. Se conservan las filas originales y los identificadores; se recalcula la cartera."
+},
+"Bestaande kosten koppelen": {
+  "nl": "Bestaande kosten koppelen",
+  "en": "Link existing charges",
+  "es": "Vincular gastos existentes"
+}
+,
+"Aandeel, handelsvaluta en splitsingscontrole kunnen hier niet worden gewijzigd.": {
+  "nl": "Aandeel, handelsvaluta en splitsingscontrole kunnen hier niet worden gewijzigd.",
+  "en": "The instrument, trading currency and split verification cannot be changed here.",
+  "es": "Aquí no se pueden cambiar el instrumento, la moneda de cotización ni el control del desdoblamiento."
+}
 };

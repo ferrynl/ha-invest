@@ -1239,6 +1239,16 @@
     "purchase-eur-status",
     "purchase-eur-tools",
     "purchased_on",
-    "reset"
+    "reset",
+    "[A-Za-z]{3}",
+    "[data-field]",
+    "[hidden]",
+    "transaction-account",
+    "transaction-cost-add",
+    "transaction-cost-row",
+    "transaction-cost-rows",
+    "transaction-costs",
+    "transaction-cost-existing",
+    "batch_id"
   ]
 }
