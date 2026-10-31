@@ -13,7 +13,7 @@ FEES=set(CATEGORIES[:4])
 def number(value):
     try:value=Decimal(str(value))
     except (InvalidOperation,ValueError,TypeError):raise ValueError('Ongeldig kosten- of belastingbedrag.') from None
-    if not value.is_finite() or abs(value)>Decimal('1e15'):raise ValueError('Ongeldig kosten- of belastingbedrag.')
+    if not value.is_finite() or value.copy_abs()>Decimal('1e15'):raise ValueError('Ongeldig kosten- of belastingbedrag.')
     return value
 
 def validate_charge(row):
@@ -50,6 +50,28 @@ def book(db,batch_id,account_id,provider,row):
         db.execute('INSERT INTO charges(batch_id,account_id,provider,external_id,component,category,ticker,amount,currency,paid_on,included_in_net,description,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',values)
         count+=1
     return count
+
+def manual_components(data,currency):
+    """Manual transaction inputs are amounts excluding VAT, not percentages."""
+    charge_currency=code(str(data.get('charge_currency') or '').strip() or currency)
+    components=[]
+    for field,category in (('fee_amount','COMMISSION'),('vat_amount','VAT')):
+        value=number(str(data.get(field) if data.get(field) is not None else '').strip() or '0')
+        if value<0:raise ValueError('Ongeldig kosten- of belastingbedrag.')
+        if value:
+            components.append(dict(component=field,category=category,amount=str(value),currency=charge_currency,included_in_net=0))
+    return components
+
+def book_manual_trade(db,trade,components):
+    if not components:return
+    import hashlib,json
+    raw={key:trade[key] for key in ('id','account_id','symbol','exchange','name','currency','quantity','price','purchased_on','side')}
+    raw['charges']=components
+    digest=hashlib.sha256(json.dumps(raw,sort_keys=True).encode()).hexdigest()
+    row=dict(kind='CHARGE',ticker=trade['symbol'],day=trade['purchased_on'],currency=trade['currency'],trade_id=trade['id'],raw=raw,digest=digest,external_id='manual-trade:'+str(trade['id']),charges=[dict(item,description=trade['name']) for item in components])
+    batch=db.execute("INSERT INTO import_batches(account_id,provider,filename,digest,payload,status,created_at) VALUES(?,'charges',?,?,?,'imported',?)",(trade['account_id'],'manual-trade-'+str(trade['id']),digest,json.dumps([row]),now())).lastrowid
+    book(db,batch,trade['account_id'],'charges',row)
+    db.execute("INSERT INTO import_records(batch_id,account_id,provider,external_id,digest,raw) VALUES(?,?,'charges',?,?,?)",(batch,trade['account_id'],row['external_id'],digest,json.dumps(raw)))
 
 def entries(store,account='all',year='',currency='',view='all'):
     from transactions import scope

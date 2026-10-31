@@ -64,17 +64,20 @@ class Store:
         day = date.fromisoformat(data['purchased_on'])
         if day > date.today():
             raise ValueError('Aankoopdatum mag niet in de toekomst liggen.')
+        from charges import manual_components,book_manual_trade
+        components=manual_components(data,currency)
         with self.connect() as db:
             account_id=int(data.get('account_id',1));self.require_account(db,account_id)
             side=data.get('side','BUY')
             if side not in ('BUY','SELL'):raise ValueError('Ongeldig transactietype.')
             trade_time=str(data.get('trade_time',''))
             if trade_time:datetime.fromisoformat(trade_time.replace('Z','+00:00'))
-            db.execute('INSERT INTO purchases(symbol,exchange,name,quantity,price,currency,purchased_on,created_at,account_id,side,trade_time) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
-                       (symbol, exchange, name, positive(data['quantity']), positive(data['price']), currency, day.isoformat(), now(),account_id,side,trade_time))
+            trade_id=db.execute('INSERT INTO purchases(symbol,exchange,name,quantity,price,currency,purchased_on,created_at,account_id,side,trade_time) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
+                       (symbol, exchange, name, positive(data['quantity']), positive(data['price']), currency, day.isoformat(), now(),account_id,side,trade_time)).lastrowid
             if side=='SELL':
                 lots=[dict(r) for r in db.execute('SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',(account_id,symbol,exchange,currency))]
                 daily_values(lots,[],[])
+            if components:book_manual_trade(db,dict(db.execute('SELECT * FROM purchases WHERE id=?',(trade_id,)).fetchone()),components)
 
     @staticmethod
     def require_account(db,account_id):

@@ -315,7 +315,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             user=auth.user(self.token())
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path!='/api/auth/login':
-                if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path in ('/api/feedback/connect','/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation') or path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/') or path.startswith('/api/charges/')):return
+                if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path in ('/api/feedback/connect','/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation') or path in ('/api/purchases','/api/dividends','/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/') or path.startswith('/api/charges/')):return
                 if auth.enabled() and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),user['csrf'] or ''):
                     return self.respond({'error':'Ongeldige sessiebeveiliging. Meld je opnieuw aan.'},403)
             try:

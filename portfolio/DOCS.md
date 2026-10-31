@@ -948,3 +948,19 @@ zonder de aankoop, verkoop of het dividend opnieuw te boeken. Een gewijzigde kos
 wordt geweigerd. Een expliciete oversla-keuze blijft geldig. Oude boekingen veranderen niet
 bij de migratie. Herstel en accountverwijdering nemen de nieuwe kostenadministratie mee;
 het demoprofiel blijft afzonderlijk en alleen-lezen.
+
+### Kosten bij een handmatige transactie (0.43.1)
+
+Open **Transactie toevoegen** bij Aandelen. Kies aankoop of verkoop, het brokeraccount,
+het aandeel, aantal, prijs per aandeel en transactiedatum. Vul **Kosten exclusief btw**
+en **Btw op kosten** als afzonderlijke bedragen in. Dit zijn bedragen, geen percentages;
+btw wordt niet berekend. Laat ongebruikte velden leeg. De prijs per aandeel bevat deze
+kosten niet. Standaard gebruiken kosten en btw de transactievaluta; een eigen kostenvaluta
+is mogelijk via het optionele valutaveld en wordt in de oorspronkelijke eenheid bewaard.
+
+Opslaan boekt de transactie en eventuele kosten atomair. De kosten horen bij hetzelfde
+account en dezelfde datum; de bronverwijzing bevat de transactie-ID. Een ongeldige verkoop
+of ongeldig kostenbedrag boekt niets. De oorspronkelijke aandelenkostprijs blijft intact;
+de aanvullende kosten verschijnen in **Kosten en belastingen**, **Belastingoverzicht** en
+het netto **Rendementsoverzicht**, met dezelfde regels voor historische wisselkoersen.
+Handmatige mutaties vereisen een beheerder en geldige sessiebeveiliging.

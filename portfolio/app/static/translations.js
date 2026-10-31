@@ -7879,5 +7879,45 @@ const UI_TRANSLATIONS = {
   "nl": "Ontbrekende kosten aanvullen bij bestaande transactie.",
   "en": "Add missing costs to the existing transaction.",
   "es": "Añadir gastos ausentes a la transacción existente."
+},
+ "Kosten exclusief btw": {
+  "nl": "Kosten exclusief btw",
+  "en": "Fees excluding VAT",
+  "es": "Gastos sin IVA"
+},
+ "Btw op kosten": {
+  "nl": "Btw op kosten",
+  "en": "VAT on fees",
+  "es": "IVA sobre gastos"
+},
+ "Valuta van kosten en btw": {
+  "nl": "Valuta van kosten en btw",
+  "en": "Currency of fees and VAT",
+  "es": "Moneda de gastos e IVA"
+},
+ "Leeg = transactievaluta": {
+  "nl": "Leeg = transactievaluta",
+  "en": "Blank = transaction currency",
+  "es": "Vacío = moneda de la operación"
+},
+ "Optioneel": {
+  "nl": "Optioneel",
+  "en": "Optional",
+  "es": "Opcional"
+},
+ "Vul kosten exclusief btw in. Btw wordt apart geboekt. De prijs per aandeel blijft exclusief deze kosten.": {
+  "nl": "Vul kosten exclusief btw in. Btw wordt apart geboekt. De prijs per aandeel blijft exclusief deze kosten.",
+  "en": "Enter fees excluding VAT. VAT is recorded separately. The price per share excludes these costs.",
+  "es": "Introduce los gastos sin IVA. El IVA se registra por separado. El precio por acción no incluye estos gastos."
+},
+ "Transactie toevoegen": {
+  "nl": "Transactie toevoegen",
+  "en": "Add transaction",
+  "es": "Añadir operación"
+},
+ "Transactie opgeslagen; eventuele kosten en btw zijn apart geboekt.": {
+  "nl": "Transactie opgeslagen; eventuele kosten en btw zijn apart geboekt.",
+  "en": "Transaction saved; any fees and VAT have been recorded separately.",
+  "es": "Operación guardada; los gastos y el IVA se han registrado por separado."
 }
 };

@@ -1,3 +1,10 @@
+## 0.43.1 — 31 oktober 2026
+
+- Handmatige transacties hebben direct velden voor kosten exclusief btw, btw en een optionele eigen kostenvaluta. Het formulier ondersteunt aankoop en verkoop.
+- Transactie en kosten worden samen opgeslagen, met hetzelfde brokeraccount en dezelfde datum en met een controleerbare verwijzing naar de transactie. Ongeldige invoer of een mislukte verkoop laat geen gedeeltelijke boeking achter.
+- Kosten en btw komen direct in de kostenrapporten en het netto Rendementsoverzicht. De oorspronkelijke prijs per aandeel blijft behouden.
+- Servercontrole op beheerdersrechten en sessiebeveiliging geldt ook voor handmatige transacties. Databaseschema blijft 20.
+
 ## 0.42.1 — 31 oktober 2026
 
 - Bedrijfscijfers worden uitsluitend getoond bij ondersteunde Amerikaanse USD-noteringen. Bij andere beurzen en valuta's blijft het volledige onderdeel verborgen en wordt Defeat Beta niet opgevraagd.

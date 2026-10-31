@@ -38,7 +38,7 @@ function bindPopups(){
  const deletePanel=$('delete-settings'),placeholder=document.createElement('section');placeholder.className='panel';const heading=document.createElement('h2');heading.textContent=ui('Portefeuillegegevens verwijderen');const text=document.createElement('p');text.textContent=ui('Verwijder alles of één brokeraccount. Het overzicht, de bevestiging en de herstelback-up staan in de pop-up.');const button=document.createElement('button');button.type='button';button.className='secondary';button.textContent=ui('Verwijderen instellen');button.addEventListener('click',()=>openPopup('delete-settings'));placeholder.append(heading,text,button);deletePanel.before(placeholder);registerPopup('delete-settings',ui('Portefeuillegegevens verwijderen'));
  for(const [id,title,label,feedback] of [
   ['import-form',ui('Transactiehistorie importeren'),ui('CSV importeren'),['import-source-help','import-account-help','import-upload-feedback']],
-  ['purchase',ui('Aankoop toevoegen'),ui('Aankoop toevoegen'),['feedback','search-status']],
+  ['purchase',ui('Transactie toevoegen'),ui('Transactie toevoegen'),['feedback','search-status']],
   ['dividend-form',ui('Dividend boeken'),ui('Dividend toevoegen'),['dividend-feedback']],
   ['broker-form',ui('Brokeraccount toevoegen'),ui('Brokeraccount toevoegen'),['broker-feedback']],
   ['settings-form',ui('Dashboardinstellingen aanpassen'),ui('Dashboard aanpassen'),['settings-feedback']],

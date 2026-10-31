@@ -148,3 +148,6 @@ inhoudingen tellen niet dubbel. De aandelenkostprijs wordt niet herschreven.
 Ontbrekende kosten zijn onbekend, niet nul. Voeg bronbedragen toe via de pop-up of het
 CSV-sjabloon. Een afzonderlijk Revolut-kostenrapport wordt niet als transactie-CSV gelezen.
 Zie DOCS voor ondersteunde velden en het voorkomen van dubbeltellingen.
+
+Handmatige aankopen en verkopen hebben in dezelfde pop-up velden voor kosten exclusief btw,
+btw en een optionele eigen kostenvaluta. Transactie en kosten worden samen opgeslagen.
