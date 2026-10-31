@@ -91,7 +91,8 @@ def details(store,data,account='all',include_pending=True):
         invested=sum((Decimal(daily_values([r for r in trades if r['account_id']==owner],[],[],summary_only=True)[-1]['invested']) for owner in {r['account_id'] for r in trades}),Decimal(0))
         received=sum((Decimal(row['amount']) for row in dividends),Decimal(0))
         summary=dict(invested=str(invested),first_purchase=min((row['purchased_on'] for row in trades),default=None),dividend_percent=str(received/invested*100) if invested else None,quantity=str(quantity),value=str(value) if value is not None else None,value_eur=str(euro) if euro is not None else None,fx_day=fx['day'] if fx else None,dividend=str(sum((Decimal(row['amount']) for row in dividends),Decimal(0))))
-        return dict(manual_valuation=dict(manual) if manual else None,summary=summary,category_sync=dict(sync) if sync else {'status':'pending'},symbol=key[0],exchange=key[1],currency=key[2],name=trades[0]['name'] if trades else key[0],categories=dict(categories) if categories else {field:'' for field in FIELDS},prices=prices,quote=dict(quote) if quote else None,events=events,account_id=account)
+        from fundamentals import supported
+        return dict(fundamentals_supported=supported(key),manual_valuation=dict(manual) if manual else None,summary=summary,category_sync=dict(sync) if sync else {'status':'pending'},symbol=key[0],exchange=key[1],currency=key[2],name=trades[0]['name'] if trades else key[0],categories=dict(categories) if categories else {field:'' for field in FIELDS},prices=prices,quote=dict(quote) if quote else None,events=events,account_id=account)
 
 
 def category_overview(store,account='all'):

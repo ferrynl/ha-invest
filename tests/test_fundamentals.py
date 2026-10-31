@@ -97,4 +97,13 @@ class FundamentalTests(unittest.TestCase):
                 self.assertEqual(request('MSFT',token)[0],400);self.assertEqual(fetch.call_count,1)
         finally:http.shutdown();http.server_close();worker.join()
 
+    def test_details_expose_eligibility_by_listing_not_company_country(self):
+        for symbol,exchange,currency,eligible in [('AAPL','NASDAQ','USD',True),('ASML','NASDAQ','USD',True),('ASML.AS','AMSTERDAM','EUR',False),('AAPL','FRANKFURT','EUR',False),('AAPL','NASDAQ','EUR',False)]:
+            stock=dict(symbol=symbol,exchange=exchange,currency=currency,name=symbol,quantity='1',price='100',purchased_on='2026-10-01')
+            self.store.add(stock)
+            with patch.object(fundamentals,'load') as load:
+                result=instruments.details(self.store,stock)
+                self.assertEqual(result['fundamentals_supported'],eligible)
+                load.assert_not_called()
+
 if __name__=='__main__':unittest.main()

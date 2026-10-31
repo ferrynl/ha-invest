@@ -1204,6 +1204,7 @@
     "stock-fundamentals-rows",
     "stock-fundamentals-source",
     "stock-fundamentals-status",
-    "stock-fundamentals-table"
+    "stock-fundamentals-table",
+    "stock-fundamentals-panel"
   ]
 }

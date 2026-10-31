@@ -1,3 +1,8 @@
+## 0.42.1 — 31 oktober 2026
+
+- Bedrijfscijfers worden uitsluitend getoond bij ondersteunde Amerikaanse USD-noteringen. Bij andere beurzen en valuta's blijft het volledige onderdeel verborgen en wordt Defeat Beta niet opgevraagd.
+- De server bepaalt de ondersteunde notering met dezelfde controle als de databron. Amerikaanse beursnoteringen van buitenlandse bedrijven blijven ondersteund; het vestigingsland is niet bepalend.
+
 ## 0.42.0 — 31 oktober 2026
 
 - Defeat Beta toegevoegd als aanvullende bron voor jaarcijfers op de aandelendetailpagina: omzet, nettowinst, operationele en vrije kasstroom en nettomarge voor maximaal vier boekjaren.
