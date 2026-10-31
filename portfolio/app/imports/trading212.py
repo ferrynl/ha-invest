@@ -106,4 +106,5 @@ def parse_csv(text):
             continue
         opens[0]['split_before']=closes[0]['quantity'] if closes else '0'
         if closes:closes[0]['kind']='SPLIT_INFO'
-    return rows
+    from .charge_fields import attach
+    return attach(rows,'trading212')

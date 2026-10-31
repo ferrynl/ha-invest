@@ -14,7 +14,7 @@ async function openBrokerDeletion(id){
  try{
   const response=await apiFetch('api/accounts/delete-preview?account_id='+id),result=await response.json();if(!response.ok)throw Error(result.error);
   if(request!==brokerEditorRequest||accessSession?.user?.role!=='admin')return;
-  brokerDelete=result;const c=result.counts;$('broker-delete-summary').textContent=result.label+': '+ui('{trades} boekingen, {dividends} dividendontvangsten, {capital} kapitaalterugbetalingen, {imports} imports en {issues} beoordelingen.',{trades:c.purchases||0,dividends:c.dividends||0,capital:c.capital_returns||0,imports:c.import_batches||0,issues:c.import_issues||0});openPopup('broker-delete');
+  brokerDelete=result;const c=result.counts;$('broker-delete-summary').textContent=result.label+': '+ui('{trades} boekingen, {dividends} dividendontvangsten, {capital} kapitaalterugbetalingen, {charges} kosten- en belastingboekingen, {imports} imports en {issues} beoordelingen.',{trades:c.purchases||0,dividends:c.dividends||0,capital:c.capital_returns||0,charges:c.charges||0,imports:c.import_batches||0,issues:c.import_issues||0});openPopup('broker-delete');
  }catch(error){$('broker-manage-feedback').textContent=error.message;}
 }
 function bindBrokerManagement(){

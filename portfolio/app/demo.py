@@ -94,7 +94,7 @@ def profile_handler(primary,store,auth,factory):
             if not self.allowed(auth.user(self.token())):return
             try:handler=demo_handler()
             except ValueError as error:return self.respond({'error':str(error)},400)
-            if path in DEMO_READS:return handler.do_GET(self)
+            if path in DEMO_READS or path=='/api/reports/charges':return handler.do_GET(self)
             if path=='/api/instrument/company':return self.respond({'description':'Fictieve demogegevens. Geen actuele koersen.','website':'','domain':'','name':''})
             if path=='/api/fx':
                 from forex import observation

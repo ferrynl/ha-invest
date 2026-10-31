@@ -47,7 +47,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
     assets['/world-countries.json']=('world-countries.json','application/json; charset=utf-8')
     for media in (static/'broker-media').glob('*.png'):assets['/broker-media/'+media.name]=('broker-media/'+media.name,'image/png')
     for flag in (static/'flags').glob('*.svg'):assets['/flags/'+flag.name]=('flags/'+flag.name,'image/svg+xml')
-    for name in ('brokers','feedback','i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','report-charts','conversions','performance'):
+    for name in ('brokers','feedback','i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','charges','report-charts','conversions','performance'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     assets['/country-map.js']=('country-map.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
@@ -102,7 +102,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             user=auth.user(self.token())
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
-            if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path in ('/api/home-assistant','/api/users','/api/backup','/api/export','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
+            if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path=='/api/charges/export' or path in ('/api/home-assistant','/api/users','/api/backup','/api/export','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
             if path in ('/api/accounts/edit','/api/accounts/delete-preview'):
                 query=parse_qs(urlsplit(self.path).query)
                 try:
@@ -184,7 +184,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if path=='/api/imports/mappings':return self.respond({'mappings':mapping_list(store)})
             if path=='/api/imports':
                 with store.connect() as db:batches=[dict(r) for r in db.execute('SELECT id,account_id,provider,filename,status,created_at FROM import_batches ORDER BY id DESC LIMIT 50')]
-                return self.respond({'providers':[{'id':key,'name':value['name'],'formats':value['formats']} for key,value in ADAPTERS.items()],'batches':batches})
+                return self.respond({'providers':[{'id':key,'name':value['name'],'formats':value['formats']} for key,value in ADAPTERS.items() if not value.get('any_broker')],'batches':batches})
             if path=='/api/dividends/overview':
                 from dividend_dashboard import overview,euro_overview
                 account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
@@ -202,6 +202,15 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     result=home_euro(account,compact_view=query.get('compact')==['1'])
                     return self.respond(result,etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
+            if path in ('/api/reports/charges','/api/charges/export'):
+                if path.endswith('/export') and not auth.enabled():return self.respond({'error':'Alleen een admin heeft toegang tot deze functie.'},403)
+                from charges import report as charge_report,export_csv as charge_csv
+                query=parse_qs(urlsplit(self.path).query)
+                try:
+                    result=charge_report(store,query.get('account_id',['all'])[0],query.get('year',[''])[0],query.get('currency',[''])[0],query.get('view',['all'])[0])
+                    if path.endswith('/export'):return self.respond(charge_csv(result),kind='text/csv; charset=utf-8',filename='home-invest-charges.csv')
+                    return self.respond(result)
+                except (ValueError,TypeError,KeyError) as error:return self.respond({'error':str(error)},400)
             if path=='/api/reports/combined':
                 from reports import combined as report_combined
                 query=parse_qs(urlsplit(self.path).query);account=query.get('account_id',['all'])[0]
@@ -306,7 +315,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             user=auth.user(self.token())
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path!='/api/auth/login':
-                if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path in ('/api/feedback/connect','/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation') or path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/')):return
+                if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path in ('/api/feedback/connect','/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation') or path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/') or path.startswith('/api/charges/')):return
                 if auth.enabled() and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),user['csrf'] or ''):
                     return self.respond({'error':'Ongeldige sessiebeveiliging. Meld je opnieuw aan.'},403)
             try:
@@ -389,6 +398,17 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 if path=='/api/accounts':
                     store.add_account(data);cache.invalidate();return self.respond({'ok':True},201)
                 if path=='/api/imports/mappings':return self.respond(mapping_edit(store,data))
+                if path=='/api/charges/fx':
+                    from charges import refresh_fx
+                    result=refresh_fx(store,data.get('account_id','all'),data.get('year',''),data.get('currency',''),data.get('view','all'));cache.invalidate();return self.respond(result)
+                if path=='/api/charges/save':
+                    import csv,io
+                    from imports.charge_csv import FIELDS,parse_csv as parse_charge_csv
+                    stream=io.StringIO();writer=csv.DictWriter(stream,fieldnames=FIELDS);writer.writeheader();writer.writerow({key:str(data.get(key,'')) for key in FIELDS})
+                    parsed=parse_charge_csv(stream.getvalue())
+                    if parsed[0].get('error'):raise ValueError(parsed[0]['error'])
+                    batch=import_preview(store,int(data['account_id']),'charges','manual-charge.csv',stream.getvalue())
+                    result=commit_partial(store,batch['batch_id']);cache.invalidate();refresh_requested.set();return self.respond(result)
                 if path=='/api/imports/preview':
                     result=import_preview(store,int(data['account_id']),str(data['provider']),str(data['filename']),str(data['csv']))
                     return self.respond(result)

@@ -1,7 +1,7 @@
 /* UI strings use the shared catalogue; pure Node tests retain Dutch defaults. */
 var ui=globalThis.HomeInvestTranslate||((value)=>value);
 let transactionRows=[],editingTransaction=null,transactionPage=0,transactionLoad=0,deletePreview=null;
-const transactionLabels={TRANSFER:ui('Omboeking'),BUY:ui('Aankoop'),SELL:ui('Verkoop'),DIVIDEND:ui('Dividend'),CAPITAL_RETURN:ui('Kapitaalterugbetaling'),SPLIT:ui('Aandelensplitsing')};
+const transactionLabels={COST:ui('Kosten'),TAX:ui('Belastingen'),TRANSFER:ui('Omboeking'),BUY:ui('Aankoop'),SELL:ui('Verkoop'),DIVIDEND:ui('Dividend'),CAPITAL_RETURN:ui('Kapitaalterugbetaling'),SPLIT:ui('Aandelensplitsing')};
 function clearTransactions(){transactionLoad++;transactionRows=[];editingTransaction=null;transactionPage=0;$('transaction-list').replaceChildren();closePopup('transaction-editor');$('transaction-form').reset();$('transaction-edit-title').textContent='';$('transaction-identity').textContent='';$('transaction-edit-feedback').textContent='';$('delete-backup').hidden=true;$('delete-backup').removeAttribute('href');$('transaction-feedback').textContent='';$('transaction-changes').replaceChildren();deletePreview=null;$('delete-review').hidden=true;$('delete-summary').textContent='';$('delete-confirmation').value='';$('delete-submit').disabled=true;$('delete-feedback').textContent='';}
 async function loadTransactions(){
  const version=++transactionLoad,account=currentBroker;
@@ -34,6 +34,7 @@ function renderTransactions(){
  $('transaction-prev').disabled=transactionPage===0;$('transaction-next').disabled=transactionPage>=pages-1;
 }
 async function openTransaction(entry){
+ if(entry.kind==='charge'){location.hash='#rapporten-costs';return;}
  editingTransaction=entry;const form=$('transaction-form'),admin=accessSession?.user?.role==='admin'&&!entry.transfer_id,trade=entry.kind==='trade',split=entry.type==='SPLIT';
  openPopup('transaction-editor');$('transaction-edit-title').textContent=transactionLabels[entry.type]+' · '+(entry.name||entry.symbol||entry.ticker)+' · '+entry.account_name;
  $('transaction-identity').textContent=ui('Registratie ')+entry.id+' · '+(entry.symbol||entry.ticker)+' · '+(entry.exchange||ui('bronvaluta'))+' · '+entry.currency+(split?ui(' · Aantal vóór splitsing: ')+(entry.split_before==='0'?ui('niet in bronbestand'):entry.split_before):'');
@@ -65,7 +66,7 @@ function bindTransactions(){
  $('delete-confirmation').addEventListener('input',()=>{$('delete-submit').disabled=!deletePreview||$('delete-confirmation').value!=='VERWIJDEREN';});
  $('delete-preview').addEventListener('click',async()=>{clearDeleteReview();const account=$('delete-account').value;const button=$('delete-preview');button.disabled=true;
   try{const response=await apiFetch('api/portfolio/delete-preview?account_id='+encodeURIComponent(account));const result=await response.json();if(!response.ok)throw Error(result.error);if(account!==$('delete-account').value)return;deletePreview=result;
-   const c=result.counts;$('delete-summary').textContent=(account==='all'?ui('Alle brokeraccounts'):result.label)+': '+(c.purchases||0)+ui(' aankopen/verkopen/splitsingen, ')+(c.dividends||0)+ui(' dividendontvangsten, ')+(c.capital_returns||0)+ui(' kapitaalterugbetalingen, ')+(c.import_batches||0)+ui(' imports en ')+(c.import_issues||0)+ui(' beoordelingen. Ook de bijbehorende bron-ID’s, omrekeningen, aandelenkoppelingen en wijzigingshistorie worden verwijderd.')+(account==='all'?ui(' Gedeelde aandelenkoersen, categorieën en hun cache worden ook gewist.'):ui(' Gedeelde aandelenkoersen blijven beschikbaar voor de overige rekeningen.'));
+   const c=result.counts;$('delete-summary').textContent=(account==='all'?ui('Alle brokeraccounts'):result.label)+': '+(c.purchases||0)+ui(' aankopen/verkopen/splitsingen, ')+(c.dividends||0)+ui(' dividendontvangsten, ')+(c.capital_returns||0)+ui(' kapitaalterugbetalingen, ')+(c.charges||0)+ui(' kosten- en belastingboekingen, ')+(c.import_batches||0)+ui(' imports en ')+(c.import_issues||0)+ui(' beoordelingen. Ook de bijbehorende bron-ID’s, omrekeningen, aandelenkoppelingen en wijzigingshistorie worden verwijderd.')+(account==='all'?ui(' Gedeelde aandelenkoersen, categorieën en hun cache worden ook gewist.'):ui(' Gedeelde aandelenkoersen blijven beschikbaar voor de overige rekeningen.'));
    $('delete-review').hidden=false;$('delete-confirmation').focus();
   }catch(error){$('delete-feedback').textContent=error.message;}finally{button.disabled=false;}
  });

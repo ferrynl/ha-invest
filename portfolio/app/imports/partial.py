@@ -41,9 +41,15 @@ def commit_partial(store,batch_id):
                 with store.connect() as db:existing=db.execute('SELECT digest FROM import_records WHERE account_id=? AND provider=? AND external_id=?',(batch['account_id'],batch['provider'],row['external_id'])).fetchone()
                 if existing:
                     if existing[0]!=row['digest']:raise ValueError('Deze bron-ID is eerder met andere gegevens verwerkt. Eerdere boeking blijft behouden.')
-                    duplicates.add(row['line']);continue
+                    if row.get('error'):raise ValueError(row['error'])
+                    with store.connect() as db:
+                        ignored_before=db.execute("SELECT 1 FROM import_issues i JOIN import_batches b ON b.id=i.batch_id WHERE b.account_id=? AND b.provider=? AND i.state='ignored' AND i.resolution='IGNORE' AND json_valid(i.payload) AND json_extract(i.payload,'$.external_id')=? LIMIT 1",(batch['account_id'],batch['provider'],row['external_id'])).fetchone()
+                    if row.get('charges') and not ignored_before:
+                        prepared.append((row,None,None))
+                    else:duplicates.add(row['line'])
+                    continue
                 if row.get('error'):raise ValueError(row['error'])
-                if row.get('kind') in ('CAPITAL_RETURN','SPLIT_INFO'):prepared.append((row,None,None));continue
+                if row.get('kind') in ('CAPITAL_RETURN','SPLIT_INFO','CHARGE'):prepared.append((row,None,None));continue
                 mapping=lookup(store,batch['account_id'],batch['provider'],row) or row.get('mapping')
                 if not mapping:raise ValueError('Beurskoppeling ontbreekt. Kies de juiste notering bij Aandelenkoppelingen en probeer deze regel opnieuw.')
                 row['mapping']=mapping;trace=None;booked=row
@@ -67,7 +73,10 @@ def commit_partial(store,batch_id):
                         ignored+=1
                     elif existing:
                         if existing[0]!=row['digest']:raise ValueError('Bron-ID wijkt af van een eerdere boeking.')
-                        duplicates.add(row['line'])
+                        from charges import book as book_charges
+                        recovered=book_charges(db,batch_id,batch['account_id'],batch['provider'],row)
+                        if recovered:imported+=1
+                        else:duplicates.add(row['line'])
                     else:
                         count=book_row(db,batch_id,batch['account_id'],batch['provider'],row,mapping,trace)
                         standalone+=count;imported+=1
@@ -137,7 +146,7 @@ def resolve_issue(store,data):
         return commit_partial(store,batch['id'])
 
 def refresh_supported(rows,provider='trading212'):
-    if not any(r.get('error') and r.get('decision') in (None,'retry') for r in rows):return
+    if not any((r.get('error') or (provider=='revolut' and r.get('kind')=='SKIP')) and r.get('decision') in (None,'retry') for r in rows):return
     stream=io.StringIO()
     fields=list(dict.fromkeys(k for r in rows for k in r['raw']))
     writer=csv.DictWriter(stream,fieldnames=fields);writer.writeheader()
@@ -145,7 +154,7 @@ def refresh_supported(rows,provider='trading212'):
     from . import ADAPTERS
     parsed=ADAPTERS[provider]['parse'](stream.getvalue())
     for row,new in zip(rows,parsed):
-        if row.get('decision') not in (None,'retry') or not row.get('error') or row.get('duplicate'):continue
+        if row.get('decision') not in (None,'retry') or (not row.get('error') and not (provider=='revolut' and row.get('kind')=='SKIP')) or row.get('duplicate'):continue
         if provider=='revolut':
             pass  # Reparse failed legacy rows, preserving explicit decisions and identities.
         elif provider=='traderepublic':

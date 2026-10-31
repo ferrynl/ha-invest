@@ -189,8 +189,8 @@ Importeer de volledige relevante aankoopgeschiedenis. Een verkoop die groter is
 dan het beschikbare bezit blokkeert de hele import. Ook onbekende acties zoals
 splitsingen blokkeren de import; er worden dan geen gedeeltelijke boekingen gemaakt.
 Bekende stortingen, opnames en renteregels worden zichtbaar overgeslagen omdat de
-app geen bank-/cashsaldo bijhoudt. Transactiekosten, bronbelastingberekeningen,
-valutawissels en CFD's worden niet verwerkt. Voor dividend moet `Currency (Total)`
+app geen bank-/cashsaldo bijhoudt. Expliciete transactiekosten en belastingbedragen worden afzonderlijk geregistreerd;
+verschuldigde belasting, valutawissels en CFD's worden niet berekend. Voor dividend moet `Currency (Total)`
 overeenkomen met de noteringsvaluta. Exporteer bij een afwijkende dividendvaluta
 eerst alleen de orders; omzetting van dat dividend moet je apart controleren.
 
@@ -558,7 +558,7 @@ Imports toont de beschikbare brokers en de stappen bron → voorbeeld → opslaa
 
 Maak bij Instellingen een brokeraccount aan met bedrijf **Trade Republic**. Download de oorspronkelijke transactie-export CSV uit je profiel bij Trade Republic (afschriften/transactie-export; labels verschillen per appversie). Kies de volledige geschiedenis en upload het bestand ongewijzigd. De adapter herkent de vaste kolommen `date`, `datetime`, `category`, `type`, `name`, `symbol` (ISIN), `shares`, `price`, `amount`, `currency`, `transaction_id` en `asset_class`. PDF’s en CSV’s van externe downloadtools worden niet ondersteund.
 
-Ondersteund zijn TRADING/BUY, TRADING/SELL en CASH/DIVIDEND voor aandelen en fondsen. Verkoopaantallen worden positief opgeslagen met type Verkoop; de expliciete bronprijs wordt gebruikt. Dividend gebruikt het netto bedrag en de valuta uit de bron; belastingen worden niet nogmaals afgetrokken. Kosten en geldmutaties tellen niet mee in het portefeuillerendement. Bekende cashacties zoals rente, kaartbetalingen en Saveback worden overgeslagen. Negatieve dividendcorrecties, ontbrekende prijzen, crypto, effectenoverdrachten en onbekende acties blijven ter beoordeling. Handmatige classificatie gebruikt dezelfde strikte bronvalidatie. Identiteit en ontdubbeling gebruiken de transactie-ID per aanbieder en brokeraccount; gewijzigde gegevens met dezelfde ID worden geweigerd.
+Ondersteund zijn TRADING/BUY, TRADING/SELL en CASH/DIVIDEND voor aandelen en fondsen. Verkoopaantallen worden positief opgeslagen met type Verkoop; de expliciete bronprijs wordt gebruikt. Dividend gebruikt het netto bedrag en de valuta uit de bron; belastingen worden niet nogmaals afgetrokken. Expliciete kostenvelden staan apart in de kostenadministratie; geldmutaties blijven buiten de portefeuille. Bekende cashacties zoals rente, kaartbetalingen en Saveback worden overgeslagen. Negatieve dividendcorrecties, ontbrekende prijzen, crypto, effectenoverdrachten en onbekende acties blijven ter beoordeling. Handmatige classificatie gebruikt dezelfde strikte bronvalidatie. Identiteit en ontdubbeling gebruiken de transactie-ID per aanbieder en brokeraccount; gewijzigde gegevens met dezelfde ID worden geweigerd.
 
 Voor Trade Republic is geen ondersteunde openbare API met rapportrechten bevestigd; de koppeling gebruikt CSV en vraagt geen banklogin. Formaatonderzoek: [libtraderepublic](https://github.com/aritzmmartinez/libtraderepublic), een onafhankelijke parser die het bronformaat documenteert. De regressietests gebruiken uitsluitend verzonnen gegevens. Er is geen echte rekening of gebruikersbestand gebruikt voor deze controle.
 
@@ -765,9 +765,11 @@ niet als geldstroom; bij een selectie van slechts één zijde blijft XIRR leeg.
 EUR-omrekening gebruikt opgeslagen koersen van de geldstroomdatum en historische
 waarderingsdatum, zonder toekomstige wisselkoersen of 1:1-fallback.
 
-Kosten en belasting worden nog niet apart opgeslagen en staan daarom als niet
-(afzonderlijk) geregistreerd. Het totaal is vóór eventuele aanvullende kosten;
-netto geboekt dividend bevat al de inhoudingen uit de bron. Exact tijdgewogen
+Kosten en belasting staan apart in de kostenadministratie. Het Rendementsoverzicht
+verwerkt vastgelegde aanvullende bedragen in totaal, jaarresultaat en XIRR; netto
+geboekt dividend bevat al de inhoudingen uit de bron en wordt niet nogmaals verminderd.
+Home en de aandelenoverzichten behouden de bronkostprijs; het resultaat na apart
+geboekte kosten staat in het Rendementsoverzicht. Exact tijdgewogen
 rendement kan zonder waarderingen op ieder extern geldstroommoment niet betrouwbaar
 worden berekend en wordt niet door een benadering vervangen.
 
@@ -856,14 +858,14 @@ wordt eveneens verwijderd; stel deze na eventueel portefeuilleherstel opnieuw in
 
 ### Revolut: kosten en bijzondere transacties
 
-Bewaarloon wordt overgeslagen: kosten zijn niet opgenomen in de winst. Twee exact
-tegengestelde dividendbelastingcorrecties voor hetzelfde aandeel, dezelfde valuta en
-dezelfde dag worden samen overgeslagen; losse correcties blijven bij **Te beoordelen**.
-Kapitaalterugbetalingen worden apart opgeslagen, buiten dividendwinst.
-De bevestigde NOW-splitsing van 18 december 2025 vereist aansluitende aankoophistorie;
-de oorspronkelijke kostprijs blijft behouden. Fusies en onbekende splitsingen blijven
-apart ter beoordeling. Open een bestaand importvoorbeeld opnieuw en kies opnieuw
-verwerken om eerder afgewezen bronregels met de verbeterde herkenning te beoordelen.
+Bewaarloon en dividendbelastingcorrecties worden afzonderlijk als kosten, belasting of
+terugbetaling geboekt; ook een tegengesteld correctiepaar blijft controleerbaar.
+Kapitaalterugbetalingen blijven buiten dividendwinst. De bevestigde NOW-splitsing vereist
+aansluitende aankoophistorie en behoudt de oorspronkelijke kostprijs. Fusies en onbekende
+splitsingen blijven apart ter beoordeling. Open een oud gedeeltelijk importvoorbeeld
+opnieuw of upload de oorspronkelijke export nogmaals om gemiste kosten te herkennen;
+bekende aankopen en verkopen worden niet dubbel geboekt. Eerder expliciet overgeslagen
+bronregels worden niet automatisch alsnog als kosten verwerkt.
 
 Het verwijderen van een brokerrekening wacht niet op koersverversing. Bij een lopende
 API-import of administratiebewerking verschijnt een melding om later opnieuw te proberen.
@@ -898,3 +900,51 @@ de officiële httpfs-uitbreiding wordt tijdens de imagebuild geïnstalleerd.
 Bij handmatige installatie: installeer `portfolio/requirements.txt` en voer eenmaal
 `python -c "import duckdb; duckdb.connect().execute('INSTALL httpfs')"` uit als dezelfde gebruiker
 waarmee de app draait. Het databaseschema en de administratie blijven gelijk.
+
+### Kosten, belastingen en aanvullende import (0.43.0)
+
+Schema 20 voegt `charges` toe. Positieve bedragen zijn betaald; negatieve bedragen
+zijn terugbetalingen. De administratie bewaart account, provider, bron-ID, component,
+soort, oorspronkelijke valuta, datum en de keuze `included_in_net`. Ontbrekende
+kostengegevens worden niet als nul aangemerkt en er worden geen belastingtarieven toegepast.
+Btw wordt geregistreerd als bronbedrag, niet berekend of automatisch als terugvorderbaar aangemerkt.
+
+Revolut ondersteunt losse kosten- en belastingregels en expliciete velden `Fee`,
+`Commission`, `Tax Amt.`, `Taxes` en `VAT`, met eventuele eigen valutakolommen.
+Meerdere overlappende kostenkolommen en negatieve kostenkolommen vragen beoordeling.
+Bij `Fee` naast `VAT` is `Fee includes VAT` (0/1) nodig; bij 1 wordt btw uit de fee
+gehaald voordat beide onderdelen apart worden geboekt. `Fee (excl. VAT)` is direct
+onderscheiden. Een legacy-dividend met onduidelijke kostenverrekening blijft ter beoordeling.
+Trading 212 leest expliciete Transaction fee, Currency conversion fee, Withholding tax,
+Stamp duty reserve tax, Financial transaction tax en VAT met hun valutakolommen.
+Trade Republic herkent expliciete fee/tax/vat-velden en CASH/FEE of CASH/TAX.
+Een onbekend exportformaat wordt niet via een verschil tussen prijs en totaalbedrag geraden.
+
+Revolut heeft ook een afzonderlijk kosten- en lastenrapport. Niet alle kosten staan
+in iedere transactie-CSV. Neem ontbrekende bedragen alleen over uit een bronoverzicht;
+PDF-kostenrapporten worden niet automatisch door de transactieadapter verwerkt.
+Via **Rapporten → Kosten en belastingen → Kosten of belasting toevoegen** kun je een
+bedrag boeken of een aanvullende CSV uploaden. Het sjabloon gebruikt:
+`date,reference,category,amount,currency,ticker,included_in_net,description`.
+Datum is ISO (YYYY-MM-DD), bedrag gebruikt een decimale punt en is positief voor kosten,
+negatief voor een terugbetaling. Referentie is uniek per rekening en kostensoort.
+Soorten: COMMISSION, CUSTODY, FX_FEE, OTHER_FEE, VAT, WITHHOLDING_TAX,
+TRANSACTION_TAX en OTHER_TAX. `ticker` is optioneel. `included_in_net` is 1 als het
+bedrag al in het bestaande nettoresultaat zit (bijvoorbeeld ingehouden dividendbelasting),
+anders 0. Boek voor kosten exclusief btw en btw afzonderlijke categorieën. Neem een
+jaartotaal niet nogmaals op wanneer dezelfde kosten al per transactie zijn geboekt;
+ontdubbeling kan verschillende documenten zonder gedeelde bron-ID niet automatisch herkennen.
+
+De rapporten starten met EUR en tonen daarna elke bronvaluta. Ze gebruiken opgeslagen
+historische koersen op of vóór de boekdatum, maximaal zeven kalenderdagen eerder, inclusief
+GBX/pence. Ontbrekende omrekeningen worden expliciet vermeld en niet als 1:1 gewaardeerd.
+Een admin kan ontbrekende wisselkoersen ophalen. Het detail toont origineel bedrag,
+EUR-bedrag, factor, koersdatum en bronreferentie; de CSV-export is alleen voor ingelogde admins.
+De belastingrapporten tonen geboekte bedragen, geen berekening van een belastingaangifte.
+
+Kosten worden samen met hun bronregel geboekt; een ongeldige verkoop laat geen losse
+kosten achter. Opnieuw importeren kan ontbrekende kosten van een bestaande bron-ID aanvullen
+zonder de aankoop, verkoop of het dividend opnieuw te boeken. Een gewijzigde kostenreferentie
+wordt geweigerd. Een expliciete oversla-keuze blijft geldig. Oude boekingen veranderen niet
+bij de migratie. Herstel en accountverwijdering nemen de nieuwe kostenadministratie mee;
+het demoprofiel blijft afzonderlijk en alleen-lezen.

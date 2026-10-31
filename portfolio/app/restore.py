@@ -22,6 +22,7 @@ TABLES={
  'import_batches':(6,('id','account_id','provider','filename','digest','payload','status','created_at')),
  'import_issues':(10,('id','batch_id','line','state','reason','payload','resolution','updated_at')),
  'capital_returns':(10,('id','batch_id','account_id','provider','external_id','ticker','isin','amount','currency','paid_on','created_at')),
+ 'charges':(20,('id','batch_id','account_id','provider','external_id','component','category','ticker','amount','currency','paid_on','included_in_net','description','created_at')),
  'transaction_edits':(12,('id','kind','record_id','account_id','before_payload','after_payload','changed_by','created_at')),
  'instrument_mappings':(9,('id','account_id','provider','identity','ticker','isin','source_currency','symbol','exchange','currency','name','origin','updated_at')),
  'import_records':(6,('id','batch_id','account_id','provider','external_id','digest','raw')),
@@ -64,6 +65,9 @@ def restore_backup(store,content):
                 if len(data)>250000:raise ValueError('Te veel regels in deze back-up.')
                 for values in data:
                     row=dict(zip(columns,values))
+                    if table=='charges':
+                        from charges import validate_charge
+                        validate_charge(row)
                     if table=='import_issues' and row['state'] not in ('pending','resolved','ignored'):raise ValueError('Ongeldige importstatus in back-up.')
                     if table=='instrument_mappings':
                         from imports import ADAPTERS
@@ -91,7 +95,7 @@ def restore_backup(store,content):
                             if table=='instrument_valuations' and key=='price':
                                 from valuations import validate_price
                                 validate_price(row[key])
-                            else:positive(row[key])
+                            elif not (table=='charges' and key=='amount'):positive(row[key])
                     for key in ('purchased_on','paid_on','day','start','end','synced_on','requested_on','rate_on'):
                         if key in row:
                             day=date.fromisoformat(row[key])
@@ -101,7 +105,7 @@ def restore_backup(store,content):
                             stamp=datetime.fromisoformat(row[key].replace('Z','+00:00'))
                             if stamp.tzinfo is None:raise ValueError('Ongeldige tijdzone in back-up.')
                     for key,value in row.items():
-                        if key in ('manual_sector','manual_country','manual_asset_type'):
+                        if key in ('manual_sector','manual_country','manual_asset_type','included_in_net'):
                             if not isinstance(value,int) or value not in (0,1):raise ValueError('Ongeldige handmatige categorie in back-up.')
                         elif table=='instrument_category_sync' and key=='attempts':pass
                         elif key in ('id','account_id','batch_id','line','record_id'):
@@ -126,6 +130,7 @@ def restore_backup(store,content):
                     target.executemany(f'INSERT INTO {table} ({",".join(columns)}) VALUES({",".join("?" for _ in columns)})',rows[table])
                 target.execute("UPDATE app_settings SET value=? WHERE key='default_range'",(default_range,))
                 if target.execute('PRAGMA foreign_key_check').fetchone():raise ValueError('De back-up verwijst naar ontbrekende accounts of importbatches.')
+                if target.execute('SELECT 1 FROM charges c JOIN import_batches b ON b.id=c.batch_id WHERE c.account_id!=b.account_id OR c.provider!=b.provider LIMIT 1').fetchone():raise ValueError('Ongeldige kostenreferentie.')
                 from history import daily_values
                 for key in target.execute('SELECT DISTINCT account_id,symbol,exchange,currency FROM purchases').fetchall():
                     lots=[dict(row) for row in target.execute('SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',tuple(key))]

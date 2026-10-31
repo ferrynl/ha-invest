@@ -21,17 +21,18 @@ class RevolutActionTests(unittest.TestCase):
   for row in batch['rows']:
    if row.get('kind') in ('BUY','SELL','SPLIT','DIVIDEND'):
     remember(self.store,2,'revolut',row,dict(symbol=row['ticker'],name='Test',currency=row['currency'],exchange='NYSE'))
- def test_custody_and_exact_tax_correction_pair_are_skipped(self):
+ def test_custody_and_tax_corrections_are_booked_separately(self):
   text=entry('CUSTODY FEE',ticker='',amount='USD -0.02')+entry('DIVIDEND TAX (CORRECTION)',amount='USD -0.05')+entry('DIVIDEND TAX (CORRECTION)',amount='USD 0.05')
-  batch=self.batch(text);self.assertEqual([r['kind'] for r in batch['rows']],['SKIP']*3)
-  result=commit_partial(self.store,batch['batch_id']);self.assertEqual((result['imported'],result['pending']),(0,0))
+  batch=self.batch(text);self.assertEqual([r['kind'] for r in batch['rows']],['CHARGE']*3)
+  result=commit_partial(self.store,batch['batch_id']);self.assertEqual((result['imported'],result['pending']),(3,0))
   self.assertEqual(self.store.state()['dividends'],[])
- def test_unpaired_tax_mismatches_and_malformed_rows_stay_pending(self):
-  for other in (None,dict(amount='USD 0.04'),dict(ticker='OTHER',amount='USD 0.05'),dict(currency='EUR',amount='EUR 0.05'),dict(day='2025-12-19',amount='USD 0.05')):
-   text=entry('DIVIDEND TAX (CORRECTION)',amount='USD -0.05')+(entry('DIVIDEND TAX (CORRECTION)',**other) if other else '')
-   self.assertTrue(all(r['error'] for r in parse_csv(HEADER+text)))
-  malformed=HEADER+entry('DIVIDEND TAX (CORRECTION)',amount='USD -0.05').rstrip()+',extra\n'+entry('DIVIDEND TAX (CORRECTION)',amount='USD 0.05')
-  self.assertTrue(all(r['error'] for r in parse_csv(malformed)))
+ def test_independent_tax_corrections_are_preserved_and_bad_csv_stays_pending(self):
+  text=entry('DIVIDEND TAX (CORRECTION)',amount='USD -0.05')+entry('DIVIDEND TAX (CORRECTION)',ticker='OTHER',amount='USD 0.04')
+  rows=parse_csv(HEADER+text)
+  self.assertEqual([r['charges'][0]['amount'] for r in rows],['0.05','-0.04'])
+  self.assertFalse(any(r['error'] for r in rows))
+  malformed=HEADER+entry('DIVIDEND TAX (CORRECTION)',amount='USD -0.05').rstrip()+',extra\n'
+  self.assertTrue(parse_csv(malformed)[0]['error'])
  def test_return_of_capital_is_separate_from_dividend(self):
   batch=self.batch(entry('RETURN OF CAPITAL',amount='EUR 0.12',currency='EUR'))
   self.assertEqual(batch['rows'][0]['kind'],'CAPITAL_RETURN');self.assertEqual(batch['instruments'],[])
@@ -66,6 +67,6 @@ class RevolutActionTests(unittest.TestCase):
   original=[r['external_id'] for r in rows]
   for row in rows:row.update(kind=None,error='legacy')
   refresh_supported(rows,'revolut')
-  self.assertEqual([r['kind'] for r in rows],['SKIP','CAPITAL_RETURN']);self.assertEqual([r['external_id'] for r in rows],original)
+  self.assertEqual([r['kind'] for r in rows],['CHARGE','CAPITAL_RETURN']);self.assertEqual([r['external_id'] for r in rows],original)
   rows[1].update(kind='SKIP',decision='IGNORE',error='manual')
   refresh_supported(rows,'revolut');self.assertEqual(rows[1]['decision'],'IGNORE');self.assertEqual(rows[1]['error'],'manual')

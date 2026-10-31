@@ -119,6 +119,7 @@ class Store:
             quotes = [dict(row) for row in db.execute('SELECT * FROM quotes ORDER BY quoted_at,id')]
             daily = [dict(row) for row in db.execute('SELECT * FROM daily_prices ORDER BY day')]
             dividends = [dict(row) for row in db.execute('SELECT * FROM dividends ORDER BY paid_on,id')]
+            charges=[dict(r) for r in db.execute('SELECT id,account_id,category,amount,currency,paid_on,included_in_net FROM charges ORDER BY paid_on,id')]
             accounts=[dict(r) for r in db.execute('SELECT * FROM broker_accounts ORDER BY id')]
             categories=[dict(r) for r in db.execute('SELECT * FROM instrument_categories')]
             manual=[dict(r) for r in db.execute('SELECT * FROM instrument_valuations')]
@@ -154,7 +155,7 @@ class Store:
                               'value': str(value) if value is not None else None,
                               'gain': str(value - cost+realised) if value is not None else None})
         missing_diagnostics(self,positions)
-        return dict(instrument_categories=categories,purchases=purchases, positions=positions, quotes=quotes, dividends=dividends, portfolios=portfolio_values(positions),
+        return dict(charges=charges,instrument_categories=categories,purchases=purchases, positions=positions, quotes=quotes, dividends=dividends, portfolios=portfolio_values(positions),
                     accounts=accounts,settings=settings, database_version=SCHEMA_VERSION,data_revision=revision)
 
     def history_start(self,symbol,exchange,currency,start):

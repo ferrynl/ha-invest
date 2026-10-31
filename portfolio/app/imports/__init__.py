@@ -8,3 +8,6 @@ ADAPTERS={'trading212':{'name':'Trading 212','formats':['csv','api'],'parse':par
 
 from .revolut import parse_csv as parse_revolut
 ADAPTERS["revolut"]={"name":"Revolut","formats":["csv"],"parse":parse_revolut}
+
+from .charge_csv import parse_csv as parse_charges
+ADAPTERS['charges']={'name':'Kosten en belastingen','formats':['csv'],'parse':parse_charges,'any_broker':True}

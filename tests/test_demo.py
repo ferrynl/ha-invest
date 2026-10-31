@@ -58,8 +58,9 @@ class DemoHttpTests(unittest.TestCase):
      self.assertEqual(request('/api/instrument/company?symbol=ASML')[0],200)
      self.assertEqual(request('/api/fx')[0],200)
      self.assertEqual(request('/api/reports/combined')[0],200)
+     status,charges=request('/api/reports/charges');self.assertEqual(status,200);self.assertEqual(charges['entries'],[])
      status,performance=request('/api/reports/performance');self.assertEqual(status,200);self.assertTrue(performance['groups'][0]['combined'])
-    for path in ['/api/purchases','/api/restore','/api/auth/disable','/api/portfolio/delete']:
+    for path in ['/api/purchases','/api/restore','/api/auth/disable','/api/portfolio/delete','/api/charges/save','/api/charges/fx']:
      self.assertEqual(request(path,method='POST')[0],403)
     self.assertEqual(request('/api/backup')[0],403);self.assertEqual(request('/api/users')[0],403)
     status,own=request('/api/state?compact=1',profile='personal');self.assertEqual(status,200);self.assertEqual([p['symbol'] for p in own['positions']],['OWN'])

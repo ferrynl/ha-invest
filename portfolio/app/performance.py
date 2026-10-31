@@ -48,7 +48,7 @@ def xirr(flows):
         if not unique or abs(root-unique[-1])>1e-8:unique.append(root)
     return str(math.expm1(unique[0])*100) if len(unique)==1 else None
 
-def summarize(positions,trades,dividends,today,missing=0):
+def summarize(positions,trades,dividends,today,missing=0,charges=()):
     histories={};current=defaultdict(lambda:ZERO);complete=bool(positions);years={}
     for p in positions:
         points=p['history']
@@ -61,13 +61,15 @@ def summarize(positions,trades,dividends,today,missing=0):
         else:current['value']+=Decimal(p['value'])
     current['dividend']=sum((Decimal(d['amount']) for d in dividends),ZERO)
     complete=complete and not missing
-    profit=current['value']-current['cost']+current['realised']+current['dividend'] if complete else None
+    from charges import FEES
+    additional=sum((Decimal(c['amount']) for c in charges if not c['included_in_net']),ZERO)
+    profit=current['value']-current['cost']+current['realised']+current['dividend']-additional if complete else None
     previous=ZERO
     for day,points in sorted(histories.items()):
         valid=all(point['value'] is not None for point in points) and not missing
         gain=sum((Decimal(p['value'])-Decimal(p['cost'])+Decimal(p['realised']) for p in points),ZERO) if valid else None
         income=sum((Decimal(d['amount']) for d in dividends if d['paid_on']<=day),ZERO)
-        years[day[:4]]=dict(year=day[:4],day=day,cumulative=gain+income if gain is not None else None)
+        years[day[:4]]=dict(year=day[:4],day=day,cumulative=gain+income-sum((Decimal(c['amount']) for c in charges if not c['included_in_net'] and c['paid_on']<=day),ZERO) if gain is not None else None)
     annual=[]
     for year,row in sorted(years.items()):
         value=row['cumulative']-previous if row['cumulative'] is not None and previous is not None else None
@@ -81,6 +83,7 @@ def summarize(positions,trades,dividends,today,missing=0):
         amount=Decimal(t['quantity'])*Decimal(t['price'])
         flows.append((t['purchased_on'],amount if t['side']=='SELL' else -amount))
     flows.extend((d['paid_on'],d['amount']) for d in dividends)
+    flows.extend((c['paid_on'],-Decimal(c['amount'])) for c in charges if not c['included_in_net'])
     flows.append((today.isoformat(),current['value']))
     rate=xirr(flows) if complete and all(len(pair)==2 for pair in transfers.values()) else None
     def percent(value):return str(value/current['invested']*100) if value is not None and current['invested']>0 else None
@@ -88,7 +91,8 @@ def summarize(positions,trades,dividends,today,missing=0):
     return dict(complete=complete,count=len(positions),omitted=missing,invested=str(current['invested']),value=str(current['value']) if complete else None,
                 price_gain=str(gain) if gain is not None else None,price_percent=percent(gain),dividend=str(current['dividend']),dividend_percent=percent(current['dividend']),
                 realised=str(current['realised']),realised_percent=percent(current['realised']),total=str(profit) if profit is not None else None,total_percent=percent(profit),
-                irr=rate,twr=None,costs=None,taxes=None,years=annual)
+                irr=rate,twr=None,costs=str(sum((Decimal(c['amount']) for c in charges if c['category'] in FEES),ZERO)) if any(c['category'] in FEES for c in charges) else None,taxes=str(sum((Decimal(c['amount']) for c in charges if c['category'] not in FEES),ZERO)) if any(c['category'] not in FEES for c in charges) else None,
+                additional_costs=str(sum((Decimal(c['amount']) for c in charges if c['category'] in FEES and not c['included_in_net']),ZERO)),additional_taxes=str(sum((Decimal(c['amount']) for c in charges if c['category'] not in FEES and not c['included_in_net']),ZERO)),included_charges=str(sum((Decimal(c['amount']) for c in charges if c['included_in_net']),ZERO)),years=annual)
 
 def overview(store,snapshot,account='all',instrument=None,currency='',today=None):
     today=today or date.today()
@@ -116,6 +120,8 @@ def overview(store,snapshot,account='all',instrument=None,currency='',today=None
         i=bisect_right(dates.get(base,[]),day)-1
         if i<0 or (date.fromisoformat(day)-date.fromisoformat(dates[base][i])).days>7:return None
         return scale/Decimal(indexed[base][i]['rate'])
+    charges=[c for c in snapshot.get('charges',[]) if (owner is None or c['account_id']==owner) and (not currency or c['currency']==currency) and c['paid_on']<=today.isoformat()] if instrument is None else []
+    converted_charges=[]
     converted_trades=[];converted_income=[];missing=len(euro['excluded'])
     for t in selected['purchases']:
         fx=Decimal(1) if t.get('split_before') else factor(t['currency'],t['purchased_on'])
@@ -125,7 +131,11 @@ def overview(store,snapshot,account='all',instrument=None,currency='',today=None
         fx=factor(d['currency'],d['paid_on'])
         if fx is None:missing+=1;continue
         converted_income.append({**d,'amount':str(Decimal(d['amount'])*fx),'currency':'EUR'})
-    groups=[dict(currency='EUR',combined=True,**summarize(euro['positions'],converted_trades,converted_income,today,missing))]
-    for code in sorted({p['currency'] for p in selected['positions']}|{d['currency'] for d in selected['dividends']}):
-        groups.append(dict(currency=code,combined=False,**summarize([p for p in selected['positions'] if p['currency']==code],[t for t in selected['purchases'] if t['currency']==code],[d for d in selected['dividends'] if d['currency']==code],today)))
+    for c in charges:
+        fx=factor(c['currency'],c['paid_on'])
+        if fx is None:missing+=1;continue
+        converted_charges.append({**c,'amount':str(Decimal(c['amount'])*fx),'currency':'EUR'})
+    groups=[dict(currency='EUR',combined=True,**summarize(euro['positions'],converted_trades,converted_income,today,missing,converted_charges))]
+    for code in sorted({p['currency'] for p in selected['positions']}|{d['currency'] for d in selected['dividends']}|{c['currency'] for c in charges}):
+        groups.append(dict(currency=code,combined=False,**summarize([p for p in selected['positions'] if p['currency']==code],[t for t in selected['purchases'] if t['currency']==code],[d for d in selected['dividends'] if d['currency']==code],today,charges=[c for c in charges if c['currency']==code])))
     return dict(data_revision=snapshot.get('data_revision'),as_of=today.isoformat(),groups=groups)

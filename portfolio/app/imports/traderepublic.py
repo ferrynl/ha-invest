@@ -48,6 +48,7 @@ def parse_csv(text, decision=None):
                 kind='SKIP'
             if not decision and category=='CASH' and action=='BONUS' and not raw['symbol'] and not raw['shares'] and not raw['price']:
                 kind='SKIP'
+            if not decision and category=='CASH' and action in ('FEE','TAX'):kind='CHARGE'
             row=dict(line=index,kind=kind,ticker=raw['symbol'],name=raw['name'],raw={**raw,'ISIN':raw['symbol']},
                      digest=digest,external_id='id:'+raw['transaction_id'] if raw['transaction_id'] else 'raw:'+digest,error=None)
             try:
@@ -69,6 +70,8 @@ def parse_csv(text, decision=None):
                     if action=='PRIVATE_MARKET_BUY':row['notice']='Vooruitbetaling overgeslagen; de latere fondsuitvoering boekt de aankoop.'
                     if action=='CUSTOMER_INPAYMENT':row['notice']='Storting op de geldrekening overgeslagen; geen aankoop of dividend.'
                     if action=='BONUS':row['notice']='Geldbonus op de geldrekening overgeslagen; geen dividend of aandelenboeking.'
+                    rows.append(row);continue
+                if kind=='CHARGE':
                     rows.append(row);continue
                 if raw['asset_class'].lower() not in ('stock','fund','etf','equity','private_fund'):
                     raise ValueError('Alleen aandelen en fondsen worden ondersteund; controleer de beleggingscategorie.')
@@ -99,7 +102,8 @@ def parse_csv(text, decision=None):
         if len(currencies)==1:
             row['currency']=next(iter(currencies));row['currency_origin']='source_trades'
         else:row.update(needs_split_currency=True,error=SPLIT_CURRENCY_ERROR)
-    return rows
+    from .charge_fields import attach
+    return attach(rows,'traderepublic')
 
 def prepare_rows(store,account_id,rows):
     """A split moves units, not money; reuse a unique saved listing if needed."""

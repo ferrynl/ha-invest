@@ -18,7 +18,7 @@ def preview(store,account_id,provider,filename,text):
     with store.connect() as db:
         store.require_account(db,account_id)
         account=dict(db.execute('SELECT * FROM broker_accounts WHERE id=?',(account_id,)).fetchone())
-    if account['broker']!=adapter['name']:raise ValueError('Kies een brokeraccount van '+adapter['name']+'.')
+    if not adapter.get('any_broker') and account['broker']!=adapter['name']:raise ValueError('Kies een brokeraccount van '+adapter['name']+'.')
     rows=adapter['parse'](text)
     prepare_rows(store,account_id,provider,rows)
     with store.connect() as db:
@@ -34,6 +34,10 @@ def preview(store,account_id,provider,filename,text):
                 existing=db.execute('SELECT digest FROM import_records WHERE account_id=? AND provider=? AND external_id=?',(account_id,provider,row['external_id'])).fetchone()
                 row['duplicate']=row.get('duplicate',False) or bool(existing and existing[0]==row['digest'])
                 if existing and not row['duplicate']:row['error']='Deze bron-ID is eerder geïmporteerd met andere gegevens.'
+                if row.get('duplicate') and not row.get('error'):
+                    from charges import pending as pending_charges
+                    try:row['charges_pending']=pending_charges(db,account_id,provider,row)
+                    except ValueError as error:row['error']=str(error)
         payload=json.dumps(rows)
         cursor=db.execute('INSERT INTO import_batches(account_id,provider,filename,digest,payload,created_at) VALUES(?,?,?,?,?,?)',(account_id,provider,str(filename)[:180],hashlib.sha256(text.encode()).hexdigest(),payload,now()))
     record(store,'WARNING' if any(r.get('error') for r in rows) else 'INFO',provider,'import_preview','Importvoorbeeld aangemaakt.',{'account_id':account_id,'batch_id':cursor.lastrowid,'source_rows':len(rows),'errors':sum(bool(r.get('error')) for r in rows),'duplicates':sum(bool(r.get('duplicate')) for r in rows),'buys':sum(r.get('kind')=='BUY' for r in rows),'sells':sum(r.get('kind')=='SELL' for r in rows),'splits':sum(r.get('kind')=='SPLIT' for r in rows),'skipped':sum(r.get('kind')=='SKIP' for r in rows),'first_day':min((r['day'] for r in rows if r.get('day')),default=None),'last_day':max((r['day'] for r in rows if r.get('day')),default=None)})
@@ -43,7 +47,7 @@ def preview(store,account_id,provider,filename,text):
             key=(identity(row)[0],row['currency'])
             if key not in registered:remember(store,account_id,provider,row);registered.add(key)
     instruments=sorted({(r['ticker'],r.get('currency','')) for r in rows if r.get('kind') in ('BUY','SELL','DIVIDEND','SPLIT') and r.get('currency') and not r.get('error') and not r.get('duplicate')})
-    return dict(batch_id=cursor.lastrowid,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Dividend zonder voorafgaande aankoop wordt apart opgeslagen met een melding over ontbrekende aankoophistorie; er wordt geen positie of kostprijs aangemaakt.', 'Prijzen worden in de noteringsvaluta geïmporteerd; transactiekosten, rente en valutawissels worden niet in de winst verwerkt.','Afwijkende prijs- of dividendvaluta wordt op transactiedatum omgerekend met opgeslagen dagreferentiekoersen. Het bronbedrag en de omrekening blijven bewaard.'])
+    return dict(batch_id=cursor.lastrowid,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Dividend zonder voorafgaande aankoop wordt apart opgeslagen met een melding over ontbrekende aankoophistorie; er wordt geen positie of kostprijs aangemaakt.', 'Expliciete kosten en belastingen worden apart geboekt. Reeds netto verwerkte bedragen worden niet dubbel afgetrokken; ontbrekende kosten worden niet geschat.','Afwijkende prijs- of dividendvaluta wordt op transactiedatum omgerekend met opgeslagen dagreferentiekoersen. Het bronbedrag en de omrekening blijven bewaard.'])
 
 def commit(store,batch_id,mappings):
     with store.lock:
@@ -65,17 +69,17 @@ def commit(store,batch_id,mappings):
             if existing:
                 if existing[0]!=row['digest']:raise ValueError('Een eerder geïmporteerde transactie is gewijzigd.')
                 continue
-            if row['kind']=='CAPITAL_RETURN':
+            if row['kind'] in ('CAPITAL_RETURN','CHARGE'):
                 pending.append((row,{}));continue
             if not isinstance(mapping,dict):raise ValueError('Automatische beurskoppeling ontbreekt.')
             if mapping.get('currency')!=row['currency'] and not row.get('mapping'):raise ValueError('Valutaomrekening vereist een opgeslagen, gecontroleerde automatische koppeling.')
             pending.append((row,mapping))
-        requests=[(row['currency'],mapping['currency'],row['day']) for row,mapping in pending if row['kind'] not in ('SPLIT','CAPITAL_RETURN') and row['currency']!=mapping['currency']]
+        requests=[(row['currency'],mapping['currency'],row['day']) for row,mapping in pending if row['kind'] not in ('SPLIT','CAPITAL_RETURN','CHARGE') and row['currency']!=mapping['currency']]
         prepare_rates(store,requests)
         converted=[];standalone_dividends=0
         for row,mapping in pending:
             trace=None
-            if row['kind'] not in ('SPLIT','CAPITAL_RETURN') and row['currency']!=mapping['currency']:
+            if row['kind'] not in ('SPLIT','CAPITAL_RETURN','CHARGE') and row['currency']!=mapping['currency']:
                 key='amount' if row['kind']=='DIVIDEND' else 'price'
                 trace=convert(store,row[key],row['currency'],mapping['currency'],row['day'])
                 row={**row,key:trace['converted']}
@@ -107,6 +111,11 @@ def open_preview(store,batch_id):
         if row.get('external_id'):
             with store.connect() as db:previous=db.execute('SELECT digest FROM import_records WHERE account_id=? AND provider=? AND external_id=?',(batch['account_id'],batch['provider'],row['external_id'])).fetchone()
             if previous and previous[0]==row.get('digest'):row['duplicate']=True
+            if row.get('duplicate') and not row.get('error'):
+                from charges import pending as pending_charges
+                with store.connect() as db:
+                    try:row['charges_pending']=pending_charges(db,batch['account_id'],batch['provider'],row)
+                    except ValueError as error:row['error']=str(error)
         if row.get('kind') in ('BUY','SELL','DIVIDEND','SPLIT') and row.get('currency'):
             saved=lookup(store,batch['account_id'],batch['provider'],row)
             if saved:row['mapping']=saved
@@ -116,8 +125,10 @@ def open_preview(store,batch_id):
     return dict(batch_id=batch_id,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Dividend zonder voorafgaande aankoop wordt apart opgeslagen met een melding over ontbrekende aankoophistorie; er wordt geen positie of kostprijs aangemaakt.', 'Beursnoteringen worden automatisch gekoppeld. Bronbedragen blijven bewaard; afwijkende noteringsvaluta wordt met historische dagreferentiekoersen omgerekend.'])
 
 def book_row(db,batch_id,account_id,provider,row,mapping,trace):
+    from charges import book as book_charges
+    book_charges(db,batch_id,account_id,provider,row)
     standalone_dividends=0
-    if row['kind']=='SPLIT_INFO':
+    if row['kind'] in ('SPLIT_INFO','CHARGE'):
         db.execute('INSERT INTO import_records(batch_id,account_id,provider,external_id,digest,raw) VALUES(?,?,?,?,?,?)',(batch_id,account_id,provider,row['external_id'],row['digest'],json.dumps(row['raw'])))
         return 0
     if row['kind']=='CAPITAL_RETURN':

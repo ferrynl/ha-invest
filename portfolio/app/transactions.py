@@ -21,6 +21,11 @@ def ledger(store,account='all'):
             for source in db.execute('SELECT * FROM '+table+clause,() if account_id is None else (account_id,)):
                 row=dict(source);broker=accounts[row['account_id']]
                 rows.append(dict(row,kind=kind,revision=revision(row),account_name=broker['name'],broker=broker['broker'],day=row.get('purchased_on',row.get('paid_on')),type='TRANSFER' if row.get('transfer_id') else 'SPLIT' if row.get('split_before','') else row.get('side','DIVIDEND' if kind=='dividend' else 'CAPITAL_RETURN')))
+        clause='' if account_id is None else ' WHERE account_id=?'
+        from charges import FEES
+        for source in db.execute('SELECT * FROM charges'+clause,() if account_id is None else (account_id,)):
+            row=dict(source);broker=accounts[row['account_id']]
+            rows.append(dict(row,kind='charge',revision=revision(row),account_name=broker['name'],broker=broker['broker'],day=row['paid_on'],symbol=row['ticker'],exchange='',name=row['description'],type='COST' if row['category'] in FEES else 'TAX'))
         return dict(transactions=sorted(rows,key=lambda r:(r['day'],r['id']),reverse=True))
 
 def scope(db,value):
@@ -73,7 +78,7 @@ def changes(store,kind,record_id):
     with store.connect() as db:
         return dict(changes=[dict(r) for r in db.execute('SELECT * FROM transaction_edits WHERE kind=? AND record_id=? ORDER BY id DESC',(kind,int(record_id)))])
 
-RESET_TABLES=('transaction_edits','import_issues','import_fx','import_records','capital_returns','instrument_mappings','import_batches','dividends','purchases')
+RESET_TABLES=('charges','transaction_edits','import_issues','import_fx','import_records','capital_returns','instrument_mappings','import_batches','dividends','purchases')
 SHARED_TABLES=('instrument_valuations','instrument_category_sync','instrument_categories','quotes','daily_prices','history_sync','api_cache')
 
 def reset_where(table,account_id):

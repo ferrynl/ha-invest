@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from contextlib import closing
 
-SCHEMA_VERSION = 19
+SCHEMA_VERSION = 20
 MIGRATIONS = {
     1: (
         'CREATE TABLE IF NOT EXISTS purchases (id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL, name TEXT NOT NULL, quantity TEXT NOT NULL, price TEXT NOT NULL, currency TEXT NOT NULL, purchased_on TEXT NOT NULL, created_at TEXT NOT NULL)',
@@ -92,6 +92,14 @@ MIGRATIONS = {
         "ALTER TABLE purchases ADD COLUMN transfer_cost TEXT NOT NULL DEFAULT ''",
         "ALTER TABLE purchases ADD COLUMN transfer_invested TEXT NOT NULL DEFAULT ''",
     ),
+    20: (
+        "CREATE TABLE charges (id INTEGER PRIMARY KEY, batch_id INTEGER NOT NULL REFERENCES import_batches(id), account_id INTEGER NOT NULL REFERENCES broker_accounts(id), provider TEXT NOT NULL, external_id TEXT NOT NULL, component TEXT NOT NULL, category TEXT NOT NULL CHECK(category IN ('COMMISSION','CUSTODY','FX_FEE','OTHER_FEE','VAT','WITHHOLDING_TAX','TRANSACTION_TAX','OTHER_TAX')), ticker TEXT NOT NULL DEFAULT '', amount TEXT NOT NULL, currency TEXT NOT NULL, paid_on TEXT NOT NULL, included_in_net INTEGER NOT NULL CHECK(included_in_net IN (0,1)), description TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL, UNIQUE(account_id,provider,external_id,component))",
+        'CREATE INDEX charges_account_day ON charges(account_id,paid_on,id)',
+    ) + tuple(
+        f'CREATE TRIGGER dashboard_charges_{action.lower()} AFTER {action} ON charges BEGIN UPDATE dashboard_revision SET revision=revision+1 WHERE id=1; END'
+        for action in ('INSERT','UPDATE','DELETE')
+    ),
+
 }
 
 def migrate(path):

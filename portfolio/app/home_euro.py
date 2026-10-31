@@ -79,7 +79,7 @@ def prepare_portfolio_rates(store,snapshot,account='all'):
     # Validate scope before requesting any external rates.
     if str(account)!='all' and not any(str(a['id'])==str(account) for a in snapshot['accounts']):raise ValueError('Brokeraccount niet gevonden.')
     owner=None if str(account)=='all' else int(account);requests=[];today=date.today().isoformat()
-    for rows,field in [(snapshot['purchases'],'purchased_on'),(snapshot['dividends'],'paid_on')]:
+    for rows,field in [(snapshot['purchases'],'purchased_on'),(snapshot['dividends'],'paid_on'),(snapshot.get('charges',[]),'paid_on')]:
         requests.extend((row['currency'],'EUR',row[field]) for row in rows if (owner is None or row['account_id']==owner) and row['currency']!='EUR' and not row.get('split_before'))
     requests.extend((p['currency'],'EUR',today) for p in snapshot['positions'] if (owner is None or p['account_id']==owner) and p['currency']!='EUR' and Decimal(p['quantity'])>0)
     try:prepare_rates(store,requests)

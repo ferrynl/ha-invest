@@ -95,7 +95,7 @@ function renderPages(){
  $('sidebar-version').textContent=ui('Versie ')+state.app_version;
  $('settings-version').textContent=state.app_version;$('settings-database').textContent=state.database_version;$('settings-interval').textContent=state.refresh_minutes+ui(' minuten');
  if(!settingsDirty)$('settings-form').elements.namedItem('default_range').value=state.settings.default_range;
- const selected=$('report-year').value,years=[...new Set([...Array.from({length:6},(_,i)=>String(new Date().getFullYear()+i)),...state.dividends.filter(d=>reportDate(d.paid_on)).map(d=>d.paid_on.slice(0,4))])].sort().reverse();
+ const selected=$('report-year').value,years=[...new Set([...Array.from({length:6},(_,i)=>String(new Date().getFullYear()+i)),...[...state.dividends,...(state.charges||[])].filter(d=>reportDate(d.paid_on)).map(d=>d.paid_on.slice(0,4))])].sort().reverse();
  $('report-year').replaceChildren();for(const year of years){const option=document.createElement('option');option.value=year;option.textContent=year;$('report-year').append(option);}$('report-year').value=years.includes(selected)?selected:String(new Date().getFullYear());
  if(location.hash.startsWith('#rapporten'))renderReports();
  if(location.hash==='#instellingen')loadHomeAssistant();

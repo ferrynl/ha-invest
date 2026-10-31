@@ -7504,5 +7504,380 @@ const UI_TRANSLATIONS = {
   "nl": "libtraderepublic",
   "en": "libtraderepublic",
   "es": "libtraderepublic"
- }
+ },
+ "Aandeel (optioneel)": {
+  "nl": "Aandeel (optioneel)",
+  "en": "Security (optional)",
+  "es": "Valor (opcional)"
+},
+ "Aanvullende kosten importeren": {
+  "nl": "Aanvullende kosten importeren",
+  "en": "Import supplemental costs",
+  "es": "Importar gastos adicionales"
+},
+ "Aanvullende resultaatimpact": {
+  "nl": "Aanvullende resultaatimpact",
+  "en": "Additional effect on result",
+  "es": "Efecto adicional en el resultado"
+},
+ "Al verwerkt in bestaand nettoresultaat": {
+  "nl": "Al verwerkt in bestaand nettoresultaat",
+  "en": "Already included in the existing net result",
+  "es": "Ya incluido en el resultado neto existente"
+},
+ "Alleen bedragen die nog niet in het bestaande nettoresultaat zitten.": {
+  "nl": "Alleen bedragen die nog niet in het bestaande nettoresultaat zitten.",
+  "en": "Only amounts not yet included in the existing net result.",
+  "es": "Solo importes que aún no están incluidos en el resultado neto existente."
+},
+ "Alleen expliciet vastgelegde bedragen. Ontbrekende kosten zijn onbekend, niet nul. Btw wordt niet uit een tarief geschat.": {
+  "nl": "Alleen expliciet vastgelegde bedragen. Ontbrekende kosten zijn onbekend, niet nul. Btw wordt niet uit een tarief geschat.",
+  "en": "Only explicitly recorded amounts. Missing costs are unknown, not zero. VAT is not estimated from a rate.",
+  "es": "Solo importes registrados expresamente. Los gastos ausentes son desconocidos, no cero. El IVA no se estima aplicando un tipo."
+},
+ "Bedrag in EUR": {
+  "nl": "Bedrag in EUR",
+  "en": "Amount in EUR",
+  "es": "Importe en EUR"
+},
+ "Bedrag: positief betaald, negatief terugontvangen": {
+  "nl": "Bedrag: positief betaald, negatief terugontvangen",
+  "en": "Amount: positive paid, negative refunded",
+  "es": "Importe: positivo pagado, negativo reembolsado"
+},
+ "Bewaarloon": {
+  "nl": "Bewaarloon",
+  "en": "Custody fees",
+  "es": "Comisiones de custodia"
+},
+ "Boeking vraagt beoordeling. Controleer Te beoordelen.": {
+  "nl": "Boeking vraagt beoordeling. Controleer Te beoordelen.",
+  "en": "Entry requires review. Check Pending review.",
+  "es": "El asiento requiere revisión. Consulta Pendientes de revisión."
+},
+ "Bronreferentie": {
+  "nl": "Bronreferentie",
+  "en": "Source reference",
+  "es": "Referencia de origen"
+},
+ "Btw": {
+  "nl": "Btw",
+  "en": "VAT",
+  "es": "IVA"
+},
+ "CSV-bestand": {
+  "nl": "CSV-bestand",
+  "en": "CSV file",
+  "es": "Archivo CSV"
+},
+ "CSV-sjabloon downloaden": {
+  "nl": "CSV-sjabloon downloaden",
+  "en": "Download CSV template",
+  "es": "Descargar plantilla CSV"
+},
+ "Dividendbelasting": {
+  "nl": "Dividendbelasting",
+  "en": "Dividend withholding tax",
+  "es": "Retención sobre dividendos"
+},
+ "Geboekte kosten en belastingen": {
+  "nl": "Geboekte kosten en belastingen",
+  "en": "Recorded costs and taxes",
+  "es": "Gastos e impuestos registrados"
+},
+ "Geen kosten vastgelegd.": {
+  "nl": "Geen kosten vastgelegd.",
+  "en": "No costs recorded.",
+  "es": "No hay gastos registrados."
+},
+ "Kosten en belastingen per maand": {
+  "nl": "Kosten en belastingen per maand",
+  "en": "Costs and taxes by month",
+  "es": "Gastos e impuestos por mes"
+},
+ "Kosten en belastingen per soort": {
+  "nl": "Kosten en belastingen per soort",
+  "en": "Costs and taxes by category",
+  "es": "Gastos e impuestos por categoría"
+},
+ "Kosten of belasting toevoegen": {
+  "nl": "Kosten of belasting toevoegen",
+  "en": "Add a cost or tax",
+  "es": "Añadir un gasto o impuesto"
+},
+ "Kostenboeking opslaan": {
+  "nl": "Kostenboeking opslaan",
+  "en": "Save expense entry",
+  "es": "Guardar asiento de gastos"
+},
+ "Kostenrapport downloaden": {
+  "nl": "Kostenrapport downloaden",
+  "en": "Download cost report",
+  "es": "Descargar informe de gastos"
+},
+ "Nee": {
+  "nl": "Nee",
+  "en": "No",
+  "es": "No"
+},
+ "Nettobedragen na terugbetalingen.": {
+  "nl": "Nettobedragen na terugbetalingen.",
+  "en": "Net amounts after refunds.",
+  "es": "Importes netos después de reembolsos."
+},
+ "Niet nogmaals aftrekken van het resultaat.": {
+  "nl": "Niet nogmaals aftrekken van het resultaat.",
+  "en": "Do not deduct from the result again.",
+  "es": "No volver a deducir del resultado."
+},
+ "Omschrijving": {
+  "nl": "Omschrijving",
+  "en": "Description",
+  "es": "Descripción"
+},
+ "Ontbrekende koers": {
+  "nl": "Ontbrekende koers",
+  "en": "Missing rate",
+  "es": "Tipo de cambio ausente"
+},
+ "Ontbrekende wisselkoersen ophalen": {
+  "nl": "Ontbrekende wisselkoersen ophalen",
+  "en": "Retrieve missing exchange rates",
+  "es": "Obtener tipos de cambio ausentes"
+},
+ "Onvolledig totaal: ontbrekende historische wisselkoersen.": {
+  "nl": "Onvolledig totaal: ontbrekende historische wisselkoersen.",
+  "en": "Incomplete total: historical exchange rates are missing.",
+  "es": "Total incompleto: faltan tipos de cambio históricos."
+},
+ "Overige belastingen": {
+  "nl": "Overige belastingen",
+  "en": "Other taxes",
+  "es": "Otros impuestos"
+},
+ "Overige kosten": {
+  "nl": "Overige kosten",
+  "en": "Other costs",
+  "es": "Otros gastos"
+},
+ "Positief is betaald; negatief is terugontvangen. Reeds netto verwerkt betekent dat het bedrag al in het bestaande resultaat zit.": {
+  "nl": "Positief is betaald; negatief is terugontvangen. Reeds netto verwerkt betekent dat het bedrag al in het bestaande resultaat zit.",
+  "en": "Positive is paid; negative is refunded. Already included means the amount is already reflected in the existing result.",
+  "es": "Positivo significa pagado; negativo, reembolsado. Ya incluido significa que el importe ya se refleja en el resultado existente."
+},
+ "Rapport bevat uitsluitend de vastgelegde kosten en belastingen.": {
+  "nl": "Rapport bevat uitsluitend de vastgelegde kosten en belastingen.",
+  "en": "This report contains only recorded costs and taxes.",
+  "es": "Este informe solo contiene gastos e impuestos registrados."
+},
+ "Reeds netto verwerkt": {
+  "nl": "Reeds netto verwerkt",
+  "en": "Already included in net result",
+  "es": "Ya incluido en el resultado neto"
+},
+ "Soort": {
+  "nl": "Soort",
+  "en": "Category",
+  "es": "Categoría"
+},
+ "Transactiebelasting": {
+  "nl": "Transactiebelasting",
+  "en": "Transaction tax",
+  "es": "Impuesto sobre transacciones"
+},
+ "Unieke bronreferentie": {
+  "nl": "Unieke bronreferentie",
+  "en": "Unique source reference",
+  "es": "Referencia de origen única"
+},
+ "Valutakosten": {
+  "nl": "Valutakosten",
+  "en": "Currency conversion fees",
+  "es": "Comisiones de cambio de divisa"
+},
+ "Gebruik bedragen uit je bronoverzicht. Boek een jaartotaal niet opnieuw als dezelfde kosten al per transactie zijn vastgelegd. Btw voer je apart in; gebruik voor de kosten het bedrag exclusief die btw.": {
+  "nl": "Gebruik bedragen uit je bronoverzicht. Boek een jaartotaal niet opnieuw als dezelfde kosten al per transactie zijn vastgelegd. Btw voer je apart in; gebruik voor de kosten het bedrag exclusief die btw.",
+  "en": "Use amounts from your source statement. Do not record an annual total again if the same costs are already recorded per transaction. Enter VAT separately; use the cost amount excluding that VAT.",
+  "es": "Utiliza los importes de tu extracto original. No registres de nuevo un total anual si los mismos gastos ya están registrados por transacción. Introduce el IVA por separado y utiliza el gasto sin ese IVA."
+},
+ "Gebruik het CSV-sjabloon. Elke regel bevat een expliciet bedrag, valuta, datum en unieke referentie. included_in_net is 1 als het bedrag al in het bestaande nettoresultaat zit, anders 0.": {
+  "nl": "Gebruik het CSV-sjabloon. Elke regel bevat een expliciet bedrag, valuta, datum en unieke referentie. included_in_net is 1 als het bedrag al in het bestaande nettoresultaat zit, anders 0.",
+  "en": "Use the CSV template. Each row contains an explicit amount, currency, date and unique reference. included_in_net is 1 if the amount is already in the existing net result, otherwise 0.",
+  "es": "Utiliza la plantilla CSV. Cada fila contiene un importe, moneda, fecha y referencia única. included_in_net es 1 si el importe ya está incluido en el resultado neto existente; en caso contrario, 0."
+},
+ "Deze kostenreferentie is eerder met andere gegevens verwerkt.": {
+  "nl": "Deze kostenreferentie is eerder met andere gegevens verwerkt.",
+  "en": "This cost reference was previously processed with different data.",
+  "es": "Esta referencia de gastos ya se procesó con datos diferentes."
+},
+ "Ongeldig kosten- of belastingbedrag.": {
+  "nl": "Ongeldig kosten- of belastingbedrag.",
+  "en": "Invalid cost or tax amount.",
+  "es": "Importe de gasto o impuesto no válido."
+},
+ "Ongeldig rapportjaar.": {
+  "nl": "Ongeldig rapportjaar.",
+  "en": "Invalid report year.",
+  "es": "Año del informe no válido."
+},
+ "Ongeldige kostenreferentie.": {
+  "nl": "Ongeldige kostenreferentie.",
+  "en": "Invalid cost reference.",
+  "es": "Referencia de gastos no válida."
+},
+ "Ongeldige kostensoort of nettoverwerking.": {
+  "nl": "Ongeldige kostensoort of nettoverwerking.",
+  "en": "Invalid cost category or net treatment.",
+  "es": "Categoría de gastos o tratamiento neto no válido."
+},
+ "Ongeldige rapportselectie.": {
+  "nl": "Ongeldige rapportselectie.",
+  "en": "Invalid report selection.",
+  "es": "Selección de informe no válida."
+},
+ "Gebruik de CSV-kolommen date, reference, category, amount, currency, ticker, included_in_net en description.": {
+  "nl": "Gebruik de CSV-kolommen date, reference, category, amount, currency, ticker, included_in_net en description.",
+  "en": "Use CSV columns date, reference, category, amount, currency, ticker, included_in_net and description.",
+  "es": "Utiliza las columnas CSV date, reference, category, amount, currency, ticker, included_in_net y description."
+},
+ "Dubbele kosten- of belastingkolommen zijn niet eenduidig.": {
+  "nl": "Dubbele kosten- of belastingkolommen zijn niet eenduidig.",
+  "en": "Duplicate cost or tax columns are ambiguous.",
+  "es": "Las columnas duplicadas de gastos o impuestos son ambiguas."
+},
+ "Geef aan of de bronkosten inclusief btw zijn; btw wordt niet dubbel geboekt.": {
+  "nl": "Geef aan of de bronkosten inclusief btw zijn; btw wordt niet dubbel geboekt.",
+  "en": "Specify whether the source costs include VAT; VAT is not recorded twice.",
+  "es": "Indica si los gastos originales incluyen IVA; el IVA no se registra dos veces."
+},
+ "Kostenbedrag en bronvaluta komen niet overeen.": {
+  "nl": "Kostenbedrag en bronvaluta komen niet overeen.",
+  "en": "Cost amount and source currency do not match.",
+  "es": "El importe del gasto y la moneda de origen no coinciden."
+},
+ "Kostenbedrag en btw sluiten niet op elkaar aan.": {
+  "nl": "Kostenbedrag en btw sluiten niet op elkaar aan.",
+  "en": "Cost amount and VAT do not reconcile.",
+  "es": "El importe del gasto y el IVA no cuadran."
+},
+ "Negatieve kostenkolom vereist beoordeling; gebruik een expliciete terugbetalingsboeking.": {
+  "nl": "Negatieve kostenkolom vereist beoordeling; gebruik een expliciete terugbetalingsboeking.",
+  "en": "A negative cost column requires review; use an explicit refund entry.",
+  "es": "Una columna de gastos negativa requiere revisión; utiliza un asiento explícito de reembolso."
+},
+ "Netto dividend na kosten is niet eenduidig in deze export; controleer de bronregel.": {
+  "nl": "Netto dividend na kosten is niet eenduidig in deze export; controleer de bronregel.",
+  "en": "Net dividend after costs is ambiguous in this export; check the source entry.",
+  "es": "El dividendo neto después de gastos es ambiguo en esta exportación; comprueba la fila original."
+},
+ "Positieve kostenbetaling vereist beoordeling: is dit een terugbetaling?": {
+  "nl": "Positieve kostenbetaling vereist beoordeling: is dit een terugbetaling?",
+  "en": "A positive cost payment requires review: is this a refund?",
+  "es": "Un pago de gastos positivo requiere revisión: ¿es un reembolso?"
+},
+ "Valuta voor kosten of belasting ontbreekt in de bronregel.": {
+  "nl": "Valuta voor kosten of belasting ontbreekt in de bronregel.",
+  "en": "The source entry lacks a currency for costs or taxes.",
+  "es": "Falta la moneda de los gastos o impuestos en la fila original."
+},
+ "Expliciete kosten en belastingen worden apart geboekt. Reeds netto verwerkte bedragen worden niet dubbel afgetrokken; ontbrekende kosten worden niet geschat.": {
+  "nl": "Expliciete kosten en belastingen worden apart geboekt. Reeds netto verwerkte bedragen worden niet dubbel afgetrokken; ontbrekende kosten worden niet geschat.",
+  "en": "Explicit costs and taxes are recorded separately. Amounts already included in net results are not deducted twice; missing costs are not estimated.",
+  "es": "Los gastos e impuestos explícitos se registran por separado. Los importes ya incluidos en resultados netos no se deducen dos veces; los gastos ausentes no se estiman."
+},
+ "Belastingoverzicht": {
+  "nl": "Belastingoverzicht",
+  "en": "Tax overview",
+  "es": "Resumen de impuestos"
+},
+ "Btw, dividendbelasting en overige geboekte belastingen.": {
+  "nl": "Btw, dividendbelasting en overige geboekte belastingen.",
+  "en": "VAT, dividend withholding and other recorded taxes.",
+  "es": "IVA, retenciones sobre dividendos y otros impuestos registrados."
+},
+ "Geboekte kosten, inhoudingen en terugbetalingen.": {
+  "nl": "Geboekte kosten, inhoudingen en terugbetalingen.",
+  "en": "Recorded costs, deductions and refunds.",
+  "es": "Gastos, retenciones y reembolsos registrados."
+},
+ "Kosten en belastingen": {
+  "nl": "Kosten en belastingen",
+  "en": "Costs and taxes",
+  "es": "Gastos e impuestos"
+},
+ "Belastingen": {
+  "nl": "Belastingen",
+  "en": "Taxes",
+  "es": "Impuestos"
+},
+ "Kosten": {
+  "nl": "Kosten",
+  "en": "Costs",
+  "es": "Gastos"
+},
+ "Importvoorbeeld openen": {
+  "nl": "Importvoorbeeld openen",
+  "en": "Open import preview",
+  "es": "Abrir vista previa de importación"
+},
+ "Ja": {
+  "nl": "Ja",
+  "en": "Yes",
+  "es": "Sí"
+},
+ "Kies een brokeraccount": {
+  "nl": "Kies een brokeraccount",
+  "en": "Choose a broker account",
+  "es": "Elige una cuenta de bróker"
+},
+ "kosten- en belastingboekingen,": {
+  "nl": "kosten- en belastingboekingen,",
+  "en": "cost and tax entries,",
+  "es": "asientos de gastos e impuestos,"
+},
+ "{trades} boekingen, {dividends} dividendontvangsten, {capital} kapitaalterugbetalingen, {charges} kosten- en belastingboekingen, {imports} imports en {issues} beoordelingen.": {
+  "nl": "{trades} boekingen, {dividends} dividendontvangsten, {capital} kapitaalterugbetalingen, {charges} kosten- en belastingboekingen, {imports} imports en {issues} beoordelingen.",
+  "en": "{trades} trades, {dividends} dividend receipts, {capital} capital returns, {charges} cost and tax entries, {imports} imports and {issues} reviews.",
+  "es": "{trades} operaciones, {dividends} dividendos, {capital} devoluciones de capital, {charges} asientos de gastos e impuestos, {imports} importaciones y {issues} revisiones."
+},
+ "Sinds de eerste boeking. Eerst het totaal in EUR, daarna per bronvaluta. Percentages gebruiken de totale aankoopinleg als basis.": {
+  "nl": "Sinds de eerste boeking. Eerst het totaal in EUR, daarna per bronvaluta. Percentages gebruiken de totale aankoopinleg als basis.",
+  "en": "Since the first entry. Combined EUR total first, then source currencies. Percentages use total purchase investment as the basis.",
+  "es": "Desde el primer asiento. Primero el total combinado en EUR, después las monedas de origen. Los porcentajes se basan en la inversión total en compras."
+},
+ "Vastgelegde aanvullende kosten en belastingen zijn afgetrokken. Reeds netto verwerkte inhoudingen tellen niet dubbel. Ontbrekende kosten blijven onbekend.": {
+  "nl": "Vastgelegde aanvullende kosten en belastingen zijn afgetrokken. Reeds netto verwerkte inhoudingen tellen niet dubbel. Ontbrekende kosten blijven onbekend.",
+  "en": "Recorded additional costs and taxes have been deducted. Deductions already included in net amounts are not counted twice. Missing costs remain unknown.",
+  "es": "Se han deducido los gastos e impuestos adicionales registrados. Las retenciones ya incluidas en importes netos no se cuentan dos veces. Los gastos ausentes siguen siendo desconocidos."
+},
+ "Aanvullende kosten": {
+  "nl": "Aanvullende kosten",
+  "en": "Additional costs",
+  "es": "Gastos adicionales"
+},
+ "Aanvullende belastingen": {
+  "nl": "Aanvullende belastingen",
+  "en": "Additional taxes",
+  "es": "Impuestos adicionales"
+},
+ "Koersresultaat plus gerealiseerd resultaat en netto dividend, na vastgelegde aanvullende kosten en belastingen.": {
+  "nl": "Koersresultaat plus gerealiseerd resultaat en netto dividend, na vastgelegde aanvullende kosten en belastingen.",
+  "en": "Price gains plus realised gains and net dividends, after recorded additional costs and taxes.",
+  "es": "Resultado de cotización más ganancias realizadas y dividendos netos, tras los gastos e impuestos adicionales registrados."
+},
+ "Op jaarbasis uit gedateerde aankopen, verkopen, netto dividend, aanvullende kosten en de actuele eindwaarde. Een niet-eenduidige uitkomst blijft leeg.": {
+  "nl": "Op jaarbasis uit gedateerde aankopen, verkopen, netto dividend, aanvullende kosten en de actuele eindwaarde. Een niet-eenduidige uitkomst blijft leeg.",
+  "en": "Annualised from dated purchases, sales, net dividends, additional costs and the current final value. An ambiguous result is left blank.",
+  "es": "Anualizado a partir de compras, ventas, dividendos netos, gastos adicionales y el valor final actual, con sus fechas. Los resultados ambiguos se dejan en blanco."
+},
+ "Het resultaat na apart geboekte kosten staat in het": {
+  "nl": "Het resultaat na apart geboekte kosten staat in het",
+  "en": "The result after separately recorded costs is shown in the",
+  "es": "El resultado tras los gastos registrados por separado se muestra en el"
+},
+ "Ontbrekende kosten aanvullen bij bestaande transactie.": {
+  "nl": "Ontbrekende kosten aanvullen bij bestaande transactie.",
+  "en": "Add missing costs to the existing transaction.",
+  "es": "Añadir gastos ausentes a la transacción existente."
+}
 };

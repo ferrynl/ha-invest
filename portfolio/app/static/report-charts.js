@@ -19,14 +19,14 @@ function reportDonut(card,values,currency){
  reportSvgNode('text',{x:150,y:158,'text-anchor':'middle',fill:'#91a4bf','font-size':11},ui('bekend totaal'),svg);
  const legend=homeNode('div',undefined,'report-donut-legend');for(const [index,p] of groups.entries()){const row=homeNode('div'),mark=reportSvgNode('svg',{viewBox:'0 0 12 12','aria-hidden':'true'});reportSvgNode('rect',{width:12,height:12,rx:3,fill:reportPalette[index%reportPalette.length]},undefined,mark);const text=homeNode('span',p.name),number=homeNode('strong',reportPercent(p.value/total*100));row.append(mark,text,number);legend.append(row);}card.plot.append(legend);
 }
-function reportBars(card,values,currency,signed=false){
+function reportBars(card,values,currency,signed=false,expense=false){
  if(!values.length){reportEmpty(card);return;}
  const rows=values.slice(0,14),height=Math.max(210,rows.length*38+30),svg=reportSvg(card,height),max=Math.max(1,...rows.map(p=>Math.abs(p.value))),left=180,right=540,zero=signed?360:left,width=signed?170:right-left;
  reportSvgNode('line',{x1:zero,x2:zero,y1:8,y2:height-8,stroke:'#42516a'},undefined,svg);
  for(const [i,p] of rows.entries()){const y=18+i*38,size=Math.abs(p.value)/max*width;
   reportSvgNode('text',{x:0,y:y+15,fill:'#cbd8e9','font-size':12},p.name.length>24?p.name.slice(0,22)+'…':p.name,svg);
-  const bar=reportSvgNode('rect',{x:p.value<0?zero-size:zero,y,width:Math.max(1,size),height:23,rx:4,fill:p.value<0?'#f08091':signed?'#47dcb0':reportPalette[i%reportPalette.length]},undefined,svg);reportHover(bar,p.name+' · '+money(p.value,currency),card);
-  reportSvgNode('text',{x:630,y:y+16,'text-anchor':'end',fill:p.value<0?'#ff929d':'#e7f1ff','font-size':12},money(p.value,currency),svg);
+  const bar=reportSvgNode('rect',{x:p.value<0?zero-size:zero,y,width:Math.max(1,size),height:23,rx:4,fill:p.value<0?(expense?'#47dcb0':'#f08091'):signed?(expense?'#f08091':'#47dcb0'):reportPalette[i%reportPalette.length]},undefined,svg);reportHover(bar,p.name+' · '+money(p.value,currency),card);
+  reportSvgNode('text',{x:630,y:y+16,'text-anchor':'end',fill:p.value<0?(expense?'#47dcb0':'#ff929d'):(expense?'#ff929d':'#e7f1ff'),'font-size':12},money(p.value,currency),svg);
  }
 }
 function reportWaterfall(card,values,currency){

@@ -3,6 +3,15 @@
 - Bedrijfscijfers worden uitsluitend getoond bij ondersteunde Amerikaanse USD-noteringen. Bij andere beurzen en valuta's blijft het volledige onderdeel verborgen en wordt Defeat Beta niet opgevraagd.
 - De server bepaalt de ondersteunde notering met dezelfde controle als de databron. Amerikaanse beursnoteringen van buitenlandse bedrijven blijven ondersteund; het vestigingsland is niet bepalend.
 
+## 0.43.0 — 31 oktober 2026
+
+- Kosten en belastingen krijgen een eigen administratie per brokeraccount: transactiekosten, bewaarloon, valutakosten, btw en overige belastingen, inclusief terugbetalingen.
+- Brokerimports bewaren expliciete kostenvelden en losse kostenregels. Reeds netto verwerkte inhoudingen tellen niet dubbel; onduidelijke valuta, negatieve kostenkolommen en btw-inclusie blijven ter beoordeling.
+- Nieuwe rapporten Kosten en belastingen en Belastingoverzicht: gecombineerd EUR-totaal, uitsplitsing per bronvaluta, soort en maand, originele bedragen, koersdatums en CSV-export voor ingelogde admins.
+- Het Rendementsoverzicht neemt aanvullende kosten mee in totaalresultaat, jaarresultaten en XIRR. De oorspronkelijke aandelenkostprijs blijft behouden.
+- Ontbrekende bedragen kunnen met bronreferentie via een pop-up of aanvullend CSV-sjabloon worden geboekt. Opnieuw importeren kan gemiste kosten aanvullen zonder dubbele transacties; expliciete oversla-keuzes blijven behouden.
+- Databaseschema 20 voegt kostenboekingen en cache-invalidatie toe, met migratieback-up, gevalideerd herstel en rekeninggebonden verwijdering. Oudere boekingen worden niet herschreven.
+
 ## 0.42.0 — 31 oktober 2026
 
 - Defeat Beta toegevoegd als aanvullende bron voor jaarcijfers op de aandelendetailpagina: omzet, nettowinst, operationele en vrije kasstroom en nettomarge voor maximaal vier boekjaren.

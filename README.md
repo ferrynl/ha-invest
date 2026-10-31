@@ -29,7 +29,7 @@ toegang tot de app. Wijzigen en instellen gebeurt in pop-ups; Home opent direct 
 - **Aandelen**: posities en transacties bekijken; handmatig aankopen toevoegen.
 - **Dividend**: netto ontvangen dividend boeken en bekijken.
 - **Instellingen → Valuta**: historische omrekening en opgeslagen dagreferentiekoersen.
-- **Rapporten**: dividend per maand en portefeuillestand.
+- **Rapporten**: portefeuille, rendement, dividend, kosten en belastingen.
 - **Imports** (admin): een overzicht met brokerlogo’s en eigen stappenhandleidingen met schermafbeeldingen voor Trading 212 CSV/API, Trade Republic en Revolut CSV. Importvoorbeeld, importgeschiedenis, exporteren, API-instellingen, beurskoppelingen en beoordelingen hebben aparte pagina’s.
 - **Instellingen** (admin): accounts, beveiliging, back-ups en versiecontrole.
 - **Instellingen → Logs** (admin): afgeschermde foutdetails en Log-ID zoeken.
@@ -72,8 +72,8 @@ beide regels op hetzelfde tijdstip in het bestand staan. Voorafgaand bezit moet 
 Een losse close of ongeldige splitsing blijft ter beoordeling staan.
 
 Eerder afgewezen regels kun je na bijwerken opnieuw proberen; eerdere handmatige keuzes
-en geboekte transacties blijven behouden. Kosten, cashmutaties en valutawissels worden
-niet in het portefeuillerendement verwerkt.
+en geboekte transacties blijven behouden. Expliciete kosten en belastingen worden apart
+geboekt en in het Rendementsoverzicht verwerkt. Cashmutaties blijven buiten de portefeuille.
 
 ## Opslag en back-ups
 
@@ -125,7 +125,7 @@ Landenverdeling opent zonder bovenste header met een paginabrede interactieve we
 
 ### Export en Revolut
 
-Open **Imports → Exporteren** en kies CSV of PDF. De export bevat de transacties, dividend en kapitaalterugbetalingen van de geselecteerde brokerrekening (of alle accounts), met bronvaluta.
+Open **Imports → Exporteren** en kies CSV of PDF. De export bevat transacties, dividend, kapitaalterugbetalingen en kostenboekingen van de geselecteerde brokerrekening (of alle accounts), met bronvaluta.
 
 Open **Imports → Revolut** en upload de Engelstalige beleggings-CSV, niet het bankrekeningafschrift. Zowel het formaat met Ticker, Price per share en Total Amount als dat met Reference, CCY, Price/share en Net Amt. wordt herkend. Aankopen, verkopen en dividend worden verwerkt; onbekende acties blijven ter beoordeling. Bewaar en importeer de volledige historie. Regels zonder bron-ID worden op hun inhoud vergeleken; identieke regels binnen één bestand vereisen beoordeling.
 
@@ -138,3 +138,13 @@ De aparte centrale container wordt in Coolify gebouwd met `feedback_service/Dock
 De lokale wachtrij en installatiegegevens staan versleuteld in de aparte map `feedback/` in de app-datafolder, buiten het portefeuilledatabestand. Ze blijven behouden bij portefeuilleherstel; een volledige Home Assistant-appback-up is nodig om de meldverbinding mee te herstellen. Versturen wordt automatisch hervat. Bij een onduidelijke GitHub-verzenduitkomst controleert de centrale beheerder de melding om dubbele issues te voorkomen.
 
 Via **Over ons** vind je alle gebruikte bronnen. Op de aandelendetailpagina staan aanvullende jaarcijfers van Defeat Beta voor ondersteunde Amerikaanse noteringen, met rapportagevaluta en peildata.
+
+### Kosten en belastingen
+
+Bij **Rapporten → Kosten en belastingen** en **Belastingoverzicht** staan bekende
+kosten, btw en inhoudingen per jaar, brokeraccount en bronvaluta, met een EUR-totaal.
+Het **Rendementsoverzicht** trekt aanvullende kosten af; reeds netto verwerkte
+inhoudingen tellen niet dubbel. De aandelenkostprijs wordt niet herschreven.
+Ontbrekende kosten zijn onbekend, niet nul. Voeg bronbedragen toe via de pop-up of het
+CSV-sjabloon. Een afzonderlijk Revolut-kostenrapport wordt niet als transactie-CSV gelezen.
+Zie DOCS voor ondersteunde velden en het voorkomen van dubbeltellingen.
