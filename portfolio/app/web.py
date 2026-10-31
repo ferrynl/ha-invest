@@ -372,16 +372,15 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 if path=='/api/updates':
                     try:return self.respond(check_updates(store))
                     except Exception:return self.respond({'error':'Versiecontrole niet beschikbaar. Probeer later opnieuw of bekijk GitHub.'},502)
-                if path=='/api/accounts/edit':
-                    with refresh_lock,trading212_api._lock:
-                        result=broker_accounts.edit(store,data);cache.invalidate()
-                    return self.respond(result)
-                if path=='/api/accounts/delete':
-                    with refresh_lock,trading212_api._lock:
-                        try:result=transactions.reset(store,data,remove_account=True)
-                        except OSError:return self.respond({'error':'De rekening kon niet veilig worden verwijderd. Controleer de back-up en probeer opnieuw.'},500)
-                        cache.invalidate()
-                    refresh_requested.set()
+                if path in ('/api/accounts/edit','/api/accounts/delete'):
+                    try:
+                        with broker_accounts.mutation(store,trading212_api._lock):
+                            if path.endswith('/edit'):result=broker_accounts.edit(store,data)
+                            else:result=transactions.reset(store,data,remove_account=True)
+                            cache.invalidate()
+                    except broker_accounts.BusyAccountError as error:return self.respond({'error':str(error)},409)
+                    except OSError:return self.respond({'error':'De rekening kon niet veilig worden verwijderd. Controleer de back-up en probeer opnieuw.'},500)
+                    if path.endswith('/delete'):refresh_requested.set()
                     return self.respond(result)
                 if path=='/api/accounts':
                     store.add_account(data);cache.invalidate();return self.respond({'ok':True},201)

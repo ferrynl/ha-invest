@@ -82,3 +82,24 @@ class BrokerAccountHttpTests(ledger_tests.TransactionHttpTests):
   with self.store.connect() as db:db.execute("UPDATE users SET role='basic'")
   for path in paths:self.assertEqual(self.request(path,{},token,csrf)[0],403)
   for path in ['/api/accounts/edit?account_id=1','/api/accounts/delete-preview?account_id=1']:self.assertEqual(self.request(path,token=token)[0],403)
+
+ def test_delete_and_edit_do_not_wait_for_market_refresh(self):
+  import threading
+  from web import make_handler
+  refresh_lock=threading.Lock()
+  self.http.RequestHandlerClass=make_handler(self.store,self.auth,self.cache,{},900,refresh_lock,threading.Event(),enable_demo=False)
+  _,account=self.request('/api/accounts/edit?account_id=1')
+  with refresh_lock:
+   code,_=self.request('/api/accounts/edit',{**account,'name':'Tijdens koerscontrole'});self.assertEqual(code,200)
+   _,snapshot=self.request('/api/accounts/delete-preview?account_id=1')
+   code,_=self.request('/api/accounts/delete',{**snapshot,'confirmation':'VERWIJDEREN'});self.assertEqual(code,200)
+  self.assertEqual(self.store.state()['accounts'],[])
+ def test_busy_import_or_writer_rejects_without_queuing_deletion(self):
+  from imports import trading212_api
+  _,snapshot=self.request('/api/accounts/delete-preview?account_id=1')
+  for lock in (trading212_api._lock,self.store.lock):
+   with lock:
+    code,result=self.request('/api/accounts/delete',{**snapshot,'confirmation':'VERWIJDEREN'})
+    self.assertEqual(code,409);self.assertIn('opnieuw',result['error'])
+   self.assertEqual(len(self.store.state()['accounts']),1)
+  self.assertFalse((self.store.root/'backups'/'deletions').exists())

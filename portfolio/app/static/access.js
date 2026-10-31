@@ -81,8 +81,8 @@ async function startSession(){
  if(admin&&accessSession?.enabled)await loadUsers();
  }finally{finish();}
 }
-async function jsonAction(path,data){
- const response=await apiFetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(data)});
+async function jsonAction(path,data,options={}){
+ const response=await apiFetch(path,{...options,method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(data)});
  const result=await response.json();if(!response.ok)throw Error(result.error);return result;
 }
 async function loadUsers(){

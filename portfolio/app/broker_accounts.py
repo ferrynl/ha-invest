@@ -1,5 +1,6 @@
 """Broker account administration; ledger ownership stays stable when renamed."""
 import hmac
+from contextlib import contextmanager
 from transactions import scope,revision,reset_preview_db
 
 
@@ -24,3 +25,19 @@ def overview(store,account_id):
         if account_id is None:raise ValueError('Kies één brokeraccount om te wijzigen.')
         account=dict(db.execute('SELECT * FROM broker_accounts WHERE id=?',(account_id,)).fetchone())
         return {**account,'revision':revision(account)}
+
+
+class BusyAccountError(ValueError):
+    pass
+
+
+@contextmanager
+def mutation(store,connection_lock):
+    # Market refresh writes shared instrument data and need not block account changes.
+    # Keep the connection -> store lock order, but never queue a destructive request.
+    if not connection_lock.acquire(blocking=False):raise BusyAccountError('Er wordt een API-rapport verwerkt. Probeer de rekening straks opnieuw te wijzigen of verwijderen.')
+    try:
+        if not store.lock.acquire(blocking=False):raise BusyAccountError('De administratie wordt bijgewerkt. Probeer de rekening straks opnieuw te wijzigen of verwijderen.')
+        try:yield
+        finally:store.lock.release()
+    finally:connection_lock.release()

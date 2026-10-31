@@ -7229,25 +7229,40 @@ const UI_TRANSLATIONS = {
   "nl": "Fusie: controleer de gekoppelde geld- en aandelenregels en de oorspronkelijke kostprijs. Deze regel blijft apart bewaard.",
   "en": "Merger: check the linked cash and share entries and the original cost basis. This entry is kept for review.",
   "es": "Fusión: comprueba los movimientos vinculados de efectivo y acciones y el coste original. Esta fila se conserva para revisión."
-},
+ },
  "Dividendbelastingcorrectie: controleer de bijbehorende dividendboeking. Alleen een exact tegengesteld correctiepaar wordt automatisch overgeslagen.": {
   "nl": "Dividendbelastingcorrectie: controleer de bijbehorende dividendboeking. Alleen een exact tegengesteld correctiepaar wordt automatisch overgeslagen.",
   "en": "Dividend tax adjustment: check the related dividend entry. Only an exactly offsetting adjustment pair is skipped automatically.",
   "es": "Corrección del impuesto sobre dividendos: comprueba el dividendo relacionado. Solo se omite automáticamente un par de correcciones exactamente opuestas."
-},
+ },
  "Splitsing: de verhouding is niet bevestigd voor deze ticker, valuta en datum. Deze regel blijft apart bewaard.": {
   "nl": "Splitsing: de verhouding is niet bevestigd voor deze ticker, valuta en datum. Deze regel blijft apart bewaard.",
   "en": "Stock split: the ratio has not been confirmed for this ticker, currency and date. This entry is kept for review.",
   "es": "Desdoblamiento: la proporción no está confirmada para este símbolo, moneda y fecha. Esta fila se conserva para revisión."
-},
+ },
  "Bewaarloon overgeslagen; kosten worden niet in de winst verwerkt.": {
   "nl": "Bewaarloon overgeslagen; kosten worden niet in de winst verwerkt.",
   "en": "Custody fee skipped; fees are not included in profit.",
   "es": "Comisión de custodia omitida; los gastos no se incluyen en el beneficio."
-},
+ },
  "Tegengestelde dividendbelastingcorrecties heffen elkaar op; overgeslagen.": {
   "nl": "Tegengestelde dividendbelastingcorrecties heffen elkaar op; overgeslagen.",
   "en": "Offsetting dividend tax adjustments cancel each other out; skipped.",
   "es": "Las correcciones opuestas del impuesto sobre dividendos se anulan entre sí; omitidas."
-}
+ },
+ "Er wordt een API-rapport verwerkt. Probeer de rekening straks opnieuw te wijzigen of verwijderen.": {
+  "nl": "Er wordt een API-rapport verwerkt. Probeer de rekening straks opnieuw te wijzigen of verwijderen.",
+  "en": "An API report is being processed. Try editing or deleting the account again shortly.",
+  "es": "Se está procesando un informe API. Vuelve a intentar editar o eliminar la cuenta más tarde."
+ },
+ "De administratie wordt bijgewerkt. Probeer de rekening straks opnieuw te wijzigen of verwijderen.": {
+  "nl": "De administratie wordt bijgewerkt. Probeer de rekening straks opnieuw te wijzigen of verwijderen.",
+  "en": "The records are being updated. Try editing or deleting the account again shortly.",
+  "es": "Se están actualizando los registros. Vuelve a intentar editar o eliminar la cuenta más tarde."
+ },
+ "Geen bevestiging ontvangen. Controleer eerst de rekeninglijst voordat je opnieuw verwijdert.": {
+  "nl": "Geen bevestiging ontvangen. Controleer eerst de rekeninglijst voordat je opnieuw verwijdert.",
+  "en": "No confirmation received. Check the account list before trying to delete again.",
+  "es": "No se ha recibido confirmación. Comprueba la lista de cuentas antes de intentar eliminarlas de nuevo."
+ }
 };

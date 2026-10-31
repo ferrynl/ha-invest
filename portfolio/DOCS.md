@@ -864,3 +864,8 @@ De bevestigde NOW-splitsing van 18 december 2025 vereist aansluitende aankoophis
 de oorspronkelijke kostprijs blijft behouden. Fusies en onbekende splitsingen blijven
 apart ter beoordeling. Open een bestaand importvoorbeeld opnieuw en kies opnieuw
 verwerken om eerder afgewezen bronregels met de verbeterde herkenning te beoordelen.
+
+Het verwijderen van een brokerrekening wacht niet op koersverversing. Bij een lopende
+API-import of administratiebewerking verschijnt een melding om later opnieuw te proberen.
+Bij een verbindingstime-out is de uitkomst mogelijk nog onbekend: vernieuw eerst de
+rekeninglijst en controleer of de rekening nog bestaat voordat je opnieuw verwijdert.

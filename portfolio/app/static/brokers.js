@@ -30,9 +30,9 @@ function bindBrokerManagement(){
  $('broker-delete-form').addEventListener('submit',async event=>{
   event.preventDefault();if(!brokerDelete||$('broker-delete-confirm').value!=='VERWIJDEREN')return;const account=brokerDelete,button=$('broker-delete-submit');button.disabled=true;
   try{
-   const result=await jsonAction('api/accounts/delete',{account_id:account.account_id,revision:account.revision,confirmation:$('broker-delete-confirm').value});brokerDelete=null;closePopup('broker-delete');if(String(currentBroker)===String(account.account_id))currentBroker='all';
+   const result=await jsonAction('api/accounts/delete',{account_id:account.account_id,revision:account.revision,confirmation:$('broker-delete-confirm').value},{signal:AbortSignal.timeout(60000)});brokerDelete=null;closePopup('broker-delete');if(String(currentBroker)===String(account.account_id))currentBroker='all';
    clearTransactions();clearStockDetail();clearImportIssues();clearImportMappings();importPreview=null;$('import-preview').hidden=true;stateETag=null;await load();
    $('broker-manage-feedback').textContent=ui('Brokeraccount verwijderd. Een herstelback-up is bewaard.');const link=$('broker-manage-backup');link.href='api/portfolio/deletion-backup?name='+encodeURIComponent(result.backup_name);link.hidden=false;
-  }catch(error){$('broker-delete-feedback').textContent=error.message;button.disabled=false;}
+  }catch(error){const uncertain=error.name==='TimeoutError'||error.name==='AbortError';$('broker-delete-feedback').textContent=uncertain?ui('Geen bevestiging ontvangen. Controleer eerst de rekeninglijst voordat je opnieuw verwijdert.'):error.message;if(uncertain)brokerDelete=null;button.disabled=uncertain;}
  });
 }

@@ -1,3 +1,10 @@
+## 0.41.2
+
+- Brokeraccount verwijderen en aanpassen wachten niet meer op het ophalen van koersen.
+- Bij een lopende API-import of administratiebewerking verschijnt direct een melding; een verwijderactie blijft niet in de wachtrij staan.
+- Verwijderaanvragen hebben een tijdslimiet. Bij ontbrekende bevestiging wordt gevraagd eerst de rekeninglijst te controleren.
+- Bevestiging, herstelback-up, rechtencontrole en behoud van andere rekeningen blijven behouden.
+
 ## 0.41.1
 
 - Revolut: bewaarloon en exact tegengestelde dividendbelastingcorrecties blokkeren de import niet meer; kapitaalterugbetalingen blijven buiten dividendwinst.
