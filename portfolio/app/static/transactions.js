@@ -8,9 +8,23 @@ async function loadTransactions(){
  try{const response=await apiFetch('api/transactions?account_id='+encodeURIComponent(account));const result=await response.json();if(!response.ok)throw Error(result.error);if(version!==transactionLoad||!accessSession?.user)return;transactionRows=result.transactions;transactionPage=0;renderTransactions();}catch(error){if(version===transactionLoad)$('transaction-feedback').textContent=error.message;}
 }
 function transactionColumnValues(entry){return [entry.day,transactionLabels[entry.type],entry.name||entry.symbol||entry.ticker,entry.account_name,entry.currency,entry.quantity==null?'—':quantityLabel(entry.quantity),entry.amount?money(entry.amount,entry.currency):(entry.type==='SPLIT'||entry.type==='TRANSFER')?'—':money(entry.price,entry.currency),ui('Bekijken')];}
+function transactionInPage(row,page){
+ if(page==='transacties-dividend')return row.type==='DIVIDEND';
+ if(page==='transacties-omzettingen')return row.type==='SPLIT'||row.type==='TRANSFER';
+ return true;
+}
+function configureTransactionPage(page){
+ $('transaction-page-title').textContent=page==='transacties-dividend'?ui('Dividend'):page==='transacties-omzettingen'?ui('Splitsingen en omzettingen'):ui('Transacties');
+ $('transaction-page-description').textContent=page==='transacties-dividend'?ui('Bekijk de geboekte dividendontvangsten per brokeraccount.'):page==='transacties-omzettingen'?ui('Bekijk aandelensplitsingen en omzettingen per brokeraccount.'):ui('Bekijk aankopen, verkopen, splitsingen, dividend en kapitaalterugbetalingen. De rekeningkeuze bovenaan filtert dit overzicht. Alleen admins kunnen gegevens wijzigen.');
+ const type=$('transaction-type');
+ for(const option of type.options)option.hidden=!!option.value&&!transactionInPage({type:option.value},page);
+ if(type.selectedOptions[0]?.hidden)type.value='';
+ type.closest('label').hidden=page==='transacties-dividend';
+ transactionPage=0;
+}
 function renderTransactions(){
  const query=$('transaction-search').value.trim().toLocaleLowerCase(),type=$('transaction-type').value;
- const filtered=sortTableData('transaction-list',transactionRows.filter(r=>(!type||r.type===type)&&[r.symbol,r.ticker,r.name,r.account_name,r.broker,r.day].join(' ').toLocaleLowerCase().includes(query)&&matchesTableColumns('transaction-list',transactionColumnValues(r))),transactionColumnValues);
+ const filtered=sortTableData('transaction-list',transactionRows.filter(r=>transactionInPage(r,location.hash.slice(1).split('?')[0])&&(!type||r.type===type)&&[r.symbol,r.ticker,r.name,r.account_name,r.broker,r.day].join(' ').toLocaleLowerCase().includes(query)&&matchesTableColumns('transaction-list',transactionColumnValues(r))),transactionColumnValues);
  const pages=Math.max(1,Math.ceil(filtered.length/50));transactionPage=Math.min(transactionPage,pages-1);$('transaction-list').replaceChildren();
  for(const entry of filtered.slice(transactionPage*50,transactionPage*50+50)){
   const row=document.createElement('tr');for(const value of transactionColumnValues(entry).slice(0,7))cell(row,value);

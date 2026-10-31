@@ -68,6 +68,7 @@ async function startSession(){
  document.getElementById('login-open').hidden=true;
  document.getElementById('account-hint').textContent=accessSession.enabled?'':ui('Aanmelding via Home Assistant. Accounts inschakelen bij Instellingen.');
  document.getElementById('account-name').textContent=accessSession.user.username;
+ document.querySelector('.account-avatar').textContent=accessSession.user.username.slice(0,1).toLocaleUpperCase();
  document.getElementById('account-open').hidden=false;
  document.getElementById('enable-auth').hidden=accessSession.enabled;
  document.getElementById('disable-auth').hidden=!accessSession.enabled;

@@ -1113,6 +1113,21 @@
     "settings-types",
     "versie",
     "verwijderen",
-    "broker-import-page"
+    "broker-import-page",
+    "#transacties-",
+    "#import-export",
+    "[data-route=\"",
+    "[data-route=\"instellingen-dashboard\"]",
+    "[data-route=\"transacties\"]",
+    "[data-route=transacties]",
+    "import-export",
+    "transacties-",
+    "transacties-dividend",
+    "transacties-omzettingen",
+    "transaction-types",
+    "DIVIDEND",
+    "transaction-page-title",
+    "transaction-page-description",
+    ".account-avatar"
   ]
 }

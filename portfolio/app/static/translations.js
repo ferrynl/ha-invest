@@ -6774,5 +6774,20 @@ const UI_TRANSLATIONS = {
   "nl": "Exporteer transacties, dividend en kapitaalterugbetalingen van je eigen portefeuille. Kies bovenaan een brokeraccount of alle accounts. Alleen voor ingelogde admins.",
   "en": "Export transactions, dividends and capital returns from your personal portfolio. Select one broker account or all accounts above. Signed-in admins only.",
   "es": "Exporta operaciones, dividendos y devoluciones de capital de tu cartera personal. Selecciona una cuenta o todas arriba. Solo administradores autenticados."
+ },
+ "Splitsingen en omzettingen": {
+  "nl": "Splitsingen en omzettingen",
+  "en": "Splits and conversions",
+  "es": "Desdoblamientos y conversiones"
+ },
+ "Bekijk de geboekte dividendontvangsten per brokeraccount.": {
+  "nl": "Bekijk de geboekte dividendontvangsten per brokeraccount.",
+  "en": "View recorded dividend payments by broker account.",
+  "es": "Consulta los dividendos registrados por cuenta de bróker."
+ },
+ "Bekijk aandelensplitsingen en omzettingen per brokeraccount.": {
+  "nl": "Bekijk aandelensplitsingen en omzettingen per brokeraccount.",
+  "en": "View stock splits and conversions by broker account.",
+  "es": "Consulta los desdoblamientos y conversiones por cuenta de bróker."
  }
 };

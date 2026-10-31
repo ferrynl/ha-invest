@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.34.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.35.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -25,14 +25,14 @@ Brokeraccounts zijn afzonderlijke portefeuillerekeningen; gebruikersaccounts reg
 toegang tot de app. Wijzigen en instellen gebeurt in pop-ups; Home opent direct met het portefeuilleoverzicht.
 
 - **Home**: overzicht per valuta, posities zoeken/filteren en maximaal zes posities vergelijken. Via **Dashboard aanpassen** krijgt ieder onderdeel op Home zelf een versleepgreep en tandwiel. Verplaats de tien modules direct en kies per onderdeel zichtbaarheid en breedte. De indeling blijft per gebruiker en profiel bewaard.
-- **Transacties**: alle boekingen bekijken, zoeken en als admin wijzigen, met wijzigingshistorie.
+- **Transacties**: alle boekingen bekijken, zoeken en als admin wijzigen, met wijzigingshistorie. Subpagina’s voor dividend en splitsingen/omzettingen.
 - **Aandelen**: posities en transacties bekijken; handmatig aankopen toevoegen.
 - **Dividend**: netto ontvangen dividend boeken en bekijken.
-- **Valuta**: historische omrekening en opgeslagen dagreferentiekoersen.
+- **Instellingen → Valuta**: historische omrekening en opgeslagen dagreferentiekoersen.
 - **Rapporten**: dividend per maand en portefeuillestand.
-- **Imports** (admin): Trading 212 CSV/API en Trade Republic CSV, met aparte API-instellingen, beurskoppelingen en regels ter beoordeling.
+- **Imports** (admin): eigen pagina’s voor Trading 212 CSV/API, Trade Republic en Revolut CSV, plus Exporteren, API-instellingen, beurskoppelingen en regels ter beoordeling.
 - **Instellingen** (admin): accounts, beveiliging, back-ups en versiecontrole.
-- **Logs** (admin): afgeschermde foutdetails en Log-ID zoeken.
+- **Instellingen → Logs** (admin): afgeschermde foutdetails en Log-ID zoeken.
 
 Koersen komen van Yahoo Finance en kunnen vertraagd of tijdelijk onbeschikbaar zijn. Apollo LU3170240538 in EUR gebruikt de openbare DivvyDiary-koers, zonder vermelde koersdatum; de app toont het ophaalmoment. Bij Instellingen → TMX omboeken naar TDT kun je de VanEck-fusie per brokeraccount verwerken met behoud van kostprijs en een herstelback-up.
 Bedragen in verschillende valuta blijven gescheiden. De app voert geen orders uit. Home gebruikt opgeslagen databasegegevens en een blijvende overzichtcache; koersen worden op de achtergrond ververst.
@@ -77,7 +77,7 @@ niet in het portefeuillerendement verwerkt.
 
 ## Opslag en back-ups
 
-De database en instellingen staan in de app-datafolder. Appversie **0.34.0** gebruikt
+De database en instellingen staan in de app-datafolder. Appversie **0.35.0** gebruikt
 databaseschema **19**. Upgrades maken vooraf een consistente back-up en voeren alleen
 ontbrekende migraties transactioneel uit. Bestaande aankopen, dividend en historie blijven
 behouden. Neem voor opgeslagen API-verbindingen de volledige app op in een Home Assistant-back-up.
@@ -125,6 +125,6 @@ Landenverdeling heeft een interactieve wereldkaart met lokale vlaggen, percentag
 
 ### Export en Revolut
 
-Open **Instellingen → Exporteren** en kies CSV of PDF. De export bevat de transacties, dividend en kapitaalterugbetalingen van de geselecteerde brokerrekening (of alle accounts), met bronvaluta.
+Open **Imports → Exporteren** en kies CSV of PDF. De export bevat de transacties, dividend en kapitaalterugbetalingen van de geselecteerde brokerrekening (of alle accounts), met bronvaluta.
 
 Open **Imports → Revolut** en upload de Engelstalige beleggings-CSV, niet het bankrekeningafschrift. Zowel het formaat met Ticker, Price per share en Total Amount als dat met Reference, CCY, Price/share en Net Amt. wordt herkend. Aankopen, verkopen en dividend worden verwerkt; onbekende acties blijven ter beoordeling. Bewaar en importeer de volledige historie. Regels zonder bron-ID worden op hun inhoud vergeleken; identieke regels binnen één bestand vereisen beoordeling.

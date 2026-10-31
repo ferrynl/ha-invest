@@ -1,3 +1,9 @@
+## 0.35.0
+
+- Zijbalk in Home Assistant-stijl met compacte rijen, Material-iconen en blauwe selectie.
+- Exporteren onder Imports; Dashboard als eerste instelling; Valuta en Logs zonder icoon onder Instellingen.
+- Aparte transactiepagina’s voor dividend en splitsingen/omzettingen.
+
 ## 0.34.0
 
 - Instellingen en imports met subpagina’s; Logs onder Instellingen.
