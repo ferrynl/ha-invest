@@ -66,6 +66,16 @@ class Store:
             raise ValueError('Aankoopdatum mag niet in de toekomst liggen.')
         from charges import manual_components,book_manual_trade
         components=manual_components(data,currency)
+        fx_trace=None
+        eur_price=str(data.get('price_eur') if data.get('price_eur') is not None else '').strip()
+        if eur_price:
+            if currency=='EUR':raise ValueError('EUR-invoer is alleen beschikbaar bij een andere handelsvaluta.')
+            from forex import convert
+            fx_trace=convert(self,positive(eur_price),'EUR',currency,day.isoformat())
+            price=positive(fx_trace['converted'])
+            if str(data.get('price') if data.get('price') is not None else '').strip() and Decimal(positive(data['price']))!=Decimal(price):raise ValueError('De omrekening is niet actueel. Reken de EUR-prijs opnieuw om.')
+        else:price=positive(data['price'])
+
         with self.connect() as db:
             account_id=int(data.get('account_id',1));self.require_account(db,account_id)
             side=data.get('side','BUY')
@@ -73,11 +83,11 @@ class Store:
             trade_time=str(data.get('trade_time',''))
             if trade_time:datetime.fromisoformat(trade_time.replace('Z','+00:00'))
             trade_id=db.execute('INSERT INTO purchases(symbol,exchange,name,quantity,price,currency,purchased_on,created_at,account_id,side,trade_time) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
-                       (symbol, exchange, name, positive(data['quantity']), positive(data['price']), currency, day.isoformat(), now(),account_id,side,trade_time)).lastrowid
+                       (symbol, exchange, name, positive(data['quantity']), price, currency, day.isoformat(), now(),account_id,side,trade_time)).lastrowid
             if side=='SELL':
                 lots=[dict(r) for r in db.execute('SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',(account_id,symbol,exchange,currency))]
                 daily_values(lots,[],[])
-            if components:book_manual_trade(db,dict(db.execute('SELECT * FROM purchases WHERE id=?',(trade_id,)).fetchone()),components)
+            if components or fx_trace:book_manual_trade(db,dict(db.execute('SELECT * FROM purchases WHERE id=?',(trade_id,)).fetchone()),components,fx_trace)
 
     @staticmethod
     def require_account(db,account_id):

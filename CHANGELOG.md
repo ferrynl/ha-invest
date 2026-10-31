@@ -1,3 +1,10 @@
+## 0.43.2 — 31 oktober 2026
+
+- Bij handmatige transacties in een andere handelsvaluta verschijnt een optioneel veld Prijs per aandeel in EUR. JavaScript rekent automatisch om na het kiezen van de transactiedatum; handmatig opnieuw omrekenen blijft mogelijk.
+- De koersdatum en factor zijn zichtbaar. Gewijzigde invoer, datum of aandeel maakt een eerdere omrekening ongeldig; ontbrekende koersen krijgen geen 1:1-fallback.
+- De server controleert de omrekening opnieuw en bewaart het oorspronkelijke EUR-bedrag, de handelsprijs en de gebruikte koers bij de transactie. Ook GBX/pence wordt ondersteund.
+- De omrekening en eventuele kosten worden samen met de transactie opgeslagen. Databaseschema blijft 20.
+
 ## 0.43.1 — 31 oktober 2026
 
 - Handmatige transacties hebben direct velden voor kosten exclusief btw, btw en een optionele eigen kostenvaluta. Het formulier ondersteunt aankoop en verkoop.

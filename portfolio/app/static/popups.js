@@ -6,6 +6,7 @@ function closePopup(id){const popup=appPopups.get(id);if(popup?.dialog.open)popu
 function closeAllPopups(){for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();}
 function openPopup(id){
  const popup=appPopups.get(id);if(!popup)return;
+ if(id==='purchase-editor'&&typeof syncPurchaseFx==='function')syncPurchaseFx();
  if(!popup.dialog.open){closeAllPopups();popup.panel.hidden=false;popup.dialog.showModal();}
  popup.panel.querySelector('input:not([type="hidden"]):not(:disabled),select:not(:disabled),textarea:not(:disabled),button')?.focus();
 }
@@ -14,7 +15,7 @@ function registerPopup(id,title){
  const bar=document.createElement('div');bar.className='popup-bar';const caption=document.createElement('h2');caption.id=id+'-popup-title';caption.textContent=title;bar.append(caption);
  const close=document.createElement('button');close.type='button';close.className='popup-close secondary';close.textContent=ui('Sluiten');close.setAttribute('aria-label',title+ui(' sluiten'));close.addEventListener('click',()=>closePopup(id));bar.append(close);dialog.append(bar,panel);dialog.setAttribute('aria-labelledby',caption.id);document.body.append(dialog);
  panel.hidden=true;appPopups.set(id,{panel,dialog});
- dialog.addEventListener('close',()=>{panel.hidden=true;if(id==='transaction-editor')editingTransaction=null;if(id==='settings-form-editor'){settingsDirty=false;if(state)$('settings-form').elements.namedItem('default_range').value=state.settings.default_range;}panel.querySelectorAll('input[type="password"]').forEach(input=>{input.value='';});});
+ dialog.addEventListener('close',()=>{panel.hidden=true;if(id==='purchase-editor'&&typeof clearPurchaseFx==='function')clearPurchaseFx();if(id==='transaction-editor')editingTransaction=null;if(id==='settings-form-editor'){settingsDirty=false;if(state)$('settings-form').elements.namedItem('default_range').value=state.settings.default_range;}panel.querySelectorAll('input[type="password"]').forEach(input=>{input.value='';});});
  return dialog;
 }
 function formPopup(id,title,label,feedbackIds=[]){

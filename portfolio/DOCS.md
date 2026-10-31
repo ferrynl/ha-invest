@@ -964,3 +964,24 @@ of ongeldig kostenbedrag boekt niets. De oorspronkelijke aandelenkostprijs blijf
 de aanvullende kosten verschijnen in **Kosten en belastingen**, **Belastingoverzicht** en
 het netto **Rendementsoverzicht**, met dezelfde regels voor historische wisselkoersen.
 Handmatige mutaties vereisen een beheerder en geldige sessiebeveiliging.
+
+### Een handmatige aandelenprijs vanuit EUR omrekenen (0.43.2)
+
+Na selectie van een aandeel met een andere handelsvaluta verschijnt **Prijs per aandeel
+in EUR**. Vul de transactiedatum en het EUR-bedrag per aandeel in, zonder kosten of btw.
+JavaScript vraagt de gedeelde historische valutarekenaar aan en vult de prijs in de
+handelsvaluta automatisch in. **Omrekenen** herhaalt de aanvraag. Bij EUR-noteringen blijft
+het extra veld verborgen. Een ontbrekende koers of datum levert geen geschatte prijs op.
+
+De factor en werkelijke koersdatum zijn zichtbaar. Dit is een historische dagreferentie,
+geen gegarandeerde brokerafrekening. De omrekening gebruikt geen toekomstige koers en
+houdt rekening met GBX/pence. Veranderen van datum of aandeel maakt oude resultaten ongeldig.
+Als je de handelsprijs zelf wijzigt, wordt de EUR-invoer gewist en geldt die handmatige prijs.
+Sluiten of resetten van het formulier maakt nog lopende antwoorden onbruikbaar.
+
+Bij opslaan controleert de server EUR-bedrag, datum en handelsvaluta opnieuw. Afwijkende
+of verouderde omrekeningen worden geweigerd. De oorspronkelijke EUR-prijs, omrekenfactor,
+koersdatum en handelsprijs blijven bij de bronverwijzing bewaard in `import_fx` en de
+handmatige transactiebron. Herstel neemt deze gegevens mee; een mislukte verkoop laat
+geen losse omrekening of kosten achter. De kosten- en btw-velden behouden hun eigen
+valutakeuze en worden niet door het EUR-prijsveld omgerekend.

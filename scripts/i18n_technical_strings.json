@@ -1233,6 +1233,12 @@
     "ticker",
     "#rapporten-costs",
     "charge",
-    "stock-fundamentals-panel"
+    "stock-fundamentals-panel",
+    "purchase-eur-convert",
+    "purchase-eur-price",
+    "purchase-eur-status",
+    "purchase-eur-tools",
+    "purchased_on",
+    "reset"
   ]
 }

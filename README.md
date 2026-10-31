@@ -151,3 +151,6 @@ Zie DOCS voor ondersteunde velden en het voorkomen van dubbeltellingen.
 
 Handmatige aankopen en verkopen hebben in dezelfde pop-up velden voor kosten exclusief btw,
 btw en een optionele eigen kostenvaluta. Transactie en kosten worden samen opgeslagen.
+
+Bij een handmatige transactie in een andere valuta kun je ook de prijs per aandeel in EUR
+invullen. Het formulier rekent om op transactiedatum en toont de gebruikte koersdatum.

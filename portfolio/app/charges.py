@@ -62,16 +62,20 @@ def manual_components(data,currency):
             components.append(dict(component=field,category=category,amount=str(value),currency=charge_currency,included_in_net=0))
     return components
 
-def book_manual_trade(db,trade,components):
-    if not components:return
+def book_manual_trade(db,trade,components,fx_trace=None):
+    if not components and not fx_trace:return
     import hashlib,json
     raw={key:trade[key] for key in ('id','account_id','symbol','exchange','name','currency','quantity','price','purchased_on','side')}
     raw['charges']=components
+    if fx_trace:raw['price_fx']=fx_trace
     digest=hashlib.sha256(json.dumps(raw,sort_keys=True).encode()).hexdigest()
     row=dict(kind='CHARGE',ticker=trade['symbol'],day=trade['purchased_on'],currency=trade['currency'],trade_id=trade['id'],raw=raw,digest=digest,external_id='manual-trade:'+str(trade['id']),charges=[dict(item,description=trade['name']) for item in components])
     batch=db.execute("INSERT INTO import_batches(account_id,provider,filename,digest,payload,status,created_at) VALUES(?,'charges',?,?,?,'imported',?)",(trade['account_id'],'manual-trade-'+str(trade['id']),digest,json.dumps([row]),now())).lastrowid
     book(db,batch,trade['account_id'],'charges',row)
     db.execute("INSERT INTO import_records(batch_id,account_id,provider,external_id,digest,raw) VALUES(?,?,'charges',?,?,?)",(batch,trade['account_id'],row['external_id'],digest,json.dumps(raw)))
+    if fx_trace:
+        db.execute('INSERT INTO import_fx(batch_id,external_id,kind,source_currency,target_currency,original_amount,converted_amount,rate,requested_on,rate_on,source) VALUES(?,?,?,?,?,?,?,?,?,?,?)',(batch,row['external_id'],trade['side'],fx_trace['from'],fx_trace['to'],fx_trace['amount'],fx_trace['converted'],fx_trace['rate'],fx_trace['requested_on'],fx_trace['rate_on'],fx_trace['source']))
+
 
 def entries(store,account='all',year='',currency='',view='all'):
     from transactions import scope

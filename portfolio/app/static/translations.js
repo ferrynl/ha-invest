@@ -7919,5 +7919,50 @@ const UI_TRANSLATIONS = {
   "nl": "Transactie opgeslagen; eventuele kosten en btw zijn apart geboekt.",
   "en": "Transaction saved; any fees and VAT have been recorded separately.",
   "es": "Operación guardada; los gastos y el IVA se han registrado por separado."
+},
+ "Prijs per aandeel in EUR": {
+  "nl": "Prijs per aandeel in EUR",
+  "en": "Price per share in EUR",
+  "es": "Precio por acción en EUR"
+},
+ "Omrekening per aandeel via de historische dagreferentiekoers op de transactiedatum.": {
+  "nl": "Omrekening per aandeel via de historische dagreferentiekoers op de transactiedatum.",
+  "en": "Per-share conversion using the historical daily reference rate for the transaction date.",
+  "es": "Conversión por acción con el tipo de referencia diario histórico de la fecha de la operación."
+},
+ "De omrekening is niet actueel. Reken de EUR-prijs opnieuw om.": {
+  "nl": "De omrekening is niet actueel. Reken de EUR-prijs opnieuw om.",
+  "en": "The conversion is out of date. Convert the EUR price again.",
+  "es": "La conversión no está actualizada. Convierte de nuevo el precio en EUR."
+},
+ "EUR-invoer is alleen beschikbaar bij een andere handelsvaluta.": {
+  "nl": "EUR-invoer is alleen beschikbaar bij een andere handelsvaluta.",
+  "en": "EUR input is only available for a different trading currency.",
+  "es": "La entrada en EUR solo está disponible para otra moneda de negociación."
+},
+ "Kies eerst de transactiedatum.": {
+  "nl": "Kies eerst de transactiedatum.",
+  "en": "Choose the transaction date first.",
+  "es": "Elige primero la fecha de la operación."
+},
+ "Omgerekend naar handelsvaluta.": {
+  "nl": "Omgerekend naar handelsvaluta.",
+  "en": "Converted to trading currency.",
+  "es": "Convertido a la moneda de negociación."
+},
+ "Omrekenen…": {
+  "nl": "Omrekenen…",
+  "en": "Converting…",
+  "es": "Convirtiendo…"
+},
+ "Omrekening mislukt. Probeer opnieuw.": {
+  "nl": "Omrekening mislukt. Probeer opnieuw.",
+  "en": "Conversion failed. Try again.",
+  "es": "La conversión ha fallado. Inténtalo de nuevo."
+},
+ "Vul een positieve EUR-prijs in.": {
+  "nl": "Vul een positieve EUR-prijs in.",
+  "en": "Enter a positive EUR price.",
+  "es": "Introduce un precio en EUR positivo."
 }
 };
