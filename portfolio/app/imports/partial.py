@@ -115,7 +115,10 @@ def resolve_issue(store,data):
         if decision not in ('retry','IGNORE'):
             raw=row['raw'];edited={**raw,'Action':{'DIVIDEND':'Dividend (Ordinary)','BUY':'Market buy','SELL':'Market sell','CAPITAL_RETURN':'Dividend (Ordinary)'}[decision]}
             stream=io.StringIO();writer=csv.DictWriter(stream,fieldnames=list(edited));writer.writeheader();writer.writerow(edited)
-            if batch['provider']=='traderepublic':
+            if batch['provider']=='revolut':
+                from .revolut import parse_csv as parse_revolut
+                parsed=parse_revolut(stream.getvalue(),decision)[0]
+            elif batch['provider']=='traderepublic':
                 from .traderepublic import parse_csv as parse_trade_republic
                 parsed=parse_trade_republic(stream.getvalue(),decision)[0]
             else:parsed=parse_csv(stream.getvalue())[0]

@@ -1,3 +1,9 @@
+## 0.34.0
+
+- Instellingen en imports met subpagina’s; Logs onder Instellingen.
+- CSV- en PDF-export van transacties per brokeraccount of alle accounts.
+- Revolut beleggings-CSV met importvoorbeeld, ontdubbeling en beoordeling.
+
 # 0.33.0
 
 - Rendementsoverzicht staat direct onder Portefeuilleoverzicht in het rapportmenu. De aandelenkeuze bovenaan is verwijderd; broker-, valuta-, jaar- en periodekeuzes blijven beschikbaar waar ze relevant zijn.

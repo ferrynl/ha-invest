@@ -1,5 +1,20 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+ "Exporteren": {
+  "nl": "Exporteren",
+  "en": "Export",
+  "es": "Exportar"
+ },
+ "Revolut CSV": {
+  "nl": "Revolut CSV",
+  "en": "Revolut CSV",
+  "es": "Revolut CSV"
+ },
+ "Revolut: upload de Engelstalige CSV van je beleggingsrekening. Onbekende acties blijven ter beoordeling.": {
+  "nl": "Revolut: upload de Engelstalige CSV van je beleggingsrekening. Onbekende acties blijven ter beoordeling.",
+  "en": "Revolut: upload the English CSV from your investment account. Unknown actions remain for review.",
+  "es": "Revolut: sube el CSV en inglÃ©s de tu cuenta de inversiÃ³n. Las operaciones desconocidas quedan pendientes de revisiÃ³n."
+ },
  "Profiel kiezen": {
   "nl": "Profiel kiezen",
   "en": "Choose profile",
@@ -6719,5 +6734,45 @@ const UI_TRANSLATIONS = {
   "nl": "Je open posities naar marktwaarde en weging.",
   "en": "Your open positions by market value and weight.",
   "es": "Tus posiciones abiertas por valor de mercado y ponderación."
+ },
+ "Revolut": {
+  "nl": "Revolut",
+  "en": "Revolut",
+  "es": "Revolut"
+ },
+ "Ongeldig exportformaat.": {
+  "nl": "Ongeldig exportformaat.",
+  "en": "Invalid export format.",
+  "es": "Formato de exportación no válido."
+ },
+ "Aantal of bedrag ontbreekt of is ongeldig.": {
+  "nl": "Aantal of bedrag ontbreekt of is ongeldig.",
+  "en": "Quantity or amount is missing or invalid.",
+  "es": "Cantidad o importe ausente o no válido."
+ },
+ "Geldige ticker ontbreekt.": {
+  "nl": "Geldige ticker ontbreekt.",
+  "en": "A valid ticker is missing.",
+  "es": "Falta un símbolo válido."
+ },
+ "Revolut CSV is ongeldig.": {
+  "nl": "Revolut CSV is ongeldig.",
+  "en": "Invalid Revolut CSV.",
+  "es": "CSV de Revolut no válido."
+ },
+ "Revolut CSV: gebruik de Engelstalige transactie-export van de beleggingsrekening met Date, Ticker of Symbol, Type, Quantity, prijs, bedrag en valuta.": {
+  "nl": "Revolut CSV: gebruik de Engelstalige transactie-export van de beleggingsrekening met Date, Ticker of Symbol, Type, Quantity, prijs, bedrag en valuta.",
+  "en": "Revolut CSV: use the English investment transaction export with date, ticker or symbol, type, quantity, price, amount and currency.",
+  "es": "CSV de Revolut: utiliza la exportación en inglés de operaciones de inversión con fecha, símbolo, tipo, cantidad, precio, importe y divisa."
+ },
+ "Revolut: controleer transactietype, datum, ticker, valuta en positieve bronbedragen.": {
+  "nl": "Revolut: controleer transactietype, datum, ticker, valuta en positieve bronbedragen.",
+  "en": "Revolut: check transaction type, date, ticker, currency and positive source amounts.",
+  "es": "Revolut: comprueba el tipo, fecha, símbolo, divisa e importes positivos."
+ },
+ "Exporteer transacties, dividend en kapitaalterugbetalingen van je eigen portefeuille. Kies bovenaan een brokeraccount of alle accounts. Alleen voor ingelogde admins.": {
+  "nl": "Exporteer transacties, dividend en kapitaalterugbetalingen van je eigen portefeuille. Kies bovenaan een brokeraccount of alle accounts. Alleen voor ingelogde admins.",
+  "en": "Export transactions, dividends and capital returns from your personal portfolio. Select one broker account or all accounts above. Signed-in admins only.",
+  "es": "Exporta operaciones, dividendos y devoluciones de capital de tu cartera personal. Selecciona una cuenta o todas arriba. Solo administradores autenticados."
  }
 };

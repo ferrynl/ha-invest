@@ -98,7 +98,16 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             user=auth.user(self.token())
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
-            if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/home-assistant','/api/users','/api/backup','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
+            if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/home-assistant','/api/users','/api/backup','/api/export','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
+            if path=='/api/export':
+                if not auth.enabled():return self.respond({'error':'Alleen een admin heeft toegang tot deze functie.'},403)
+                from exports import export
+                query=parse_qs(urlsplit(self.path).query)
+                format=query.get('format',['csv'])[0]
+                try:
+                    content,kind=export(store,query.get('account_id',['all'])[0],format)
+                    return self.respond(content,kind=kind,filename='home-invest.'+format)
+                except (ValueError,TypeError):return self.respond({'error':'Ongeldige aanvraag of brokeraccount.'},400)
             if path=='/api/account/dashboard':
                 from dashboard_layout import read
                 try:return self.respond(read(store,user,self.headers.get('X-HomeInvest-Profile','personal')))

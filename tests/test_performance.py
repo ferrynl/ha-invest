@@ -70,14 +70,18 @@ class PerformanceTests(unittest.TestCase):
   for day,rate in [('2025-01-01','2'),('2025-12-31','3'),('2026-01-02','3'),('2026-02-01','4'),('2026-10-30','5')]:
    rates.append(dict(base='EUR',quote='USD',day=day,rate=rate))
    with self.store.connect() as db:db.execute("INSERT INTO fx_rates VALUES('EUR','USD',?,?,'Test','2026-10-30T10:00:00+00:00')",(day,rate))
-  snapshot=self.store.state();today=date(2026,10,30)
+  from history import daily_values
+  today=date(2026,10,30)
+  with patch("storage.daily_values",side_effect=lambda *args:daily_values(*args,today=today)):
+   snapshot=self.store.state()
   full=build(snapshot,rates,today=today,skip_invalid=True)
   sparse=build({**snapshot,'positions':[{**p,'history':annual_points(p['history'])} for p in snapshot['positions']]},rates,today=today,skip_invalid=True,sparse_history=True)
   self.assertEqual(sparse['positions'][0]['history'],annual_points(full['positions'][0]['history']))
   converted=[{**t,'price':str(Decimal(t['price'])/Decimal('2' if t['side']=='BUY' else '3'))} for t in snapshot['purchases']]
   income=[{**d,'amount':str(Decimal(d['amount'])/4)} for d in snapshot['dividends']]
   expected=summarize(full['positions'],converted,income,today)
-  actual=self.report()['groups'][0]
+  with patch("storage.daily_values",side_effect=lambda *args:daily_values(*args,today=today)):
+   actual=self.report()['groups'][0]
   for key,value in expected.items():
    if key=='years':
     for observed,wanted in zip(actual[key],value):
