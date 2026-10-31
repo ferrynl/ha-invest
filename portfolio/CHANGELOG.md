@@ -1,3 +1,9 @@
+## 0.37.0
+
+- Menu-items met dezelfde rijafstand als Home Assistant.
+- Landenverdeling zonder bovenste header en filterbalk; wereldkaart over de volle breedte.
+- Interactieve landentabel met marktwaarde en weging onder iedere kaart.
+
 ## 0.36.0
 
 - Home Assistant-menuvormgeving: consequente blauwe selectie, vetgedrukte hoofditems en gelijkmatige submenu’s.

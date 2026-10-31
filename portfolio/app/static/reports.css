@@ -126,13 +126,13 @@
 /* The geographic report has its own map and country ranking. */
 #report-metrics:empty,#report-insights:empty{display:none}
 .reports-dashboard .report-filters label:first-child{flex:1}
-.country-layout{display:grid;grid-template-columns:minmax(0,3fr) minmax(210px,1fr);gap:24px;align-items:start}
+.country-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start}
 .country-map-panel,.country-ranking{min-width:0}
 .country-map-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#abc7d4;font-size:12px;margin:4px 0 12px;flex-wrap:wrap}
 .country-map-controls{display:flex;gap:6px}.country-map-controls button{padding:7px 13px;font-size:11px;min-height:36px}
 .country-map-controls button[aria-pressed="true"]{color:#071e21;background:#69dfbc;border-color:#69dfbc}
 .country-map-canvas{width:100%;background:radial-gradient(ellipse at 50% 40%,#132b3d,#0b1829 80%);border:1px solid #294056;border-radius:14px;overflow:hidden}
-.country-map-canvas svg{width:100%;display:block;max-height:none;min-height:0}
+.country-map-canvas svg{width:100%;height:auto;display:block;max-height:none;min-height:0}
 .country-map-canvas [role="button"]{cursor:pointer;outline:none}.country-map-canvas path[role="button"]:hover,.country-map-canvas path.country-selected{fill:#a2f6d8;stroke:#e0fff3}
 .country-map-canvas [role="button"]:focus-visible{filter:drop-shadow(0 0 3px #fff)}
 .country-map-pin:hover rect,.country-map-pin.country-selected rect{fill:#285245;stroke:#9df8d5}
@@ -140,21 +140,21 @@
 .country-map-selection>div{flex:1;min-width:90px}.country-map-selection strong{display:block;font-size:14px}.country-map-selection small{display:block;color:#91a4bf;font-size:10px;margin-top:4px}
 .country-map-selection img,.country-ranking img{object-fit:cover;border-radius:3px;box-shadow:0 0 0 1px #ffffff22;flex:none}
 .country-selection-percent{color:#83efc9}.country-selection-value{font-size:12px;color:#abc6d9;white-space:nowrap}
-.country-ranking{display:flex;flex-direction:column;gap:5px;max-height:560px;overflow-y:auto;overscroll-behavior:contain;padding-right:5px}
+.country-ranking{width:100%;overflow-x:auto}.country-ranking table{white-space:normal}.country-ranking td:first-child{width:60%}.country-ranking th:not(:first-child),.country-ranking td:not(:first-child){text-align:right;white-space:nowrap}.country-ranking .country-ranking-row{background:transparent;padding:8px 10px}.country-ranking .country-ranking-heading{font-size:14px}
 .country-ranking-row{width:100%;padding:13px 12px;border:1px solid transparent;border-radius:10px;background:#101e30;color:#c7dce6;text-align:left;font-weight:400}
 .country-ranking-row:hover,.country-ranking-row[aria-pressed="true"]{background:#17372f;border-color:#397e68}
 .country-ranking-heading{display:flex;align-items:center;gap:9px;font-size:12px}.country-ranking-heading>span{flex:1;min-width:0;overflow-wrap:anywhere}.country-ranking-heading strong{font-size:12px;white-space:nowrap;color:#93ebca}
 .country-weight-track{height:3px;background:#263a4b;border-radius:10px;margin:10px 0 0 33px;overflow:hidden}.country-weight-track span{display:block;height:100%;background:#63d7b0;border-radius:10px}
 .country-unknown-mark{font-size:20px;color:#9aadc2;width:24px;flex:none!important}
-@media(max-width:1000px){.country-layout{grid-template-columns:1fr}.country-ranking{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;padding:0}}
-@media(max-width:520px){.country-layout{gap:14px}.country-ranking{grid-template-columns:1fr}.country-map-toolbar>span{width:100%}.country-map-controls{width:100%}.country-map-controls button{flex:1}.country-selection-value{margin-left:36px}.country-map-selection{gap:9px}.country-map-selection strong{font-size:13px}}
+@media(max-width:1000px){.country-layout{grid-template-columns:1fr}.country-ranking{width:100%}}
+@media(max-width:520px){.country-layout{gap:14px}.country-ranking .country-ranking-heading{font-size:12px}.country-map-toolbar>span{width:100%}.country-map-controls{width:100%}.country-map-controls button{flex:1}.country-selection-value{margin-left:36px}.country-map-selection{gap:9px}.country-map-selection strong{font-size:13px}}
 @font-face{font-family:HomeInvestRoboto;src:url("fonts/Roboto.ttf") format("truetype");font-style:normal;font-weight:100 900;font-display:swap}
 /* Match the Home Assistant sidebar shown alongside the ingress app. */
 .sidebar{width:256px;background:#1c1c1c;border-right:1px solid #333;color:#e1e1e1;font-family:HomeInvestRoboto,Roboto,Arial,sans-serif;overflow:hidden}
 .sidebar-brand{height:56px;min-height:56px;padding:0 20px;gap:16px;border-bottom:1px solid #333;font-size:20px}
 .sidebar-brand strong{font-weight:400}
 .sidebar-brand>span{color:#9b9b9b;font-size:24px;width:24px;line-height:1}
-.sidebar nav{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;gap:0;padding:4px 4px 12px;scrollbar-width:thin;scrollbar-color:#555 transparent}
+.sidebar nav{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;gap:4px;padding:8px 4px 12px;scrollbar-width:thin;scrollbar-color:#555 transparent}
 .sidebar nav a{min-height:40px;padding:8px 16px;gap:24px;border-radius:4px;color:#e1e1e1;font-size:14px;font-weight:700;line-height:20px}
 .sidebar nav a:hover{background:rgba(255,255,255,.06)}
 .sidebar nav a[aria-current="page"]{color:#03a9f4;background:rgba(0,188,212,.12)}
@@ -170,3 +170,5 @@
 .account-avatar{width:32px;height:32px;background:#b3e5fc;color:#212121;font-size:18px}
 @media(min-width:851px){main{margin-left:256px}.locked .login-panel{left:128px}}
 @media(max-width:850px){.sidebar{width:min(256px,calc(100vw - 48px))}.locked .sidebar{width:100%}}
+
+.countries-page .report-intro,.countries-page .report-filter-panel,.countries-page .report-section-heading,.countries-page #report-description{display:none}

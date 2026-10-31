@@ -56,6 +56,7 @@ function showPage(){
  for(const link of document.querySelectorAll('.import-nav a')){if(link.hash==='#'+page)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  document.body.classList.toggle('home-page',page==='home');
  document.body.classList.toggle('reports-page',isReport);
+ document.body.classList.toggle('countries-page',page==='rapporten-countries');
  document.body.classList.toggle('dividend-page',page==='dividend');
  document.body.classList.toggle('stocks-page',page==='aandelen'||page==='aandeel');
  document.body.classList.toggle('stocks-list-page',page==='aandelen');

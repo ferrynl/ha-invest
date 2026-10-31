@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.36.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.37.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -77,7 +77,7 @@ niet in het portefeuillerendement verwerkt.
 
 ## Opslag en back-ups
 
-De database en instellingen staan in de app-datafolder. Appversie **0.36.0** gebruikt
+De database en instellingen staan in de app-datafolder. Appversie **0.37.0** gebruikt
 databaseschema **19**. Upgrades maken vooraf een consistente back-up en voeren alleen
 ontbrekende migraties transactioneel uit. Bestaande aankopen, dividend en historie blijven
 behouden. Neem voor opgeslagen API-verbindingen de volledige app op in een Home Assistant-back-up.
@@ -121,7 +121,7 @@ Open **Mijn account → Profiel kiezen** om te wisselen tussen je eigen portefeu
 
 De eigen portefeuille blijft in `data/portfolio.sqlite3`; de demo gebruikt `data/demo/portfolio.sqlite3` (in Home Assistant `/data/demo/portfolio.sqlite3`). Loginaccounts en sessies blijven van de eigen installatie. De demo wordt op de achtergrond voorbereid en hergebruikt, zonder dagelijkse herbouw. Succesvolle providerantwoorden worden gecachet; verversen gebeurt op zijn vroegst na vijf minuten en kan bij veel aandelen langer duren. De gekozen portefeuille staat in het pagina-adres en blijft bij herladen behouden. De demo is alleen-lezen.
 
-Landenverdeling heeft een interactieve wereldkaart met lokale vlaggen, percentages en een Europaweergave. Rapporten tonen alleen relevante cijfers; de algemene waarde-/winstkaarten staan op Portefeuilleoverzicht, met Rendementsoverzicht direct daaronder in het menu.
+Landenverdeling opent zonder bovenste header met een paginabrede interactieve wereldkaart en daaronder de landentabel met marktwaarde en weging. Lokale vlaggen, percentages en de Europaweergave blijven beschikbaar. Rapporten tonen alleen relevante cijfers; de algemene waarde-/winstkaarten staan op Portefeuilleoverzicht, met Rendementsoverzicht direct daaronder in het menu.
 
 ### Export en Revolut
 

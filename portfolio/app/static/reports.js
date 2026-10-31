@@ -82,6 +82,7 @@ function reportMoney(value,currency){return money(value,currency);}
 function renderReports(){
  if(!state)return;const income=reportIncome(reportType),year=$('report-year').value||String(new Date().getFullYear());
  reportOptions('report-currency',[...new Set([...state.positions,...state.dividends].filter(reportInstrument).map(p=>p.currency))].sort().map(c=>[c,c]),ui('Alle valuta’s'));
+ if(reportType==='countries')$('report-currency').value='';
  renderReportNavigation();$('report-growth-filter').hidden=reportType!=='calendar';$('report-year-filter').hidden=!income;$('report-range-filter').hidden=reportType!=='growth';
  const definition=reportDefinitions.find(d=>d[0]===reportType);$('report-title').textContent=definition[1];$('report-active-description').textContent=definition[2];
  $('report-description').textContent=reportType==='calendar'?ui('Schatting op basis van de laatste twaalf maanden en jaarlijkse groei. Datums zijn indicatief. Aangekondigde uitkeringen zijn niet gekoppeld.'):income?ui('Ontvangen netto dividend in het gekozen jaar. Eerst het totaal in euro, daarna per valuta.'):reportType==='growth'?ui('Opgeslagen dagwaarden. Ontbrekende posities worden per dag overgeslagen; dit is geen rendementspercentage.'):ui('Actuele stand, inclusief gerealiseerde winst en alle geboekte dividenden. Geen historische jaarstand of fiscale jaaropgave.');

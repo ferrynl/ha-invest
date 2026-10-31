@@ -1128,6 +1128,10 @@
     "DIVIDEND",
     "transaction-page-title",
     "transaction-page-description",
-    ".account-avatar"
+    ".account-avatar",
+    "tbody",
+    "thead",
+    "countries-page",
+    "rapporten-countries"
   ]
 }
