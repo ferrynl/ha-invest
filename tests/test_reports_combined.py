@@ -17,6 +17,15 @@ class CombinedReportTests(unittest.TestCase):
   with self.store.connect() as db:
    db.executemany('INSERT INTO fx_rates VALUES(?,?,?,?,?,?)',[('EUR','USD','2026-10-01','2','test','now'),('EUR','USD','2026-10-02','4','test','now'),('EUR','USD','2026-10-03','1','test','now'),('EUR','GBP','2026-10-01','.8','test','now')])
  def build(self,**kwargs):return combined(self.store,self.store.state(),today=date(2026,10,3),**kwargs)
+ def test_native_sections_share_the_eur_snapshot_and_stay_compact(self):
+  snapshot=self.store.state()
+  result=combined(self.store,snapshot,currency='USD',today=date(2026,10,3))
+  source=result['source']
+  self.assertEqual(source['data_revision'],result['data_revision'])
+  self.assertEqual([p['symbol'] for p in source['positions']],['DOLLAR'])
+  self.assertEqual(source['dividends'],[d for d in snapshot['dividends'] if d['currency']=='USD'])
+  self.assertEqual(len(source['positions'][0]['history']),1)
+  self.assertNotIn('purchases',source)
  def test_market_and_income_use_different_dated_rates_and_pence(self):
   before=deepcopy(self.store.state());result=self.build(include_history=True)
   self.assertEqual(sum(Decimal(p['value']) for p in result['positions']),Decimal('302.5'))
@@ -106,3 +115,15 @@ class CombinedReportHttpTests(unittest.TestCase):
   status,css=self.request('/style.css?v=test')
   self.assertEqual(status,200);self.assertIn(b'.report-metric-heading{grid-column:1/-1',css)
   self.assertIn(b'.payment-grid',css)
+
+ def test_unexpected_eur_error_has_a_safe_log_reference(self):
+  from unittest.mock import patch
+  with patch('reports.combined',side_effect=RuntimeError('private details must not be exposed')):
+   code,result=self.request('/api/reports/combined')
+  self.assertEqual(code,500)
+  self.assertIn('Log-ID',result['error'])
+  self.assertNotIn('private details',result['error'])
+  with self.store.read() as db:
+   row=db.execute("SELECT * FROM app_logs WHERE event='combined_failed'").fetchone()
+   self.assertIsNotNone(row)
+   self.assertNotIn('private details',row['details'])

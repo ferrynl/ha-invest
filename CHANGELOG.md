@@ -1,3 +1,9 @@
+## 0.36.0
+
+- Home Assistant-menuvormgeving: consequente blauwe selectie, vetgedrukte hoofditems en gelijkmatige submenu’s.
+- EUR-rapport en bronvaluta uit dezelfde gegevensversie, ook tijdens koersupdates.
+- Concrete foutmelding en afgeschermde Log-ID bij een mislukte EUR-berekening.
+
 ## 0.35.0
 
 - Zijbalk in Home Assistant-stijl met compacte rijen, Material-iconen en blauwe selectie.

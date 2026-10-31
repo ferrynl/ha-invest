@@ -90,6 +90,11 @@ def combined(store, snapshot, account='all', instrument=None, currency='', inclu
             missing.append(dict(symbol=row.get('symbol',''),currency=row.get('currency',''),day=row.get('paid_on',''),reason='Ontbrekende of ongeldige dividendgegevens'))
     result = dict(data_revision=snapshot.get('data_revision'), as_of=today.isoformat(), positions=[{**p, 'history':[]} for p in euro['positions']], dividends=dividends,
                   excluded=euro['excluded'], missing_dividends=missing, fx_dates=used)
+    # The browser can render native and EUR sections from the same committed data
+    # even when quotes refresh after the initial dashboard response.
+    result['source'] = dict(data_revision=snapshot.get('data_revision'),
+                          positions=[{**p,'history':p['history'][-1:]} for p in scoped['positions']],
+                          dividends=scoped['dividends'])
     if include_history:
         converted = history({**scoped, 'positions':euro['positions']}, account)
         result['history'] = converted['currencies'][0] if converted['currencies'] else None

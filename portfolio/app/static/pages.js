@@ -52,7 +52,7 @@ function showPage(){
  if(isReport){reportType=page==='rapporten'?'portfolio':page.slice(10);renderReportNavigation();}
  $('report-types').hidden=!isReport;document.querySelector('[data-route=rapporten]').setAttribute('aria-expanded',String(isReport));
  for(const view of document.querySelectorAll('[data-page]'))view.hidden=view.dataset.page!==(isReport?'rapporten':brokerPage?'imports':isTransactions?'transacties':page);
- for(const link of document.querySelectorAll('[data-route]')){if(link.dataset.route===page||(isTransactions&&link.dataset.route==='transacties')||(isSettings&&link.dataset.route==='instellingen')||(brokerPage&&link.dataset.route==='imports')||(page==='aandeel'&&link.dataset.route==='aandelen')||(page.startsWith('import-')&&link.dataset.route==='imports'))link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
+ for(const link of document.querySelectorAll('[data-route]')){if(link.dataset.route===page||(isReport&&link.dataset.route==='rapporten')||(isTransactions&&link.dataset.route==='transacties')||(isSettings&&link.dataset.route==='instellingen')||(brokerPage&&link.dataset.route==='imports')||(page==='aandeel'&&link.dataset.route==='aandelen')||(page.startsWith('import-')&&link.dataset.route==='imports'))link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  for(const link of document.querySelectorAll('.import-nav a')){if(link.hash==='#'+page)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  document.body.classList.toggle('home-page',page==='home');
  document.body.classList.toggle('reports-page',isReport);

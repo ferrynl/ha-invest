@@ -41,6 +41,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
         return cache.derived(('home-euro-compact:' if compact_view else 'home-euro:')+str(account),build)
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css'),'/reports.css':('reports.css','text/css')}
+    assets['/fonts/Roboto.ttf']=('fonts/Roboto.ttf','font/ttf')
     assets['/world-countries.json']=('world-countries.json','application/json; charset=utf-8')
     for flag in (static/'flags').glob('*.svg'):assets['/flags/'+flag.name]=('flags/'+flag.name,'image/svg+xml')
     for name in ('i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','report-charts','conversions','performance'):
@@ -193,6 +194,10 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     key='reports-combined:'+json.dumps([account,selection,currency,with_history],separators=(',',':'))
                     return self.respond(cache.derived(key,lambda:report_combined(store,cache.get(store.state),account,selection,currency,with_history)),etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
+                except Exception as error:
+                    reference=record(store,'ERROR','reports','combined_failed','Totaal in euro berekenen mislukt.',{'error_type':type(error).__name__})
+                    message='Totaal in euro berekenen mislukt.'+' · Log-ID '+reference
+                    return self.respond({'error':message},500)
             if path=='/api/reports/performance':
                 from performance import overview
                 query=parse_qs(urlsplit(self.path).query);account=query.get('account_id',['all'])[0]

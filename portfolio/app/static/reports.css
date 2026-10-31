@@ -89,7 +89,7 @@
 
 .report-sidebar{padding:4px 0 10px 18px;border-left:1px solid #34465e;margin-left:18px}.sidebar nav .report-sidebar a{font-size:12px;padding:9px 12px}.report-intro{justify-content:flex-end;margin:0 0 12px}.report-plot table{width:100%;font-size:13px}
 
-.sidebar nav{min-height:0;overflow-y:auto;flex:1}.sidebar-bottom{flex-shrink:0}.sidebar nav a[data-route="rapporten"][aria-expanded="true"]{color:#4de0b3}.report-plot th{text-align:left;padding:12px}.report-plot td{padding:12px}
+.sidebar nav{min-height:0;overflow-y:auto;flex:1}.sidebar-bottom{flex-shrink:0}.report-plot th{text-align:left;padding:12px}.report-plot td{padding:12px}
 
 /* Full-width reports; every grid can shrink with its containing viewport. */
 .reports-page main{min-width:0}.reports-dashboard>*{min-width:0}.report-chart-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))}.reports-dashboard .report-filters label{min-width:min(150px,100%)}.report-section-heading>div{min-width:0}.report-section-heading h2,.report-section-heading p{overflow-wrap:anywhere}.report-insight{min-width:min(210px,100%)}
@@ -148,20 +148,21 @@
 .country-unknown-mark{font-size:20px;color:#9aadc2;width:24px;flex:none!important}
 @media(max-width:1000px){.country-layout{grid-template-columns:1fr}.country-ranking{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;padding:0}}
 @media(max-width:520px){.country-layout{gap:14px}.country-ranking{grid-template-columns:1fr}.country-map-toolbar>span{width:100%}.country-map-controls{width:100%}.country-map-controls button{flex:1}.country-selection-value{margin-left:36px}.country-map-selection{gap:9px}.country-map-selection strong{font-size:13px}}
+@font-face{font-family:HomeInvestRoboto;src:url("fonts/Roboto.ttf") format("truetype");font-style:normal;font-weight:100 900;font-display:swap}
 /* Match the Home Assistant sidebar shown alongside the ingress app. */
-.sidebar{width:256px;background:#1c1c1c;border-right:1px solid #333;color:#e1e1e1;font-family:Roboto,"Noto Sans",Arial,sans-serif;overflow:hidden}
+.sidebar{width:256px;background:#1c1c1c;border-right:1px solid #333;color:#e1e1e1;font-family:HomeInvestRoboto,Roboto,Arial,sans-serif;overflow:hidden}
 .sidebar-brand{height:56px;min-height:56px;padding:0 20px;gap:16px;border-bottom:1px solid #333;font-size:20px}
 .sidebar-brand strong{font-weight:400}
 .sidebar-brand>span{color:#9b9b9b;font-size:24px;width:24px;line-height:1}
 .sidebar nav{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;gap:0;padding:4px 4px 12px;scrollbar-width:thin;scrollbar-color:#555 transparent}
-.sidebar nav a{min-height:40px;padding:8px 16px;gap:24px;border-radius:4px;color:#e1e1e1;font-size:14px;font-weight:500;line-height:20px}
+.sidebar nav a{min-height:40px;padding:8px 16px;gap:24px;border-radius:4px;color:#e1e1e1;font-size:14px;font-weight:700;line-height:20px}
 .sidebar nav a:hover{background:rgba(255,255,255,.06)}
 .sidebar nav a[aria-current="page"]{color:#03a9f4;background:rgba(0,188,212,.12)}
 .sidebar nav a:focus-visible{outline:2px solid #03a9f4;outline-offset:-2px}
 .sidebar .nav-icon{display:block;flex:none;width:24px;height:24px;min-height:0;fill:currentColor;color:#9b9b9b}
 .sidebar nav a[aria-current="page"] .nav-icon{color:#03a9f4}
 .sidebar .report-sidebar{border:0;margin:0;padding:0 0 4px}
-.sidebar nav .report-sidebar a{font-size:13px;font-weight:400;line-height:18px;min-height:36px;padding:8px 12px 8px 64px;overflow-wrap:anywhere}
+.sidebar nav .report-sidebar a{font-size:14px;font-weight:400;line-height:20px;min-height:40px;padding:8px 12px 8px 64px;overflow-wrap:anywhere}
 .sidebar-bottom{padding:8px;color:#9b9b9b;font-size:11px;border-top:1px solid #333}
 .sidebar-bottom>small{padding:0 12px;font-size:10px}
 #account-controls{border:0;padding:0 8px;margin:0 0 4px}

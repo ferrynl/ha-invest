@@ -134,3 +134,12 @@ console.log('Calendar month alignment and leap-year checks passed.');
   console.log('Hanging totals time out and repeated revision changes do not reload endlessly.');
  })().catch(error=>{console.error(error);process.exitCode=1;});
 }
+// A coherent report snapshot stays usable while background quote revisions change.
+{
+ const fields=new Map();let refreshes=0;
+ const context=vm.createContext({state:{data_revision:1},currentBroker:'all',accessSession:{user:{}},location:{hash:'#rapporten'},
+  $:id=>{if(!fields.has(id))fields.set(id,{value:'',replaceChildren(){}});return fields.get(id);},
+  apiFetch:async()=>({ok:true,json:async()=>({data_revision:3,source:{data_revision:3,positions:[],dividends:[]},positions:[],dividends:[],excluded:[],missing_dividends:[]})}),load:async()=>{refreshes++;}});
+ vm.runInContext(fs.readFileSync(path.join(__dirname,'../portfolio/app/static/reports.js'),'utf8'),context);vm.runInContext('renderReports=()=>{};',context);
+ (async()=>{await context.loadReportCombined();assert.equal(refreshes,0);assert.equal(vm.runInContext('reportCombined.data_revision',context),3);assert.equal(vm.runInContext('reportCombinedError',context),false);console.log('EUR totals accept a coherent native/EUR snapshot during background quote updates.');})().catch(e=>{console.error(e);process.exitCode=1;});
+}

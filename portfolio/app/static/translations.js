@@ -6789,5 +6789,10 @@ const UI_TRANSLATIONS = {
   "nl": "Bekijk aandelensplitsingen en omzettingen per brokeraccount.",
   "en": "View stock splits and conversions by broker account.",
   "es": "Consulta los desdoblamientos y conversiones por cuenta de bróker."
+ },
+ "Totaal in euro berekenen mislukt.": {
+  "nl": "Totaal in euro berekenen mislukt.",
+  "en": "Unable to calculate the total in euros.",
+  "es": "No se pudo calcular el total en euros."
  }
 };
