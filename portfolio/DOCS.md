@@ -820,3 +820,18 @@ Meldingen worden binnen Home Invest ingediend en gevolgd; gebruikers hebben geen
 De aparte centrale container wordt in Coolify gebouwd met `feedback_service/Dockerfile` en buildcontext `/`. Zie [installatie, GitHub App en beheer](../feedback_service/README.md) voor Coolify.
 
 De lokale wachtrij en installatiegegevens staan versleuteld in de aparte map `feedback/` in de app-datafolder, buiten het portefeuilledatabestand. Ze blijven behouden bij portefeuilleherstel; een volledige Home Assistant-appback-up is nodig om de meldverbinding mee te herstellen. Versturen wordt automatisch hervat. Bij een onduidelijke GitHub-verzenduitkomst controleert de centrale beheerder de melding om dubbele issues te voorkomen.
+
+
+### Importpagina’s vanaf 0.40.0
+
+Open **Imports** en kies Trading 212, Trade Republic of Revolut. Iedere broker heeft
+zijn eigen pagina met vier stappen, een CSV-importknop en vergrootbare schermafbeeldingen
+met fictieve gegevens. Trading 212 biedt daarnaast een API-rapportknop; de verbinding
+beheer je apart bij **API-instellingen**. De uitleg bij de broker opent in een nieuw tabblad.
+
+Na uploaden opent **Importvoorbeeld**. Controleer daar de transacties en beurskoppelingen,
+vink de bevestiging aan en sla op. **Importgeschiedenis** toont opgeslagen voorbeelden en
+verwerkte imports. Regels met problemen vind je op **Te beoordelen**; vaste koppelingen
+beheer je bij **Aandelenkoppelingen**. Downloaden staat op de aparte pagina **Exporteren**.
+De logo’s en schermafbeeldingen worden lokaal geleverd; de browser vraagt geen externe
+logo- of afbeeldingsdienst aan. Brokerbenamingen en logo’s behoren aan hun eigenaren.

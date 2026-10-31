@@ -1,3 +1,10 @@
+## 0.40.0
+
+- Imports opgesplitst in een rustig brokeroverzicht, drie eigen brokerpagina’s, importvoorbeeld en importgeschiedenis.
+- Stappenhandleidingen met lokale brokerlogo’s, vergrootbare schermafbeeldingen met fictieve gegevens en verwijzingen naar brokerhulp.
+- CSV-upload en API-rapporten blijven in pop-ups; alle nieuwe schermteksten zijn beschikbaar in Nederlands, Engels en Spaans.
+- Databaseschema blijft 19; bestaande importcontroles en transacties blijven behouden.
+
 ## 0.39.0
 
 - Wensen en bugs volledig indienen binnen Home Invest, zonder GitHub-account, via een apart te hosten centrale meldservice.

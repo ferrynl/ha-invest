@@ -24,7 +24,7 @@ const exportLink=document.createElement('a');exportLink.href='#import-export';ex
 
 const importNav=document.createElement('div');importNav.id='import-types';importNav.className='report-sidebar';
 document.querySelector('[data-route="imports"]').after(importNav);
-for(const [route,title] of [['import-trading212','Trading 212'],['import-traderepublic','Trade Republic'],['import-revolut',ui('Revolut')],['import-api',ui('API-instellingen')],['import-koppelingen',ui('Aandelenkoppelingen')],['import-beoordeling',ui('Te beoordelen')]]){
+for(const [route,title] of [['import-trading212','Trading 212'],['import-traderepublic','Trade Republic'],['import-revolut',ui('Revolut')],['import-geschiedenis',ui('Importgeschiedenis')],['import-api',ui('API-instellingen')],['import-koppelingen',ui('Aandelenkoppelingen')],['import-beoordeling',ui('Te beoordelen')]]){
  const a=document.createElement('a');a.href='#'+route;a.dataset.route=route;a.textContent=title;importNav.append(a);
 }
 importNav.append(exportLink);
@@ -33,7 +33,7 @@ document.querySelector('[data-route="transacties"]').after(transactionNav);
 for(const [route,title] of [['transacties-dividend',ui('Dividend')],['transacties-omzettingen',ui('Splitsingen en omzettingen')]]){
  const link=document.createElement('a');link.href='#'+route;link.dataset.route=route;link.textContent=title;transactionNav.append(link);
 }
-const pageNames={feedback:ui('Wensen & bugs'),'tmx-omboeken':ui('TMX omboeken naar TDT'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
+const pageNames={'import-voorbeeld':ui('Importvoorbeeld'),feedback:ui('Wensen & bugs'),'tmx-omboeken':ui('TMX omboeken naar TDT'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
 for(const a of [...settingsNav.querySelectorAll('a'),...importNav.querySelectorAll('a'),...transactionNav.querySelectorAll('a')])pageNames[a.dataset.route]=a.textContent;
 for(const [key,title] of reportDefinitions)pageNames['rapporten-'+key]=title;
 function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches&&!document.body.classList.contains('locked');$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label',ui('Menu openen'));}
@@ -47,11 +47,11 @@ function showPage(){
  const brokerPage=page.match(/^import-(trading212|traderepublic|revolut)$/);importNav.hidden=!(page==='imports'||page.startsWith('import-'));document.querySelector('[data-route=imports]').setAttribute('aria-expanded',String(!importNav.hidden));
  document.body.classList.toggle('broker-import-page',!!brokerPage);$('import-provider').disabled=!!brokerPage;
  if(brokerPage){$('import-provider').value=brokerPage[1];refreshImportAccounts();}
- for(const card of document.querySelectorAll('.import-providers > section'))card.hidden=!!brokerPage&&!card.querySelector('[data-import-provider="'+brokerPage[1]+'"]');
+
  const isReport=page==='rapporten'||page.startsWith('rapporten-');
  if(isReport){reportType=page==='rapporten'?'portfolio':page.slice(10);renderReportNavigation();}
  $('report-types').hidden=!isReport;document.querySelector('[data-route=rapporten]').setAttribute('aria-expanded',String(isReport));
- for(const view of document.querySelectorAll('[data-page]'))view.hidden=view.dataset.page!==(isReport?'rapporten':brokerPage?'imports':isTransactions?'transacties':page);
+ for(const view of document.querySelectorAll('[data-page]'))view.hidden=view.dataset.page!==(isReport?'rapporten':isTransactions?'transacties':page);
  for(const link of document.querySelectorAll('[data-route]')){if(link.dataset.route===page||(isReport&&link.dataset.route==='rapporten')||(isTransactions&&link.dataset.route==='transacties')||(isSettings&&link.dataset.route==='instellingen')||(brokerPage&&link.dataset.route==='imports')||(page==='aandeel'&&link.dataset.route==='aandelen')||(page.startsWith('import-')&&link.dataset.route==='imports'))link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  for(const link of document.querySelectorAll('.import-nav a')){if(link.hash==='#'+page)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  document.body.classList.toggle('home-page',page==='home');
@@ -72,7 +72,7 @@ function showPage(){
  if(page==='dividend'&&state)renderDividendPage();
  if(page==='home'&&state){renderHomeDashboard();requestAnimationFrame(draw);}
  if(isReport&&state)renderReports();
- if((page==='imports'||brokerPage)&&state&&accessSession?.user?.role==='admin')loadImportHistory().catch(error=>{$('import-feedback').textContent=error.message;});
+ if((page==='import-geschiedenis'||brokerPage)&&state&&accessSession?.user?.role==='admin')loadImportHistory().catch(error=>{$('import-feedback').textContent=error.message;});
  if(page==='feedback')loadFeedback();
  if(page==='logs')loadLogs().catch(error=>{$('logs-feedback').textContent=error.message;});
  if(page==='import-koppelingen')loadImportMappings();

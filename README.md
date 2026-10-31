@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-Experimentele versie (0.39.0). Draait volledig als Home Assistant-app
+Experimentele versie (0.40.0). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
@@ -30,7 +30,7 @@ toegang tot de app. Wijzigen en instellen gebeurt in pop-ups; Home opent direct 
 - **Dividend**: netto ontvangen dividend boeken en bekijken.
 - **Instellingen → Valuta**: historische omrekening en opgeslagen dagreferentiekoersen.
 - **Rapporten**: dividend per maand en portefeuillestand.
-- **Imports** (admin): eigen pagina’s voor Trading 212 CSV/API, Trade Republic en Revolut CSV, plus Exporteren, API-instellingen, beurskoppelingen en regels ter beoordeling.
+- **Imports** (admin): een overzicht met brokerlogo’s en eigen stappenhandleidingen met schermafbeeldingen voor Trading 212 CSV/API, Trade Republic en Revolut CSV. Importvoorbeeld, importgeschiedenis, exporteren, API-instellingen, beurskoppelingen en beoordelingen hebben aparte pagina’s.
 - **Instellingen** (admin): accounts, beveiliging, back-ups en versiecontrole.
 - **Instellingen → Logs** (admin): afgeschermde foutdetails en Log-ID zoeken.
 
@@ -77,7 +77,7 @@ niet in het portefeuillerendement verwerkt.
 
 ## Opslag en back-ups
 
-De database en instellingen staan in de app-datafolder. Appversie **0.39.0** gebruikt
+De database en instellingen staan in de app-datafolder. Appversie **0.40.0** gebruikt
 databaseschema **19**. Upgrades maken vooraf een consistente back-up en voeren alleen
 ontbrekende migraties transactioneel uit. Bestaande aankopen, dividend en historie blijven
 behouden. Neem voor opgeslagen API-verbindingen de volledige app op in een Home Assistant-back-up.

@@ -1167,6 +1167,10 @@
     "feedback-connect-status",
     "feedback-connection",
     "feedback-form-status",
-    "feedback-mine"
+    "feedback-mine",
+    "#import-geschiedenis",
+    "import-voorbeeld",
+    "import-geschiedenis",
+    "t212-report-account"
   ]
 }

@@ -7059,5 +7059,90 @@ const UI_TRANSLATIONS = {
   "nl": "Meldservice bijwerken mislukt.",
   "en": "Failed to update the feedback service.",
   "es": "No se pudo actualizar el servicio de incidencias."
+ },
+ "Kies je broker": {
+  "nl": "Kies je broker",
+  "en": "Choose your broker",
+  "es": "Elige tu bróker"
+ },
+ "Elke broker heeft een eigen pagina met een handleiding en importknop.": {
+  "nl": "Elke broker heeft een eigen pagina met een handleiding en importknop.",
+  "en": "Each broker has its own page with a guide and import button.",
+  "es": "Cada bróker tiene su propia página con una guía y un botón de importación."
+ },
+ "Je imports beheren": {
+  "nl": "Je imports beheren",
+  "en": "Manage your imports",
+  "es": "Gestiona tus importaciones"
+ },
+ "Handleiding en importeren": {
+  "nl": "Handleiding en importeren",
+  "en": "Guide and import",
+  "es": "Guía e importación"
+ },
+ "Menu → History → Export. Kies de volledige periode en download de Engelstalige CSV van Invest of Stocks ISA.": {
+  "nl": "Menu → History → Export. Kies de volledige periode en download de Engelstalige CSV van Invest of Stocks ISA.",
+  "en": "Menu → History → Export. Select the full period and download the English CSV for Invest or Stocks ISA.",
+  "es": "Menú → History → Export. Elige el período completo y descarga el CSV en inglés de Invest o Stocks ISA."
+ },
+ "Maak je rekening klaar": {
+  "nl": "Maak je rekening klaar",
+  "en": "Prepare your account",
+  "es": "Prepara tu cuenta"
+ },
+ "Maak bij Instellingen → Brokeraccounts een rekening voor deze broker aan. Houd verschillende rekeningen apart.": {
+  "nl": "Maak bij Instellingen → Brokeraccounts een rekening voor deze broker aan. Houd verschillende rekeningen apart.",
+  "en": "Create an account for this broker under Settings → Broker accounts. Keep different accounts separate.",
+  "es": "Crea una cuenta para este bróker en Ajustes → Cuentas de bróker. Mantén separadas las distintas cuentas."
+ },
+ "Download je historie": {
+  "nl": "Download je historie",
+  "en": "Download your history",
+  "es": "Descarga tu historial"
+ },
+ "Upload en controleer": {
+  "nl": "Upload en controleer",
+  "en": "Upload and review",
+  "es": "Sube y revisa"
+ },
+ "Klik op CSV importeren, kies je brokeraccount en selecteer het bestand (maximaal 5 MB). Open daarna het voorbeeld en controleer transacties, valuta en beurskoppelingen.": {
+  "nl": "Klik op CSV importeren, kies je brokeraccount en selecteer het bestand (maximaal 5 MB). Open daarna het voorbeeld en controleer transacties, valuta en beurskoppelingen.",
+  "en": "Click Import CSV, choose your broker account and select the file (up to 5 MB). Then review transactions, currencies and exchange mappings in the preview.",
+  "es": "Pulsa Importar CSV, elige tu cuenta de bróker y selecciona el archivo (máximo 5 MB). Revisa las transacciones, divisas y correspondencias bursátiles en la vista previa."
+ },
+ "Bevestig de import": {
+  "nl": "Bevestig de import",
+  "en": "Confirm the import",
+  "es": "Confirma la importación"
+ },
+ "Vink de bevestiging aan en kies Import definitief opslaan. Geldige regels worden geboekt; afwijkingen vind je bij Te beoordelen. Bekende transacties worden overgeslagen.": {
+  "nl": "Vink de bevestiging aan en kies Import definitief opslaan. Geldige regels worden geboekt; afwijkingen vind je bij Te beoordelen. Bekende transacties worden overgeslagen.",
+  "en": "Tick the confirmation and choose Save import permanently. Valid rows are booked; exceptions appear under Needs review. Known transactions are skipped.",
+  "es": "Marca la confirmación y elige Guardar importación definitivamente. Se registran las filas válidas; las incidencias aparecen en Pendientes de revisión. Se omiten las transacciones conocidas."
+ },
+ "Open je profiel en zoek bij afschriften naar de transactie-export. Gebruik de oorspronkelijke CSV voor aandelen en fondsen. Menunamen en beschikbaarheid kunnen verschillen.": {
+  "nl": "Open je profiel en zoek bij afschriften naar de transactie-export. Gebruik de oorspronkelijke CSV voor aandelen en fondsen. Menunamen en beschikbaarheid kunnen verschillen.",
+  "en": "Open your profile and look for the transaction export under statements. Use the original CSV for stocks and funds. Menu names and availability may vary.",
+  "es": "Abre tu perfil y busca la exportación de transacciones en extractos. Usa el CSV original de acciones y fondos. Los menús y la disponibilidad pueden variar."
+ },
+ "Invest → Meer (…) → Documenten → Aandelen → Rekeningafschrift. Kies de volledige periode en CSV; gebruik het afschrift van je beleggingsrekening.": {
+  "nl": "Invest → Meer (…) → Documenten → Aandelen → Rekeningafschrift. Kies de volledige periode en CSV; gebruik het afschrift van je beleggingsrekening.",
+  "en": "Invest → More (…) → Documents → Stocks → Account statement. Choose the full period and CSV; use your investment account statement.",
+  "es": "Invertir → Más (…) → Documentos → Acciones → Extracto de cuenta. Elige el período completo y CSV; usa el extracto de tu cuenta de inversión."
+ },
+ "Uitleg bij de broker ↗": {
+  "nl": "Uitleg bij de broker ↗",
+  "en": "Broker help ↗",
+  "es": "Ayuda del bróker ↗"
+ },
+ "Schermvoorbeeld met fictieve gegevens. Klik op de afbeelding om te vergroten.": {
+  "nl": "Schermvoorbeeld met fictieve gegevens. Klik op de afbeelding om te vergroten.",
+  "en": "Example screen with fictional data. Click the image to enlarge.",
+  "es": "Pantalla de ejemplo con datos ficticios. Pulsa la imagen para ampliarla."
+ },
+ "Nog geen imports. Begin bij het brokeroverzicht.": {
+  "nl": "Nog geen imports. Begin bij het brokeroverzicht.",
+  "en": "No imports yet. Start at the broker overview.",
+  "es": "Todavía no hay importaciones. Empieza en la vista de brókeres."
  }
 };

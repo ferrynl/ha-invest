@@ -45,6 +45,26 @@ class HttpTests(unittest.TestCase):
             self.assertGreater(len(body), 0)
             self.assertEqual(headers['Cache-Control'], 'no-store' if path in ('/','/api/state') else 'private, max-age=86400, immutable')
 
+    def test_import_guides_and_broker_media_are_served_locally(self):
+        from html.parser import HTMLParser
+        class Pages(HTMLParser):
+            def __init__(self):super().__init__();self.pages=[];self.ids=[]
+            def handle_starttag(self,tag,attrs):
+                attrs=dict(attrs)
+                if 'data-page' in attrs:self.pages.append(attrs['data-page'])
+                if 'id' in attrs:self.ids.append(attrs['id'])
+        code,body,_=self.request('GET','/')
+        self.assertEqual(code,200)
+        markup=Pages();markup.feed(body.decode())
+        for route in ('imports','import-trading212','import-traderepublic','import-revolut','import-voorbeeld','import-geschiedenis'):
+            self.assertEqual(markup.pages.count(route),1,route)
+        self.assertEqual(len(markup.ids),len(set(markup.ids)))
+        for name in ('trading212','traderepublic','revolut','trading212-upload','traderepublic-upload','revolut-upload','preview'):
+            code,data,headers=self.request('GET','/broker-media/'+name+'.png')
+            self.assertEqual(code,200,name)
+            self.assertEqual(headers['Content-Type'],'image/png')
+            self.assertTrue(data.startswith(b'\x89PNG\r\n\x1a\n'),name)
+
     def test_world_map_data_and_flags_are_served_locally(self):
         code,body,headers=self.request('GET','/world-countries.json')
         self.assertEqual(code,200);self.assertTrue(headers['Content-Type'].startswith('application/json'))
