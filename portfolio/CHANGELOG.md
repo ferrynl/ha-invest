@@ -1,3 +1,10 @@
+## 0.41.0
+
+- Brokeraccounts aanpassen en verwijderen via Instellingen → Brokeraccounts, met aparte pop-ups.
+- Namen wijzigen behoudt transacties; broker wijzigen kan alleen zonder administratie of API-verbinding.
+- Verwijderen toont vooraf de omvang, vraagt expliciete bevestiging en maakt een herstelback-up. Alleen de gekozen rekening, administratie en API-verbinding worden verwijderd.
+- Servercontrole op beheerdersrechten, sessiebeveiliging en verouderde bewerk- of verwijdervoorbeelden. Databaseschema blijft 19.
+
 ## 0.40.1
 
 - Brokerrekening direct vanuit de importpop-up toevoegen, met de juiste broker vooraf ingevuld.

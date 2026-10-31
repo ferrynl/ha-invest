@@ -1175,6 +1175,23 @@
     "import-account-add",
     "broker-form-editor",
     "broker-form-editor-popup",
-    "broker"
+    "broker",
+    "broker-edit-feedback",
+    "api/accounts/edit?account_id=",
+    "broker-edit-form",
+    "broker-editor",
+    "broker-manage-feedback",
+    "broker-delete-feedback",
+    "broker-delete-confirm",
+    "broker-delete-submit",
+    "api/accounts/delete-preview?account_id=",
+    "broker-delete-summary",
+    "broker-delete",
+    "broker-edit-cancel",
+    "broker-delete-cancel",
+    "api/accounts/edit",
+    "broker-delete-form",
+    "api/accounts/delete",
+    "broker-manage-backup"
   ]
 }

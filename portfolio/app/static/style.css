@@ -117,3 +117,5 @@ main input,main select,main textarea{max-width:100%}
 @media(max-width:1000px){.broker-directory{grid-template-columns:1fr}.broker-guide{grid-template-columns:1fr}}@media(max-width:600px){.broker-guide>li{gap:12px;padding:18px}.import-provider-heading{gap:12px}.import-tools{gap:14px}}
 
 .import-account-field{display:flex;flex-direction:column;gap:10px;min-width:0}.import-account-field>button{align-self:flex-start}
+
+#broker-list td:last-child{display:flex;gap:8px;flex-wrap:wrap}#broker-delete-summary{font-weight:700;overflow-wrap:anywhere}

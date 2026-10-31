@@ -7149,5 +7149,80 @@ const UI_TRANSLATIONS = {
   "nl": "Nog geen passende brokerrekening",
   "en": "No matching broker account yet",
   "es": "Todavía no hay una cuenta de bróker compatible"
+ },
+ "Brokeraccount aanpassen": {
+  "nl": "Brokeraccount aanpassen",
+  "en": "Edit broker account",
+  "es": "Editar cuenta de bróker"
+ },
+ "Brokeraccount verwijderen": {
+  "nl": "Brokeraccount verwijderen",
+  "en": "Delete broker account",
+  "es": "Eliminar cuenta de bróker"
+ },
+ "De naam wijzigen behoudt alle boekingen. De broker wijzigen kan alleen zonder administratie of API-verbinding.": {
+  "nl": "De naam wijzigen behoudt alle boekingen. De broker wijzigen kan alleen zonder administratie of API-verbinding.",
+  "en": "Renaming keeps all entries. The broker can only be changed without records or an API connection.",
+  "es": "Cambiar el nombre conserva todos los registros. El bróker solo se puede cambiar sin registros ni conexión API."
+ },
+ "Dit verwijdert de rekening, alle bijbehorende administratie en de opgeslagen API-verbinding. Andere rekeningen blijven behouden. Vooraf wordt een herstelback-up van de portefeuille gemaakt. Een API-verbinding moet je na herstel opnieuw instellen.": {
+  "nl": "Dit verwijdert de rekening, alle bijbehorende administratie en de opgeslagen API-verbinding. Andere rekeningen blijven behouden. Vooraf wordt een herstelback-up van de portefeuille gemaakt. Een API-verbinding moet je na herstel opnieuw instellen.",
+  "en": "This deletes the account, all its records and the saved API connection. Other accounts are kept. A portfolio recovery backup is created first. After restoring, set up the API connection again.",
+  "es": "Se eliminarán la cuenta, todos sus registros y la conexión API guardada. Se conservarán las demás cuentas. Antes se creará una copia de seguridad de la cartera. Tras restaurarla, deberás configurar de nuevo la conexión API."
+ },
+ "Rekening en gegevens verwijderen": {
+  "nl": "Rekening en gegevens verwijderen",
+  "en": "Delete account and data",
+  "es": "Eliminar cuenta y datos"
+ },
+ "{trades} boekingen, {dividends} dividendontvangsten, {capital} kapitaalterugbetalingen, {imports} imports en {issues} beoordelingen.": {
+  "nl": "{trades} boekingen, {dividends} dividendontvangsten, {capital} kapitaalterugbetalingen, {imports} imports en {issues} beoordelingen.",
+  "en": "{trades} entries, {dividends} dividend payments, {capital} capital returns, {imports} imports and {issues} reviews.",
+  "es": "{trades} registros, {dividends} dividendos, {capital} devoluciones de capital, {imports} importaciones y {issues} revisiones."
+ },
+ "Brokeraccount bijgewerkt.": {
+  "nl": "Brokeraccount bijgewerkt.",
+  "en": "Broker account updated.",
+  "es": "Cuenta de bróker actualizada."
+ },
+ "Brokeraccount verwijderd. Een herstelback-up is bewaard.": {
+  "nl": "Brokeraccount verwijderd. Een herstelback-up is bewaard.",
+  "en": "Broker account deleted. A recovery backup has been saved.",
+  "es": "Cuenta de bróker eliminada. Se ha guardado una copia de seguridad."
+ },
+ "Kies één brokeraccount om te verwijderen.": {
+  "nl": "Kies één brokeraccount om te verwijderen.",
+  "en": "Choose one broker account to delete.",
+  "es": "Elige una cuenta de bróker para eliminarla."
+ },
+ "Kies één brokeraccount om te wijzigen.": {
+  "nl": "Kies één brokeraccount om te wijzigen.",
+  "en": "Choose one broker account to edit.",
+  "es": "Elige una cuenta de bróker para editarla."
+ },
+ "De rekening is intussen gewijzigd. Open de rekening opnieuw.": {
+  "nl": "De rekening is intussen gewijzigd. Open de rekening opnieuw.",
+  "en": "The account has changed. Open it again.",
+  "es": "La cuenta ha cambiado. Ábrela de nuevo."
+ },
+ "De broker kan alleen worden gewijzigd bij een rekening zonder administratie of API-verbinding.": {
+  "nl": "De broker kan alleen worden gewijzigd bij een rekening zonder administratie of API-verbinding.",
+  "en": "The broker can only be changed for an account without records or an API connection.",
+  "es": "El bróker solo se puede cambiar en una cuenta sin registros ni conexión API."
+ },
+ "De rekening kon niet veilig worden verwijderd. Controleer de back-up en probeer opnieuw.": {
+  "nl": "De rekening kon niet veilig worden verwijderd. Controleer de back-up en probeer opnieuw.",
+  "en": "The account could not be safely deleted. Check the backup and try again.",
+  "es": "No se ha podido eliminar la cuenta de forma segura. Comprueba la copia de seguridad e inténtalo de nuevo."
+ },
+ "Aanpassen": {
+  "nl": "Aanpassen",
+  "en": "Edit",
+  "es": "Editar"
+ },
+ "Verwijderen": {
+  "nl": "Verwijderen",
+  "en": "Delete",
+  "es": "Eliminar"
  }
 };

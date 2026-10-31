@@ -26,6 +26,8 @@ function formPopup(id,title,label,feedbackIds=[]){
  const cancel=document.createElement('button');cancel.type='button';cancel.className='secondary';cancel.textContent=ui('Annuleren');cancel.addEventListener('click',()=>closePopup(panel.id));form.append(cancel);
 }
 function bindPopups(){
+ registerPopup('broker-editor',ui('Brokeraccount aanpassen'));
+ registerPopup('broker-delete',ui('Brokeraccount verwijderen'));
  registerPopup('import-api-report',ui('Trading 212-rapport ophalen'));
  registerPopup('conversion-editor',ui('TMX omboeken naar TDT'));
  registerPopup('stock-valuation-editor',ui('Koers instellen'));

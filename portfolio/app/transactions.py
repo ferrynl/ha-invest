@@ -85,6 +85,7 @@ def reset_preview_db(db,account):
     account_id=scope(db,account)
     tables=RESET_TABLES+(SHARED_TABLES if account_id is None else ())
     digest=hashlib.sha256(str(account_id).encode());counts={}
+    if account_id is not None:digest.update(json.dumps(dict(db.execute('SELECT * FROM broker_accounts WHERE id=?',(account_id,)).fetchone()),sort_keys=True).encode())
     for table in tables:
         where,args=reset_where(table,account_id)
         rows=[tuple(r) for r in db.execute('SELECT * FROM '+table+where,args)]
@@ -96,12 +97,13 @@ def reset_preview_db(db,account):
 def reset_preview(store,account):
     with store.connect() as db:return reset_preview_db(db,account)
 
-def reset(store,data):
+def reset(store,data,remove_account=False):
     if data.get('confirmation')!='VERWIJDEREN':raise ValueError('Typ VERWIJDEREN om de gekozen gegevens te verwijderen.')
     with store.lock:
         with store.connect() as db:preview=reset_preview_db(db,data['account_id'])
         if not hmac.compare_digest(str(data.get('revision','')),preview['revision']):raise ValueError('De gegevens zijn intussen gewijzigd. Controleer eerst een nieuw verwijderoverzicht.')
-        if not any(preview['counts'].values()):raise ValueError('Er zijn geen gegevens om te verwijderen.')
+        if remove_account and preview['account_id']=='all':raise ValueError('Kies één brokeraccount om te verwijderen.')
+        if not remove_account and not any(preview['counts'].values()):raise ValueError('Er zijn geen gegevens om te verwijderen.')
         # Keep this copy outside routine backup rotation.
         backup=store.backup();folder=store.root/'backups'/'deletions';folder.mkdir(exist_ok=True)
         backup=backup.rename(folder/('before-delete-'+backup.name))
@@ -112,6 +114,9 @@ def reset(store,data):
             account_id=None if data['account_id']=='all' else int(data['account_id'])
             for table in RESET_TABLES+(SHARED_TABLES if account_id is None else ()):
                 where,args=reset_where(table,account_id);db.execute('DELETE FROM '+table+where,args)
+            if remove_account:
+                db.execute('DELETE FROM broker_accounts WHERE id=?',(account_id,))
+                (store.root/'connections'/f'{account_id}.encrypted').unlink(missing_ok=True)
         store._mapping_discovered=False
         return dict(ok=True,deleted=preview['counts'],label=preview['label'],backup_name=backup.name)
 

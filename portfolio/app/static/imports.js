@@ -19,6 +19,7 @@ function accountOptions(select,accounts,prefer){
  else if(accounts.some(a=>String(a.id)===prefer))select.value=prefer;
 }
 function renderBrokerAccounts(){
+ if(currentBroker!=='all'&&!state.accounts.some(account=>String(account.id)===currentBroker))currentBroker='all';
  renderDeleteAccounts();
  const filter=$('account-filter');filter.replaceChildren();const all=document.createElement('option');all.value='all';all.textContent=ui('Alle accounts');filter.append(all);
  for(const account of state.accounts){const option=document.createElement('option');option.value=account.id;option.textContent=account.name+' · '+account.broker;filter.append(option);}filter.value=currentBroker;
@@ -26,7 +27,7 @@ function renderBrokerAccounts(){
  refreshImportAccounts();
  accountOptions($('t212-account'),state.accounts.filter(a=>a.broker==='Trading 212'),currentBroker);
  accountOptions($('t212-report-account'),state.accounts.filter(a=>a.broker==='Trading 212'),currentBroker);
- $('broker-list').replaceChildren();for(const account of state.accounts){const row=document.createElement('tr');cell(row,account.name);cell(row,account.broker);$('broker-list').append(row);}
+ $('broker-list').replaceChildren();for(const account of state.accounts){const row=document.createElement('tr');cell(row,account.name);cell(row,account.broker);const actions=cell(row,'');for(const [label,handler] of [[ui('Aanpassen'),()=>openBrokerEditor(account.id)],[ui('Verwijderen'),()=>openBrokerDeletion(account.id)]]){const button=document.createElement('button');button.type='button';button.className='secondary';button.textContent=label;button.addEventListener('click',handler);actions.append(button);}$('broker-list').append(row);}
  if((location.hash==='#import-geschiedenis'||/^#import-(trading212|traderepublic|revolut)$/.test(location.hash))&&accessSession?.user?.role==='admin')loadImportHistory().catch(error=>{$('import-feedback').textContent=error.message;});
 }
 async function loadImportHistory(){

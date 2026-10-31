@@ -839,3 +839,17 @@ logo- of afbeeldingsdienst aan. Brokerbenamingen en logo’s behoren aan hun eig
 Bij een lege rekeningkeuze klik je in de importpop-up op **Brokeraccount toevoegen**.
 De broker staat al ingevuld. Na opslaan keer je terug naar je upload en is de nieuwe
 rekening geselecteerd. Een eventueel gekozen CSV-bestand blijft behouden.
+
+
+### Brokeraccounts beheren
+
+Onder **Instellingen → Brokeraccounts** heeft iedere rekening **Aanpassen** en
+**Verwijderen**. Aanpassen opent een pop-up. Een nieuwe naam behoudt dezelfde rekening-ID,
+boekingen en importkoppelingen. De broker zelf wijzigen kan alleen als de rekening geen
+administratie of opgeslagen API-verbinding heeft.
+
+Verwijderen toont eerst de aantallen boekingen, dividend, kapitaalterugbetalingen, imports
+en beoordelingen. Typ **VERWIJDEREN** om de rekening inclusief gekoppelde administratie
+te verwijderen. De app bewaart vooraf een herstelback-up die je daarna kunt downloaden.
+Andere rekeningen en gedeelde koersen blijven behouden. Een opgeslagen API-verbinding
+wordt eveneens verwijderd; stel deze na eventueel portefeuilleherstel opnieuw in.

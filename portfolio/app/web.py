@@ -23,6 +23,7 @@ from imports.matching import resolve_instrument
 from imports.registry import discover as mapping_list,edit as mapping_edit
 from imports import trading212_api
 import transactions
+import broker_accounts
 import instruments
 from history import portfolio_values
 from diagnostics import read_logs,record,DiagnosticError,ActionError
@@ -46,7 +47,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
     assets['/world-countries.json']=('world-countries.json','application/json; charset=utf-8')
     for media in (static/'broker-media').glob('*.png'):assets['/broker-media/'+media.name]=('broker-media/'+media.name,'image/png')
     for flag in (static/'flags').glob('*.svg'):assets['/flags/'+flag.name]=('flags/'+flag.name,'image/svg+xml')
-    for name in ('feedback','i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','report-charts','conversions','performance'):
+    for name in ('brokers','feedback','i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','report-charts','conversions','performance'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     assets['/country-map.js']=('country-map.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
@@ -101,7 +102,14 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             user=auth.user(self.token())
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
-            if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/home-assistant','/api/users','/api/backup','/api/export','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
+            if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path in ('/api/home-assistant','/api/users','/api/backup','/api/export','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
+            if path in ('/api/accounts/edit','/api/accounts/delete-preview'):
+                query=parse_qs(urlsplit(self.path).query)
+                try:
+                    account_id=query.get('account_id',[''])[0]
+                    if path.endswith('/edit'):return self.respond(broker_accounts.overview(store,account_id))
+                    return self.respond(transactions.reset_preview(store,int(account_id)))
+                except (ValueError,TypeError):return self.respond({'error':'Ongeldige aanvraag of brokeraccount.'},400)
             if path=='/api/feedback':
                 try:return self.respond(feedback_overview(store,integration_options,user))
                 except ValueError as error:return self.respond({'error':str(error)},503)
@@ -294,7 +302,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             user=auth.user(self.token())
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path!='/api/auth/login':
-                if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/feedback/connect','/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation') or path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/')):return
+                if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path in ('/api/feedback/connect','/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation') or path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/')):return
                 if auth.enabled() and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),user['csrf'] or ''):
                     return self.respond({'error':'Ongeldige sessiebeveiliging. Meld je opnieuw aan.'},403)
             try:
@@ -364,6 +372,17 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 if path=='/api/updates':
                     try:return self.respond(check_updates(store))
                     except Exception:return self.respond({'error':'Versiecontrole niet beschikbaar. Probeer later opnieuw of bekijk GitHub.'},502)
+                if path=='/api/accounts/edit':
+                    with refresh_lock,trading212_api._lock:
+                        result=broker_accounts.edit(store,data);cache.invalidate()
+                    return self.respond(result)
+                if path=='/api/accounts/delete':
+                    with refresh_lock,trading212_api._lock:
+                        try:result=transactions.reset(store,data,remove_account=True)
+                        except OSError:return self.respond({'error':'De rekening kon niet veilig worden verwijderd. Controleer de back-up en probeer opnieuw.'},500)
+                        cache.invalidate()
+                    refresh_requested.set()
+                    return self.respond(result)
                 if path=='/api/accounts':
                     store.add_account(data);cache.invalidate();return self.respond({'ok':True},201)
                 if path=='/api/imports/mappings':return self.respond(mapping_edit(store,data))
