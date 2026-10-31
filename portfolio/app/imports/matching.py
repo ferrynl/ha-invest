@@ -16,7 +16,8 @@ def resolve(store,rows,provider,preferred=None):
     isins={r.get('raw',{}).get('ISIN','').strip().upper() for r in rows}-{''}
     if len(isins)>1:return {'error':'Meerdere ISIN-codes bij '+ticker+'. Deze brongegevens zijn niet eenduidig.'}
     isin=next(iter(isins),'');base=ticker_base(ticker)
-    identity='|'.join((provider,isin or ticker,currency,preferred or ''))
+    # Historical eligibility changes with the latest source transaction date.
+    identity='|'.join((provider,isin or ticker,currency,preferred or '',max(r.get('day','9999') for r in rows)))
     def find():
         # Prefer mappings proven by prior committed imports with the same ISIN/ticker.
         with store.connect() as db:
@@ -27,6 +28,9 @@ def resolve(store,rows,provider,preferred=None):
                 same=(row.get('raw',{}).get('ISIN','').upper()==isin) if isin else row.get('ticker')==ticker
                 if same and row.get('mapping') and (not preferred or row['mapping']['currency']==target):return {'mapping':row['mapping'],'via':'Bewaarde koppeling'}
         historical=HISTORICAL_LISTINGS.get(isin)
+        if not isin and provider=='revolut':
+            matches=[item for item in HISTORICAL_LISTINGS.values() if item['symbol']==ticker and item['currency']==currency]
+            if len(matches)==1:historical=matches[0]
         if historical and all(r.get('day','9999')<=historical['last_day'] for r in rows):
             return {'mapping':{k:v for k,v in historical.items() if k!='last_day'},'via':'Historische ISIN-notering; actuele koers kan ontbreken'}
         broker_listing=BROKER_LISTINGS.get((provider,isin))
@@ -44,6 +48,21 @@ def resolve(store,rows,provider,preferred=None):
                 verified.append(stock)
                 if stock['currency']==(preferred or currency):return {'mapping':stock,'via':'Gecontroleerde ISIN-notering'}
             if verified:return {'mapping':verified[0],'via':'Gecontroleerde ISIN-notering met historische valutaomrekening'}
+        # Legacy Revolut exports omit ISIN. Search indexes miss valid symbols,
+        # particularly one-letter US tickers and German venue codes. Validate
+        # the exact symbol and currency against chart metadata instead.
+        if provider=='revolut' and not isin:
+            # Allianz issuer share information: WKN 840400, exchange code ALV.
+            # allianz.com/en/investor_relations/share/share-information.html
+            alias={'840400':'ALV.DE'}.get(ticker) if currency=='EUR' else None
+            symbols=([alias] if alias else [ticker] if currency=='USD' or ticker.endswith(('.DE','.F','.AS','.PA','.MI','.BR','.MC')) else
+                     [ticker+'.DE',ticker+'.F'] if currency=='EUR' else [])
+            for symbol in symbols:
+                try:stock=listing(symbol,store=store)
+                except ProviderBusy:raise
+                except Exception:continue
+                if stock['symbol'].upper()==symbol.upper() and stock['currency']==target:
+                    return {'mapping':stock,'via':'ISIN / ticker en gecontroleerde koersvaluta'}
         queries=[]
         for query in (isin,base,first.get('name','')):
             if 2<=len(query)<=80 and query not in queries:queries.append(query)
@@ -78,10 +97,10 @@ def resolve(store,rows,provider,preferred=None):
         elif failures:reason='Koersdienst tijdelijk niet beschikbaar of de gevonden notering kon niet worden gecontroleerd. Probeer de automatische koppeling opnieuw.'
         else:reason='Geen eenduidige ondersteunde notering gevonden voor '+ticker+((' · ISIN '+isin) if isin else '')+'.'
         return {'error':reason}
-    result=cached_json(store,'import-listing-v5',identity,7*86400,find)
+    result=cached_json(store,'import-listing-v6',identity,7*86400,find)
     # Do not keep transient failures for a week.
     if result.get('error'):
-        with store.connect() as db:db.execute("DELETE FROM api_cache WHERE namespace='import-listing-v5' AND cache_key=?",(identity,))
+        with store.connect() as db:db.execute("DELETE FROM api_cache WHERE namespace='import-listing-v6' AND cache_key=?",(identity,))
     return result
 
 def resolve_instrument(store,batch_id,key):

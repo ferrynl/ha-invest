@@ -147,9 +147,13 @@ def book_row(db,batch_id,account_id,provider,row,mapping,trace):
             prior=[p for p in lots if (p['purchased_on'],p['trade_time'])<=(row['day'],row['trade_time'])]
             if not prior:raise ValueError('Splitsing zonder voorafgaand bezit. Importeer de volledige aankoopgeschiedenis.')
             point=daily_values(prior,[],[],today=date.fromisoformat(row['day']))[-1]
-            if provider=='traderepublic' and row.get('split_ratio'):
-                from .traderepublic import SPLITS
-                ratio=SPLITS.get((row['raw'].get('ISIN'),row['day']))
+            if provider in ('traderepublic','revolut') and row.get('split_ratio'):
+                if provider=='revolut':
+                    from .revolut import SPLITS
+                    ratio=SPLITS.get((row['ticker'],row['currency'],row['day']))
+                else:
+                    from .traderepublic import SPLITS
+                    ratio=SPLITS.get((row['raw'].get('ISIN'),row['day']))
                 before=Decimal(point['quantity']);source_quantity=Decimal(row['quantity'])
                 if not ratio or before<=0 or source_quantity not in (before*ratio,before*(ratio-1)):
                     raise ValueError('Splitsingsaantal sluit niet aan op het voorafgaande bezit en de bevestigde verhouding. Controleer de volledige aankoophistorie.')

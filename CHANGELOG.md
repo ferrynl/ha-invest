@@ -1,3 +1,11 @@
+## 0.41.1
+
+- Revolut: bewaarloon en exact tegengestelde dividendbelastingcorrecties blokkeren de import niet meer; kapitaalterugbetalingen blijven buiten dividendwinst.
+- De ServiceNow-splitsing van 18 december 2025 wordt met de bevestigde verhouding en het voorafgaande bezit gecontroleerd, met behoud van kostprijs.
+- Exacte Amerikaanse tickers, Duitse beurscodes en de Allianz-WKN worden rechtstreeks gecontroleerd wanneer de zoekindex tekortschiet. Valuta en provider-wachttijden blijven gecontroleerd.
+- Fusies en onbekende splitsingen krijgen gerichte beoordelingsmeldingen. Bestaande foutregels kunnen opnieuw worden verwerkt met behoud van bron-ID en handmatige keuzes.
+- Databaseschema blijft 19; geen wijziging aan eerder geboekte transacties.
+
 ## 0.41.0
 
 - Brokeraccounts aanpassen en verwijderen via Instellingen → Brokeraccounts, met aparte pop-ups.

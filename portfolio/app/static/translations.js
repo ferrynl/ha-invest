@@ -7224,5 +7224,30 @@ const UI_TRANSLATIONS = {
   "nl": "Verwijderen",
   "en": "Delete",
   "es": "Eliminar"
- }
+ },
+ "Fusie: controleer de gekoppelde geld- en aandelenregels en de oorspronkelijke kostprijs. Deze regel blijft apart bewaard.": {
+  "nl": "Fusie: controleer de gekoppelde geld- en aandelenregels en de oorspronkelijke kostprijs. Deze regel blijft apart bewaard.",
+  "en": "Merger: check the linked cash and share entries and the original cost basis. This entry is kept for review.",
+  "es": "Fusión: comprueba los movimientos vinculados de efectivo y acciones y el coste original. Esta fila se conserva para revisión."
+},
+ "Dividendbelastingcorrectie: controleer de bijbehorende dividendboeking. Alleen een exact tegengesteld correctiepaar wordt automatisch overgeslagen.": {
+  "nl": "Dividendbelastingcorrectie: controleer de bijbehorende dividendboeking. Alleen een exact tegengesteld correctiepaar wordt automatisch overgeslagen.",
+  "en": "Dividend tax adjustment: check the related dividend entry. Only an exactly offsetting adjustment pair is skipped automatically.",
+  "es": "Corrección del impuesto sobre dividendos: comprueba el dividendo relacionado. Solo se omite automáticamente un par de correcciones exactamente opuestas."
+},
+ "Splitsing: de verhouding is niet bevestigd voor deze ticker, valuta en datum. Deze regel blijft apart bewaard.": {
+  "nl": "Splitsing: de verhouding is niet bevestigd voor deze ticker, valuta en datum. Deze regel blijft apart bewaard.",
+  "en": "Stock split: the ratio has not been confirmed for this ticker, currency and date. This entry is kept for review.",
+  "es": "Desdoblamiento: la proporción no está confirmada para este símbolo, moneda y fecha. Esta fila se conserva para revisión."
+},
+ "Bewaarloon overgeslagen; kosten worden niet in de winst verwerkt.": {
+  "nl": "Bewaarloon overgeslagen; kosten worden niet in de winst verwerkt.",
+  "en": "Custody fee skipped; fees are not included in profit.",
+  "es": "Comisión de custodia omitida; los gastos no se incluyen en el beneficio."
+},
+ "Tegengestelde dividendbelastingcorrecties heffen elkaar op; overgeslagen.": {
+  "nl": "Tegengestelde dividendbelastingcorrecties heffen elkaar op; overgeslagen.",
+  "en": "Offsetting dividend tax adjustments cancel each other out; skipped.",
+  "es": "Las correcciones opuestas del impuesto sobre dividendos se anulan entre sí; omitidas."
+}
 };

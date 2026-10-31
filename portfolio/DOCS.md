@@ -853,3 +853,14 @@ en beoordelingen. Typ **VERWIJDEREN** om de rekening inclusief gekoppelde admini
 te verwijderen. De app bewaart vooraf een herstelback-up die je daarna kunt downloaden.
 Andere rekeningen en gedeelde koersen blijven behouden. Een opgeslagen API-verbinding
 wordt eveneens verwijderd; stel deze na eventueel portefeuilleherstel opnieuw in.
+
+### Revolut: kosten en bijzondere transacties
+
+Bewaarloon wordt overgeslagen: kosten zijn niet opgenomen in de winst. Twee exact
+tegengestelde dividendbelastingcorrecties voor hetzelfde aandeel, dezelfde valuta en
+dezelfde dag worden samen overgeslagen; losse correcties blijven bij **Te beoordelen**.
+Kapitaalterugbetalingen worden apart opgeslagen, buiten dividendwinst.
+De bevestigde NOW-splitsing van 18 december 2025 vereist aansluitende aankoophistorie;
+de oorspronkelijke kostprijs blijft behouden. Fusies en onbekende splitsingen blijven
+apart ter beoordeling. Open een bestaand importvoorbeeld opnieuw en kies opnieuw
+verwerken om eerder afgewezen bronregels met de verbeterde herkenning te beoordelen.

@@ -99,7 +99,7 @@ def list_issues(store):
         returns=[dict(r) for r in db.execute('SELECT c.*,a.name AS account_name FROM capital_returns c JOIN broker_accounts a ON a.id=c.account_id ORDER BY c.id DESC LIMIT 500')]
     result=[]
     for item in entries:
-        item=dict(item);row=json.loads(item.pop('payload'));raw=row.get('raw',{});item.update(ticker=row.get('ticker',''),action=raw.get('Action') or raw.get('type',''),day=row.get('day') or raw.get('date') or raw.get('Time (UTC)',raw.get('Time','')),currency=row.get('currency') or raw.get('currency') or raw.get('Currency (Total)',''),amount=row.get('amount') or raw.get('amount') or raw.get('Total',''))
+        item=dict(item);row=json.loads(item.pop('payload'));raw=row.get('raw',{});item.update(ticker=row.get('ticker',''),action=raw.get('Action') or raw.get('Type') or raw.get('type',''),day=row.get('day') or raw.get('Date') or raw.get('date') or raw.get('Time (UTC)',raw.get('Time','')),currency=row.get('currency') or raw.get('currency') or raw.get('Currency (Total)',''),amount=row.get('amount') or raw.get('amount') or raw.get('Net Amt.') or raw.get('Total Amount') or raw.get('Total',''))
         result.append(item)
     return dict(issues=result,capital_returns=returns)
 
@@ -146,7 +146,9 @@ def refresh_supported(rows,provider='trading212'):
     parsed=ADAPTERS[provider]['parse'](stream.getvalue())
     for row,new in zip(rows,parsed):
         if row.get('decision') not in (None,'retry') or not row.get('error') or row.get('duplicate'):continue
-        if provider=='traderepublic':
+        if provider=='revolut':
+            pass  # Reparse failed legacy rows, preserving explicit decisions and identities.
+        elif provider=='traderepublic':
             if (new.get('error') and not new.get('needs_split_currency')) or new.get('kind') not in ('BUY','SELL','DIVIDEND','CAPITAL_RETURN','SKIP','SPLIT'):continue
         else:
             if new.get('kind') not in ('BUY','SELL','DISTRIBUTION','CAPITAL_RETURN','SPLIT','SPLIT_INFO','SPLIT_CLOSE'):continue

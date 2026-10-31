@@ -12,6 +12,12 @@ class RevolutTests(unittest.TestCase):
   self.assertEqual(rows[0]['price'],'10');self.assertIsNone(rows[0]['error']);self.assertTrue(rows[1]['error'])
   modern='Date,Reference,Symbol,ISIN,Type,Quantity,CCY,Price/share,Net Amt.\n2026-01-01,abc,AAPL,US0378331005,DIVIDEND,,USD,,2\n'
   row=parse_csv(modern)[0];self.assertEqual(row['amount'],'2');self.assertEqual(row['external_id'],'id:abc')
+ def test_review_reason_identifies_action_and_invalid_source_values(self):
+  header='Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency\n'
+  rows=parse_csv(header+'2026-01-01,MCD,STOCK SPLIT,2,0,0,USD\n2026-01-01,MCD,BUY,2,0,0,USD\n2026-01-01,,BUY,2,10,20,USD\n')
+  self.assertIn('Splitsing:',rows[0]['error'])
+  self.assertEqual(rows[1]['error'],'Aantal of bedrag ontbreekt of is ongeldig.')
+  self.assertEqual(rows[2]['error'],'Geldige ticker ontbreekt.')
  def test_bad_rows_and_stable_identity(self):
   text='Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency\n2026-01-01,AAPL,BUY,2,NaN,20,USD\n'
   row=parse_csv(text)[0];self.assertTrue(row['error']);self.assertEqual(row['external_id'],parse_csv(text)[0]['external_id'])
