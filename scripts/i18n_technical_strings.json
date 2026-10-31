@@ -1171,6 +1171,10 @@
     "#import-geschiedenis",
     "import-voorbeeld",
     "import-geschiedenis",
-    "t212-report-account"
+    "t212-report-account",
+    "import-account-add",
+    "broker-form-editor",
+    "broker-form-editor-popup",
+    "broker"
   ]
 }

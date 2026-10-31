@@ -7144,5 +7144,10 @@ const UI_TRANSLATIONS = {
   "nl": "Nog geen imports. Begin bij het brokeroverzicht.",
   "en": "No imports yet. Start at the broker overview.",
   "es": "Todavía no hay importaciones. Empieza en la vista de brókeres."
+ },
+ "Nog geen passende brokerrekening": {
+  "nl": "Nog geen passende brokerrekening",
+  "en": "No matching broker account yet",
+  "es": "Todavía no hay una cuenta de bróker compatible"
  }
 };

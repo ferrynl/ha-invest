@@ -1,3 +1,9 @@
+## 0.40.1
+
+- Brokerrekening direct vanuit de importpop-up toevoegen, met de juiste broker vooraf ingevuld.
+- Na aanmaken wordt de nieuwe rekening geselecteerd en keert de upload terug met behoud van het gekozen bestand.
+- Lege rekeningkeuze krijgt een duidelijke melding; een import zonder rekening kan niet worden gestart.
+
 ## 0.40.0
 
 - Imports opgesplitst in een rustig brokeroverzicht, drie eigen brokerpagina’s, importvoorbeeld en importgeschiedenis.

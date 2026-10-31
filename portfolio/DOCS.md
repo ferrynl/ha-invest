@@ -835,3 +835,7 @@ verwerkte imports. Regels met problemen vind je op **Te beoordelen**; vaste kopp
 beheer je bij **Aandelenkoppelingen**. Downloaden staat op de aparte pagina **Exporteren**.
 De logo’s en schermafbeeldingen worden lokaal geleverd; de browser vraagt geen externe
 logo- of afbeeldingsdienst aan. Brokerbenamingen en logo’s behoren aan hun eigenaren.
+
+Bij een lege rekeningkeuze klik je in de importpop-up op **Brokeraccount toevoegen**.
+De broker staat al ingevuld. Na opslaan keer je terug naar je upload en is de nieuwe
+rekening geselecteerd. Een eventueel gekozen CSV-bestand blijft behouden.
