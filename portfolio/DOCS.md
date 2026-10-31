@@ -815,4 +815,8 @@ bij de gebundelde bestanden in portfolio/app/static/WORLD_MAP_SOURCES.md.
 
 ## Wensen & bugs
 
-Open **Wensen & bugs** voor het openbare GitHub-overzicht met zoek-, type- en statusfilters. De server bewaart maximaal 100 recent bijgewerkte GitHub-items tien minuten; pull requests worden niet getoond. Via **Nieuwe melding** vul je een wens of bug in. **Verder op GitHub** opent een nieuwe tab; controleer en publiceer daar met je eigen GitHub-account. Alleen je tekst en de appversie worden meegenomen. Meldingen zijn openbaar: deel geen persoonlijke gegevens. De koppeling gebruikt geen GitHub-sleutels. Bij een storing blijven de GitHub-link en het meldformulier bruikbaar.
+Meldingen worden binnen Home Invest ingediend en gevolgd; gebruikers hebben geen GitHub-account nodig. De beheerder stelt `feedback_service_url` in de Home Assistant-appconfiguratie in (bijvoorbeeld `https://meldingen.home-invest.nl`) en activeert de installatie via **Wensen & bugs → Meldservice activeren** met een eenmalige code. Zonder deze inrichting staat verzenden uit. Per installatie geldt een limiet van vijf meldingen per 24 uur. Alleen de bewust ingevulde tekst en de appversie worden verstuurd; meldingen worden openbaar op GitHub.
+
+De aparte centrale container wordt in Coolify gebouwd met `feedback_service/Dockerfile` en buildcontext `/`. Zie [installatie, GitHub App en beheer](../feedback_service/README.md) voor Coolify.
+
+De lokale wachtrij en installatiegegevens staan versleuteld in de aparte map `feedback/` in de app-datafolder, buiten het portefeuilledatabestand. Ze blijven behouden bij portefeuilleherstel; een volledige Home Assistant-appback-up is nodig om de meldverbinding mee te herstellen. Versturen wordt automatisch hervat. Bij een onduidelijke GitHub-verzenduitkomst controleert de centrale beheerder de melding om dubbele issues te voorkomen.

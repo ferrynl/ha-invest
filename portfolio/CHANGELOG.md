@@ -1,3 +1,10 @@
+## 0.39.0
+
+- Wensen en bugs volledig indienen binnen Home Invest, zonder GitHub-account, via een apart te hosten centrale meldservice.
+- Coolify-container met GitHub App, eenmalige installatieactivering, intrekbare toegang, verzendlimieten en duurzame wachtrij.
+- Versleutelde lokale verzending met expliciete toestemming voor openbaarmaking en bescherming tegen dubbele meldingen.
+- Meldservice staat standaard uit totdat een HTTPS-adres, GitHub App en activering zijn ingericht. Databaseschema blijft 19.
+
 ## 0.38.0
 
 - Aparte pagina Wensen & bugs met zoeken, type- en statusfilters en een tijdelijk opgeslagen GitHub-overzicht.

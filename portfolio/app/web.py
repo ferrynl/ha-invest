@@ -15,7 +15,7 @@ from security import verify_password,SESSION_TTL
 from version import APP_VERSION
 from i18n import localize,LANGUAGES
 from updates import check_updates
-from feedback import overview as feedback_overview
+from feedback_client import overview as feedback_overview,connect as feedback_connect,enqueue as feedback_enqueue
 from imports import ADAPTERS
 from imports.service import preview as import_preview,open_preview
 from imports.partial import commit_partial,list_issues,resolve_issue
@@ -102,7 +102,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
             if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/home-assistant','/api/users','/api/backup','/api/export','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
             if path=='/api/feedback':
-                try:return self.respond(feedback_overview(store))
+                try:return self.respond(feedback_overview(store,integration_options,user))
                 except ValueError as error:return self.respond({'error':str(error)},503)
             if path=='/api/export':
                 if not auth.enabled():return self.respond({'error':'Alleen een admin heeft toegang tot deze functie.'},403)
@@ -293,7 +293,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             user=auth.user(self.token())
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path!='/api/auth/login':
-                if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation') or path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/')):return
+                if not self.allowed(user,admin=path.startswith('/api/portfolio/') or path in ('/api/feedback/connect','/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation') or path in ('/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/')):return
                 if auth.enabled() and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),user['csrf'] or ''):
                     return self.respond({'error':'Ongeldige sessiebeveiliging. Meld je opnieuw aan.'},403)
             try:
@@ -306,6 +306,11 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))
                 data=json.loads(body)
                 if not isinstance(data,dict):raise ValueError('Ongeldige aanvraag.')
+                if path in ('/api/feedback/connect','/api/feedback/submit'):
+                    try:
+                        result=feedback_connect(store,integration_options,data) if path.endswith('/connect') else feedback_enqueue(store,integration_options,user,data)
+                        return self.respond(result,202 if path.endswith('/submit') else 200)
+                    except OSError:return self.respond({'error':'De melding of verbinding kon niet veilig worden opgeslagen.'},503)
                 if path=='/api/account/dashboard':
                     from dashboard_layout import save
                     return self.respond(save(store,user,self.headers.get('X-HomeInvest-Profile','personal'),data))

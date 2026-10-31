@@ -6884,5 +6884,180 @@ const UI_TRANSLATIONS = {
   "nl": "Open",
   "en": "Open",
   "es": "Abierto"
+ },
+ "Dien je wens of bug hier in en volg de status. Je hebt geen GitHub-account nodig.": {
+  "nl": "Dien je wens of bug hier in en volg de status. Je hebt geen GitHub-account nodig.",
+  "en": "Submit your wish or bug here and track its status. No GitHub account is needed.",
+  "es": "Envía tu deseo o error aquí y sigue su estado. No necesitas una cuenta de GitHub."
+ },
+ "Activeer deze installatie met een eenmalige code van de beheerder van de meldservice. Je hebt geen GitHub-account nodig.": {
+  "nl": "Activeer deze installatie met een eenmalige code van de beheerder van de meldservice. Je hebt geen GitHub-account nodig.",
+  "en": "Activate this installation with a one-time code from the feedback service administrator. No GitHub account is needed.",
+  "es": "Activa esta instalación con un código de un solo uso del administrador del servicio. No necesitas una cuenta de GitHub."
+ },
+ "Activeren": {
+  "nl": "Activeren",
+  "en": "Activate",
+  "es": "Activar"
+ },
+ "Activeringscode": {
+  "nl": "Activeringscode",
+  "en": "Activation code",
+  "es": "Código de activación"
+ },
+ "Meldservice activeren": {
+  "nl": "Meldservice activeren",
+  "en": "Activate feedback service",
+  "es": "Activar el servicio de incidencias"
+ },
+ "Mijn meldingen": {
+  "nl": "Mijn meldingen",
+  "en": "My submissions",
+  "es": "Mis incidencias"
+ },
+ "Opgeslagen op deze installatie. Alleen je eigen meldingen worden hier getoond.": {
+  "nl": "Opgeslagen op deze installatie. Alleen je eigen meldingen worden hier getoond.",
+  "en": "Stored on this installation. Only your own submissions are shown here.",
+  "es": "Guardadas en esta instalación. Aquí solo aparecen tus propias incidencias."
+ },
+ "Je melding wordt via de centrale meldservice openbaar op GitHub. Deel geen bedragen, accountgegevens, sleutels of andere persoonlijke informatie. Alleen je tekst en de appversie worden verstuurd.": {
+  "nl": "Je melding wordt via de centrale meldservice openbaar op GitHub. Deel geen bedragen, accountgegevens, sleutels of andere persoonlijke informatie. Alleen je tekst en de appversie worden verstuurd.",
+  "en": "Your submission will be made public on GitHub through the central feedback service. Do not share amounts, account details, keys or other personal information. Only your text and the app version are sent.",
+  "es": "Tu incidencia se publicará en GitHub a través del servicio central. No compartas importes, datos de cuentas, claves ni otra información personal. Solo se envían tu texto y la versión de la aplicación."
+ },
+ "Ik begrijp dat mijn melding openbaar wordt.": {
+  "nl": "Ik begrijp dat mijn melding openbaar wordt.",
+  "en": "I understand that my submission will be public.",
+  "es": "Entiendo que mi incidencia será pública."
+ },
+ "Melding indienen": {
+  "nl": "Melding indienen",
+  "en": "Submit issue",
+  "es": "Enviar incidencia"
+ },
+ "Wacht op verzending": {
+  "nl": "Wacht op verzending",
+  "en": "Waiting to send",
+  "es": "Pendiente de envío"
+ },
+ "Ontvangen door de meldservice": {
+  "nl": "Ontvangen door de meldservice",
+  "en": "Received by the feedback service",
+  "es": "Recibida por el servicio"
+ },
+ "Wordt verwerkt": {
+  "nl": "Wordt verwerkt",
+  "en": "Processing",
+  "es": "En proceso"
+ },
+ "Controle door beheerder nodig": {
+  "nl": "Controle door beheerder nodig",
+  "en": "Administrator review needed",
+  "es": "Requiere revisión del administrador"
+ },
+ "Geblokkeerd; neem contact op met de beheerder": {
+  "nl": "Geblokkeerd; neem contact op met de beheerder",
+  "en": "Blocked; contact the administrator",
+  "es": "Bloqueada; contacta con el administrador"
+ },
+ "Je hebt hier nog geen meldingen ingediend.": {
+  "nl": "Je hebt hier nog geen meldingen ingediend.",
+  "en": "You have not submitted any issues here yet.",
+  "es": "Todavía no has enviado incidencias aquí."
+ },
+ "De 100 recent bijgewerkte meldingen worden getoond.": {
+  "nl": "De 100 recent bijgewerkte meldingen worden getoond.",
+  "en": "Showing the 100 most recently updated issues.",
+  "es": "Se muestran las 100 incidencias actualizadas más recientemente."
+ },
+ "Verbonden met de meldservice. Meldingen zijn openbaar; deel geen persoonlijke gegevens.": {
+  "nl": "Verbonden met de meldservice. Meldingen zijn openbaar; deel geen persoonlijke gegevens.",
+  "en": "Connected to the feedback service. Submissions are public; do not share personal information.",
+  "es": "Conectado al servicio. Las incidencias son públicas; no compartas datos personales."
+ },
+ "De beheerder moet de meldservice eerst activeren.": {
+  "nl": "De beheerder moet de meldservice eerst activeren.",
+  "en": "The administrator must activate the feedback service first.",
+  "es": "El administrador debe activar primero el servicio."
+ },
+ "De centrale meldservice is nog niet ingesteld.": {
+  "nl": "De centrale meldservice is nog niet ingesteld.",
+  "en": "The central feedback service has not been configured yet.",
+  "es": "El servicio central todavía no está configurado."
+ },
+ "De lijst wordt op de achtergrond bijgewerkt.": {
+  "nl": "De lijst wordt op de achtergrond bijgewerkt.",
+  "en": "The list is updated in the background.",
+  "es": "La lista se actualiza en segundo plano."
+ },
+ "Melding lokaal opgeslagen. Verzending gaat automatisch verder, ook na een herstart.": {
+  "nl": "Melding lokaal opgeslagen. Verzending gaat automatisch verder, ook na een herstart.",
+  "en": "Submission saved locally. Sending continues automatically, including after a restart.",
+  "es": "Incidencia guardada localmente. El envío continúa automáticamente, incluso tras un reinicio."
+ },
+ "Stel een geldig HTTPS-adres voor de meldservice in bij de appconfiguratie.": {
+  "nl": "Stel een geldig HTTPS-adres voor de meldservice in bij de appconfiguratie.",
+  "en": "Set a valid HTTPS feedback service address in the app configuration.",
+  "es": "Configura una dirección HTTPS válida para el servicio en la configuración de la aplicación."
+ },
+ "De meldverbinding kan niet worden gelezen. Herstel de volledige appback-up.": {
+  "nl": "De meldverbinding kan niet worden gelezen. Herstel de volledige appback-up.",
+  "en": "The feedback connection cannot be read. Restore the complete app backup.",
+  "es": "No se puede leer la conexión del servicio. Restaura la copia de seguridad completa de la aplicación."
+ },
+ "Vul een geldige eenmalige activeringscode in.": {
+  "nl": "Vul een geldige eenmalige activeringscode in.",
+  "en": "Enter a valid one-time activation code.",
+  "es": "Introduce un código de activación válido de un solo uso."
+ },
+ "Deze installatie is al verbonden met de meldservice.": {
+  "nl": "Deze installatie is al verbonden met de meldservice.",
+  "en": "This installation is already connected to the feedback service.",
+  "es": "Esta instalación ya está conectada al servicio."
+ },
+ "De activeringscode is ongeldig, verlopen of al gebruikt.": {
+  "nl": "De activeringscode is ongeldig, verlopen of al gebruikt.",
+  "en": "The activation code is invalid, expired or already used.",
+  "es": "El código de activación no es válido, ha caducado o ya se ha utilizado."
+ },
+ "De meldservice is niet bereikbaar. Probeer activeren later opnieuw.": {
+  "nl": "De meldservice is niet bereikbaar. Probeer activeren later opnieuw.",
+  "en": "The feedback service is unavailable. Try activating again later.",
+  "es": "El servicio no está disponible. Intenta activarlo más tarde."
+ },
+ "De meldservice gaf een ongeldig antwoord.": {
+  "nl": "De meldservice gaf een ongeldig antwoord.",
+  "en": "The feedback service returned an invalid response.",
+  "es": "El servicio devolvió una respuesta no válida."
+ },
+ "Deze installatie heeft de daglimiet van vijf meldingen bereikt.": {
+  "nl": "Deze installatie heeft de daglimiet van vijf meldingen bereikt.",
+  "en": "This installation has reached the daily limit of five submissions.",
+  "es": "Esta instalación ha alcanzado el límite diario de cinco incidencias."
+ },
+ "De lokale meldwachtrij is vol. Probeer het later opnieuw.": {
+  "nl": "De lokale meldwachtrij is vol. Probeer het later opnieuw.",
+  "en": "The local submission queue is full. Try again later.",
+  "es": "La cola local de incidencias está llena. Inténtalo más tarde."
+ },
+ "De melding of verbinding kon niet veilig worden opgeslagen.": {
+  "nl": "De melding of verbinding kon niet veilig worden opgeslagen.",
+  "en": "The submission or connection could not be saved securely.",
+  "es": "No se pudo guardar la incidencia o la conexión de forma segura."
+ },
+ "Vul een geldige titel en beschrijving in en bevestig dat je melding openbaar wordt.": {
+  "nl": "Vul een geldige titel en beschrijving in en bevestig dat je melding openbaar wordt.",
+  "en": "Enter a valid title and description and confirm that your submission will be public.",
+  "es": "Introduce un título y una descripción válidos y confirma que tu incidencia será pública."
+ },
+ "De meldservice is tijdelijk niet bereikbaar. Je melding blijft bewaard.": {
+  "nl": "De meldservice is tijdelijk niet bereikbaar. Je melding blijft bewaard.",
+  "en": "The feedback service is temporarily unavailable. Your submission is retained.",
+  "es": "El servicio no está disponible temporalmente. Tu incidencia se conservará."
+ },
+ "Meldservice bijwerken mislukt.": {
+  "nl": "Meldservice bijwerken mislukt.",
+  "en": "Failed to update the feedback service.",
+  "es": "No se pudo actualizar el servicio de incidencias."
  }
 };

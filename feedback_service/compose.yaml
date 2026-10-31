@@ -1,0 +1,21 @@
+# Local/VPS alternative. In Coolify use the Dockerfile instructions in README.md.
+services:
+  feedback:
+    build:
+      context: ..
+      dockerfile: feedback_service/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - feedback-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  feedback-data:

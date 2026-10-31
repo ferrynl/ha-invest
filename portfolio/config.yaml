@@ -1,6 +1,6 @@
 name: Home Invest
 url: https://github.com/ferrynl/ha-invest
-version: "0.38.0"
+version: "0.39.0"
 slug: aandelen_dashboard
 description: Persoonlijke aandelenportefeuille met SQLite en koershistorie
 arch: [amd64, aarch64]
@@ -19,6 +19,8 @@ ports_description:
 options:
   refresh_minutes: 15
   home_assistant_token: ""
+  feedback_service_url: ""
 schema:
   refresh_minutes: int(5,1440)
   home_assistant_token: password?
+  feedback_service_url: str?

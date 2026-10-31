@@ -143,5 +143,7 @@ if __name__ == '__main__':
     start_export()
     threading.Thread(target=background, daemon=True).start()
     threading.Thread(target=demo_background, daemon=True).start()
+    from feedback_client import background as feedback_background
+    threading.Thread(target=feedback_background,args=(store,options),daemon=True).start()
     # The dashboard stays ingress-only; optional sensors use a separate read-only port.
     ThreadingHTTPServer((os.environ.get('BIND', '0.0.0.0'), int(os.environ.get('PORT', 8099))), Handler).serve_forever()

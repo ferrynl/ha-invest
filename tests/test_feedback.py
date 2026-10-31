@@ -1,57 +1,42 @@
 import sys
-import json
-import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'portfolio'/'app'))
-import feedback
-from storage import Store
+from unittest.mock import Mock,MagicMock
+from urllib.error import HTTPError
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from feedback_service.github import GitHub,GitHubFailure
 
 class FeedbackTests(unittest.TestCase):
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.tmp.cleanup)
-        self.store = Store(self.tmp.name)
-        feedback._retry_after = 0
+        self.github=GitHub.__new__(GitHub)
+        self.github.access_token=Mock(return_value='scoped-test-token')
 
-    def response(self, rows):
-        response = MagicMock()
-        response.__enter__.return_value.read.return_value = json.dumps(rows).encode()
-        return response
+    def test_board_normalizes_plain_text_and_excludes_pull_requests(self):
+        rows=[{'number':1,'title':'[Bug] <script>alert(1)</script>','state':'open','html_url':'https://evil.invalid','body':'not exposed','labels':[]},
+              {'number':2,'title':'Feature','state':'closed','labels':[{'name':'enhancement'}]},
+              {'number':3,'title':'PR','pull_request':{}},
+              {'number':4,'title':'[Wens] test','labels':[]},
+              {'number':'bad','title':'invalid'}]
+        self.github.request=Mock(return_value=(rows,'etag'))
+        board,etag=self.github.board()
+        self.assertEqual([r['kind'] for r in board['issues']],['bug','wish','wish'])
+        self.assertEqual(board['issues'][1]['state'],'closed')
+        self.assertNotIn('body',board['issues'][0])
+        self.assertNotIn('url',board['issues'][0])
+        self.assertEqual(etag,'etag')
+        self.github.request.assert_called_once_with('/repos/ferrynl/ha-invest/issues?state=all&sort=updated&direction=desc&per_page=100','scoped-test-token',etag=None)
 
-    def test_normalizes_and_caches_without_credentials(self):
-        rows = [{'number':1,'title':'[Bug] <script>alert(1)</script>','state':'open','html_url':'https://evil.invalid','labels':[]},
-                {'number':2,'title':'Feature','state':'closed','labels':[{'name':'enhancement'}]},
-                {'number':3,'title':'PR','pull_request':{}},
-                {'number':4,'title':'[Wens] test','labels':[]},
-                {'number':'bad','title':'invalid'}]
-        with patch('feedback.urlopen',return_value=self.response(rows)) as request:
-            result = feedback.overview(self.store)
-            self.assertEqual(result,feedback.overview(self.store))
-            request.assert_called_once()
-            req = request.call_args.args[0]
-            self.assertEqual(req.full_url,feedback.API)
-            self.assertFalse(req.has_header('Authorization'))
-            self.assertIsNone(req.data)
-        self.assertEqual([r['kind'] for r in result['issues']],['bug','wish','wish'])
-        self.assertEqual(result['issues'][0]['url'],feedback.REPOSITORY+'/issues/1')
-        self.assertNotIn('body',result['issues'][0])
-        self.assertEqual(result['issues'][1]['state'],'closed')
+    def test_conditional_board_keeps_existing_snapshot(self):
+        self.github.request=Mock(return_value=(None,'etag'))
+        self.assertEqual(self.github.board('etag'),(None,'etag'))
 
-    def test_failure_is_generic_and_backed_off(self):
-        with patch('feedback.urlopen',side_effect=RuntimeError('secret provider response')) as request:
-            for _ in range(2):
-                with self.assertRaisesRegex(ValueError,'GitHub is tijdelijk') as error:
-                    feedback.overview(self.store)
-                self.assertNotIn('secret',str(error.exception))
-            request.assert_called_once()
-
-    def test_oversize_response_is_rejected(self):
-        response = MagicMock()
-        response.__enter__.return_value.read.return_value=b' '*2000001
-        with patch('feedback.urlopen',return_value=response):
-            with self.assertRaises(ValueError):feedback.overview(self.store)
+    def test_oversize_response_and_redirect_are_rejected(self):
+        self.github.opener=Mock()
+        response=MagicMock();response.__enter__.return_value.read.return_value=b' '*2000001
+        self.github.opener.open.return_value=response
+        with self.assertRaises(GitHubFailure):self.github.request('/repos/ferrynl/ha-invest/issues','test')
+        self.github.opener.open.side_effect=HTTPError('https://api.github.com',302,'redirect',{},None)
+        with self.assertRaises(GitHubFailure) as error:self.github.request('/repos/ferrynl/ha-invest/issues','test')
+        self.assertEqual(error.exception.status,302)
 
 if __name__=='__main__':unittest.main()

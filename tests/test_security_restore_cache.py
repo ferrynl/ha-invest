@@ -71,6 +71,21 @@ class AccessTests(unittest.TestCase):
    self.assertEqual(self.request('GET','/api/feedback',token=basic,extra={'X-HomeInvest-Profile':'demo'})[0],200)
   with patch('web.feedback_overview',side_effect=ValueError('GitHub is tijdelijk niet beschikbaar. Probeer het later opnieuw.')):
    self.assertEqual(self.request('GET','/api/feedback',token=basic)[0],503)
+ def test_feedback_submission_requires_csrf_and_activation_requires_admin(self):
+  admin,admin_csrf=self.activate()
+  self.auth.save_user({'username':'submitter','password':self.password,'role':'basic'})
+  basic=self.auth.login('submitter',self.password,'test');csrf=self.auth.user(basic)['csrf']
+  with patch('web.feedback_enqueue',return_value={'ok':True}) as enqueue:
+   self.assertEqual(self.request('POST','/api/feedback/submit',{})[0],401)
+   self.assertEqual(self.request('POST','/api/feedback/submit',{},basic)[0],403)
+   enqueue.assert_not_called()
+   self.assertEqual(self.request('POST','/api/feedback/submit',{},basic,csrf)[0],202)
+   self.assertEqual(self.request('POST','/api/feedback/submit',{},basic,csrf,{'X-HomeInvest-Profile':'demo'})[0],202)
+  with patch('web.feedback_connect',return_value={'ok':True}) as connect:
+   self.assertEqual(self.request('POST','/api/feedback/connect',{},basic,csrf)[0],403)
+   self.assertEqual(self.request('POST','/api/feedback/connect',{},admin)[0],403)
+   connect.assert_not_called()
+   self.assertEqual(self.request('POST','/api/feedback/connect',{},admin,admin_csrf)[0],200)
  def test_mapping_registry_is_admin_only_and_csrf_protected(self):
   admin,csrf=self.activate()
   self.auth.save_user({'username':'mappingviewer','password':self.password,'role':'basic'})

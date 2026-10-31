@@ -1155,6 +1155,18 @@
     "noopener noreferrer",
     "noopener,noreferrer",
     "wish",
-    "feedback-page"
+    "feedback-page",
+    "#feedback",
+    "api/feedback/connect",
+    "api/feedback/submit",
+    "button[type=submit]",
+    "feedback-connect-cancel",
+    "feedback-connect-editor",
+    "feedback-connect-form",
+    "feedback-connect-open",
+    "feedback-connect-status",
+    "feedback-connection",
+    "feedback-form-status",
+    "feedback-mine"
   ]
 }

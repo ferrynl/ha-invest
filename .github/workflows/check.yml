@@ -56,6 +56,8 @@ jobs:
       - run: node tests/test_home.cjs
       - run: node tests/test_chart.cjs
       - run: docker build portfolio -t aandelen-dashboard:test
+      - run: docker build -f feedback_service/Dockerfile -t home-invest-feedback:test .
+      - run: docker run --rm --network none -v "$PWD/tests/smoke_feedback_container.py:/smoke.py:ro" home-invest-feedback:test python /smoke.py
   release:
     needs: tests
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

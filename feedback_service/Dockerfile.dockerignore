@@ -1,0 +1,10 @@
+**
+!feedback_service/
+!feedback_service/**
+feedback_service/**/__pycache__/
+feedback_service/**/*.pyc
+feedback_service/**/.env
+feedback_service/**/*.pem
+feedback_service/**/*.key
+feedback_service/**/*.sqlite*
+feedback_service/data/
