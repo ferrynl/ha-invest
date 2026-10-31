@@ -1193,6 +1193,17 @@
     "broker-delete-form",
     "api/accounts/delete",
     "broker-manage-backup",
-    "TimeoutError"
+    "TimeoutError",
+    "api/instrument/fundamentals?",
+    "free_cash_flow",
+    "net_income",
+    "ok",
+    "operating_cash_flow",
+    "over-ons",
+    "revenue",
+    "stock-fundamentals-rows",
+    "stock-fundamentals-source",
+    "stock-fundamentals-status",
+    "stock-fundamentals-table"
   ]
 }

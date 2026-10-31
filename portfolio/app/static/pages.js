@@ -33,7 +33,7 @@ document.querySelector('[data-route="transacties"]').after(transactionNav);
 for(const [route,title] of [['transacties-dividend',ui('Dividend')],['transacties-omzettingen',ui('Splitsingen en omzettingen')]]){
  const link=document.createElement('a');link.href='#'+route;link.dataset.route=route;link.textContent=title;transactionNav.append(link);
 }
-const pageNames={'import-voorbeeld':ui('Importvoorbeeld'),feedback:ui('Wensen & bugs'),'tmx-omboeken':ui('TMX omboeken naar TDT'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
+const pageNames={'over-ons':ui('Over ons'),'import-voorbeeld':ui('Importvoorbeeld'),feedback:ui('Wensen & bugs'),'tmx-omboeken':ui('TMX omboeken naar TDT'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
 for(const a of [...settingsNav.querySelectorAll('a'),...importNav.querySelectorAll('a'),...transactionNav.querySelectorAll('a')])pageNames[a.dataset.route]=a.textContent;
 for(const [key,title] of reportDefinitions)pageNames['rapporten-'+key]=title;
 function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches&&!document.body.classList.contains('locked');$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label',ui('Menu openen'));}
@@ -63,7 +63,7 @@ function showPage(){
  document.body.classList.toggle('stocks-list-page',page==='aandelen');
  const brokerSlot={home:'home-broker-slot',aandelen:'stocks-broker-slot',dividend:'dividend-broker-slot',rapporten:'reports-broker-slot'}[isReport?'rapporten':page];
  $(brokerSlot||'page-header').append($('broker-filter-control'));
- $('broker-filter-control').hidden=page==='account';
+ $('broker-filter-control').hidden=page==='account'||page==='over-ons';
  updateExportLinks();
  $('page-title').textContent=pageNames[page];document.title=pageNames[page]+' · Home Invest';closeMenu();
  if(isTransactions){configureTransactionPage(page);if(state)loadTransactions();}

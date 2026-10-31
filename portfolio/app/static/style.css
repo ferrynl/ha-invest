@@ -119,3 +119,5 @@ main input,main select,main textarea{max-width:100%}
 .import-account-field{display:flex;flex-direction:column;gap:10px;min-width:0}.import-account-field>button{align-self:flex-start}
 
 #broker-list td:last-child{display:flex;gap:8px;flex-wrap:wrap}#broker-delete-summary{font-weight:700;overflow-wrap:anywhere}
+
+.source-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:18px}.source-card{min-width:0;padding:18px;border:1px solid var(--border,#293951);border-radius:12px}.source-card h3{margin-top:0}.source-card p{line-height:1.65}.source-links{overflow-wrap:anywhere}[data-page="over-ons"] .panel{width:100%;box-sizing:border-box}#stock-fundamentals-table{font-variant-numeric:tabular-nums}#stock-fundamentals-source{overflow-wrap:anywhere}

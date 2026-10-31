@@ -1,3 +1,11 @@
+## 0.42.0 — 31 oktober 2026
+
+- Defeat Beta toegevoegd als aanvullende bron voor jaarcijfers op de aandelendetailpagina: omzet, nettowinst, operationele en vrije kasstroom en nettomarge voor maximaal vier boekjaren.
+- Alleen ondersteunde Amerikaanse USD-noteringen worden gekoppeld. Rapportagevaluta, boekjaar, datasetdatum en ophaalmoment zijn zichtbaar. Ontbrekende cijfers blijven onbekend; bedrijfsgegevens wijzigen geen koersen of boekingen.
+- Cijfers worden een dag bewaard in de bestaande SQLite-cache. Bij een bronstoring blijven eerdere cijfers met melding zichtbaar en geldt een wachttijd voor opnieuw ophalen.
+- Nieuwe pagina Over ons met databronnen, bronlinks, dekking en actualiteit, kaart- en vlagverantwoording en gebruikte licenties. Beschikbaar in Nederlands, Engels en Spaans.
+- De appcontainer gebruikt Debian slim met DuckDB en een vooraf geïnstalleerde officiële HTTP-uitbreiding voor het lezen van de openbare dataset. Geen databaseschemawijziging.
+
 ## 0.41.2
 
 - Brokeraccount verwijderen en aanpassen wachten niet meer op het ophalen van koersen.

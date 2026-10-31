@@ -114,10 +114,18 @@ def category_overview(store,account='all'):
     return dict(account_id=str(account),entries=entries,counts=counts)
 
 
-def company(store,data,account='all'):
+def owned_key(store,data,account='all'):
     key=identity(data)
     with store.connect() as db:
         owner=scope(db,account);restriction='' if owner is None else ' AND account_id=?';args=key if owner is None else (*key,owner)
         if not db.execute('SELECT 1 FROM purchases WHERE symbol=? AND exchange=? AND currency=?'+restriction+' UNION ALL SELECT 1 FROM dividends WHERE symbol=? AND exchange=? AND currency=?'+restriction,(*args,*args)).fetchone():raise ValueError('Aandeel niet gevonden.')
+    return key
+
+def fundamentals(store,data,account='all'):
+    from fundamentals import fetch
+    return fetch(store,owned_key(store,data,account))
+
+def company(store,data,account='all'):
+    key=owned_key(store,data,account)
     from profiles import fetch_company
     return fetch_company(store,key)

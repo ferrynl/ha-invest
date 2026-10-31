@@ -3707,8 +3707,8 @@ const UI_TRANSLATIONS = {
  },
  "- regel": {
   "nl": "- regel",
-  "en": " - row",
-  "es": " - fila"
+  "en": "- row",
+  "es": "- fila"
  },
  "betalingen ·": {
   "nl": "betalingen ·",
@@ -4757,8 +4757,8 @@ const UI_TRANSLATIONS = {
  },
  "- bij import geen voorafgaande aankoop in dit brokeraccount gevonden; aankoophistorie kan ontbreken.": {
   "nl": "- bij import geen voorafgaande aankoop in dit brokeraccount gevonden; aankoophistorie kan ontbreken.",
-  "en": " - no preceding purchase found in this broker account during import; purchase history may be missing.",
-  "es": " - no se encontró una compra previa en esta cuenta al importar; puede faltar historial de compras."
+  "en": "- no preceding purchase found in this broker account during import; purchase history may be missing.",
+  "es": "- no se encontró una compra previa en esta cuenta al importar; puede faltar historial de compras."
  },
  "Historie van": {
   "nl": "Historie van",
@@ -7264,5 +7264,245 @@ const UI_TRANSLATIONS = {
   "nl": "Geen bevestiging ontvangen. Controleer eerst de rekeninglijst voordat je opnieuw verwijdert.",
   "en": "No confirmation received. Check the account list before trying to delete again.",
   "es": "No se ha recibido confirmación. Comprueba la lista de cuentas antes de intentar eliminarlas de nuevo."
+ },
+ "Over ons": {
+  "nl": "Over ons",
+  "en": "About us",
+  "es": "Sobre nosotros"
+ },
+ "Over Home Invest": {
+  "nl": "Over Home Invest",
+  "en": "About Home Invest",
+  "es": "Acerca de Home Invest"
+ },
+ "Home Invest brengt je beleggingen, transacties en dividend samen in Home Assistant.": {
+  "nl": "Home Invest brengt je beleggingen, transacties en dividend samen in Home Assistant.",
+  "en": "Home Invest brings your investments, transactions and dividends together in Home Assistant.",
+  "es": "Home Invest reúne tus inversiones, operaciones y dividendos en Home Assistant."
+ },
+ "Bronnen en verantwoording": {
+  "nl": "Bronnen en verantwoording",
+  "en": "Sources and attribution",
+  "es": "Fuentes y atribución"
+ },
+ "Koersen, koershistorie, zoeken en bedrijfsprofielen. Koersen kunnen vertraagd zijn; beschikbaarheid en dekking verschillen per beurs.": {
+  "nl": "Koersen, koershistorie, zoeken en bedrijfsprofielen. Koersen kunnen vertraagd zijn; beschikbaarheid en dekking verschillen per beurs.",
+  "en": "Quotes, price history, search and company profiles. Quotes may be delayed; availability and coverage vary by exchange.",
+  "es": "Cotizaciones, historial, búsqueda y perfiles empresariales. Las cotizaciones pueden tener retraso; la disponibilidad y cobertura varían según la bolsa."
+ },
+ "Jaarcijfers via de openbare dataset op Hugging Face, oorspronkelijk uit Yahoo Finance. Alleen ondersteunde Amerikaanse noteringen; dagelijks bijgewerkte dataset, geen live koersen. Rapportagevaluta kan afwijken van de noteringsvaluta. Dataset: ODC-By; API-code: Apache-2.0.": {
+  "nl": "Jaarcijfers via de openbare dataset op Hugging Face, oorspronkelijk uit Yahoo Finance. Alleen ondersteunde Amerikaanse noteringen; dagelijks bijgewerkte dataset, geen live koersen. Rapportagevaluta kan afwijken van de noteringsvaluta. Dataset: ODC-By; API-code: Apache-2.0.",
+  "en": "Annual financials via the public Hugging Face dataset, originally from Yahoo Finance. Supported US listings only; daily dataset updates, no live quotes. Reporting currency may differ from listing currency. Dataset: ODC-By; API code: Apache-2.0.",
+  "es": "Cifras anuales del conjunto público de Hugging Face, procedentes de Yahoo Finance. Solo cotizaciones estadounidenses compatibles; actualización diaria, sin precios en directo. La moneda contable puede diferir de la de cotización. Datos: ODC-By; código API: Apache-2.0."
+ },
+ "Dagelijkse referentiewisselkoersen via Frankfurter. Omrekening gebruikt een beschikbare koers van uiterlijk de gekozen datum.": {
+  "nl": "Dagelijkse referentiewisselkoersen via Frankfurter. Omrekening gebruikt een beschikbare koers van uiterlijk de gekozen datum.",
+  "en": "Daily reference exchange rates via Frankfurter. Conversion uses an available rate no later than the selected date.",
+  "es": "Tipos de cambio diarios de referencia mediante Frankfurter. La conversión utiliza un tipo disponible de la fecha elegida o anterior."
+ },
+ "Openbare fondswaardering voor Apollo LU3170240538 in EUR. De bron vermeldt geen koersdatum; Home Invest toont het ophaalmoment.": {
+  "nl": "Openbare fondswaardering voor Apollo LU3170240538 in EUR. De bron vermeldt geen koersdatum; Home Invest toont het ophaalmoment.",
+  "en": "Public fund valuation for Apollo LU3170240538 in EUR. The source provides no price date; Home Invest shows the retrieval time.",
+  "es": "Valoración pública del fondo Apollo LU3170240538 en EUR. La fuente no indica la fecha del precio; Home Invest muestra cuándo se obtuvo."
+ },
+ "Je eigen administratie": {
+  "nl": "Je eigen administratie",
+  "en": "Your own records",
+  "es": "Tus propios registros"
+ },
+ "Transacties en dividend uit Trading 212, Trade Republic en Revolut, via ondersteunde exports en de optionele Trading 212 API. Handmatige boekingen en waarderingen zijn door de gebruiker aangeleverd.": {
+  "nl": "Transacties en dividend uit Trading 212, Trade Republic en Revolut, via ondersteunde exports en de optionele Trading 212 API. Handmatige boekingen en waarderingen zijn door de gebruiker aangeleverd.",
+  "en": "Transactions and dividends from Trading 212, Trade Republic and Revolut through supported exports and the optional Trading 212 API. Manual entries and valuations are supplied by the user.",
+  "es": "Operaciones y dividendos de Trading 212, Trade Republic y Revolut mediante exportaciones compatibles y la API opcional de Trading 212. Los registros y valoraciones manuales los aporta el usuario."
+ },
+ "Kaarten, vlaggen en vormgeving": {
+  "nl": "Kaarten, vlaggen en vormgeving",
+  "en": "Maps, flags and design",
+  "es": "Mapas, banderas y diseño"
+ },
+ "Natural Earth levert de wereldkaart (publiek domein). Vlaggen komen van flag-icons (MIT). Roboto is het lokaal meegeleverde lettertype. Bedrijfsiconen worden via Google Favicons geladen op basis van het websitedomein.": {
+  "nl": "Natural Earth levert de wereldkaart (publiek domein). Vlaggen komen van flag-icons (MIT). Roboto is het lokaal meegeleverde lettertype. Bedrijfsiconen worden via Google Favicons geladen op basis van het websitedomein.",
+  "en": "Natural Earth provides the world map (public domain). Flags come from flag-icons (MIT). Roboto is the bundled local font. Company icons are loaded through Google Favicons using the website domain.",
+  "es": "Natural Earth proporciona el mapa mundial (dominio público). Las banderas proceden de flag-icons (MIT). Roboto es la fuente local incluida. Los iconos de empresas se cargan mediante Google Favicons usando el dominio web."
+ },
+ "Gebruik en actualiteit": {
+  "nl": "Gebruik en actualiteit",
+  "en": "Usage and freshness",
+  "es": "Uso y actualidad"
+ },
+ "Bronnen kunnen ontbreken, vertraagd zijn of worden gecorrigeerd. Bedrijfscijfers dienen ter informatie; ze veranderen je boekingen of portefeuillewaardering niet. Controleer belangrijke gegevens bij je broker en de onderneming.": {
+  "nl": "Bronnen kunnen ontbreken, vertraagd zijn of worden gecorrigeerd. Bedrijfscijfers dienen ter informatie; ze veranderen je boekingen of portefeuillewaardering niet. Controleer belangrijke gegevens bij je broker en de onderneming.",
+  "en": "Sources may be missing, delayed or corrected. Company financials are informational and do not change your records or portfolio valuation. Verify important figures with your broker and the company.",
+  "es": "Las fuentes pueden faltar, retrasarse o corregirse. Las cifras empresariales son informativas y no modifican tus registros ni la valoración de tu cartera. Verifica los datos importantes con tu bróker y la empresa."
+ },
+ "Broncode en versies": {
+  "nl": "Broncode en versies",
+  "en": "Source code and releases",
+  "es": "Código fuente y versiones"
+ },
+ "Bedrijfscijfers": {
+  "nl": "Bedrijfscijfers",
+  "en": "Company financials",
+  "es": "Cifras empresariales"
+ },
+ "Bedrijfscijfers laden…": {
+  "nl": "Bedrijfscijfers laden…",
+  "en": "Loading company financials…",
+  "es": "Cargando cifras empresariales…"
+ },
+ "Defeat Beta ondersteunt hier alleen Amerikaanse beursnoteringen in USD. Voor deze notering zijn geen bedrijfscijfers gekoppeld.": {
+  "nl": "Defeat Beta ondersteunt hier alleen Amerikaanse beursnoteringen in USD. Voor deze notering zijn geen bedrijfscijfers gekoppeld.",
+  "en": "Defeat Beta currently supports US listings in USD here. No company financials are linked to this listing.",
+  "es": "Defeat Beta admite aquí cotizaciones estadounidenses en USD. No hay cifras empresariales vinculadas a esta cotización."
+ },
+ "Geen jaarcijfers beschikbaar voor deze notering.": {
+  "nl": "Geen jaarcijfers beschikbaar voor deze notering.",
+  "en": "No annual financials available for this listing.",
+  "es": "No hay cifras anuales disponibles para esta cotización."
+ },
+ "Defeat Beta is tijdelijk niet beschikbaar. Probeer later opnieuw.": {
+  "nl": "Defeat Beta is tijdelijk niet beschikbaar. Probeer later opnieuw.",
+  "en": "Defeat Beta is temporarily unavailable. Try again later.",
+  "es": "Defeat Beta no está disponible temporalmente. Inténtalo más tarde."
+ },
+ "Opgeslagen cijfers; vernieuwen is tijdelijk niet gelukt.": {
+  "nl": "Opgeslagen cijfers; vernieuwen is tijdelijk niet gelukt.",
+  "en": "Saved financials; the latest refresh temporarily failed.",
+  "es": "Cifras guardadas; la última actualización ha fallado temporalmente."
+ },
+ "Jaarcijfers in rapportagevaluta; bedragen zijn niet naar de noteringsvaluta omgerekend.": {
+  "nl": "Jaarcijfers in rapportagevaluta; bedragen zijn niet naar de noteringsvaluta omgerekend.",
+  "en": "Annual figures in reporting currency; amounts have not been converted to the listing currency.",
+  "es": "Cifras anuales en la moneda contable; los importes no se han convertido a la moneda de cotización."
+ },
+ "Boekjaar tot": {
+  "nl": "Boekjaar tot",
+  "en": "Fiscal year ending",
+  "es": "Cierre del ejercicio"
+ },
+ "Omzet": {
+  "nl": "Omzet",
+  "en": "Revenue",
+  "es": "Ingresos"
+ },
+ "Nettowinst": {
+  "nl": "Nettowinst",
+  "en": "Net income",
+  "es": "Beneficio neto"
+ },
+ "Operationele kasstroom": {
+  "nl": "Operationele kasstroom",
+  "en": "Operating cash flow",
+  "es": "Flujo de caja operativo"
+ },
+ "Vrije kasstroom": {
+  "nl": "Vrije kasstroom",
+  "en": "Free cash flow",
+  "es": "Flujo de caja libre"
+ },
+ "Nettomarge": {
+  "nl": "Nettomarge",
+  "en": "Net margin",
+  "es": "Margen neto"
+ },
+ "Dataset bijgewerkt:": {
+  "nl": "Dataset bijgewerkt:",
+  "en": "Dataset updated:",
+  "es": "Datos actualizados:"
+ },
+ "Opgehaald:": {
+  "nl": "Opgehaald:",
+  "en": "Retrieved:",
+  "es": "Obtenido:"
+ },
+ "Defeat Beta": {
+  "nl": "Defeat Beta",
+  "en": "Defeat Beta",
+  "es": "Defeat Beta"
+ },
+ "DivvyDiary": {
+  "nl": "DivvyDiary",
+  "en": "DivvyDiary",
+  "es": "DivvyDiary"
+ },
+ "Frankfurter": {
+  "nl": "Frankfurter",
+  "en": "Frankfurter",
+  "es": "Frankfurter"
+ },
+ "Google": {
+  "nl": "Google",
+  "en": "Google",
+  "es": "Google"
+ },
+ "Hugging Face": {
+  "nl": "Hugging Face",
+  "en": "Hugging Face",
+  "es": "Hugging Face"
+ },
+ "Natural Earth": {
+  "nl": "Natural Earth",
+  "en": "Natural Earth",
+  "es": "Natural Earth"
+ },
+ "ODC-By": {
+  "nl": "ODC-By",
+  "en": "ODC-By",
+  "es": "ODC-By"
+ },
+ "Roboto": {
+  "nl": "Roboto",
+  "en": "Roboto",
+  "es": "Roboto"
+ },
+ "Yahoo Finance": {
+  "nl": "Yahoo Finance",
+  "en": "Yahoo Finance",
+  "es": "Yahoo Finance"
+ },
+ "flag-icons": {
+  "nl": "flag-icons",
+  "en": "flag-icons",
+  "es": "flag-icons"
+ },
+ "Privé opgeslagen in Home Assistant · SQLite · Yahoo Finance, mogelijk vertraagd ·": {
+  "nl": "Privé opgeslagen in Home Assistant · SQLite · Yahoo Finance, mogelijk vertraagd ·",
+  "en": "Stored privately in Home Assistant · SQLite · Yahoo Finance, possibly delayed ·",
+  "es": "Guardado de forma privada en Home Assistant · SQLite · Yahoo Finance, con posible retraso ·"
+ },
+ "Noteringen en bedrijfsacties": {
+  "nl": "Noteringen en bedrijfsacties",
+  "en": "Listings and corporate actions",
+  "es": "Cotizaciones y operaciones corporativas"
+ },
+ "Vaste instrumentkoppelingen en bedrijfsacties zijn gecontroleerd met Deutsche Börse, bedrijfsinformatie van Rheinmetall en Apollo en de fusiepublicatie van VanEck. Het Trade Republic-importformaat is mede gebaseerd op de documentatie van libtraderepublic.": {
+  "nl": "Vaste instrumentkoppelingen en bedrijfsacties zijn gecontroleerd met Deutsche Börse, bedrijfsinformatie van Rheinmetall en Apollo en de fusiepublicatie van VanEck. Het Trade Republic-importformaat is mede gebaseerd op de documentatie van libtraderepublic.",
+  "en": "Fixed instrument mappings and corporate actions were checked with Deutsche Börse, company information from Rheinmetall and Apollo, and the VanEck merger announcement. The Trade Republic import format also draws on the libtraderepublic documentation.",
+  "es": "Las correspondencias de instrumentos y las operaciones corporativas se verificaron con Deutsche Börse, información de Rheinmetall y Apollo y el anuncio de fusión de VanEck. El formato de importación de Trade Republic también se basa en la documentación de libtraderepublic."
+ },
+ "Deutsche Börse": {
+  "nl": "Deutsche Börse",
+  "en": "Deutsche Börse",
+  "es": "Deutsche Börse"
+ },
+ "Rheinmetall": {
+  "nl": "Rheinmetall",
+  "en": "Rheinmetall",
+  "es": "Rheinmetall"
+ },
+ "Apollo": {
+  "nl": "Apollo",
+  "en": "Apollo",
+  "es": "Apollo"
+ },
+ "VanEck": {
+  "nl": "VanEck",
+  "en": "VanEck",
+  "es": "VanEck"
+ },
+ "libtraderepublic": {
+  "nl": "libtraderepublic",
+  "en": "libtraderepublic",
+  "es": "libtraderepublic"
  }
 };

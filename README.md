@@ -136,3 +136,5 @@ Meldingen worden binnen Home Invest ingediend en gevolgd; gebruikers hebben geen
 De aparte centrale container wordt in Coolify gebouwd met `feedback_service/Dockerfile` en buildcontext `/`. Zie [installatie, GitHub App en beheer](feedback_service/README.md) voor Coolify.
 
 De lokale wachtrij en installatiegegevens staan versleuteld in de aparte map `feedback/` in de app-datafolder, buiten het portefeuilledatabestand. Ze blijven behouden bij portefeuilleherstel; een volledige Home Assistant-appback-up is nodig om de meldverbinding mee te herstellen. Versturen wordt automatisch hervat. Bij een onduidelijke GitHub-verzenduitkomst controleert de centrale beheerder de melding om dubbele issues te voorkomen.
+
+Via **Over ons** vind je alle gebruikte bronnen. Op de aandelendetailpagina staan aanvullende jaarcijfers van Defeat Beta voor ondersteunde Amerikaanse noteringen, met rapportagevaluta en peildata.

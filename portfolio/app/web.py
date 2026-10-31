@@ -152,6 +152,10 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 query=parse_qs(urlsplit(self.path).query)
                 try:return self.respond(instruments.category_overview(store,query.get('account_id',['all'])[0]),etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
+            if path=='/api/instrument/fundamentals':
+                query=parse_qs(urlsplit(self.path).query)
+                try:return self.respond(instruments.fundamentals(store,{k:query.get(k,[''])[0] for k in ('symbol','exchange','currency')},query.get('account_id',['all'])[0]))
+                except (ValueError,TypeError):return self.respond({'error':'Aandeel of brokeraccount niet gevonden.'},400)
             if path=='/api/instrument/company':
                 query=parse_qs(urlsplit(self.path).query)
                 try:return self.respond(instruments.company(store,{k:query.get(k,[''])[0] for k in ('symbol','exchange','currency')},query.get('account_id',['all'])[0]))

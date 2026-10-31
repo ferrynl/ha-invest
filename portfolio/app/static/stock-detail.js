@@ -16,6 +16,7 @@ async function loadStockDetail(){
   $('stock-valuation-open').hidden=accessSession.user.role!=='admin';$('stock-valuation-status').textContent=data.manual_valuation?ui('Handmatige laatste koers: ')+money(data.manual_valuation.price,data.currency)+' · '+dayLabel(data.manual_valuation.day)+ui(' · automatisch ophalen uitgeschakeld.'):data.exchange==='PRIVATE'?(data.symbol==='LU3170240538'&&data.currency==='EUR'?ui('Apollo · automatisch via DivvyDiary. De bron vermeldt geen koersdatum; de getoonde datum is het ophaalmoment.'):ui('Niet-beursgenoteerd fonds · actuele fondskoers handmatig instellen.')):'';
   $('stock-company-description').textContent=ui('Bedrijfsinformatie laden…');$('stock-company-logo').hidden=true;$('stock-company-logo').onload=null;$('stock-company-logo').onerror=null;$('stock-company-logo').removeAttribute('src');$('stock-company-initials').hidden=false;$('stock-company-initials').textContent=data.name.split(/\s+/).slice(0,2).map(word=>word[0]).join('').toUpperCase();
   loadStockCompany(params,request,route);
+  loadStockFundamentals(params,request,route);
   $('stock-category-open').hidden=accessSession.user.role!=='admin';$('stock-detail-categories').replaceChildren();
   for(const [field,label] of Object.entries(categoryLabels)){const group=document.createElement('div'),term=document.createElement('dt'),value=document.createElement('dd');term.textContent=label;value.textContent=data.categories[field]||ui('Niet ingedeeld');group.append(term,value);$('stock-detail-categories').append(group);}
   $('stock-events').replaceChildren();for(const event of data.events){const row=document.createElement('tr');let note=event.note||'';if(event.type==='SPLIT')note=ui('Aantal vóór splitsing: ')+(event.split_before==='0'?ui('niet in bronbestand'):quantityLabel(event.split_before))+' → '+quantityLabel(event.quantity);
@@ -84,3 +85,17 @@ $('stock-valuation-form').addEventListener('submit',async event=>{
  const target={symbol:stockDetail.symbol,exchange:stockDetail.exchange,currency:stockDetail.currency};
  try{await jsonAction('api/instrument/valuation',{...target,automatic:form.elements.mode.value==='automatic',price:form.elements.price.value,day:form.elements.day.value});closePopup('stock-valuation-editor');stateETag=null;await load();}catch(error){$('stock-valuation-feedback').textContent=error.message;}finally{button.disabled=false;}
 });
+
+async function loadStockFundamentals(params,request,route){
+ const active=()=>request===stockDetailRequest&&route===location.hash&&!!accessSession?.user;
+ $('stock-fundamentals-rows').replaceChildren();$('stock-fundamentals-table').hidden=true;$('stock-fundamentals-source').textContent='';$('stock-fundamentals-status').textContent=ui('Bedrijfscijfers laden…');
+ try{
+  const response=await apiFetch('api/instrument/fundamentals?'+params);const data=await response.json();if(!active())return;if(!response.ok)throw Error();
+  const statuses={unsupported:ui('Defeat Beta ondersteunt hier alleen Amerikaanse beursnoteringen in USD. Voor deze notering zijn geen bedrijfscijfers gekoppeld.'),no_data:ui('Geen jaarcijfers beschikbaar voor deze notering.'),unavailable:ui('Defeat Beta is tijdelijk niet beschikbaar. Probeer later opnieuw.')};
+  $('stock-fundamentals-status').textContent=data.status==='ok'?(data.stale?ui('Opgeslagen cijfers; vernieuwen is tijdelijk niet gelukt.'):''):statuses[data.status]||statuses.unavailable;
+  if(data.status!=='ok')return;
+  $('stock-fundamentals-source').textContent=data.source+' · '+ui('Dataset bijgewerkt: ')+new Date(data.dataset_updated_at).toLocaleString(appLocale())+' · '+ui('Opgehaald: ')+new Date(data.fetched_at).toLocaleString(appLocale());
+  for(const period of data.periods){const row=document.createElement('tr');for(const value of [dayLabel(period.day),period.currency,...['revenue','net_income','operating_cash_flow','free_cash_flow'].map(field=>period[field]==null?'—':money(period[field],period.currency)),period.net_margin==null?'—':new Intl.NumberFormat(appLocale(),{maximumFractionDigits:2}).format(Number(period.net_margin))+'%'])cell(row,value);$('stock-fundamentals-rows').append(row);}
+  $('stock-fundamentals-table').hidden=false;
+ }catch(error){if(active())$('stock-fundamentals-status').textContent=ui('Defeat Beta is tijdelijk niet beschikbaar. Probeer later opnieuw.');}
+}

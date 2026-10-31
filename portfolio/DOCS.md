@@ -869,3 +869,32 @@ Het verwijderen van een brokerrekening wacht niet op koersverversing. Bij een lo
 API-import of administratiebewerking verschijnt een melding om later opnieuw te proberen.
 Bij een verbindingstime-out is de uitkomst mogelijk nog onbekend: vernieuw eerst de
 rekeninglijst en controleer of de rekening nog bestaat voordat je opnieuw verwijdert.
+
+
+### Bedrijfscijfers en bronnen (0.42.0)
+
+Op de aandelendetailpagina staan maximaal vier jaarlijkse rapportages uit Defeat Beta:
+omzet, nettowinst, operationele kasstroom, vrije kasstroom en de daaruit berekende nettomarge.
+De koppeling leest de openbare `defeatbeta/yahoo-finance-data`-dataset op Hugging Face
+rechtstreeks met DuckDB; de volledige notebook/AI-API is niet nodig. Een API-sleutel is niet nodig.
+Alleen Amerikaanse NASDAQ/NYSE/AMEX-noteringen in USD waarvan het symbool exact in de
+Amerikaanse catalogus voorkomt worden ondersteund. Europese noteringen, private fondsen en
+onbekende tickers worden niet naar een andere notering vertaald. De rapportagevaluta komt
+uit de catalogus en kan afwijken van USD. Er vindt geen valutaomrekening plaats.
+
+De pagina toont het einde van het boekjaar, de update van de dataset en het ophaalmoment.
+Ontbrekende posten blijven onbekend; de nettomarge gebruikt alleen omzet en nettowinst uit
+hetzelfde boekjaar. De gegevens worden per notering 24 uur in `api_cache` opgeslagen en
+blijven bij een bronstoring zichtbaar als verouderde cijfers. Na een fout geldt 15 minuten
+wachttijd. Externe queries draaien één tegelijk in een apart proces met een limiet van
+40 seconden en 192 MB DuckDB-werkgeheugen; laden blokkeert de overige aandelendetails niet.
+De bron ontvangt alleen de ticker voor de query, geen posities, bedragen of brokergegevens.
+De dataset heeft ODC-By als licentie en beschrijft gebruik voor onderzoek en onderwijs.
+
+**Over ons** in het hoofdmenu en de voettekst vermeldt de markt- en wisselkoersbronnen,
+brokerimporten, fondswaarderingen, kaartmateriaal, vlaggen en bedrijfsiconen met bronlinks.
+De appcontainer gebruikt Python 3.13 op Debian slim voor DuckDB-wheels op amd64 en aarch64;
+de officiële httpfs-uitbreiding wordt tijdens de imagebuild geïnstalleerd.
+Bij handmatige installatie: installeer `portfolio/requirements.txt` en voer eenmaal
+`python -c "import duckdb; duckdb.connect().execute('INSTALL httpfs')"` uit als dezelfde gebruiker
+waarmee de app draait. Het databaseschema en de administratie blijven gelijk.
