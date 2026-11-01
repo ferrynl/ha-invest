@@ -1,3 +1,9 @@
+## 0.49.0 — 1 november 2026
+
+- Herstelt herkenning van Vanguard-fondsen met Accumulation in de naam en Invesco-fondsen met afwijkende beursticker, waaronder VWCE.DE, VUAA.L en EHDV.DE.
+- Automatische iShares-bronherkenning via de officiële Britse en Duitse catalogi, met lokale tickers, controle van fondsvarianten en ondersteuning voor Duitse CSV-kolommen, datums en getallen.
+- TMX en single-stock ETP’s krijgen een gerichte toelichting; aanbieders zonder automatische koppeling worden expliciet gemeld. Verwachte ontbrekende bronnen worden niet meer als technische storing gelogd.
+
 ## 0.48.0 — 1 november 2026
 
 - Instellingen > Taken haalt ETF-samenstellingen voor alle brokeraccounts op de achtergrond op, met voortgang, stoppen en opnieuw proberen van ontbrekende of mislukte fondsen.

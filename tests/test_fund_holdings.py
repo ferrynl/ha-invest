@@ -24,6 +24,12 @@ GBP,GBP CASH,Cash and/or Derivatives,Cash,-0.01,United Kingdom
 
 
 class FundHoldingsTests(unittest.TestCase):
+    def test_german_ishares_csv_uses_date_decimal_comma_and_canonical_countries(self):
+        content='Fondsposition per,"29.Okt.2026"\n\nEmittententicker,Name,Sektor,Anlageklasse,Gewichtung (%),Standort,Marktwährung\nAAPL,APPLE,IT,Aktien,"99,99",Vereinigte Staaten,USD\nEUR,EURO,Cash und/oder Derivate,Geldmarkt,"0,01",Deutschland,EUR\n'
+        result=parse_csv(content)
+        self.assertEqual(result['as_of'],'2026-10-29');self.assertEqual(result['coverage'],'100.00')
+        self.assertEqual(result['holdings'][0]['weight'],'99.99');self.assertEqual(result['holdings'][0]['country'],'US');self.assertEqual(result['holdings'][0]['sector'],'Technology');self.assertEqual(result['holdings'][0]['asset_type'],'Equity')
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)

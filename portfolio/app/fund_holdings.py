@@ -81,16 +81,22 @@ def validate(payload):
 
 HEADERS = {
     'name': ('name', 'naam', 'holding', 'security name', 'security description'),
-    'symbol': ('ticker', 'symbol', 'symbool'),
+    'symbol': ('ticker', 'symbol', 'symbool', 'emittententicker'),
     'isin': ('isin',),
-    'weight': ('weight (%)', 'weight', 'weging (%)', 'weging', '% of net assets', '% of fund'),
-    'sector': ('sector', 'industry', 'gics sector'),
-    'exchange': ('exchange', 'beurs'),
-    'currency': ('market currency', 'currency', 'valuta'),
-    'country': ('location', 'country', 'land', 'country of risk'),
-    'asset_type': ('asset class', 'type', 'asset type'),
+    'weight': ('weight (%)', 'weight', 'weging (%)', 'weging', '% of net assets', '% of fund', 'gewichtung (%)'),
+    'sector': ('sector', 'industry', 'gics sector', 'sektor'),
+    'exchange': ('exchange', 'beurs', 'börse'),
+    'currency': ('market currency', 'currency', 'valuta', 'marktwährung'),
+    'country': ('location', 'country', 'land', 'country of risk', 'standort'),
+    'asset_type': ('asset class', 'type', 'asset type', 'anlageklasse'),
     'category': ('category', 'categorie'),
 }
+
+GERMAN_SECTORS = dict(zip(('IT','Financials','Gesundheitsversorgung','Industrie','Zyklische Konsumgüter','Nichtzyklische Konsumgüter','Kommunikation','Energie','Materialien','Versorger','Immobilien'),
+                         ('Technology','Financials','Healthcare','Industrials','Consumer Cyclical','Consumer Defensive','Communication Services','Energy','Basic Materials','Utilities','Real Estate')))
+GERMAN_SECTORS.update({'Finanzwesen':'Financials','Barmittel & Derivate':'Cash and/or Derivatives'})
+GERMAN_COUNTRIES = dict(zip(('Vereinigte Staaten','Vereinigtes Königreich','Deutschland','Frankreich','Niederlande','Schweiz','Spanien','Italien','Belgien','Österreich','Finnland','Schweden','Norwegen','Dänemark','Irland','Portugal','Japan','China','Taiwan','Korea','Südkorea','Hongkong','Australien','Kanada','Brasilien','Indien','Südafrika','Mexiko','Israel','Singapur','Neuseeland','Luxemburg','Europäische Union','Saudi-Arabien','Griechenland','Polen','Türkei','Thailand','Indonesien','Malaysia','Philippinen'),
+                           ('US','GB','DE','FR','NL','CH','ES','IT','BE','AT','FI','SE','NO','DK','IE','PT','JP','CN','TW','KR','KR','HK','AU','CA','BR','IN','ZA','MX','IL','SG','NZ','LU','EU','SA','GR','PL','TR','TH','ID','MY','PH')))
 
 
 def parse_csv(content, as_of=''):
@@ -115,11 +121,14 @@ def parse_csv(content, as_of=''):
             break
     if header is None:
         raise ValueError('CSV mist de kolommen Naam en Weging (%).')
+    german = 'gewichtung (%)' in lines[header].lower()
     if not as_of:
-        match = re.search(r'(?:Fund Holdings as of|Holdings as of)[,;\t]"?([^"\r\n]+)', content[:10000], re.I)
+        match = re.search(r'(?:Fund Holdings as of|Holdings as of|Fondsposition per)[,;\t]"?([^"\r\n]+)', content[:10000], re.I)
         if match:
             raw = match[1].strip()
-            for fmt in ('%d/%b/%Y', '%d-%b-%Y', '%Y-%m-%d'):
+            for local, english in (('Okt','Oct'),('Mär','Mar'),('Mai','May'),('Dez','Dec'),('Sept','Sep')):
+                raw = raw.replace(local, english)
+            for fmt in ('%d/%b/%Y', '%d-%b-%Y', '%Y-%m-%d', '%d.%b.%Y'):
                 try:
                     as_of = datetime.strptime(raw, fmt).date().isoformat()
                     break
@@ -140,7 +149,12 @@ def parse_csv(content, as_of=''):
             continue
         row = {key: field(key) for key in HEADERS}
         row['weight'] = raw.replace('%', '').replace('\u00a0', '').replace(' ', '')
-        if delimiter in (';', '\t'):
+        if german:
+            row['weight'] = row['weight'].replace('.', '').replace(',', '.')
+            row['sector'] = GERMAN_SECTORS.get(row['sector'], row['sector'])
+            row['country'] = GERMAN_COUNTRIES.get(row['country'], row['country'])
+            row['asset_type'] = {'Aktien':'Equity','Obligationen':'Fixed Income','Geldmarkt':'Cash','Cash und/oder Derivate':'Cash and/or Derivatives'}.get(row['asset_type'], row['asset_type'])
+        elif delimiter in (';', '\t'):
             row['weight'] = row['weight'].replace(',', '.')
         rows.append(row)
         if len(rows) > MAX_ROWS:

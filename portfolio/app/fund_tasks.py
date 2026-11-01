@@ -6,7 +6,7 @@ import threading
 import time
 from datetime import datetime, timezone
 from fund_holdings import saved, refresh, KNOWN
-from fund_providers import discover, issuer_name
+from fund_providers import discover, issuer_name, FundSourceUnavailable
 
 _lock = threading.RLock()
 _jobs = {}
@@ -66,7 +66,7 @@ def status(store):
                 labels = {tuple(r.get(k) for k in ('symbol', 'exchange', 'currency')): r
                           for r in previous['rows'] if isinstance(r, dict)}
                 rows = candidates(store)
-                valid = ('success', 'partial', 'waiting', 'skipped', 'unsupported', 'error', 'cancelled', 'interrupted')
+                valid = ('success', 'partial', 'waiting', 'skipped', 'unsupported', 'error', 'cancelled', 'interrupted', 'closed')
                 for item in rows:
                     old = labels.get(tuple(item[k] for k in ('symbol', 'exchange', 'currency')), {})
                     status_label = old.get('status')
@@ -156,6 +156,9 @@ def run(store, cache, job):
                        message=message, as_of=result['as_of'], count=len(result['holdings']), stale=result['stale'], source_url=result['source_url'])
                 cache.invalidate()
             except Exception as error:
+                if isinstance(error, FundSourceUnavailable):
+                    update(store, job, row, status=error.task_status, message=str(error))
+                    continue
                 from diagnostics import record
                 reference = record(store, 'WARNING', 'market', 'fund_task_failed', 'ETF-taak kon geen nieuwe samenstelling ophalen.',
                                    {'symbol': listing[0], 'error_type': type(error).__name__})

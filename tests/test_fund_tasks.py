@@ -20,6 +20,44 @@ SNAPSHOT = dict(as_of='2026-10-29', holdings=[dict(name='Example', weight='100',
 
 
 class ProviderTests(unittest.TestCase):
+    def test_screenshot_names_match_without_isin_or_same_exchange_ticker(self):
+        examples = [
+            ('invesco','EHDV.DE','Invesco EURO STOXX High Dividend Low Volatility UCITS ETF','Invesco EURO STOXX High Dividend Low Volatility UCITS ETF Dist','EUHD'),
+            ('ishares','SECO.DE','iShares MSCI Global Semiconductors UCITS ETF USD Acc','iShares MSCI Global Semiconductors UCITS ETF','SEMI'),
+            ('ishares','IUSQ.DE','iShares MSCI All Country World UCITS ETF USD Acc','iShares MSCI All Country World UCITS ETF','SSAC'),
+            ('ishares','NQSE.DE','iShares VII PLC - iShares NASDAQ 100 ETF EUR Hdg Acc','iShares NASDAQ 100 UCITS ETF EUR Hedged (Acc)','CNX1')]
+        for issuer,symbol,name,official,ticker in examples:
+            entry=dict(issuer=issuer,isin='IE0032077012',name=official,symbols=[ticker],url=URL,distribution='acc' if issuer=='ishares' else 'dist',fund_currency='EUR' if 'EUR Hdg' in name else 'USD')
+            with patch.object(providers,'catalog',return_value=[entry]):
+                self.assertEqual(providers.discover(None,dict(symbol=symbol,name=name))['isin'],entry['isin'])
+
+    def test_vanguard_accumulation_spelling_still_requires_official_ticker(self):
+        entry=dict(issuer='vanguard',isin='IE00BK5BQT80',name='FTSE All-World UCITS ETF (USD) Accumulating',symbols=[],url='https://www.vanguard.co.uk/professional/product/etf/equity/9679/example')
+        with patch.object(providers,'catalog',return_value=[entry]),patch.object(providers,'request',return_value='<span data-search-id="bitk">VWCE</span>'):
+            self.assertEqual(providers.discover(None,dict(symbol='VWCE.DE',name='Vanguard FTSE All-World UCITS ETF USD Accumulation'))['isin'],entry['isin'])
+            with self.assertRaises(providers.FundSourceUnavailable):providers.discover(None,dict(symbol='OTHER.DE',name='Vanguard FTSE All-World UCITS ETF USD Accumulation'))
+
+    def test_ishares_catalog_merges_local_tickers_and_keeps_english_source(self):
+        de=dict(productView=['etf'],isin='DE0006289382',fundName='iShares Example UCITS ETF',localExchangeTicker='EXI2',productPageUrl='/de/privatanleger/de/produkte/251769/example',seriesBaseCurrencyCode='EUR',useOfProfits='ausschüttend')
+        en=dict(de,localExchangeTicker='EXXX',productPageUrl='/uk/individual/en/products/251769/example',useOfProfits='Distributing')
+        with patch.object(providers,'request',side_effect=[json.dumps({'251769':de}),json.dumps({'251769':en})]):
+            result=providers.ishares_catalog()
+        self.assertEqual(len(result),1);self.assertEqual(result[0]['symbols'],['EXI2','EXXX']);self.assertIn('/uk/',result[0]['url']);self.assertEqual(result[0]['distribution'],'dist')
+
+    def test_name_matching_does_not_guess_share_class_or_ignore_isin(self):
+        entry=dict(issuer='ishares',isin='IE0000000001',name='iShares Example UCITS ETF',symbols=['ONE'],url=URL,distribution='acc',fund_currency='USD')
+        with patch.object(providers,'catalog',return_value=[entry,dict(entry,isin='IE0000000002')]):
+            with self.assertRaises(providers.FundSourceUnavailable):providers.discover(None,dict(symbol='OTHER.DE',name='iShares Example UCITS ETF USD Acc'))
+        with patch.object(providers,'catalog',return_value=[entry]):
+            for extra in (dict(isin='IE0000000003'),dict(name='iShares Example UCITS ETF USD Dist'),dict(name='iShares Example UCITS ETF EUR Acc'),dict(name='iShares Example Hedged UCITS ETF USD Acc')):
+                with self.subTest(extra=extra),self.assertRaises(providers.FundSourceUnavailable):providers.discover(None,dict(dict(symbol='OTHER.DE',name='iShares Example UCITS ETF USD Acc'),**extra))
+
+    def test_closed_fund_and_single_stock_etp_have_specific_messages(self):
+        with patch.object(providers,'catalog') as fetch:
+            with self.assertRaisesRegex(providers.FundSourceUnavailable,'samengevoegd'):providers.discover(None,dict(symbol='TMX.AS',name='VanEck AMX UCITS ETF'))
+            with self.assertRaisesRegex(providers.FundSourceUnavailable,'ETP op één aandeel'):providers.discover(None,dict(symbol='MSFT.L',name='LS 1x Microsoft Tracker ETP Securities'))
+            fetch.assert_not_called()
+
     def test_invesco_keeps_extra_cash_and_missing_classifications(self):
         data = dict(effectiveDate='2026-10-29', numberOfHoldings=1, holdings=[dict(name='Equity', isin=None, weight=99, currency=None), dict(name='Cash', weight=1)])
         with patch.object(providers, 'request', return_value=json.dumps(data)):
@@ -119,6 +157,16 @@ class TaskTests(unittest.TestCase):
             tasks.run(self.store, self.cache, tasks._jobs[tasks.key(self.store)])
             discovery.assert_not_called()
         self.assertEqual(tasks.status(self.store)['rows'][0]['status'], 'cancelled')
+
+    def test_expected_closed_fund_is_not_logged_as_a_provider_failure(self):
+        self.start()
+        with patch.object(tasks, 'discover', side_effect=providers.FundSourceUnavailable('Merged', task_status='closed')), patch('diagnostics.record') as record, patch.object(tasks, 'refresh') as refresh:
+            tasks.run(self.store, self.cache, tasks._jobs[tasks.key(self.store)])
+            record.assert_not_called();refresh.assert_not_called()
+        self.assertEqual(tasks.status(self.store)['rows'][0]['status'], 'closed')
+        tasks._jobs.clear()
+        self.assertEqual(tasks.status(self.store)['rows'][0]['status'], 'closed')
+        state,_=self.start('failed');self.assertEqual(state['rows'][0]['status'], 'skipped')
 
     def test_cancel_after_discovery_does_not_fetch_holdings(self):
         self.start()
