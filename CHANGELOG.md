@@ -1,3 +1,9 @@
+## 0.45.0 — 1 november 2026
+
+- Portefeuilleoverzicht staat altijd bovenaan de rapportenlijst.
+- Gecombineerd EUR-dashboard met zes grafieken, vier kerncijfers en concentratie-inzicht; valuta-uitsplitsing is optioneel.
+- Filters voor aandeel, sector en open of gesloten posities, naast broker en bronvaluta.
+
 ## 0.44.0
 
 - Bestaande transacties wijzigen inclusief brokeraccount, datum, aantal, prijs, kosten, btw en andere belastingen.

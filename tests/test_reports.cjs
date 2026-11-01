@@ -143,3 +143,15 @@ console.log('Calendar month alignment and leap-year checks passed.');
  vm.runInContext(fs.readFileSync(path.join(__dirname,'../portfolio/app/static/reports.js'),'utf8'),context);vm.runInContext('renderReports=()=>{};',context);
  (async()=>{await context.loadReportCombined();assert.equal(refreshes,0);assert.equal(vm.runInContext('reportCombined.data_revision',context),3);assert.equal(vm.runInContext('reportCombinedError',context),false);console.log('EUR totals accept a coherent native/EUR snapshot during background quote updates.');})().catch(e=>{console.error(e);process.exitCode=1;});
 }
+
+{
+ const {reportPortfolioKeys,reportPortfolioSource}=require('../portfolio/app/static/reports.js');
+ const source={positions:[{...p,quantity:'2',currency:'USD',categories:{sector:'Tech'}},{...p,symbol:'CLOSED',quantity:'0',categories:{sector:'Energy'}}],dividends:[{...p,currency:'USD',amount:'3'}]};
+ const keys=reportPortfolioKeys(source.positions,'','Tech','open');
+ assert.equal(keys.size,1);assert.equal(reportPortfolioSource(source,keys).dividends.length,1);
+ assert.equal(reportPortfolioSource({positions:[{...source.positions[0],native_currency:'USD',currency:'EUR'}],dividends:[]},keys).positions.length,1);
+ assert.equal(reportPortfolioKeys(source.positions,'','','closed').size,1);
+ assert.equal(reportPortfolioKeys(source.positions,'','Energy','open').size,0);
+ assert.match(fs.readFileSync(path.join(__dirname,'../portfolio/app/static/reports.js'),'utf8'),/const reportDefinitions=\[\s*\['portfolio'/);
+ console.log('Overview ordering and combined/native portfolio filters passed.');
+}

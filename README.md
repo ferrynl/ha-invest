@@ -154,3 +154,5 @@ btw en een optionele eigen kostenvaluta. Transactie en kosten worden samen opges
 
 Bij een handmatige transactie in een andere valuta kun je ook de prijs per aandeel in EUR
 invullen. Het formulier rekent om op transactiedatum en toont de gebruikte koersdatum.
+
+Portefeuilleoverzicht staat bovenaan de rapportenlijst en toont standaard één gecombineerd EUR-dashboard met vier kerncijfers en zes grafieken. Filter op broker, bronvaluta, aandeel, sector of open/gesloten posities. Zet **Uitsplitsing per valuta tonen** aan voor afzonderlijke bronvaluta naast het totaal.

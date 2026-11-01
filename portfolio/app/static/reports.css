@@ -172,3 +172,5 @@
 @media(max-width:850px){.sidebar{width:min(256px,calc(100vw - 48px))}.locked .sidebar{width:100%}}
 
 .countries-page .report-intro,.countries-page .report-filter-panel,.countries-page .report-section-heading,.countries-page #report-description{display:none}
+
+.portfolio-filter-bar{padding:18px 22px;margin-bottom:24px;background:#122338;border:1px solid #30445f;border-radius:14px;align-items:end}.portfolio-filter-bar label{flex:1;min-width:0}.portfolio-filter-bar select{width:100%;min-width:0}.portfolio-filter-bar .report-currency-toggle{display:flex;flex-direction:row;align-items:center;gap:10px;font-size:12px;padding:12px 0}.report-currency-toggle input{width:18px;height:18px;accent-color:#63e5bc}.reports-dashboard .portfolio-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}@media(max-width:1000px){.reports-dashboard .portfolio-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:550px){.portfolio-filter-bar{padding:16px;flex-direction:column;align-items:stretch}.portfolio-filter-bar label{width:100%}}

@@ -1,5 +1,10 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+"Alle sectoren":{"nl":"Alle sectoren","en":"All sectors","es":"Todos los sectores"},
+"Gesloten posities":{"nl":"Gesloten posities","en":"Closed positions","es":"Posiciones cerradas"},
+"Posities":{"nl":"Posities","en":"Positions","es":"Posiciones"},
+"Uitsplitsing per valuta tonen":{"nl":"Uitsplitsing per valuta tonen","en":"Show currency breakdown","es":"Mostrar desglose por divisa"},
+
  "Exporteren": {
   "nl": "Exporteren",
   "en": "Export",
