@@ -1012,3 +1012,10 @@ alleen via hun herstelback-up terug te draaien.
 Databaseversie 21 koppelt bestaande handmatige kosten aan hun transactie en bewaart
 ook wijzigingen aan losse kosten. De upgrade maakt vooraf een veiligheidskopie.
 Back-upherstel valideert de koppelingen en ondersteunt ook eerdere databaseversies.
+
+
+### ETF-samenstelling
+
+Databaseversie 22 voegt `fund_compositions` toe, gedeeld per symbool/beurs/noteringsvaluta. De migratie maakt vooraf een veiligheidskopie. Bronregels worden gevalideerd en met bron-URL, peildatum en ophaalmoment opgeslagen; herstel importeert uitsluitend gevalideerde gegevens, nooit providerschema of toegangsinstellingen. De snapshot en rapportcache worden via revisietriggers ongeldig bij wijzigingen.
+
+`GET /api/instrument/holdings` leest uitsluitend opgeslagen gegevens na eigendoms-/brokerscopecontrole. `POST /api/instrument/holdings` vereist admin en CSRF en bewaart een bronkoppeling of CSV-import atomair. Externe bronnen gebruiken HTTPS, een vaste lijst aanbieders, gecontroleerde redirects, limieten en wachttijden. Rapporten zelf roepen geen aanbieders op. Een nieuwe aanbieder met afwijkende kolommen kan via de CSV-adapter worden toegevoegd; iedere ETF ondersteunt de standaard CSV-kolommen. EXV1.DE is getest met de volledige iShares-bron, inclusief negatieve kasposities.

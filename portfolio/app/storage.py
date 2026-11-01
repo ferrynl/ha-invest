@@ -135,6 +135,8 @@ class Store:
             charges=[dict(r) for r in db.execute('SELECT id,account_id,category,amount,currency,paid_on,included_in_net FROM charges ORDER BY paid_on,id')]
             accounts=[dict(r) for r in db.execute('SELECT * FROM broker_accounts ORDER BY id')]
             categories=[dict(r) for r in db.execute('SELECT * FROM instrument_categories')]
+            from fund_holdings import all_saved
+            fund_compositions=all_saved(db)
             manual=[dict(r) for r in db.execute('SELECT * FROM instrument_valuations')]
         from valuations import apply_final_prices,missing_diagnostics
         quotes,daily=apply_final_prices(quotes,daily,manual)
@@ -168,7 +170,7 @@ class Store:
                               'value': str(value) if value is not None else None,
                               'gain': str(value - cost+realised) if value is not None else None})
         missing_diagnostics(self,positions)
-        return dict(charges=charges,instrument_categories=categories,purchases=purchases, positions=positions, quotes=quotes, dividends=dividends, portfolios=portfolio_values(positions),
+        return dict(fund_compositions=fund_compositions,charges=charges,instrument_categories=categories,purchases=purchases, positions=positions, quotes=quotes, dividends=dividends, portfolios=portfolio_values(positions),
                     accounts=accounts,settings=settings, database_version=SCHEMA_VERSION,data_revision=revision)
 
     def history_start(self,symbol,exchange,currency,start):

@@ -47,7 +47,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
     assets['/world-countries.json']=('world-countries.json','application/json; charset=utf-8')
     for media in (static/'broker-media').glob('*.png'):assets['/broker-media/'+media.name]=('broker-media/'+media.name,'image/png')
     for flag in (static/'flags').glob('*.svg'):assets['/flags/'+flag.name]=('flags/'+flag.name,'image/svg+xml')
-    for name in ('brokers','feedback','i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','reports','charges','purchase-fx','report-charts','conversions','performance'):
+    for name in ('brokers','feedback','i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','funds','reports','charges','purchase-fx','report-charts','conversions','performance'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     assets['/country-map.js']=('country-map.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
@@ -152,6 +152,13 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 query=parse_qs(urlsplit(self.path).query)
                 try:return self.respond(instruments.category_overview(store,query.get('account_id',['all'])[0]),etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
+            if path=='/api/instrument/holdings':
+                from fund_holdings import saved,KNOWN
+                query=parse_qs(urlsplit(self.path).query)
+                try:
+                    key=instruments.owned_key(store,{k:query.get(k,[''])[0] for k in ('symbol','exchange','currency')},query.get('account_id',['all'])[0])
+                    return self.respond(dict(composition=saved(store,key),source_url=KNOWN.get(key,'')))
+                except (ValueError,TypeError):return self.respond({'error':'Aandeel of brokeraccount niet gevonden.'},400)
             if path=='/api/instrument/fundamentals':
                 query=parse_qs(urlsplit(self.path).query)
                 try:return self.respond(instruments.fundamentals(store,{k:query.get(k,[''])[0] for k in ('symbol','exchange','currency')},query.get('account_id',['all'])[0]))
@@ -302,7 +309,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             # requests. Closing with unread bytes can reset browser connections.
             try:
                 length=int(self.headers.get('Content-Length','0'))
-                limit=25*1024*1024 if path=='/api/restore' else 8*1024*1024 if path=='/api/imports/preview' else 65536
+                limit=25*1024*1024 if path=='/api/restore' else 12*1024*1024 if path=='/api/instrument/holdings' else 8*1024*1024 if path=='/api/imports/preview' else 65536
                 if not 0<length<=limit:raise ValueError('Bestand of aanvraag is te groot of leeg.')
                 self.connection.settimeout(30)
                 body=self.rfile.read(length)
@@ -315,7 +322,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             user=auth.user(self.token())
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path!='/api/auth/login':
-                if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path in ('/api/feedback/connect','/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation') or path in ('/api/purchases','/api/dividends','/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/') or path.startswith('/api/charges/')):return
+                if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path in ('/api/feedback/connect','/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation','/api/instrument/holdings') or path in ('/api/purchases','/api/dividends','/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/') or path.startswith('/api/charges/')):return
                 if auth.enabled() and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),user['csrf'] or ''):
                     return self.respond({'error':'Ongeldige sessiebeveiliging. Meld je opnieuw aan.'},403)
             try:
@@ -338,6 +345,15 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond(save(store,user,self.headers.get('X-HomeInvest-Profile','personal'),data))
                 if path=='/api/account/language':
                     return self.respond({'language':auth.set_language(user,data.get('language'))})
+                if path=='/api/instrument/holdings':
+                    from fund_holdings import refresh
+                    key=instruments.owned_key(store,data,data.get('account_id','all'))
+                    with refresh_lock:
+                        try:result=refresh(store,key,url=data.get('source_url'),as_of=data.get('as_of',''),content=data.get('csv'))
+                        except (OSError,UnicodeError):return self.respond({'error':'ETF-bron ophalen mislukt. Opgeslagen samenstelling blijft behouden.'},503)
+                        cache.invalidate()
+                    refresh_requested.set()
+                    return self.respond(dict(composition=result))
                 if path=='/api/instrument/valuation':
                     from valuations import save as save_valuation
                     with refresh_lock:

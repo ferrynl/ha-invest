@@ -1,3 +1,10 @@
+## 0.47.0 — 1 november 2026
+
+- ETF-detailpagina toont de volledige beschikbare samenstelling met percentages, sector, categorie, land, bron en peildatum; zoeken en bladeren door alle regels.
+- Algemene bronkoppeling en CSV-import per fonds, met dagelijkse broncontrole, blijvende opslag, behoud bij bronfouten en zichtbare ontbrekende of verouderde gegevens. EXV1.DE en IWDA.AS hebben een vooraf gekoppelde iShares-bron.
+- Beschikbare fondswegingen werken door in de rapportgrafieken voor spreiding, sectoren en landen. Ieder rapport bevat de actuele ETF-uitsplitsing; historische winst, dividend en kosten blijven bij de geboekte ETF.
+- Databaseversie 22 bewaart fondscomposities en neemt ze gevalideerd mee in back-ups en herstel. Er worden geen onderliggende transacties aangemaakt.
+
 ## 0.46.0 — 1 november 2026
 
 - Je aandelen krijgt meer diepte met verhoogde kaarten, gelaagde sectorsymbolen en een ruimere indeling.

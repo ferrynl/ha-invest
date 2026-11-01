@@ -31,6 +31,7 @@ function bindPopups(){
  registerPopup('broker-delete',ui('Brokeraccount verwijderen'));
  registerPopup('import-api-report',ui('Trading 212-rapport ophalen'));
  registerPopup('conversion-editor',ui('TMX omboeken naar TDT'));
+ registerPopup('stock-fund-editor',ui('ETF-samenstelling beheren'));
  registerPopup('stock-valuation-editor',ui('Koers instellen'));
  registerPopup('stock-category-editor',ui('Categorieën aanpassen'));
  registerPopup('transaction-editor',ui('Transactie bekijken en wijzigen'));

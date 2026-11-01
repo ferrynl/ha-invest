@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from contextlib import closing
 
-SCHEMA_VERSION = 21
+SCHEMA_VERSION = 22
 MIGRATIONS = {
     1: (
         'CREATE TABLE IF NOT EXISTS purchases (id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL, name TEXT NOT NULL, quantity TEXT NOT NULL, price TEXT NOT NULL, currency TEXT NOT NULL, purchased_on TEXT NOT NULL, created_at TEXT NOT NULL)',
@@ -109,6 +109,12 @@ MIGRATIONS = {
         "CREATE TABLE transaction_charge_links (charge_id INTEGER PRIMARY KEY REFERENCES charges(id), kind TEXT NOT NULL CHECK(kind IN ('trade','dividend','capital')), record_id INTEGER NOT NULL)",
         'CREATE INDEX transaction_charge_record ON transaction_charge_links(kind,record_id)',
         "INSERT INTO transaction_charge_links SELECT c.id,'trade',p.id FROM charges c JOIN purchases p ON c.external_id='manual-trade:'||p.id AND c.account_id=p.account_id AND c.provider='charges' JOIN import_batches b ON b.id=c.batch_id AND b.filename='manual-trade-'||p.id AND json_extract(CASE WHEN json_valid(b.payload) THEN b.payload ELSE '[]' END,'$[0].trade_id')=p.id",
+    ),
+    22: (
+        'CREATE TABLE fund_compositions (symbol TEXT NOT NULL, exchange TEXT NOT NULL, currency TEXT NOT NULL, source_url TEXT NOT NULL, as_of TEXT NOT NULL, fetched_at TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(symbol,exchange,currency))',
+    ) + tuple(
+        f'CREATE TRIGGER dashboard_fund_compositions_{action.lower()} AFTER {action} ON fund_compositions BEGIN UPDATE dashboard_revision SET revision=revision+1 WHERE id=1; END'
+        for action in ('INSERT','UPDATE','DELETE')
     ),
 }
 

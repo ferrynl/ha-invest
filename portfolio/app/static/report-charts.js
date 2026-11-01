@@ -9,13 +9,14 @@ function reportSvgNode(tag,attrs={},text,parent){const node=document.createEleme
 function reportSvg(card,height=300){const svg=reportSvgNode('svg',{viewBox:'0 0 640 '+height,role:'group','aria-label':card.plot.closest('section').querySelector('h3').textContent});card.plot.append(svg);return svg;}
 function reportEmpty(card){card.plot.append(homeNode('p',ui('Geen gegevens voor deze selectie.'),'report-chart-empty'));card.detail.textContent='';}
 function reportHover(node,label,card){node.setAttribute('tabindex','0');node.setAttribute('role','img');node.setAttribute('aria-label',label);reportSvgNode('title',{},label,node);const show=()=>{card.detail.textContent=label;};node.onpointerenter=show;node.onfocus=show;node.onclick=show;}
-function reportDonut(card,values,currency){
+function reportDonut(card,values,currency,options={}){
+ const format=value=>options.percent?reportPercent(value):money(value,currency);
  const groups=reportTop(values,6),total=groups.reduce((sum,p)=>sum+p.value,0);if(!total){reportEmpty(card);return;}
  card.plot.classList.add('report-donut-layout');const svg=reportSvg(card,280);svg.setAttribute('viewBox','0 0 300 280');
  reportSvgNode('circle',{cx:150,cy:137,r:88,fill:'none',stroke:'#243348','stroke-width':28},undefined,svg);
  const length=2*Math.PI*88;let start=0;
- for(const [index,p] of groups.entries()){const fraction=p.value/total;const circle=reportSvgNode('circle',{cx:150,cy:137,r:88,fill:'none',stroke:reportPalette[index%reportPalette.length],'stroke-width':28,'stroke-dasharray':Math.max(0,fraction*length-3)+' '+length,'stroke-dashoffset':-start*length,transform:'rotate(-90 150 137)'},undefined,svg);reportHover(circle,p.name+' · '+money(p.value,currency)+' · '+reportPercent(fraction*100),card);start+=fraction;}
- reportSvgNode('text',{x:150,y:132,'text-anchor':'middle',fill:'#eef4ff','font-size':25,'font-weight':700},money(total,currency),svg);
+ for(const [index,p] of groups.entries()){const fraction=p.value/total;const circle=reportSvgNode('circle',{cx:150,cy:137,r:88,fill:'none',stroke:reportPalette[index%reportPalette.length],'stroke-width':28,'stroke-dasharray':Math.max(0,fraction*length-3)+' '+length,'stroke-dashoffset':-start*length,transform:'rotate(-90 150 137)'},undefined,svg);reportHover(circle,p.name+' · '+format(p.value)+' · '+reportPercent(fraction*100),card);start+=fraction;}
+ reportSvgNode('text',{x:150,y:132,'text-anchor':'middle',fill:'#eef4ff','font-size':25,'font-weight':700},format(total),svg);
  reportSvgNode('text',{x:150,y:158,'text-anchor':'middle',fill:'#91a4bf','font-size':11},ui('bekend totaal'),svg);
  const legend=homeNode('div',undefined,'report-donut-legend');for(const [index,p] of groups.entries()){const row=homeNode('div'),mark=reportSvgNode('svg',{viewBox:'0 0 12 12','aria-hidden':'true'});reportSvgNode('rect',{width:12,height:12,rx:3,fill:reportPalette[index%reportPalette.length]},undefined,mark);const text=homeNode('span',p.name),number=homeNode('strong',reportPercent(p.value/total*100));row.append(mark,text,number);legend.append(row);}card.plot.append(legend);
 }

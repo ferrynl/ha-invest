@@ -16,4 +16,4 @@ def overview(store,snapshot,account='all'):
     positions=[]
     for p in groups.values():positions.append({**p,**{field:str(p[field]) if p[field] is not None else None for field in fields}})
     positions.sort(key=lambda p:p['name'].casefold())
-    return dict(account_id=str(account),positions=positions,accounts=len({p['account_id'] for p in snapshot['positions'] if str(account)=='all' or str(p['account_id'])==str(account)}))
+    return dict(fund_compositions=snapshot.get('fund_compositions',[]),account_id=str(account),positions=positions,accounts=len({p['account_id'] for p in snapshot['positions'] if str(account)=='all' or str(p['account_id'])==str(account)}))

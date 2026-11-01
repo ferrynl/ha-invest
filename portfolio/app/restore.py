@@ -10,6 +10,7 @@ from storage import positive
 from migrations import SCHEMA_VERSION
 
 TABLES={
+ 'fund_compositions':(22,('symbol','exchange','currency','source_url','as_of','fetched_at','payload')),
  'instrument_valuations':(15,('symbol','exchange','currency','price','day','updated_at')),
  'broker_accounts':(6,('id','name','broker','created_at')),
  'purchases':(1,('id','symbol','exchange','name','quantity','price','currency','purchased_on','created_at','account_id','side','trade_time','split_before','transfer_id','transfer_cost','transfer_invested')),
@@ -66,6 +67,10 @@ def restore_backup(store,content):
                 if len(data)>250000:raise ValueError('Te veel regels in deze back-up.')
                 for values in data:
                     row=dict(zip(columns,values))
+                    if table=='fund_compositions':
+                        from fund_holdings import validate,source_url
+                        payload=validate(json.loads(row['payload']));source_url(row['source_url'])
+                        if row['as_of']!=payload['as_of']:raise ValueError('Ongeldige samenstellingsdatum in back-up.')
                     if table=='charges':
                         from charges import validate_charge
                         validate_charge(row)

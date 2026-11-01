@@ -75,6 +75,8 @@ def refresh():
                 history_errors += 1
             # Profile lookup runs once per listing, including existing holdings.
             if enrich_categories(store,instrument):state_cache.invalidate()
+            from fund_holdings import background_refresh
+            if background_refresh(store,instrument,p.get('categories',{}).get('asset_type')=='ETF'):state_cache.invalidate()
             # Space requests to avoid bursts; plan limits still apply.
             time.sleep(1)
         from storage import now

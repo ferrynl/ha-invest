@@ -189,3 +189,8 @@
 @media(max-width:850px){.stocks-countries-panel .country-layout{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:550px){.stocks-composition>.panel{padding:18px 14px}.stocks-composition #stocks-sectors{grid-template-columns:minmax(0,1fr)}.stock-sector-card{padding:16px}.stocks-composition h2{font-size:22px}.stocks-dashboard .stocks-composition{gap:18px}.stocks-countries-panel .country-map-toolbar{gap:10px}}
 @media(prefers-reduced-motion:reduce){.stock-sector-card{transition:none}.stock-sector-card:hover{transform:none}}
+
+#stock-fund-panel{min-width:0}#stock-fund-charts{margin:24px 0}.fund-holdings-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0}.fund-holdings-controls input{flex:1;min-width:min(240px,100%)}.fund-holdings-controls span{font-size:12px;color:#a7bcd1}.fund-holdings-controls button{min-height:40px}.fund-report{margin:0 0 24px}.fund-report>summary{cursor:pointer;font-size:16px;font-weight:650;padding:8px 0}.fund-report>p{line-height:1.7}.fund-report h3{margin-top:24px}#stock-fund-holdings table,.fund-report table{width:100%;font-size:12px}#stock-fund-source{font-size:12px}#stock-fund-charts .report-chart-card{min-width:0}#stock-fund-charts .country-layout{grid-template-columns:minmax(0,1fr)}
+@media(max-width:550px){.fund-holdings-controls input{flex-basis:100%}.fund-holdings-controls span{flex:1}.fund-report{padding:16px}#stock-fund-panel .section-head{flex-wrap:wrap;gap:12px}}
+
+#stock-fund-charts{align-items:start}#stock-fund-charts .country-ranking{max-height:320px;overflow:auto}#stock-fund-charts .report-chart-detail:empty{display:none}
