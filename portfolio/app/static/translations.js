@@ -1,5 +1,20 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+"open notering":{"nl":"open notering","en":"open listing","es":"cotización abierta"},
+"Software, chips en digitale innovatie":{"nl":"Software, chips en digitale innovatie","en":"Software, chips and digital innovation","es":"Software, chips e innovación digital"},
+"Medicijnen, zorg en medische technologie":{"nl":"Medicijnen, zorg en medische technologie","en":"Medicines, care and medical technology","es":"Medicamentos, atención y tecnología médica"},
+"Banken, verzekeringen en betalingsverkeer":{"nl":"Banken, verzekeringen en betalingsverkeer","en":"Banking, insurance and payments","es":"Banca, seguros y pagos"},
+"Olie, gas en energieproductie":{"nl":"Olie, gas en energieproductie","en":"Oil, gas and energy production","es":"Petróleo, gas y producción de energía"},
+"Machines, transport en industriële productie":{"nl":"Machines, transport en industriële productie","en":"Machinery, transport and industrial production","es":"Maquinaria, transporte y producción industrial"},
+"Gebouwen, verhuur en vastgoedbeheer":{"nl":"Gebouwen, verhuur en vastgoedbeheer","en":"Buildings, rentals and property management","es":"Edificios, alquileres y gestión inmobiliaria"},
+"Winkels, reizen en vrijetijdsbesteding":{"nl":"Winkels, reizen en vrijetijdsbesteding","en":"Retail, travel and leisure","es":"Comercio, viajes y ocio"},
+"Voeding, verzorging en dagelijkse producten":{"nl":"Voeding, verzorging en dagelijkse producten","en":"Food, personal care and everyday products","es":"Alimentación, cuidado personal y productos cotidianos"},
+"Telecom, media en online communicatie":{"nl":"Telecom, media en online communicatie","en":"Telecoms, media and online communication","es":"Telecomunicaciones, medios y comunicación en línea"},
+"Elektriciteit, water en gasnetwerken":{"nl":"Elektriciteit, water en gasnetwerken","en":"Electricity, water and gas networks","es":"Redes de electricidad, agua y gas"},
+"Metalen, chemie en grondstoffen":{"nl":"Metalen, chemie en grondstoffen","en":"Metals, chemicals and raw materials","es":"Metales, productos químicos y materias primas"},
+"Eigen of nog niet ingedeelde sector":{"nl":"Eigen of nog niet ingedeelde sector","en":"Custom or unclassified sector","es":"Sector personalizado o sin clasificar"},
+"Klik op een land of vlag voor het aantal open noteringen en de weging.":{"nl":"Klik op een land of vlag voor het aantal open noteringen en de weging.","en":"Select a country or flag to see its open listing count and weight.","es":"Selecciona un país o bandera para ver sus cotizaciones abiertas y su ponderación."},
+
 "Alle sectoren":{"nl":"Alle sectoren","en":"All sectors","es":"Todos los sectores"},
 "Gesloten posities":{"nl":"Gesloten posities","en":"Closed positions","es":"Posiciones cerradas"},
 "Posities":{"nl":"Posities","en":"Positions","es":"Posiciones"},

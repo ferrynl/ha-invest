@@ -1,3 +1,9 @@
+## 0.46.0 — 1 november 2026
+
+- Je aandelen krijgt meer diepte met verhoogde kaarten, gelaagde sectorsymbolen en een ruimere indeling.
+- Sectoren tonen herkenbare symbolen, een korte uitleg en het aandeel in de open beursnoteringen.
+- Landen worden getoond op een interactieve wereldkaart met vlaggen, Europaweergave en aantallen per land; onbekende landen blijven zichtbaar in de lijst.
+
 ## 0.45.0 — 1 november 2026
 
 - Portefeuilleoverzicht staat altijd bovenaan de rapportenlijst.

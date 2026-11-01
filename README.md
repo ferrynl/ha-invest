@@ -156,3 +156,5 @@ Bij een handmatige transactie in een andere valuta kun je ook de prijs per aande
 invullen. Het formulier rekent om op transactiedatum en toont de gebruikte koersdatum.
 
 Portefeuilleoverzicht staat bovenaan de rapportenlijst en toont standaard één gecombineerd EUR-dashboard met vier kerncijfers en zes grafieken. Filter op broker, bronvaluta, aandeel, sector of open/gesloten posities. Zet **Uitsplitsing per valuta tonen** aan voor afzonderlijke bronvaluta naast het totaal.
+
+Op **Je aandelen** geven sectoren met symbolen en een korte uitleg hun betekenis weer. De interactieve landenkaart toont aantallen open beursnoteringen en hun weging, met een wereld- en Europaweergave. De kaart telt iedere open beursnotering één keer; dit is geen verdeling naar marktwaarde.
