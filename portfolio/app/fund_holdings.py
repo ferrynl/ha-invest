@@ -13,7 +13,7 @@ from html.parser import HTMLParser
 
 MAX_BYTES = 8 * 1024 * 1024
 MAX_ROWS = 20000
-ISSUERS = {'www.ishares.com', 'www.blackrock.com', 'www.vaneck.com',
+ISSUERS = {'dng-api.invesco.com', 'www.ishares.com', 'www.blackrock.com', 'www.vaneck.com',
            'fund-docs.vanguard.com', 'www.vanguard.co.uk', 'www.ssga.com',
            'etf.dws.com', 'www.amundietf.com', 'www.invesco.com', 'www.spdrgoldshares.com'}
 KNOWN = {
@@ -180,6 +180,10 @@ class HoldingsLink(HTMLParser):
 
 def retrieve(url, as_of=''):
     from urllib.parse import urljoin
+    from fund_providers import retrieve_invesco,retrieve_vaneck,retrieve_vanguard
+    if urlsplit(url).hostname=='dng-api.invesco.com':return retrieve_invesco(url)
+    if '/Main/HoldingsBlock/' in url:return retrieve_vaneck(url)
+    if urlsplit(url).hostname=='www.vanguard.co.uk' and '/product/etf/' in url:return retrieve_vanguard(url)
     content = download(url)
     if '<html' in content[:10000].lower() or '<!doctype' in content[:1000].lower():
         parser = HoldingsLink()

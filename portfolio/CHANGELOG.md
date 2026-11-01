@@ -1,3 +1,10 @@
+## 0.48.0 — 1 november 2026
+
+- Instellingen > Taken haalt ETF-samenstellingen voor alle brokeraccounts op de achtergrond op, met voortgang, stoppen en opnieuw proberen van ontbrekende of mislukte fondsen.
+- Gratis automatische bronherkenning voor Invesco, VanEck en Vanguard via officiële fondscatalogi en ISIN, ticker of eenduidige naam; geen betaalde dienst of API-sleutel nodig.
+- Volledige holdings worden gecontroleerd en blijvend opgeslagen, inclusief Vanguard-paginering. Beschikbare sectoren en landen werken door in de aandeelpagina en rapporten; ontbrekende indelingen blijven zichtbaar.
+- Bestaande gegevens blijven behouden bij bronfouten. De takenpagina is alleen voor beheerders en doet bij laden geen externe aanvragen.
+
 ## 0.47.0 — 1 november 2026
 
 - ETF-detailpagina toont de volledige beschikbare samenstelling met percentages, sector, categorie, land, bron en peildatum; zoeken en bladeren door alle regels.

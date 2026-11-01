@@ -33,6 +33,7 @@ function lockApp(){
  if(typeof clearConversions==='function')clearConversions();
  if(typeof clearHomeDashboard==='function')clearHomeDashboard();
  if(typeof clearDividendDashboard==='function')clearDividendDashboard();
+ if(typeof clearETFTasks==='function')clearETFTasks();
  if(typeof clearReports==='function')clearReports();
  if(typeof clearImportIssues==='function')clearImportIssues();
  if(typeof clearImportMappings==='function')clearImportMappings();
