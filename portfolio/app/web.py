@@ -171,6 +171,12 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 query=parse_qs(urlsplit(self.path).query)
                 try:return self.respond(instruments.company(store,{k:query.get(k,[''])[0] for k in ('symbol','exchange','currency')},query.get('account_id',['all'])[0]))
                 except (ValueError,TypeError):return self.respond({'error':'Aandeel of brokeraccount niet gevonden.'},400)
+            if path in ('/api/fund/constituent','/api/fund/constituent/company'):
+                import constituents
+                query=parse_qs(urlsplit(self.path).query)
+                data={k:query.get(k,[''])[0] for k in ('symbol','exchange','currency','holding','as_of','holding_name','holding_isin','holding_symbol')}
+                try:return self.respond((constituents.company if path.endswith('/company') else constituents.details)(store,data,query.get('account_id',['all'])[0]))
+                except (ValueError,TypeError):return self.respond({'error':'Onderliggende belegging niet gevonden. Open deze opnieuw vanuit de ETF.'},400)
             if path=='/api/instrument':
                 query=parse_qs(urlsplit(self.path).query)
                 try:return self.respond(instruments.details(store,{k:query.get(k,[''])[0] for k in ('symbol','exchange','currency')},query.get('account_id',['all'])[0],include_pending=user['role']=='admin'))

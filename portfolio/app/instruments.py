@@ -131,4 +131,15 @@ def fundamentals(store,data,account='all'):
 def company(store,data,account='all'):
     key=owned_key(store,data,account)
     from profiles import fetch_company
-    return fetch_company(store,key)
+    info=fetch_company(store,key)
+    with store.read() as db:
+        row=db.execute('SELECT name FROM purchases WHERE symbol=? AND exchange=? AND currency=? LIMIT 1',key).fetchone()
+    from fund_providers import issuer_name
+    issuer=issuer_name(row['name'] if row else '')
+    domains={'invesco':'invesco.com','vanguard':'vanguard.com','vaneck':'vaneck.com','ishares':'ishares.com'}
+    if issuer in domains:
+        from fund_holdings import saved
+        fund=saved(store,key)
+        info=dict(info,domain=info.get('domain') or domains[issuer],issuer=issuer,
+                  holdings_count=len(fund['holdings']) if fund else 0,as_of=fund['as_of'] if fund else '')
+    return info

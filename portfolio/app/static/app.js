@@ -29,6 +29,7 @@ function draw(){
 }
 $('chart-ranges').addEventListener('click',event=>{const button=event.target.closest('button[data-range]');if(!button)return;chartRange=button.dataset.range;for(const choice of $('chart-ranges').querySelectorAll('button'))choice.setAttribute('aria-pressed',String(choice===button));draw();});
 $('instrument').addEventListener('change',()=>{homeChartChanged();draw();});
+$('chart-measure').addEventListener('change',draw);
 window.addEventListener('resize',()=>{clearTimeout(homeResizeTimer);homeResizeTimer=setTimeout(()=>{if(document.body.classList.contains('home-page'))draw();},120);});
 let homeResizeTimer;
 let selectedStock=null,searchTimer,searchController,searchVersion=0;

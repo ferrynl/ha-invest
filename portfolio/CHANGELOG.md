@@ -1,3 +1,10 @@
+## 0.50.0 — 1 november 2026
+
+- Onderliggende ETF-beleggingen zijn aanklikbaar op de fondsdetailpagina en in rapporten. Een eigen aandeelpagina toont de bron-ETF, de weging, peildatum en beschikbare bedrijfsinformatie, zonder fictieve aankopen of direct aandelenbezit aan te maken.
+- Logo’s en omschrijvingen gebruiken ook fondsprofielen en een kortere informatiecache. Bekende ETF-aanbieders krijgen een herkenbaar logo en brongebonden samenvatting wanneer bedrijfsinformatie ontbreekt.
+- Home krijgt een groene/rode resultaatgrafiek met vlakvulling, nulreferentie, resultaatbadge en extra perioden 1D, 5D en 5Y. De bestaande marktwaarde/kostprijsweergave blijft kiesbaar.
+- Percentagegrafieken gebruiken de totale aankoopinleg, inclusief gerealiseerd resultaat en dividend. Ontbrekende gegevens blijven grafiekgaten; de grafiek is geen tijdgewogen perioderendement en verzint geen handelsvolumes.
+
 ## 0.49.0 — 1 november 2026
 
 - Herstelt herkenning van Vanguard-fondsen met Accumulation in de naam en Invesco-fondsen met afwijkende beursticker, waaronder VWCE.DE, VUAA.L en EHDV.DE.

@@ -36,3 +36,6 @@ const known={...composition,holdings:[{name:'First',symbol:'A',exchange:'NYSE',c
 const second={...etf,symbol:'OTHER'};
 const merged=fundAllocation(fundExposure([etf,second],[known,{...known,symbol:'OTHER'}]));
 assert.equal(merged.length,1);assert.equal(merged[0].value,2000);
+const {fundHoldingLink}=require('../portfolio/app/static/funds.js');
+const linked=new URLSearchParams(fundHoldingLink({name:'A & B',isin:'US0000000001',symbol:'AB',fund_parent:{symbol:'ETF.L',exchange:'LONDON',currency:'EUR',native_currency:'GBP'},fund_index:3,fund_as_of:'2026-10-30'}).split('?')[1]);
+assert.equal(linked.get('currency'),'GBP');assert.equal(linked.get('holding'),'3');assert.equal(linked.get('holding_name'),'A & B');assert.equal(linked.get('holding_isin'),'US0000000001');

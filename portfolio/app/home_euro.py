@@ -73,6 +73,8 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
     for day in sorted({day for rows in maps for day in rows}):
         active=[rows[day] for rows in maps if day in rows];known=[point for point in active if point['value'] is not None];value=sum((Decimal(p['value']) for p in known),Decimal(0)) if known else None
         history.append(dict(day=day,value=str(value) if value is not None else None,cost=str(sum((Decimal(p['cost']) for p in active),Decimal(0))),dividend=str(sum((Decimal(p['dividend']) for p in active),Decimal(0))),with_dividends=str(sum((Decimal(p['with_dividends']) for p in known),Decimal(0))) if known else None,total_gain=str(sum((Decimal(p['total_gain']) for p in known),Decimal(0))) if known else None,price=None,carried=any(p['carried'] for p in active),missing=len(active)-len(known)))
+    for point in history:
+        point['invested']=str(sum((Decimal(rows[point['day']]['invested']) for rows in maps if point['day'] in rows),Decimal(0)))
     return dict(account_id=str(account),as_of=today.isoformat(),positions=positions,portfolios=[dict(name='Alle valuta’s in euro',currency='EUR',history=history)],excluded=excluded,fx_dates=[dict(currency=c,requested_on=d,rate_on=r) for c,d,r in sorted(used)])
 
 def prepare_portfolio_rates(store,snapshot,account='all'):

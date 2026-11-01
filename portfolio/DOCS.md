@@ -1023,3 +1023,9 @@ Databaseversie 22 voegt `fund_compositions` toe, gedeeld per symbool/beurs/noter
 ### Gratis ETF-gegevens ophalen
 
 Open **Instellingen > Taken** als beheerder. Start alle ETF-noteringen, ontbrekende/verouderde samenstellingen of mislukte taken opnieuw. Invesco, VanEck, Vanguard en iShares gebruiken gratis officiële bronnen zonder API-sleutel; een ISIN-koppeling uit de brokerimport helpt bij herkenning. De taak werkt over alle brokeraccounts, toont voortgang en kan worden gestopt. Bij een bronfout blijft de vorige samenstelling behouden. Ontbrekende sectoren/landen worden niet gegokt. Niet elk fonds wordt door de gratis bronnen gedekt. Na een app-herstart moet een onderbroken taak opnieuw worden gestart. Gekoppelde bronnen worden daarna door de bestaande dagelijkse controle bijgewerkt.
+
+### ETF-beleggingen en Home-grafiek
+
+Klik in een ETF-samenstelling of rapport op een belegging om de aandeelpagina te openen. Die vermeldt dat de belegging via de ETF wordt aangehouden, met weging en peildatum. Dit maakt geen rechtstreekse positie of boeking aan. Bedrijfsprofielen worden alleen gekoppeld bij een gecontroleerde identiteit; ontbrekende informatie blijft zichtbaar.
+
+Home toont standaard het resultaat sinds aankoop als percentage van de totale aankoopinleg. Groen is positief en rood negatief. Kies **Grafiekmeting** voor de bestaande marktwaarde/kostprijsgrafiek. Periodeknoppen kiezen de getoonde dagwaarden; 1D is een dagwaarde, geen intraday-koers. De grafiek is geen tijdgewogen rendement van de gekozen periode. Handelsvolume voor een portefeuille wordt niet gesimuleerd.

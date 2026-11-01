@@ -52,7 +52,7 @@ def _download_direct(symbol):
         with _open('https://query1.finance.yahoo.com/v1/test/getcrumb',response_type='text',stage='session_crumb') as response:crumb=response.read(1025).decode('utf-8').strip()
         if not crumb or len(crumb)>1024 or any(c.isspace() for c in crumb) or '<' in crumb:raise ProfileError('session_unavailable')
         _crumb=crumb
-    params=urlencode({'modules':'assetProfile,quoteType,price','crumb':_crumb})
+    params=urlencode({'modules':'assetProfile,fundProfile,quoteType,price','crumb':_crumb})
     with _open('https://query2.finance.yahoo.com/v10/finance/quoteSummary/'+quote(symbol,safe='')+'?'+params) as response:
         raw=response.read(2*1024*1024+1)
         if len(raw)>2*1024*1024:raise ProfileError('invalid_profile')
@@ -115,8 +115,10 @@ def normalize_profile(payload,key):
     except (ValueError,KeyError,IndexError,TypeError,AttributeError):raise ProfileError('invalid_profile') from None
 
 def company_data(payload):
-    profile=payload['quoteSummary']['result'][0].get('assetProfile') or {}
-    description=' '.join(str(profile.get('longBusinessSummary') or '').split())[:650]
+    row=payload['quoteSummary']['result'][0]
+    profile=row.get('assetProfile') or {}
+    fund=row.get('fundProfile') or {}
+    description=' '.join(str(profile.get('longBusinessSummary') or fund.get('longBusinessSummary') or fund.get('description') or '').split())[:1500]
     website=urlsplit(str(profile.get('website') or ''))
     domain=website.hostname if website.scheme in ('http','https') else None
     if domain and not re.fullmatch(r'[a-zA-Z0-9.-]{1,253}',domain):domain=None
@@ -136,8 +138,10 @@ def fetch_profile(store,key,company=False):
             if delay>0:raise ProfileError('provider_cooldown',max(1,int(delay)))
             try:
                 payload=_download_profile(key[0]);values=normalize_profile(payload,key);info=company_data(payload)
-                if company:return info
-                cached_json(store,'yahoo-company-v1','|'.join(key),10*365*86400,lambda:info)
+                if company:
+                    if not info['description'] and not info['domain']:raise ProfileError('profile_unavailable')
+                    return info
+                if info['description'] or info['domain']:cached_json(store,'yahoo-company-v2','|'.join(key),7*86400,lambda:info)
                 return values
             except HTTPError as error:
                 _session=None;_crumb=None
@@ -151,7 +155,7 @@ def fetch_profile(store,key,company=False):
             except (ValueError,TypeError) as error:
                 if isinstance(error,ProfileError):raise
                 raise ProfileError('invalid_profile') from None
-    cached=cached_json(store,'yahoo-company-v1' if company else 'yahoo-profile-v1','|'.join(key),(10*365 if company else 30)*86400,load)
+    cached=cached_json(store,'yahoo-company-v2' if company else 'yahoo-profile-v1','|'.join(key),(7 if company else 30)*86400,load)
     if company:return cached
     if not isinstance(cached,dict):raise ProfileError('invalid_profile')
     try:values=validate_categories(cached)
@@ -203,4 +207,4 @@ def fetch_company(store,key):
             record(store,'WARNING','market','company_failed','Bedrijfsinformatie ophalen mislukt.',{'symbol':key[0],'code':error.code if isinstance(error,ProfileError) else 'profile_failed'})
             return {'description':'','domain':'','unavailable':True}
     # Failed requests wait 15 minutes; successful company profiles are retained above.
-    return cached_json(store,'company-display','|'.join(key),900,load)
+    return cached_json(store,'company-display-v2','|'.join(key),900,load)

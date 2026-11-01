@@ -79,7 +79,7 @@ def portfolio_values(positions):
             income = sum((Decimal(p['dividend']) for p in active), Decimal(0))
             complete = all(p['value'] is not None for p in active)
             value = sum((Decimal(p['value']) for p in active), Decimal(0)) if complete else None
-            points.append(dict(day=day, cost=str(cost), value=str(value) if complete else None,
+            points.append(dict(day=day, cost=str(cost), invested=str(sum((Decimal(p.get('invested',p['cost'])) for p in active),Decimal(0))), value=str(value) if complete else None,
                                dividend=str(income), with_dividends=str(value + income) if complete else None,
                                total_gain=str(value - cost + income+sum((Decimal(p.get('realised','0')) for p in active),Decimal(0))) if complete else None, price=None,
                                carried=any(p['carried'] for p in active)))

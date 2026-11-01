@@ -23,6 +23,14 @@ def payload(**profile):
  return {'quoteSummary':{'result':[{'price':{'symbol':'ASML.AS','exchange':'AMS','currency':'EUR','quoteType':'EQUITY'},'assetProfile':{'sector':'Technology','country':'Netherlands',**profile}}],'error':None}}
 
 class ProfileTests(unittest.TestCase):
+ def test_fund_profile_description_and_old_empty_company_cache_are_refreshed(self):
+  raw=payload();raw['quoteSummary']['result'][0]['fundProfile']={'description':'Tracks a broad equity index.'}
+  self.assertEqual(profiles.company_data(raw)['description'],'Tracks a broad equity index.')
+  import time
+  with self.store.connect() as db:db.execute('INSERT OR REPLACE INTO api_cache VALUES(?,?,?,?,?)',('yahoo-company-v1','|'.join(KEY),json.dumps(dict(description='',domain='')),time.time(),time.time()+86400))
+  with patch('profiles._download_profile',return_value=payload(longBusinessSummary='Company information.',website='https://www.asml.com')) as fetch:
+   self.assertEqual(profiles.fetch_company(self.store,KEY)['domain'],'www.asml.com');fetch.assert_called_once()
+
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.store=Store(self.tmp.name)
   self.store.add(dict(**STOCK,quantity='2',price='100',purchased_on='2026-10-01'))
@@ -138,7 +146,7 @@ class ProfileTests(unittest.TestCase):
   with patch('profiles._download_profile',side_effect=AssertionError('No new request')):
    self.assertEqual(profiles.fetch_company(Store(self.tmp.name),KEY),result)
   with self.store.connect() as db:
-   company=db.execute("SELECT payload FROM api_cache WHERE namespace='yahoo-company-v1'").fetchone()[0]
+   company=db.execute("SELECT payload FROM api_cache WHERE namespace='yahoo-company-v2'").fetchone()[0]
   self.assertNotIn('omit-me',company)
  def test_company_lookup_upgrades_existing_categories_and_caches_failure(self):
   with patch('profiles._download_profile',return_value=payload(website='javascript:alert(1)',longBusinessSummary='Company')) as api:

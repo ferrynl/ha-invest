@@ -166,3 +166,9 @@ De gratis bronnen dekken niet elk fonds of elke classificatie. Bij Invesco ontbr
 De app bewaart alle bronregels, ook contanten, derivaten en negatieve wegingen. Een bron met onvolledige dekking wordt niet opgehoogd tot 100%; het ontbrekende deel blijft **ETF niet uitgesplitst**. Een peildatum ouder dan 14 dagen wordt gemeld. Gekoppelde bronnen worden maximaal dagelijks bijgewerkt; fouten behouden de vorige samenstelling en hebben een wachttijd. CSV-import zonder bron-URL wordt handmatig bijgewerkt. Dagelijkse controle vereist dat de automatische koersverversing draait.
 
 Rapporten rekenen de actuele ETF-marktwaarde naar onderliggende beleggingen door voor spreiding, sectoren en landen, met behoud van het gecombineerde EUR-totaal. Het uitklapbare ETF-blok is in ieder rapport beschikbaar. Winst, belasting, kosten, dividend en historie blijven gebaseerd op echte ETF-boekingen: de huidige samenstelling wordt niet als historische winst van de onderliggende aandelen gepresenteerd. Bronwegingen zijn percentages van fondsvermogen, geen gegarandeerde economische blootstelling bij derivaten of synthetische fondsen. ETF-in-ETF wordt één niveau uitgesplitst.
+
+### ETF-beleggingen en Home-grafiek
+
+Klik in een ETF-samenstelling of rapport op een belegging om de aandeelpagina te openen. Die vermeldt dat de belegging via de ETF wordt aangehouden, met weging en peildatum. Dit maakt geen rechtstreekse positie of boeking aan. Bedrijfsprofielen worden alleen gekoppeld bij een gecontroleerde identiteit; ontbrekende informatie blijft zichtbaar.
+
+Home toont standaard het resultaat sinds aankoop als percentage van de totale aankoopinleg. Groen is positief en rood negatief. Kies **Grafiekmeting** voor de bestaande marktwaarde/kostprijsgrafiek. Periodeknoppen kiezen de getoonde dagwaarden; 1D is een dagwaarde, geen intraday-koers. De grafiek is geen tijdgewogen rendement van de gekozen periode. Handelsvolume voor een portefeuille wordt niet gesimuleerd.

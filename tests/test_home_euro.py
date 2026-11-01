@@ -19,6 +19,7 @@ class HomeEuroTests(unittest.TestCase):
   original=self.store.state();result=build(original,self.rates,today=date(2026,10,3));p=result['positions'][0]
   self.assertEqual(Decimal(p['cost']),50);self.assertEqual(Decimal(p['realised']),-20);self.assertEqual(Decimal(p['dividend']),Decimal('2.5'));self.assertEqual(Decimal(p['value']),150);self.assertEqual(Decimal(p['total_gain']),Decimal('82.5'))
   self.assertEqual(p['currency'],'EUR');self.assertEqual(p['native_currency'],'USD');self.assertEqual(original['positions'][0]['currency'],'USD');self.assertEqual(Decimal(p['history'][-1]['invested']),100)
+  self.assertEqual(Decimal(result['portfolios'][0]['history'][-1]['invested']),100)
  def test_missing_fx_is_excluded_and_future_rates_never_used(self):
   result=build(self.store.state(),[dict(base='EUR',quote='USD',day='2026-10-04',rate='1')],today=date(2026,10,3))
   self.assertEqual(result['positions'],[]);self.assertEqual(result['excluded'][0]['symbol'],'TEST');self.assertIn('2026-10-01',result['excluded'][0]['dates'])
