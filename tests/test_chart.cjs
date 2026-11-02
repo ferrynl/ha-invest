@@ -22,4 +22,7 @@ assert.equal(chartProfitValue({invested:'200',total_gain:'-20'}),-10);
 assert.equal(chartProfitValue({invested:'0',total_gain:'0'}),null);
 assert.equal(chartProfitValue({invested:'200',total_gain:null}),null);
 assert.equal(chartProfitValue({invested:'200',total_gain:'10',missing:1}),null);
+assert.equal(chartProfitValue({invested:'500',total_gain:'85',missing:1,return_gain:'85',return_invested:'100'}),85);
+assert.equal(chartProfitValue({invested:'500',total_gain:null,missing:1,return_gain:'-20',return_invested:'100'}),-20);
+assert.equal(chartProfitValue({invested:'500',total_gain:null,missing:2,return_gain:null,return_invested:'0'}),null);
 assert.deepEqual(chartRuns([1,null,-1,0,NaN,2]),[[{i:0,value:1}],[{i:2,value:-1},{i:3,value:0}],[{i:5,value:2}]]);

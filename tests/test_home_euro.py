@@ -43,6 +43,33 @@ class HomeEuroTests(unittest.TestCase):
  def test_missing_quote_does_not_erase_other_market_values(self):
   self.store.add(dict(symbol='EUR',exchange='AMSTERDAM',currency='EUR',name='Euro',quantity='1',price='50',purchased_on='2026-10-01'))
   result=build(self.store.state(),self.rates,today=date(2026,10,3));self.assertEqual(Decimal(result['portfolios'][0]['history'][-1]['value']),150);self.assertEqual(result['portfolios'][0]['history'][-1]['missing'],1)
+  point=result['portfolios'][0]['history'][-1]
+  self.assertEqual(Decimal(point['invested']),150)
+  self.assertEqual(Decimal(point['return_invested']),100)
+  self.assertEqual(Decimal(point['return_gain']),Decimal('82.5'))
+ def test_all_missing_returns_no_fabricated_profit(self):
+  snapshot=self.store.state()
+  for p in snapshot['positions']:
+   p['value']=None
+   for day in p['history']:day.update(value=None,total_gain=None)
+  result=build(snapshot,self.rates,today=date(2026,10,3))
+  point=result['portfolios'][0]['history'][-1]
+  self.assertIsNone(point['return_gain']);self.assertEqual(Decimal(point['return_invested']),0)
+ def test_missing_usd_quote_keeps_eur_profit_visible(self):
+  self.store.add(dict(symbol='EUR',exchange='AMSTERDAM',currency='EUR',name='Euro',quantity='1',price='50',purchased_on='2026-10-01'))
+  self.store.quote('EUR','AMSTERDAM','EUR','60','2026-10-03T10:00:00+00:00','test')
+  snapshot=self.store.state();usd=next(p for p in snapshot['positions'] if p['currency']=='USD');usd['value']=None
+  for day in usd['history']:day.update(value=None,total_gain=None)
+  point=build(snapshot,self.rates,today=date(2026,10,3))['portfolios'][0]['history'][-1]
+  self.assertEqual(point['missing'],1);self.assertEqual(Decimal(point['return_gain']),10);self.assertEqual(Decimal(point['return_invested']),50)
+ def test_native_partial_profit_keeps_matching_denominator(self):
+  from history import portfolio_values
+  day=dict(day='2026-10-03',cost='50',invested='100',value='120',dividend='5',realised='10',total_gain='85',carried=False)
+  missing=dict(day,cost='200',invested='300',value=None,total_gain=None)
+  group=portfolio_values([dict(currency='EUR',history=[day]),dict(currency='EUR',history=[missing])])[0]
+  point=group['history'][0]
+  self.assertIsNone(point['total_gain']);self.assertEqual(point['missing'],1)
+  self.assertEqual(Decimal(point['return_invested']),100);self.assertEqual(Decimal(point['return_gain']),85)
 
 import test_transactions as transaction_test_support
 class HomeEuroHttpTests(unittest.TestCase):

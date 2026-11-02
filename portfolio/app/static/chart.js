@@ -16,6 +16,6 @@ function chartPeriodPoints(history, range) {
  const start=chartPeriodStart(history.at(-1).day,range);
  return history.filter(point=>point.day>=start);
 }
-function chartProfitValue(point){const basis=Number(point?.invested),gain=Number(point?.total_gain);return point?.total_gain==null||point?.missing>0||!Number.isFinite(basis)||!Number.isFinite(gain)||basis<=0?null:gain/basis*100;}
+function chartProfitValue(point){const scoped=point?.return_gain!=null&&point?.return_invested!=null,raw=scoped?point.return_gain:point?.total_gain,basis=Number(scoped?point.return_invested:point?.invested),gain=Number(raw);return raw==null||point?.missing>0&&!scoped||!Number.isFinite(basis)||!Number.isFinite(gain)||basis<=0?null:gain/basis*100;}
 function chartRuns(values){const runs=[];let run=[];values.forEach((v,i)=>{if(v==null||!Number.isFinite(v)){if(run.length)runs.push(run);run=[];}else run.push({i,value:v});});if(run.length)runs.push(run);return runs;}
 if(typeof module!=='undefined')module.exports={chartPeriodStart,chartPeriodPoints,chartProfitValue,chartRuns};

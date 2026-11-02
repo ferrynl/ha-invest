@@ -1,5 +1,7 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+"Resultaat bekende posities (%)":{"nl":"Resultaat bekende posities (%)","en":"Known positions profit (%)","es":"Resultado de posiciones conocidas (%)"},
+"Resultaat van bekende posities. Winst en aankoopinleg worden per dag voor dezelfde posities berekend. Ontbrekende posities: maximaal {count}. De samenstelling van dit deel kan per dag verschillen.":{"nl":"Resultaat van bekende posities. Winst en aankoopinleg worden per dag voor dezelfde posities berekend. Ontbrekende posities: maximaal {count}. De samenstelling van dit deel kan per dag verschillen.","en":"Profit of known positions. Profit and purchase investment use the same positions each day; up to {count} positions are missing. This subset can differ from day to day.","es":"Resultado de las posiciones conocidas. El resultado y la inversión corresponden a las mismas posiciones cada día; faltan hasta {count} posiciones. Este subconjunto puede variar de un día a otro."},
 "Grafiekmeting":{"nl":"Grafiekmeting","en":"Chart metric","es":"Métrica del gráfico"},
 "Marktwaarde en kostprijs":{"nl":"Marktwaarde en kostprijs","en":"Market value and cost basis","es":"Valor de mercado y coste"},
 "Resultaat sinds aankoop (%)":{"nl":"Resultaat sinds aankoop (%)","en":"Profit since purchase (%)","es":"Resultado desde la compra (%)"},

@@ -1,3 +1,9 @@
+## 0.51.0 — 2 november 2026
+
+- Herstelt de lege resultaatgrafiek bij een portefeuille met ontbrekende koersen, waaronder het gecombineerde EUR-overzicht.
+- Beschikbare dagresultaten blijven zichtbaar. De winst en aankoopinleg gebruiken exact dezelfde bekende posities; onbekende posities worden niet als nul of als inleg zonder bijbehorende winst meegerekend.
+- De grafiek vermeldt expliciet wanneer alleen bekende posities worden getoond en hoeveel posities ontbreken. Dagen zonder bruikbare waarden blijven leeg.
+
 ## 0.50.0 — 1 november 2026
 
 - Onderliggende ETF-beleggingen zijn aanklikbaar op de fondsdetailpagina en in rapporten. Een eigen aandeelpagina toont de bron-ETF, de weging, peildatum en beschikbare bedrijfsinformatie, zonder fictieve aankopen of direct aandelenbezit aan te maken.
