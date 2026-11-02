@@ -22,7 +22,7 @@ def memory_size(value,limit=MEMORY_BUDGET):
 
 class StateCache:
     def __init__(self,ttl=30,store=None):
-        self.ttl=ttl;self.lock=RLock();self.value=None;self.expires=0;self.store=store;self.entries={};self.build_locks=WeakValueDictionary();self.generation=0;self.pruned_store=None
+        self.ttl=ttl;self.lock=RLock();self.value=None;self.expires=0;self.store=store;self.entries={};self.build_locks=WeakValueDictionary();self.generation=0;self.pruned_store=None;self.active={};self.measurements={}
     def bind(self,store):
         with self.lock:
             if self.store is not store:
@@ -45,7 +45,8 @@ class StateCache:
                 self.value=loader();self.expires=time.monotonic()+self.ttl
             return self.value
     def statistics(self):
-        with self.lock:return dict(bytes=sum(e[2] for e in self.entries.values()),budget_bytes=MEMORY_BUDGET,entries=len(self.entries))
+        with self.lock:
+            return dict(bytes=sum(e[2] for e in self.entries.values()),budget_bytes=MEMORY_BUDGET,entries=len(self.entries),active=[dict(view=slot.split(':')[0],seconds=round(time.monotonic()-started,2)) for slot,started in self.active.items()],measurements=[dict(view=family,**values) for family,values in self.measurements.items()])
     def derived(self,slot,loader):
         # Only identical views wait for each other. Heavy report builds must not
         # hold the shared RAM lock or block unrelated cached Home/state requests.
@@ -74,11 +75,19 @@ class StateCache:
                     if not isinstance(result,dict):result=None
                 except (ValueError,TypeError,zlib.error):pass
             if result is None:
-                result=loader()
+                started=time.monotonic();family=slot.split(':')[0]
+                with self.lock:self.active[slot]=started
+                try:result=loader()
+                finally:
+                    with self.lock:
+                        self.active.pop(slot,None)
+                        measurement=self.measurements.setdefault(family,dict(builds=0,oversized=0,last_seconds=0,max_seconds=0))
+                        duration=time.monotonic()-started;measurement['builds']+=1;measurement['last_seconds']=round(duration,3);measurement['max_seconds']=round(max(duration,measurement['max_seconds']),3)
                 size=memory_size(result)
                 # Do not serialise oversized expanded histories into more copies.
                 if size>MEMORY_BUDGET:
-                    with self.lock:self.entries.pop(slot,None)
+                    with self.lock:
+                        self.entries.pop(slot,None);self.measurements[family]['oversized']+=1
                     return result
                 raw=json.dumps(result,separators=(',',':')).encode()
                 payload=base64.b64encode(zlib.compress(raw,1)).decode()

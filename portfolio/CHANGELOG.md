@@ -1,3 +1,10 @@
+## 0.54.0 · 2 november 2026
+
+- Compacte overzichten laden koersgegevens per positie en nemen de volledige lijst ruwe koerswaarnemingen niet meer mee in de cache. Per kalenderdag wordt alleen de laatste waarneming verwerkt; de oorspronkelijke koersgegevens blijven bewaard.
+- Dividend en rendement gebruiken alleen hun benodigde historische datums, zodat deze pagina’s geen volledige portefeuillehistorie meer in het geheugen opbouwen.
+- Statistieken bevat diagnostiek met piekgeheugen, anoniem/bestands-/wisselgeheugen waar beschikbaar, lopende berekeningen, cache-afwijzingen en berekeningstijden, aantallen posities en de oudste historiedatums. Admins kunnen een technisch diagnosebestand downloaden zonder posities, bedragen, accountnamen of sleutels.
+- Reproductie met 2.865 transacties, 66.403 dagkoersen en 138.157 koerswaarnemingen: versie 0.53.0 piekte op circa 1.153 MiB en hield geen overzichtcache vast. Dezelfde proef met deze versie piekte op circa 48 MiB en kon de cache hergebruiken. Lokale proefmeting, geen garantie voor iedere installatie.
+
 ## 0.53.0 · 2 november 2026
 
 - Instellingen > Statistieken toont app-CPU, proces- en containergeheugen, de RAM-cache, database, databaselog, back-ups, vrije opslag en aantallen boekingen/koersen. Alleen admins hebben toegang; alleen de zichtbare pagina ververst.

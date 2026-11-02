@@ -20,6 +20,35 @@ class ResourceTests(unittest.TestCase):
   self.assertEqual(list(self.store.position_histories(small))[0]['history'],full['positions'][0]['history'])
   self.store.add_account(dict(name='Other',broker='Test'))
   self.assertEqual(self.store.state(compact_view=True,account='2')['positions'],[])
+ def test_dense_intraday_quotes_stay_out_of_overview_cache(self):
+  with self.store.connect() as db:
+   db.executemany('INSERT INTO quotes VALUES(NULL,?,?,?,?,?,?,?)',[('TEST','TEST','EUR',str(100+i),'2026-11-01T'+str(i%24).zfill(2)+':00:00+00:00','2026-11-01T00:00:00+00:00','test') for i in range(4000)])
+  full=self.store.state();small=self.cache.derived('state-compact:all',lambda:self.store.state(compact_view=True))
+  self.assertEqual(small['quotes'],[])
+  self.assertEqual(small['positions'][0]['value'],full['positions'][0]['value'])
+  self.assertEqual(small['portfolios'],full['portfolios'])
+  with self.store.read() as db:
+   observations,daily=self.store.history_inputs(db,('TEST','TEST','EUR'))
+  self.assertEqual(len(observations),1)
+  self.assertIn('state-compact:all',self.cache.entries)
+  self.assertEqual(self.cache.derived('state-compact:all',lambda:self.fail('Should reuse cache')),small)
+ def test_specialist_reports_preserve_results_using_only_required_dates(self):
+  from performance import overview as performance
+  from dividend_dashboard import overview as dividend
+  self.store.quote('TEST','TEST','EUR','110','2026-11-01T10:00:00+00:00','test')
+  self.store.add_dividend(dict(symbol='TEST',exchange='TEST',currency='EUR',amount='3',paid_on='2024-06-01'))
+  full=self.store.state();small=self.store.state(compact_view=True)
+  self.assertEqual(performance(self.store,full),performance(self.store,self.store.sampled_state(small,'annual')))
+  self.assertEqual(dividend(full),dividend(self.store.sampled_state(small,'dividend')))
+ def test_cache_reports_rejections_durations_and_current_builds(self):
+  def build():
+   active=self.cache.statistics()['active'];self.assertEqual(active[0]['view'],'test')
+   return {'value':'x'*1000}
+  with patch('cache.MEMORY_BUDGET',50):self.cache.derived('test:scope',build)
+  stats=self.cache.statistics();self.assertEqual(stats['active'],[])
+  self.assertEqual(stats['measurements'][0]['oversized'],1)
+  self.assertEqual(stats['measurements'][0]['builds'],1)
+  self.assertNotIn('scope',str(stats))
  def test_report_streaming_matches_complete_history_without_retaining_positions(self):
   from reports import combined
   self.store.quote('TEST','TEST','EUR','110','2026-11-01T10:00:00+00:00','test')
@@ -64,10 +93,17 @@ class ResourceTests(unittest.TestCase):
    result=monitor.snapshot()
   self.assertEqual(result['storage']['backup_bytes'],123)
   self.assertEqual(result['storage']['rows']['purchases'],1)
+  self.assertGreater(result['storage']['estimated_daily_points'],1)
+  self.assertNotIn('TEST',__import__('json').dumps(result))
+  self.assertIn('app_version',result['diagnostics'])
   self.assertGreater(result['storage']['database_bytes'],0)
   self.assertEqual(result['cache']['budget_bytes'],64*1024*1024)
   with patch.object(monitor,'disk',side_effect=AssertionError('Storage scan is throttled')):monitor.snapshot()
   memory=process_memory();self.assertTrue(memory is None or memory>0)
+ def test_linux_memory_breakdown_uses_bytes_and_exposes_no_raw_status(self):
+  from resource_stats import process_details
+  with patch('resource_stats.sys.platform','linux'),patch('resource_stats.Path.read_text',return_value='VmHWM: 2048 kB\nRssAnon: 1024 kB\nRssFile: 256 kB\nVmSwap: 32 kB\nName: secret\n'):
+   self.assertEqual(process_details(),dict(peak_bytes=2097152,anonymous_bytes=1048576,file_bytes=262144,swap_bytes=32768))
 
 import test_transactions as support
 class ResourceHttpTests(unittest.TestCase):
@@ -80,7 +116,7 @@ class ResourceHttpTests(unittest.TestCase):
    self.assertTrue(kwargs.get('compact_view'),'Full state constructed for standard page')
    return original(*args,**kwargs)
   with patch.object(self.store,'state',side_effect=small_only):
-   for path in ('/api/state?compact=1','/api/home/euro?compact=1','/api/home/euro/history','/api/stocks','/api/reports/combined','/api/reports/combined?history=1','/api/reports/history'):
+   for path in ('/api/state?compact=1','/api/home/euro?compact=1','/api/home/euro/history','/api/stocks','/api/reports/combined','/api/reports/combined?history=1','/api/reports/history','/api/reports/performance','/api/dividends/overview','/api/dividends/overview?combined=1'):
     self.assertEqual(self.request(path)[0],200,path)
  def test_admin_authorization_is_checked_on_every_resource_request(self):
   self.auth.enable('owner','Long-test-password-2026')

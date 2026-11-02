@@ -125,20 +125,26 @@ class Store:
 
     def state(self,compact_view=False,account='all'):
         with self.read() as db:
-            db.execute('BEGIN')
-            revision=db.execute('SELECT revision FROM dashboard_revision WHERE id=1').fetchone()[0]
-            settings=dict(db.execute("SELECT key,value FROM app_settings WHERE key NOT LIKE 'dashboard_layout:%'"))
-            purchases = [dict(row) for row in db.execute('SELECT * FROM purchases ORDER BY purchased_on,id')]
-            quotes = [dict(row) for row in db.execute('SELECT * FROM quotes ORDER BY quoted_at,id')]
-            daily = [dict(row) for row in db.execute('SELECT * FROM daily_prices ORDER BY day')]
-            dividends = [dict(row) for row in db.execute('SELECT * FROM dividends ORDER BY paid_on,id')]
-            charges=[dict(r) for r in db.execute('SELECT id,account_id,category,amount,currency,paid_on,included_in_net FROM charges ORDER BY paid_on,id')]
-            accounts=[dict(r) for r in db.execute('SELECT * FROM broker_accounts ORDER BY id')]
-            categories=[dict(r) for r in db.execute('SELECT * FROM instrument_categories')]
-            from fund_holdings import all_saved
-            fund_compositions=all_saved(db)
-            manual=[dict(r) for r in db.execute('SELECT * FROM instrument_valuations')]
-        from valuations import apply_final_prices,missing_diagnostics
+            result=self._state(db,compact_view,account)
+        from valuations import missing_diagnostics
+        missing_diagnostics(self,result['positions'])
+        return result
+
+    def _state(self,db,compact_view,account):
+        db.execute('BEGIN')
+        revision=db.execute('SELECT revision FROM dashboard_revision WHERE id=1').fetchone()[0]
+        settings=dict(db.execute("SELECT key,value FROM app_settings WHERE key NOT LIKE 'dashboard_layout:%'"))
+        purchases = [dict(row) for row in db.execute('SELECT * FROM purchases ORDER BY purchased_on,id')]
+        quotes = [] if compact_view else [dict(row) for row in db.execute('SELECT * FROM quotes ORDER BY quoted_at,id')]
+        daily = [] if compact_view else [dict(row) for row in db.execute('SELECT * FROM daily_prices ORDER BY day')]
+        dividends = [dict(row) for row in db.execute('SELECT * FROM dividends ORDER BY paid_on,id')]
+        charges=[dict(r) for r in db.execute('SELECT id,account_id,category,amount,currency,paid_on,included_in_net FROM charges ORDER BY paid_on,id')]
+        accounts=[dict(r) for r in db.execute('SELECT * FROM broker_accounts ORDER BY id')]
+        categories=[dict(r) for r in db.execute('SELECT * FROM instrument_categories')]
+        from fund_holdings import all_saved
+        fund_compositions=all_saved(db)
+        manual=[dict(r) for r in db.execute('SELECT * FROM instrument_valuations')]
+        from valuations import apply_final_prices
         quotes,daily=apply_final_prices(quotes,daily,manual)
         category_map={(r['symbol'],r['exchange'],r['currency']):r for r in categories}
         account_names={a['id']:a for a in accounts}
@@ -161,9 +167,12 @@ class Store:
         positions = []
         for key,group in groups.items():
             if account!='all' and str(key[0])!=str(account):continue
-            instrument=key[1:];observations=quotes_by_listing.get(instrument,[])
+            instrument=key[1:]
+            if compact_view:
+                observations,prices=self.history_inputs(db,instrument)
+            else:observations=quotes_by_listing.get(instrument,[]);prices=daily_by_listing.get(instrument,[])
             group['quote']=observations[-1] if observations else None
-            chart = daily_values(purchases_by_position[key],daily_by_listing.get(instrument,[]),observations)
+            chart = daily_values(purchases_by_position[key],prices,observations)
             income = income_by_position.get(key,[])
             chart = with_dividends(chart, income)
             received = sum((Decimal(d['amount']) for d in income), Decimal(0))
@@ -175,9 +184,8 @@ class Store:
                               'gain': str(value - cost+realised) if value is not None else None})
             if accumulator is not None:
                 accumulator.add(positions[-1]);positions[-1]['history']=chart[-1:];positions[-1]['history_loaded']=False
-        missing_diagnostics(self,positions)
         scoped=lambda rows:[r for r in rows if account=='all' or str(r['account_id'])==str(account)]
-        result=dict(fund_compositions=fund_compositions,charges=charges,instrument_categories=categories,purchases=scoped(purchases), positions=positions, quotes=quotes, dividends=scoped(dividends), portfolios=accumulator.result() if accumulator else portfolio_values(positions),
+        result=dict(fund_compositions=fund_compositions,charges=charges,instrument_categories=categories,purchases=scoped(purchases), positions=positions, quotes=[] if compact_view else quotes, dividends=scoped(dividends), portfolios=accumulator.result() if accumulator else portfolio_values(positions),
                     accounts=accounts,settings=settings, database_version=SCHEMA_VERSION,data_revision=revision)
         if compact_view:result['compact']=True
         return result
@@ -195,12 +203,39 @@ class Store:
             for p in snapshot['positions']:
                 if account!='all' and str(p['account_id'])!=str(account):continue
                 listing=tuple(p[k] for k in ('symbol','exchange','currency'))
-                daily=[dict(r) for r in db.execute('SELECT * FROM daily_prices WHERE symbol=? AND exchange=? AND currency=? ORDER BY day',listing)]
-                quotes=[dict(r) for r in db.execute('SELECT * FROM quotes WHERE symbol=? AND exchange=? AND currency=? ORDER BY quoted_at,id',listing)]
-                manual=[dict(r) for r in db.execute('SELECT * FROM instrument_valuations WHERE symbol=? AND exchange=? AND currency=?',listing)]
-                from valuations import apply_final_prices
-                quotes,daily=apply_final_prices(quotes,daily,manual)
+                quotes,daily=self.history_inputs(db,listing)
                 yield {**p,'history':with_dividends(daily_values(trades[identity(p)],daily,quotes),income.get(identity(p),[]))}
+
+    def sampled_state(self,snapshot,mode,account='all'):
+        """Retain only annual boundaries or dividend dates for specialist reports."""
+        payments={}
+        for row in snapshot['dividends']:
+            key=tuple(row[k] for k in ('account_id','symbol','exchange','currency'))
+            payments.setdefault(key,set()).add(row['paid_on'])
+        positions=[]
+        for p in self.position_histories(snapshot,account):
+            if mode=='annual':
+                from performance import annual_points
+                points=annual_points(p['history'])
+            else:
+                key=tuple(p[k] for k in ('account_id','symbol','exchange','currency'))
+                needed=payments.get(key,set())
+                points=[point for point in p['history'] if point['day'] in needed]
+                if p['history'] and (not points or points[-1]['day']!=p['history'][-1]['day']):points.append(p['history'][-1])
+            positions.append({**p,'history':points})
+        return {**snapshot,'positions':positions}
+
+    @staticmethod
+    def history_inputs(db,listing):
+        daily=[dict(r) for r in db.execute('SELECT * FROM daily_prices WHERE symbol=? AND exchange=? AND currency=? ORDER BY day',listing)]
+        quotes=[dict(r) for r in db.execute("""SELECT * FROM (
+            SELECT quotes.*,ROW_NUMBER() OVER (PARTITION BY substr(quoted_at,1,10) ORDER BY quoted_at DESC,id DESC) AS rank
+            FROM quotes WHERE symbol=? AND exchange=? AND currency=?
+        ) WHERE rank=1 ORDER BY quoted_at,id""",listing)]
+        for row in quotes:row.pop('rank',None)
+        manual=[dict(r) for r in db.execute('SELECT * FROM instrument_valuations WHERE symbol=? AND exchange=? AND currency=?',listing)]
+        from valuations import apply_final_prices
+        return apply_final_prices(quotes,daily,manual)
 
     def history_start(self,symbol,exchange,currency,start):
         with self.connect() as db:

@@ -1,6 +1,6 @@
 """Small initial responses and on-demand history for at most six positions."""
 def compact(snapshot):
-    return {**snapshot,'compact':True,'positions':[{**p,'history':p['history'][-1:],'history_loaded':False} for p in snapshot['positions']]}
+    return {**snapshot,**({'quotes':[]} if 'quotes' in snapshot else {}),'compact':True,'positions':[{**p,'history':p['history'][-1:],'history_loaded':False} for p in snapshot['positions']]}
 
 def histories(snapshot,account,selections):
     if not isinstance(selections,list) or not 1<=len(selections)<=6:raise ValueError('Selecteer maximaal zes posities.')

@@ -212,7 +212,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if path=='/api/dividends/overview':
                 from dividend_dashboard import overview,euro_overview
                 account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
-                try:return self.respond(cache.derived('dividend-euro:'+str(account),lambda:euro_overview(store,cache.get(store.state),account,fetch_rates=False)) if parse_qs(urlsplit(self.path).query).get('combined')==['1'] else cache.derived('dividend:'+str(account),lambda:overview(cache.get(store.state),account)),etag=True)
+                try:return self.respond(cache.derived('dividend-euro:'+str(account),lambda:euro_overview(store,store.sampled_state(compact_state(),'dividend',account),account,fetch_rates=False)) if parse_qs(urlsplit(self.path).query).get('combined')==['1'] else cache.derived('dividend:'+str(account),lambda:overview(store.sampled_state(compact_state(),'dividend',account),account)),etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
             if path=='/api/stocks':
                 from stocks_dashboard import overview
@@ -258,7 +258,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     instrument=query.get('instrument',[''])[0];selection=json.loads(instrument) if instrument else None
                     currency=query.get('currency',[''])[0]
                     key='performance:'+json.dumps([account,selection,currency],separators=(',',':'))
-                    result=cache.derived(key,lambda:overview(store,cache.get(store.state),account,selection,currency))
+                    result=cache.derived(key,lambda:overview(store,store.sampled_state(compact_state(),'annual',account),account,selection,currency))
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
                 except Exception as error:
                     reference=record(store,'ERROR','reports','performance_failed','Rendementsrapport berekenen mislukt.',{'error_type':type(error).__name__})
