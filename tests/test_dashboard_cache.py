@@ -83,10 +83,11 @@ class DashboardCacheTests(unittest.TestCase):
   with patch('cache.date') as clock:
    clock.today.return_value=date.today()+timedelta(days=1)
    loader=Mock(wraps=self.store.state);self.cache.get(loader);loader.assert_called_once()
- def test_memory_budget_keeps_database_cache_usable(self):
+ def test_oversized_snapshots_are_not_retained_or_serialized(self):
   with patch('cache.MEMORY_BUDGET',1):
    first=self.cache.get(self.store.state);self.assertEqual(self.cache.entries,{})
-   self.assertEqual(self.cache.get(Mock(side_effect=AssertionError('Use the database'))),first)
+   with self.store.read() as db:self.assertEqual(db.execute("SELECT COUNT(*) FROM api_cache WHERE namespace LIKE 'dashboard:%'").fetchone()[0],0)
+   self.assertEqual(self.cache.get(self.store.state),first)
 
  def test_slow_report_does_not_block_cached_home_and_builds_once_per_slot(self):
   import threading

@@ -88,3 +88,25 @@ def portfolio_values(positions):
                               return_invested=str(sum((Decimal(p.get('invested',p['cost'])) for p in known),Decimal(0))))
         result.append(dict(name='Portefeuille', currency=currency, history=points))
     return result
+
+class PortfolioAccumulator:
+    """Aggregate one position at a time, without retaining its daily rows."""
+    def __init__(self):self.currencies={}
+    def add(self,position):
+        days=self.currencies.setdefault(position['currency'],{})
+        for p in position['history']:
+            row=days.setdefault(p['day'],dict(cost=Decimal(0),invested=Decimal(0),dividend=Decimal(0),value=Decimal(0),total_gain=Decimal(0),return_invested=Decimal(0),realised=Decimal(0),missing=0,known=0,carried=False))
+            for field in ('cost','dividend','realised'):row[field]+=Decimal(p.get(field,'0'))
+            row['invested']+=Decimal(p.get('invested',p['cost']));row['carried']|=p['carried']
+            if p['value'] is None:row['missing']+=1
+            else:
+                row['known']+=1;row['value']+=Decimal(p['value']);row['total_gain']+=Decimal(p['total_gain']);row['return_invested']+=Decimal(p.get('invested',p['cost']))
+    def result(self):
+        result=[]
+        for currency,days in sorted(self.currencies.items()):
+            history=[]
+            for day,r in sorted(days.items()):
+                complete=not r['missing'];value=r['value']
+                history.append(dict(day=day,cost=str(r['cost']),invested=str(r['invested']),dividend=str(r['dividend']),value=str(value) if complete else None,with_dividends=str(value+r['dividend']) if complete else None,total_gain=str(value-r['cost']+r['dividend']+r['realised']) if complete else None,price=None,carried=r['carried'],missing=r['missing'],return_gain=str(r['total_gain']) if r['known'] else None,return_invested=str(r['return_invested'])))
+            result.append(dict(name='Portefeuille',currency=currency,history=history))
+        return result

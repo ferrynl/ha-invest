@@ -41,7 +41,7 @@ def history(snapshot, account='all', instrument=None, currency=''):
     ])
 
 
-def combined(store, snapshot, account='all', instrument=None, currency='', include_history=False, today=None):
+def combined(store, snapshot, account='all', instrument=None, currency='', include_history=False, today=None, stream_history=False):
     """Convert report inputs using saved, dated FX; never fetch providers here."""
     from bisect import bisect_right
     from datetime import date
@@ -66,7 +66,7 @@ def combined(store, snapshot, account='all', instrument=None, currency='', inclu
             if number.is_finite() and number>0:valid_rates.append(row)
         except (ArithmeticError,ValueError,TypeError,KeyError):continue
     rates=valid_rates
-    euro = build(scoped, rates, account, today, include_history=include_history, skip_invalid=True)
+    euro = build(scoped, rates, account, today, include_history=include_history, skip_invalid=True,retain_history=not stream_history,positions=store.position_histories(scoped,account) if stream_history and include_history else None)
     indexed = {}
     for row in rates:
         indexed.setdefault(row['quote'], []).append(row)
@@ -96,6 +96,11 @@ def combined(store, snapshot, account='all', instrument=None, currency='', inclu
                           positions=[{**p,'history':p['history'][-1:]} for p in scoped['positions']],
                           dividends=scoped['dividends'])
     if include_history:
+        if stream_history:
+            points=euro['portfolios'][0]['history']
+            omitted=[p['day'] for p in points if not p['count']]
+            result['history']=dict(currency='EUR',as_of=max((p['day'] for p in points),default=''),history=[dict(p,skipped=p['missing']) for p in points if p['count']],omitted_days=len(omitted),omitted_dates=omitted) if points else None
+            return result
         converted = history({**scoped, 'positions':euro['positions']}, account)
         result['history'] = converted['currencies'][0] if converted['currencies'] else None
     return result

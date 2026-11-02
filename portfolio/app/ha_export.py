@@ -47,7 +47,7 @@ def build(snapshot,rates,today=None):
 
 def overview(store,cache):
     def load():
-        snapshot=cache.get(store.state)
+        snapshot=cache.derived('state-compact:all',lambda:store.state(compact_view=True))
         with store.read() as db:rates=[dict(row) for row in db.execute("SELECT base,quote,day,rate FROM fx_rates WHERE base='EUR'")]
         return build(snapshot,rates)
     return cache.derived('ha-export',load)

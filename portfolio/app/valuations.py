@@ -47,6 +47,6 @@ def missing_diagnostics(store,positions):
         details.update(reason='no_quote',excluded_from_known_profit=True,last_quote=p.get('quote'))
         reference=hashlib.sha256(json.dumps(details,sort_keys=True).encode()).hexdigest()[:12]
         since=(datetime.now(timezone.utc)-timedelta(hours=6)).isoformat()
-        with store.connect() as db:previous=db.execute('SELECT 1 FROM app_logs WHERE reference=? AND event=? AND created_at>?',(reference,'valuation_missing',since)).fetchone()
+        with store.read() as db:previous=db.execute('SELECT 1 FROM app_logs WHERE reference=? AND event=? AND created_at>?',(reference,'valuation_missing',since)).fetchone()
         if not previous:record(store,'WARNING','valuation','valuation_missing','Positie zonder koers overgeslagen bij bekende marktwaarde en winst.',details,reference=reference)
         p['valuation_log_id']=reference

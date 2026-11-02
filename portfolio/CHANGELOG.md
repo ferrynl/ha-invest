@@ -1,3 +1,11 @@
+## 0.53.0 · 2 november 2026
+
+- Instellingen > Statistieken toont app-CPU, proces- en containergeheugen, de RAM-cache, database, databaselog, back-ups, vrije opslag en aantallen boekingen/koersen. Alleen admins hebben toegang; alleen de zichtbare pagina ververst.
+- Home bouwt niet langer eerst alle volledige positiehistories op voor een compact overzicht. Dagtotalen worden per positie verzameld; EUR- en rapportgrafieken verwerken positiehistories achtereenvolgens.
+- Ook koersverversing, Home Assistant-sensoren en het vooraf laden van EUR-totalen gebruiken het compacte overzicht. De achtergrondtaak berekent geen volledige EUR-grafiek meer voor alleen de totalen.
+- De RAM-cache telt Python-objecten mee in plaats van alleen JSON-grootte. Te grote histories worden niet opnieuw gekopieerd naar de databasecache; verouderde dashboardcaches worden bij de start verwijderd. Boekingen en koersgegevens blijven behouden.
+- Vergelijkende proef met 237 posities en 1.036 dagen: procespiek circa 345 MiB in 0.52.0 tegenover 49 MiB met deze versie. Dit is een lokale proefmeting, geen garantie voor iedere installatie.
+
 ## 0.52.0 — 2 november 2026
 
 - EUR-totalen worden los van de volledige grafiekhistorie berekend en kunnen de al geladen compacte portefeuille hergebruiken. De historische grafiek laadt daarna op de achtergrond.

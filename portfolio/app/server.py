@@ -33,7 +33,7 @@ def refresh():
     try:
         state_cache.bind(store)
         errors = 0
-        snapshot = state_cache.get(store.state)
+        snapshot = state_cache.derived('state-compact:all',lambda:store.state(compact_view=True))
         history_errors = 0
         seen=set()
         for p in snapshot['positions']:
@@ -90,11 +90,11 @@ def refresh():
 def warm_dashboard():
     # Refresh FX and warm durable views outside the page request path.
     from home_euro import prepare_portfolio_rates,overview as euro_overview
-    snapshot=state_cache.get(store.state)
+    snapshot=state_cache.derived('state-compact:all',lambda:store.state(compact_view=True))
     prepare_portfolio_rates(store,snapshot)
-    snapshot=state_cache.get(store.state)
+    snapshot=state_cache.derived('state-compact:all',lambda:store.state(compact_view=True))
     from dashboard import compact
-    state_cache.derived('home-euro-compact:all',lambda:compact({**euro_overview(store,snapshot,fetch_rates=False),'data_revision':snapshot['data_revision']}))
+    state_cache.derived('home-euro-compact:all',lambda:compact({**euro_overview(store,snapshot,fetch_rates=False,include_history=False),'data_revision':snapshot['data_revision'],'chart_status':'pending'}))
 
 def demo_background():
     from demo import ensure_demo,refresh_demo_quotes

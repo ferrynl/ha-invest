@@ -31,14 +31,16 @@ from forex import overview as fx_overview,convert as fx_convert,history as fx_hi
 
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested,integration_options=None,enable_demo=True):
     cache.bind(store)
+    from resource_stats import ResourceMonitor
+    resources=ResourceMonitor(store,cache)
+    def compact_state():return cache.derived('state-compact:all',lambda:store.state(compact_view=True))
     def home_euro(account,compact_view=False,chart_only=False):
         from home_euro import overview
         def build():
-            if compact_view:
-                from dashboard import compact
-                snapshot=cache.derived('state-compact:all',lambda:compact(cache.get(store.state)))
+            if compact_view or chart_only:
+                snapshot=compact_state()
             else:snapshot=cache.get(store.state)
-            result={**overview(store,snapshot,account,fetch_rates=False,include_history=not compact_view,retain_history=not chart_only),'data_revision':snapshot['data_revision']}
+            result={**overview(store,snapshot,account,fetch_rates=False,include_history=not compact_view,retain_history=not chart_only,positions=store.position_histories(snapshot,account) if chart_only else None),'data_revision':snapshot['data_revision']}
             if chart_only:return {k:result[k] for k in ('portfolios','data_revision','as_of')}
             if compact_view:
                 from dashboard import compact
@@ -52,7 +54,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
     assets['/world-countries.json']=('world-countries.json','application/json; charset=utf-8')
     for media in (static/'broker-media').glob('*.png'):assets['/broker-media/'+media.name]=('broker-media/'+media.name,'image/png')
     for flag in (static/'flags').glob('*.svg'):assets['/flags/'+flag.name]=('flags/'+flag.name,'image/svg+xml')
-    for name in ('brokers','feedback','i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','funds','tasks','reports','charges','purchase-fx','report-charts','conversions','performance'):
+    for name in ('brokers','feedback','i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','funds','tasks','resource-stats','reports','charges','purchase-fx','report-charts','conversions','performance'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     assets['/country-map.js']=('country-map.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
@@ -107,7 +109,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             user=auth.user(self.token())
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
-            if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path=='/api/charges/export' or path in ('/api/home-assistant','/api/users','/api/backup','/api/export','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs')):return
+            if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path=='/api/charges/export' or path in ('/api/home-assistant','/api/users','/api/backup','/api/export','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs','/api/resource-stats')):return
             if path in ('/api/accounts/edit','/api/accounts/delete-preview'):
                 query=parse_qs(urlsplit(self.path).query)
                 try:
@@ -215,7 +217,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if path=='/api/stocks':
                 from stocks_dashboard import overview
                 account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
-                try:return self.respond(overview(store,cache.get(store.state),account))
+                try:return self.respond(overview(store,compact_state(),account))
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
             if path in ('/api/home/euro','/api/home/euro/history'):
                 from dashboard import compact
@@ -243,7 +245,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     instrument=query.get('instrument',[''])[0];selection=json.loads(instrument) if instrument else None
                     currency=query.get('currency',[''])[0];with_history=query.get('history')==['1']
                     key='reports-combined:'+json.dumps([account,selection,currency,with_history],separators=(',',':'))
-                    return self.respond(cache.derived(key,lambda:report_combined(store,cache.get(store.state),account,selection,currency,with_history)),etag=True)
+                    return self.respond(cache.derived(key,lambda:report_combined(store,compact_state(),account,selection,currency,with_history,stream_history=True)),etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
                 except Exception as error:
                     reference=record(store,'ERROR','reports','combined_failed','Totaal in euro berekenen mislukt.',{'error_type':type(error).__name__})
@@ -272,7 +274,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 try:
                     selection=json.loads(instrument) if instrument else None
                     key='reports-history:'+json.dumps([account,selection,currency],separators=(',',':'))
-                    return self.respond(cache.derived(key,lambda:report_history(cache.get(store.state),account,selection,currency)),etag=True)
+                    return self.respond(cache.derived(key,lambda:report_history({**compact_state(),'positions':store.position_histories(compact_state(),account)},account,selection,currency)),etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
             if path=='/api/home/history':
                 from dashboard import histories
@@ -281,7 +283,11 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     selections=json.loads(query.get('positions',['[]'])[0])
                     combined=query.get('combined')==['1']
                     def selected_histories():
-                        snapshot=cache.get(store.state)
+                        snapshot=compact_state()
+                        histories(snapshot,account,selections)
+                        selected={tuple(row[k] for k in ('account_id','symbol','exchange','currency')) for row in selections}
+                        members=[p for p in snapshot['positions'] if tuple(p[k] for k in ('account_id','symbol','exchange','currency')) in selected]
+                        snapshot={**snapshot,'positions':list(store.position_histories({**snapshot,'positions':members},account))}
                         if combined:
                             histories(snapshot,account,selections)  # validate before work
                             selected={tuple(row[k] for k in ('account_id','symbol','exchange','currency')) for row in selections}
@@ -293,9 +299,13 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     key='home-selected-history:'+json.dumps([account,combined,selections],separators=(',',':'))
                     return self.respond(cache.derived(key,selected_histories),etag=True)
                 except (ValueError,TypeError,KeyError):return self.respond({'error':'Kies één tot zes bestaande posities in dit brokeraccount.'},400)
+            if path=='/api/resource-stats':return self.respond(resources.snapshot())
             if path=='/api/state':
                 query=parse_qs(urlsplit(self.path).query);account=query.get('account_id',['all'])[0]
                 def state_view():
+                    if query.get('compact')==['1']:
+                        if account!='all':int(account)
+                        return store.state(compact_view=True,account=account)
                     state=cache.get(store.state)
                     if account!='all':
                         account_id=int(account)

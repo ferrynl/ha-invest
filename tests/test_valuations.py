@@ -50,5 +50,5 @@ class ValuationTests(unittest.TestCase):
   with patch.object(server,'store',self.store),patch.object(server,'fetch_quote') as quote,patch.object(server,'fetch_history') as history,patch.object(server,'enrich_categories',wraps=enrich_categories),patch('profiles._download_profile') as profile:
    # Only the private position is relevant; the setup's public position is excluded.
    original=self.store.state
-   with patch.object(self.store,'state',side_effect=lambda:dict(original(),positions=[p for p in original()['positions'] if p['exchange']=='PRIVATE'])):server.refresh()
+   with patch.object(self.store,'state',side_effect=lambda **kwargs:dict(original(**kwargs),positions=[p for p in original()['positions'] if p['exchange']=='PRIVATE'])):server.refresh()
    quote.assert_not_called();history.assert_not_called();profile.assert_not_called()

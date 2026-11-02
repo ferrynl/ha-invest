@@ -123,7 +123,7 @@ class Store:
             db.execute('INSERT INTO dividends(symbol,exchange,currency,amount,paid_on,note,created_at,account_id) VALUES(?,?,?,?,?,?,?,?)',
                        (symbol, exchange, currency, amount, day.isoformat(), note, now(),account_id))
 
-    def state(self):
+    def state(self,compact_view=False,account='all'):
         with self.read() as db:
             db.execute('BEGIN')
             revision=db.execute('SELECT revision FROM dashboard_revision WHERE id=1').fetchone()[0]
@@ -146,8 +146,8 @@ class Store:
         groups = {}
         for p in purchases:
             key = (p['account_id'],p['symbol'], p['exchange'], p['currency'])
-            account=account_names[p['account_id']]
-            groups.setdefault(key,dict(account_id=key[0],symbol=key[1],exchange=key[2],currency=key[3],categories=category_map.get((key[1],key[2],key[3]),{}),name=p['name'],account_name=account['name'],broker=account['broker'],quote=None))
+            broker_account=account_names[p['account_id']]
+            groups.setdefault(key,dict(account_id=key[0],symbol=key[1],exchange=key[2],currency=key[3],categories=category_map.get((key[1],key[2],key[3]),{}),name=p['name'],account_name=broker_account['name'],broker=broker_account['broker'],quote=None))
         # Index once instead of scanning every price/payment for every holding.
         listing=lambda row:tuple(row[k] for k in ('symbol','exchange','currency'))
         purchases_by_position={};daily_by_listing={};quotes_by_listing={};income_by_position={}
@@ -155,8 +155,12 @@ class Store:
         for row in daily:daily_by_listing.setdefault(listing(row),[]).append(row)
         for row in quotes:quotes_by_listing.setdefault(listing(row),[]).append(row)
         for row in dividends:income_by_position.setdefault((row['account_id'],*listing(row)),[]).append(row)
+        from history import PortfolioAccumulator
+        accumulator=PortfolioAccumulator() if compact_view else None
+        if account!='all' and not any(str(a['id'])==str(account) for a in accounts):raise LookupError('Brokeraccount niet gevonden.')
         positions = []
         for key,group in groups.items():
+            if account!='all' and str(key[0])!=str(account):continue
             instrument=key[1:];observations=quotes_by_listing.get(instrument,[])
             group['quote']=observations[-1] if observations else None
             chart = daily_values(purchases_by_position[key],daily_by_listing.get(instrument,[]),observations)
@@ -169,9 +173,34 @@ class Store:
                               'history': chart, 'quantity': str(quantity), 'cost': str(cost),
                               'value': str(value) if value is not None else None,
                               'gain': str(value - cost+realised) if value is not None else None})
+            if accumulator is not None:
+                accumulator.add(positions[-1]);positions[-1]['history']=chart[-1:];positions[-1]['history_loaded']=False
         missing_diagnostics(self,positions)
-        return dict(fund_compositions=fund_compositions,charges=charges,instrument_categories=categories,purchases=purchases, positions=positions, quotes=quotes, dividends=dividends, portfolios=portfolio_values(positions),
+        scoped=lambda rows:[r for r in rows if account=='all' or str(r['account_id'])==str(account)]
+        result=dict(fund_compositions=fund_compositions,charges=charges,instrument_categories=categories,purchases=scoped(purchases), positions=positions, quotes=quotes, dividends=scoped(dividends), portfolios=accumulator.result() if accumulator else portfolio_values(positions),
                     accounts=accounts,settings=settings, database_version=SCHEMA_VERSION,data_revision=revision)
+        if compact_view:result['compact']=True
+        return result
+
+    def position_histories(self,snapshot,account='all'):
+        """Yield a single complete position; never materialise all daily histories."""
+        trades={};income={}
+        identity=lambda r:tuple(r[k] for k in ('account_id','symbol','exchange','currency'))
+        for row in snapshot['purchases']:trades.setdefault(identity(row),[]).append(row)
+        for row in snapshot['dividends']:income.setdefault(identity(row),[]).append(row)
+        with self.read() as db:
+            db.execute('BEGIN')
+            if db.execute('SELECT revision FROM dashboard_revision WHERE id=1').fetchone()[0]!=snapshot['data_revision']:
+                raise ValueError('De portefeuille is gewijzigd. Vernieuw het overzicht.')
+            for p in snapshot['positions']:
+                if account!='all' and str(p['account_id'])!=str(account):continue
+                listing=tuple(p[k] for k in ('symbol','exchange','currency'))
+                daily=[dict(r) for r in db.execute('SELECT * FROM daily_prices WHERE symbol=? AND exchange=? AND currency=? ORDER BY day',listing)]
+                quotes=[dict(r) for r in db.execute('SELECT * FROM quotes WHERE symbol=? AND exchange=? AND currency=? ORDER BY quoted_at,id',listing)]
+                manual=[dict(r) for r in db.execute('SELECT * FROM instrument_valuations WHERE symbol=? AND exchange=? AND currency=?',listing)]
+                from valuations import apply_final_prices
+                quotes,daily=apply_final_prices(quotes,daily,manual)
+                yield {**p,'history':with_dividends(daily_values(trades[identity(p)],daily,quotes),income.get(identity(p),[]))}
 
     def history_start(self,symbol,exchange,currency,start):
         with self.connect() as db:

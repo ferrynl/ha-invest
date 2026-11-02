@@ -8,7 +8,7 @@ from diagnostics import record
 from functools import lru_cache
 
 def identity(row):return tuple(row[k] for k in ('account_id','symbol','exchange','currency'))
-def build(snapshot,rates,account='all',today=None,include_history=True,skip_invalid=False,sparse_history=False,retain_history=True):
+def build(snapshot,rates,account='all',today=None,include_history=True,skip_invalid=False,sparse_history=False,retain_history=True,positions=None):
     today=today or date.today();owner=None
     if str(account)!='all':
         try:owner=int(account)
@@ -18,6 +18,7 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
     for row in rates:
         if row['base']=='EUR':indexed.setdefault(row['quote'],[]).append(row)
     for rows in indexed.values():rows.sort(key=lambda row:row['day'])
+    position_source=snapshot['positions'] if positions is None else positions
     days={currency:[row['day'] for row in rows] for currency,rows in indexed.items()};used=set();positions=[];excluded=[]
     @lru_cache(maxsize=None)
     def rate(currency,day):
@@ -31,7 +32,7 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
     trades={};income={};totals={}
     for row in snapshot['purchases']:trades.setdefault(identity(row),[]).append(row)
     for row in snapshot['dividends']:income.setdefault(identity(row),[]).append(row)
-    for p in snapshot['positions']:
+    for p in position_source:
         if owner is not None and p['account_id']!=owner:continue
         try:
             if skip_invalid:
@@ -86,7 +87,7 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
     for day,row in sorted(totals.items()):
         point={field:str(row[field]) for field in ('cost','invested','dividend','return_invested')}
         point.update({field:str(row[field]) if row['known'] else None for field in ('value','with_dividends','total_gain')})
-        history.append(dict(point,day=day,return_gain=point['total_gain'],price=None,carried=row['carried'],missing=row['active']-row['known']))
+        history.append(dict(point,day=day,return_gain=point['total_gain'],price=None,carried=row['carried'],missing=row['active']-row['known'],count=row['known']))
     return dict(account_id=str(account),as_of=today.isoformat(),positions=positions,portfolios=[dict(name='Alle valuta’s in euro',currency='EUR',history=history,excluded_count=len(excluded))],excluded=excluded,fx_dates=[dict(currency=c,requested_on=d,rate_on=r) for c,d,r in sorted(used)])
 
 def prepare_portfolio_rates(store,snapshot,account='all'):
@@ -99,8 +100,8 @@ def prepare_portfolio_rates(store,snapshot,account='all'):
     try:prepare_rates(store,requests)
     except Exception as error:record(store,'WARNING','fx','home_euro_rates_failed','Wisselkoersen voor het totaaloverzicht konden niet volledig worden opgehaald.',{'error_type':type(error).__name__,'requested_pairs':len(set((a,b) for a,b,d in requests))})
 
-def overview(store,snapshot,account='all',fetch_rates=True,include_history=True,retain_history=True,skip_invalid=False):
+def overview(store,snapshot,account='all',fetch_rates=True,include_history=True,retain_history=True,skip_invalid=False,positions=None):
     if str(account)!='all' and not any(str(a['id'])==str(account) for a in snapshot['accounts']):raise ValueError('Brokeraccount niet gevonden.')
     if fetch_rates:prepare_portfolio_rates(store,snapshot,account)
     with store.read() as db:rates=[dict(row) for row in db.execute("SELECT base,quote,day,rate FROM fx_rates WHERE base='EUR'")]
-    return build(snapshot,rates,account,include_history=include_history,retain_history=retain_history,skip_invalid=skip_invalid)
+    return build(snapshot,rates,account,include_history=include_history,retain_history=retain_history,skip_invalid=skip_invalid,positions=positions)
