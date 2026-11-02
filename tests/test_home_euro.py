@@ -7,6 +7,44 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'portfolio'/'app'))
 from storage import Store
 from home_euro import build,overview
 class HomeEuroTests(unittest.TestCase):
+ def test_237_positions_reuse_daily_fx_and_keep_only_selected_position_points(self):
+  import home_euro
+  from datetime import timedelta
+  end=date(2026,11,2);start=end-timedelta(days=730)
+  days=[(start+timedelta(days=i)).isoformat() for i in range(731)]
+  points=[dict(day=day,cost='100',invested='100',quantity='1',realised='0',dividend='0',value='110',price='110',total_gain='10',carried=False) for day in days]
+  snapshot=dict(accounts=[dict(id=1)],positions=[],purchases=[],dividends=[])
+  for i in range(237):
+   currency=['EUR','USD','GBP'][i%3];key=dict(account_id=1,symbol='LOAD'+str(i),exchange='TEST',currency=currency)
+   history=points if i<236 else [dict(p,value=None,price=None,total_gain=None) for p in points]
+   snapshot['positions'].append(dict(**key,name='Test',account_name='Test',quantity='1',cost='100',value='110' if i<236 else None,realised='0',dividend='0',history=history))
+   snapshot['purchases'].append(dict(**key,purchased_on=days[0],price='100',quantity='1',split_before='',side='BUY'))
+  rates=[dict(base='EUR',quote=currency,day=day,rate=rate) for currency,rate in [('USD','1.1'),('GBP','0.8')] for day in days]
+  with patch('home_euro.unit',wraps=home_euro.unit) as conversions:
+   result=build(snapshot,rates,today=end,retain_history=False)
+  self.assertLessEqual(conversions.call_count,3*len(days))
+  self.assertEqual(len(result['positions']),237);self.assertTrue(all(len(p['history'])==1 for p in result['positions']))
+  self.assertEqual(len(result['portfolios'][0]['history']),731);self.assertEqual(result['portfolios'][0]['history'][-1]['missing'],1)
+  summary=build(snapshot,rates,today=end,include_history=False)
+  for actual,expected in zip(summary['positions'],result['positions']):
+   for field in ('value','cost','total_gain','dividend'):self.assertEqual(actual[field],expected[field])
+ def test_summary_does_not_replay_daily_history_and_matches_full_totals(self):
+  import home_euro
+  original=home_euro.daily_values;snapshot=self.store.state()
+  full=build(snapshot,self.rates,today=date(2026,10,3))
+  with patch('home_euro.daily_values',wraps=original) as replay:
+   summary=build(snapshot,self.rates,today=date(2026,10,3),include_history=False)
+  self.assertTrue(all(call.kwargs.get('summary_only') for call in replay.call_args_list))
+  self.assertEqual(len(summary['portfolios'][0]['history']),1)
+  for field in ('value','cost','total_gain','dividend','realised'):
+   self.assertEqual(Decimal(summary['positions'][0][field]),Decimal(full['positions'][0][field]))
+ def test_streamed_chart_matches_full_history_without_retaining_position_days(self):
+  snapshot=self.store.state()
+  full=build(snapshot,self.rates,today=date(2026,10,3))
+  chart=build(snapshot,self.rates,today=date(2026,10,3),retain_history=False)
+  self.assertEqual(chart['portfolios'],full['portfolios'])
+  self.assertEqual(len(chart['positions'][0]['history']),1)
+  self.assertGreater(len(full['positions'][0]['history']),1)
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.store=Store(self.tmp.name)
   self.stock=dict(symbol='TEST',exchange='NYSE',currency='USD',name='Test')

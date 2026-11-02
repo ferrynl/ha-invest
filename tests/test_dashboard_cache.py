@@ -113,6 +113,37 @@ class DashboardCacheTests(unittest.TestCase):
 
 import test_transactions as support
 class DashboardCacheHttpTests(unittest.TestCase):
+ def test_euro_summary_and_chart_are_separate_and_reuse_small_summary_state(self):
+  from home_euro import daily_values
+  self.request('/api/state?compact=1')
+  with patch('home_euro.daily_values',wraps=daily_values) as replay:
+   code,summary=self.request('/api/home/euro?compact=1')
+  self.assertEqual(code,200);self.assertEqual(summary['chart_status'],'pending')
+  self.assertEqual(len(summary['portfolios'][0]['history']),1)
+  self.assertTrue(all(call.kwargs.get('summary_only') for call in replay.call_args_list))
+  with patch.object(self.cache,'get',side_effect=AssertionError('Summary must reuse compact state')):
+   self.cache.entries.pop('home-euro-compact:all',None)
+   with self.store.connect() as db:db.execute("DELETE FROM api_cache WHERE namespace LIKE 'dashboard:%:home-euro-compact:all'")
+   self.assertEqual(self.request('/api/home/euro?compact=1')[0],200)
+  code,chart=self.request('/api/home/euro/history')
+  self.assertEqual(code,200);self.assertNotIn('positions',chart)
+  self.assertGreater(len(chart['portfolios'][0]['history']),1)
+  self.assertEqual(chart['data_revision'],summary['data_revision'])
+ def test_slow_chart_does_not_block_summary_request(self):
+  import threading
+  import home_euro
+  self.request('/api/state?compact=1');started=threading.Event();release=threading.Event();result=[]
+  original=home_euro.overview
+  def slow(*args,**kwargs):
+   if kwargs.get('include_history',True):started.set();release.wait(4)
+   return original(*args,**kwargs)
+  with patch('home_euro.overview',side_effect=slow):
+   worker=threading.Thread(target=lambda:result.append(self.request('/api/home/euro/history')[0]));worker.start()
+   try:
+    self.assertTrue(started.wait(1));self.assertEqual(self.request('/api/home/euro?compact=1')[0],200)
+    self.assertFalse(release.is_set())
+   finally:release.set();worker.join()
+  self.assertEqual(result,[200])
  setUp=support.TransactionHttpTests.setUp
  tearDown=support.TransactionHttpTests.tearDown
  request=support.TransactionHttpTests.request

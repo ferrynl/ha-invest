@@ -31,16 +31,21 @@ from forex import overview as fx_overview,convert as fx_convert,history as fx_hi
 
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested,integration_options=None,enable_demo=True):
     cache.bind(store)
-    def home_euro(account,compact_view=False):
+    def home_euro(account,compact_view=False,chart_only=False):
         from home_euro import overview
         def build():
-            snapshot=cache.get(store.state)
-            result={**overview(store,snapshot,account,fetch_rates=False),'data_revision':snapshot['data_revision']}
+            if compact_view:
+                from dashboard import compact
+                snapshot=cache.derived('state-compact:all',lambda:compact(cache.get(store.state)))
+            else:snapshot=cache.get(store.state)
+            result={**overview(store,snapshot,account,fetch_rates=False,include_history=not compact_view,retain_history=not chart_only),'data_revision':snapshot['data_revision']}
+            if chart_only:return {k:result[k] for k in ('portfolios','data_revision','as_of')}
             if compact_view:
                 from dashboard import compact
                 result=compact(result)
+                result['chart_status']='pending'
             return result
-        return cache.derived(('home-euro-compact:' if compact_view else 'home-euro:')+str(account),build)
+        return cache.derived(('home-euro-chart:' if chart_only else 'home-euro-compact:' if compact_view else 'home-euro:')+str(account),build)
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css'),'/reports.css':('reports.css','text/css')}
     assets['/fonts/Roboto.ttf']=('fonts/Roboto.ttf','font/ttf')
@@ -212,13 +217,16 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
                 try:return self.respond(overview(store,cache.get(store.state),account))
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
-            if path=='/api/home/euro':
+            if path in ('/api/home/euro','/api/home/euro/history'):
                 from dashboard import compact
                 query=parse_qs(urlsplit(self.path).query);account=query.get('account_id',['all'])[0]
                 try:
-                    result=home_euro(account,compact_view=query.get('compact')==['1'])
+                    result=home_euro(account,compact_view=query.get('compact')==['1'] and path=='/api/home/euro',chart_only=path.endswith('/history'))
                     return self.respond(result,etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
+                except Exception as error:
+                    reference=record(store,'ERROR','market','home_euro_failed','Het euro-overzicht kon niet worden geladen.',{'error_type':type(error).__name__,'chart':path.endswith('/history')})
+                    return self.respond({'error':'Het euro-overzicht kon niet worden geladen.','log_id':reference},503)
             if path in ('/api/reports/charges','/api/charges/export'):
                 if path.endswith('/export') and not auth.enabled():return self.respond({'error':'Alleen een admin heeft toegang tot deze functie.'},403)
                 from charges import report as charge_report,export_csv as charge_csv

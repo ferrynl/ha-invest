@@ -5,9 +5,10 @@ from decimal import Decimal
 from forex import unit,prepare_rates
 from history import daily_values,with_dividends
 from diagnostics import record
+from functools import lru_cache
 
 def identity(row):return tuple(row[k] for k in ('account_id','symbol','exchange','currency'))
-def build(snapshot,rates,account='all',today=None,include_history=True,skip_invalid=False,sparse_history=False):
+def build(snapshot,rates,account='all',today=None,include_history=True,skip_invalid=False,sparse_history=False,retain_history=True):
     today=today or date.today();owner=None
     if str(account)!='all':
         try:owner=int(account)
@@ -18,6 +19,7 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
         if row['base']=='EUR':indexed.setdefault(row['quote'],[]).append(row)
     for rows in indexed.values():rows.sort(key=lambda row:row['day'])
     days={currency:[row['day'] for row in rows] for currency,rows in indexed.items()};used=set();positions=[];excluded=[]
+    @lru_cache(maxsize=None)
     def rate(currency,day):
         base,scale=unit(currency)
         if base=='EUR':return scale,day
@@ -26,7 +28,7 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
         row=indexed[base][i]
         if (date.fromisoformat(day)-date.fromisoformat(row['day'])).days>7:return None
         used.add((currency,day,row['day']));return scale/Decimal(row['rate']),row['day']
-    trades={};income={}
+    trades={};income={};totals={}
     for row in snapshot['purchases']:trades.setdefault(identity(row),[]).append(row)
     for row in snapshot['dividends']:income.setdefault(identity(row),[]).append(row)
     for p in snapshot['positions']:
@@ -65,18 +67,26 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
                 fx=rate(p['currency'],point['day']);value=Decimal(point['value'])*fx[0] if point['value'] is not None and fx else (Decimal(0) if point['value'] is not None and Decimal(point['value'])==0 else None)
                 history.append({**point,'cost':cost['cost'],'realised':cost['realised'],'invested':cost['invested'],'value':str(value) if value is not None else None,'price':str(Decimal(point['price'])*fx[0]) if point['price'] is not None and fx else None})
             with_dividends(history,converted_income);last=history[-1];value=Decimal(p['value'])*current[0] if p['value'] is not None else None;cost=Decimal(last['cost']);realised=Decimal(last['realised']);received=Decimal(last['dividend'])
-            positions.append({**p,'native_currency':p['currency'],'currency':'EUR','fx_day':current[1],'cost':str(cost),'value':str(value) if value is not None else None,'dividend':str(received),'realised':str(realised),'gain':str(value-cost+realised) if value is not None else None,'total_gain':str(value-cost+realised+received) if value is not None else None,'history':history})
+            positions.append({**p,'native_currency':p['currency'],'currency':'EUR','fx_day':current[1],'cost':str(cost),'value':str(value) if value is not None else None,'dividend':str(received),'realised':str(realised),'gain':str(value-cost+realised) if value is not None else None,'total_gain':str(value-cost+realised+received) if value is not None else None,'history':history if retain_history else history[-1:]})
+            # Aggregate while processing one position; the compact chart never
+            # needs hundreds of full converted position histories in memory.
+            for point in history:
+                day=point['day']
+                row=totals.setdefault(day,dict(cost=Decimal(0),invested=Decimal(0),dividend=Decimal(0),value=Decimal(0),with_dividends=Decimal(0),total_gain=Decimal(0),return_invested=Decimal(0),active=0,known=0,carried=False))
+                row['active']+=1;row['carried']=row['carried'] or point['carried']
+                for field in ('cost','invested','dividend'):row[field]+=Decimal(point[field])
+                if point['value'] is not None:
+                    row['known']+=1
+                    for field in ('value','with_dividends','total_gain'):row[field]+=Decimal(point[field])
+                    row['return_invested']+=Decimal(point['invested'])
         except (ArithmeticError,ValueError,TypeError,KeyError,IndexError):
             if not skip_invalid:raise
             excluded.append({**{field:p.get(field,'') for field in ('symbol','exchange','currency','account_id','name','account_name')},'reason':'Ontbrekende of ongeldige positiegegevens','dates':[]})
-    maps=[{point['day']:point for point in p['history']} for p in positions];history=[]
-    for day in sorted({day for rows in maps for day in rows}):
-        active=[rows[day] for rows in maps if day in rows];known=[point for point in active if point['value'] is not None];value=sum((Decimal(p['value']) for p in known),Decimal(0)) if known else None
-        history.append(dict(day=day,value=str(value) if value is not None else None,cost=str(sum((Decimal(p['cost']) for p in active),Decimal(0))),dividend=str(sum((Decimal(p['dividend']) for p in active),Decimal(0))),with_dividends=str(sum((Decimal(p['with_dividends']) for p in known),Decimal(0))) if known else None,total_gain=str(sum((Decimal(p['total_gain']) for p in known),Decimal(0))) if known else None,price=None,carried=any(p['carried'] for p in active),missing=len(active)-len(known)))
-        # Numerator and denominator must describe the exact same known subset.
-        history[-1].update(return_gain=history[-1]['total_gain'],return_invested=str(sum((Decimal(p['invested']) for p in known),Decimal(0))))
-    for point in history:
-        point['invested']=str(sum((Decimal(rows[point['day']]['invested']) for rows in maps if point['day'] in rows),Decimal(0)))
+    history=[]
+    for day,row in sorted(totals.items()):
+        point={field:str(row[field]) for field in ('cost','invested','dividend','return_invested')}
+        point.update({field:str(row[field]) if row['known'] else None for field in ('value','with_dividends','total_gain')})
+        history.append(dict(point,day=day,return_gain=point['total_gain'],price=None,carried=row['carried'],missing=row['active']-row['known']))
     return dict(account_id=str(account),as_of=today.isoformat(),positions=positions,portfolios=[dict(name='Alle valuta’s in euro',currency='EUR',history=history,excluded_count=len(excluded))],excluded=excluded,fx_dates=[dict(currency=c,requested_on=d,rate_on=r) for c,d,r in sorted(used)])
 
 def prepare_portfolio_rates(store,snapshot,account='all'):
@@ -89,8 +99,8 @@ def prepare_portfolio_rates(store,snapshot,account='all'):
     try:prepare_rates(store,requests)
     except Exception as error:record(store,'WARNING','fx','home_euro_rates_failed','Wisselkoersen voor het totaaloverzicht konden niet volledig worden opgehaald.',{'error_type':type(error).__name__,'requested_pairs':len(set((a,b) for a,b,d in requests))})
 
-def overview(store,snapshot,account='all',fetch_rates=True):
+def overview(store,snapshot,account='all',fetch_rates=True,include_history=True,retain_history=True,skip_invalid=False):
     if str(account)!='all' and not any(str(a['id'])==str(account) for a in snapshot['accounts']):raise ValueError('Brokeraccount niet gevonden.')
     if fetch_rates:prepare_portfolio_rates(store,snapshot,account)
     with store.read() as db:rates=[dict(row) for row in db.execute("SELECT base,quote,day,rate FROM fx_rates WHERE base='EUR'")]
-    return build(snapshot,rates,account)
+    return build(snapshot,rates,account,include_history=include_history,retain_history=retain_history,skip_invalid=skip_invalid)

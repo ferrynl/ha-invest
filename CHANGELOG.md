@@ -1,3 +1,10 @@
+## 0.52.0 — 2 november 2026
+
+- EUR-totalen worden los van de volledige grafiekhistorie berekend en kunnen de al geladen compacte portefeuille hergebruiken. De historische grafiek laadt daarna op de achtergrond.
+- Omrekening hergebruikt dezelfde gedateerde wisselkoers binnen een berekening. De grafiekberekening bewaart alleen de gezamenlijke dagtotalen en niet nogmaals alle omgerekende positiehistorie.
+- Grafiekfouten laten de bedragen staan en bieden een knop om alleen de grafiek opnieuw te laden. Grafiekverzoeken blokkeren de pagina niet met de algemene laadlaag.
+- Ongewijzigde gegevens worden bij herladen hergebruikt. Verouderde antwoorden, accountwissels en uitloggen blijven afgevangen; er worden geen ontbrekende koersen of wisselkoersen ingevuld.
+
 ## 0.51.0 — 2 november 2026
 
 - Herstelt de lege resultaatgrafiek bij een portefeuille met ontbrekende koersen, waaronder het gecombineerde EUR-overzicht.

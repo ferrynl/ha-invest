@@ -26,6 +26,7 @@ function draw(){
  const members=selection==='all'?homeChartMembers():selection.startsWith('portfolio:')?[]:[view.positions[Number(selection)]].filter(Boolean);
  if(members.some(p=>p.history_loaded===false)){loadHomePositionHistory(members);return;}
  drawDashboardChart(view,chartRange,selection,homeChartMembers());
+ if(homeCurrency==='ALL'&&selection.startsWith('portfolio:'))showHomeEuroChartProgress();
 }
 $('chart-ranges').addEventListener('click',event=>{const button=event.target.closest('button[data-range]');if(!button)return;chartRange=button.dataset.range;for(const choice of $('chart-ranges').querySelectorAll('button'))choice.setAttribute('aria-pressed',String(choice===button));draw();});
 $('instrument').addEventListener('change',()=>{homeChartChanged();draw();});

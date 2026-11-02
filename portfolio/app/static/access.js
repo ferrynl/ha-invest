@@ -5,7 +5,7 @@ let currentProfile=typeof location!=='undefined'&&new URLSearchParams(location.s
 let accessSession=null,stateETag=null,stateETagUrl='';
 const nativeFetch=window.fetch.bind(window);
 async function apiFetch(url,options={}){
- const finish=beginPageLoading(),controller=(!options.signal&&(!options.method||options.method==='GET'))?new AbortController():null;
+ const finish=options.background?()=>{}:beginPageLoading(),controller=(!options.signal&&(!options.method||options.method==='GET'))?new AbortController():null;
  const timer=controller?setTimeout(()=>controller.abort(),30000):null;
  try{
   const headers=new Headers(options.headers??{});

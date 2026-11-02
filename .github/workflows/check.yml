@@ -63,6 +63,7 @@ jobs:
       - run: node --check portfolio/app/static/dashboard-layout.js
       - run: node tests/test_dashboard_layout.cjs
       - run: node tests/test_home.cjs
+      - run: node tests/test_home_loading.cjs
       - run: node tests/test_chart.cjs
       - run: docker build portfolio -t aandelen-dashboard:test
       - name: Check bundled Defeat Beta reader without network
