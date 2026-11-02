@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from diagnostics import ActionError
 
-def daily_values(purchases, daily, quotes, today=None, summary_only=False):
+def daily_values(purchases, daily, quotes, today=None, summary_only=False,history_start=None):
     end = today or date.today()
     start = end if summary_only else date.fromisoformat(min(p['purchased_on'] for p in purchases))
     prices = {r['day']: r['price'] for r in daily}
@@ -12,6 +12,12 @@ def daily_values(purchases, daily, quotes, today=None, summary_only=False):
     for key, quote_price in quote_days.items():
         if key not in prices or key == end.isoformat():
             prices[key] = quote_price
+    if not summary_only:
+        if history_start is not None:start=max(start,history_start)
+        if start.year<1900:
+            candidates=[date.fromisoformat(day) for day in prices if '1900-01-01'<=day<=end.isoformat()]
+            candidates.extend(date.fromisoformat(p['purchased_on']) for p in purchases if '1900-01-01'<=p['purchased_on']<=end.isoformat())
+            start=min(candidates,default=end)
     previous = [day for day in prices if day < start.isoformat()]
     price = prices[max(previous)] if previous else None
     lots = sorted(purchases, key=lambda p: (p['purchased_on'],p.get('trade_time',''),p.get('id',0)))

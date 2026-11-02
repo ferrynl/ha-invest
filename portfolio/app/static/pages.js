@@ -14,6 +14,7 @@ for(const [index,panel] of [...settingsRoot.children].entries()){
 }
 const tasksLink=homeNode('a',ui('Taken'));tasksLink.href='#instellingen-taken';tasksLink.dataset.route='instellingen-taken';settingsNav.append(tasksLink);
 const resourceLink=homeNode('a',ui('Statistieken'));resourceLink.href='#instellingen-statistieken';resourceLink.dataset.route='instellingen-statistieken';settingsNav.append(resourceLink);
+const cleanupLink=homeNode('a',ui('Gegevens opschonen'));cleanupLink.href='#instellingen-opschonen';cleanupLink.dataset.route='instellingen-opschonen';settingsNav.append(cleanupLink);
 settingsNav.prepend(settingsNav.querySelector('[data-route="instellingen-dashboard"]'));
 for(const route of ['valuta','logs']){const link=document.querySelector('[data-route="'+route+'"]');link.querySelector('span')?.remove();settingsNav.append(link);}
 const exportView=document.createElement('div');exportView.dataset.page='import-export';exportView.hidden=true;
@@ -65,7 +66,7 @@ function showPage(){
  document.body.classList.toggle('stocks-list-page',page==='aandelen');
  const brokerSlot={home:'home-broker-slot',aandelen:'stocks-broker-slot',dividend:'dividend-broker-slot',rapporten:'reports-broker-slot'}[isReport?'rapporten':page];
  $(brokerSlot||'page-header').append($('broker-filter-control'));
- $('broker-filter-control').hidden=page==='account'||page==='over-ons'||page==='instellingen-taken'||page==='instellingen-statistieken';
+ $('broker-filter-control').hidden=page==='account'||page==='over-ons'||page==='instellingen-taken'||page==='instellingen-statistieken'||page==='instellingen-opschonen';
  updateExportLinks();
  $('page-title').textContent=pageNames[page];document.title=pageNames[page]+' · Home Invest';closeMenu();
  if(isTransactions){configureTransactionPage(page);if(state)loadTransactions();}

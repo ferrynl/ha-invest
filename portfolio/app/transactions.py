@@ -53,6 +53,7 @@ def edit(store,data,actor):
         for field in ('symbol','exchange','ticker','split_before')+(() if kind=='charge' else ('currency',)):
             if field in data and str(data[field])!=str(before.get(field,'')):raise ValueError('Aandeel, handelsvaluta en splitsingscontrole kunnen hier niet worden gewijzigd.')
         day=date.fromisoformat(str(data['day']))
+        if day.year<1900:raise ValueError('Gebruik een transactiedatum vanaf 1900. Controleer het volledige jaartal.')
         if day>date.today():raise ValueError('Transactiedatum mag niet in de toekomst liggen.')
         account_id=int(data.get('account_id',before['account_id']));store.require_account(db,account_id)
         if kind=='charge':

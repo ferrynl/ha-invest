@@ -1,3 +1,11 @@
+## 0.55.0 · 2 november 2026
+
+- Instellingen > Gegevens opschonen biedt een gecontroleerd overzicht, volledige veiligheidskopie, verwijdering van tijdelijke/verlopen caches en overtollige koerswaarnemingen en het verkleinen van de database. Boekingen, dagelijkse koershistorie en ETF-samenstellingen blijven behouden. Bij back-upopschoning blijven de vijf nieuwste app-back-ups staan; dit beleid geldt ook voor volgende automatische app-back-ups.
+
+- Een bestaande aankoop met jaartal 0026 kon bijna tweeduizend jaar dagwaarden veroorzaken. De grafiek bouwt voor transacties vóór 1900 alleen een bereik vanaf betrouwbare recente transacties/koersdatums op. De oorspronkelijke transacties, aantallen en kostprijs blijven behouden; de oude datum wordt nooit automatisch naar een andere eeuw gewijzigd.
+- Home waarschuwt voor deze datums. Statistieken toont de afwijkende datums en aantallen met een link naar de betrokken transacties, die een admin via de bestaande bewerkpopup kan controleren.
+- Nieuwe boekingen, transactiecorrecties en importboekingen weigeren datums vóór 1900 met een duidelijke jaartalcontrole.
+
 ## 0.54.0 · 2 november 2026
 
 - Compacte overzichten laden koersgegevens per positie en nemen de volledige lijst ruwe koerswaarnemingen niet meer mee in de cache. Per kalenderdag wordt alleen de laatste waarneming verwerkt; de oorspronkelijke koersgegevens blijven bewaard.

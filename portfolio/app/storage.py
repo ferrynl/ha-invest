@@ -62,6 +62,7 @@ class Store:
         if not re.fullmatch(r'[A-Z]{3}', currency) or not 1 <= len(name) <= 100:
             raise ValueError('Vul een naam en drieletterige valutacode in.')
         day = date.fromisoformat(data['purchased_on'])
+        if day.year<1900:raise ValueError('Gebruik een transactiedatum vanaf 1900. Controleer het volledige jaartal.')
         if day > date.today():
             raise ValueError('Aankoopdatum mag niet in de toekomst liggen.')
         from charges import manual_components,book_manual_trade
@@ -110,6 +111,7 @@ class Store:
     def add_dividend(self, data):
         symbol, exchange, currency = (str(data.get(k, '')).strip().upper() for k in ('symbol', 'exchange', 'currency'))
         day = date.fromisoformat(data['paid_on'])
+        if day.year<1900:raise ValueError('Gebruik een transactiedatum vanaf 1900. Controleer het volledige jaartal.')
         amount = positive(data['amount'])
         note = str(data.get('note', '')).strip()
         if day > date.today() or len(note) > 200:
@@ -187,6 +189,8 @@ class Store:
         scoped=lambda rows:[r for r in rows if account=='all' or str(r['account_id'])==str(account)]
         result=dict(fund_compositions=fund_compositions,charges=charges,instrument_categories=categories,purchases=scoped(purchases), positions=positions, quotes=[] if compact_view else quotes, dividends=scoped(dividends), portfolios=accumulator.result() if accumulator else portfolio_values(positions),
                     accounts=accounts,settings=settings, database_version=SCHEMA_VERSION,data_revision=revision)
+        suspicious=sorted({row['purchased_on'] for row in purchases if row['purchased_on']<'1900-01-01'})
+        if suspicious:result['history_date_issues']=suspicious
         if compact_view:result['compact']=True
         return result
 
@@ -269,12 +273,14 @@ class Store:
             db.execute('INSERT OR REPLACE INTO history_sync VALUES(?,?,?,?,?)',
                        (symbol, exchange, currency, min(start,db.execute('SELECT COALESCE(MIN(start),?) FROM history_sync WHERE symbol=? AND exchange=? AND currency=?',(start,symbol,exchange,currency)).fetchone()[0]), date.today().isoformat()))
 
-    def backup(self):
+    def backup(self,retain=True):
         folder = self.root / 'backups'
         folder.mkdir(exist_ok=True)
         path = folder / ('portfolio-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f') + '-' + uuid4().hex[:8] + '.sqlite3')
         with self.connect() as source, closing(sqlite3.connect(path)) as target:
             source.backup(target)
-        for old in sorted(folder.glob('portfolio-*.sqlite3'))[:-30]:
-            old.unlink()
+        if retain:
+            keep=5 if self.settings().get('backup_retention')=='5' else 30
+            for old in sorted(folder.glob('portfolio-*.sqlite3'))[:-keep]:
+                if not old.is_symlink() and old.resolve().parent==folder.resolve():old.unlink()
         return path

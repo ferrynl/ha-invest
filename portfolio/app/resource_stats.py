@@ -93,6 +93,7 @@ class ResourceMonitor:
             page_size=db.execute('PRAGMA page_size').fetchone()[0]
             totals['reusable_bytes']=db.execute('PRAGMA freelist_count').fetchone()[0]*page_size
             totals['cache_payload_bytes']=db.execute('SELECT COALESCE(SUM(length(payload)),0) FROM api_cache').fetchone()[0]
+            totals['date_issues']=[dict(day=r[0],count=r[1]) for r in db.execute("SELECT purchased_on,COUNT(*) FROM purchases WHERE purchased_on<'1900-01-01' GROUP BY purchased_on ORDER BY purchased_on")]
             totals['history_start']=db.execute('SELECT MIN(purchased_on) FROM purchases').fetchone()[0]
             totals['quote_start']=db.execute('SELECT MIN(quoted_at) FROM quotes').fetchone()[0]
             totals['estimated_daily_points']=sum(max(0,(date.today()-date.fromisoformat(r[0])).days+1) for r in db.execute('SELECT MIN(purchased_on) FROM purchases GROUP BY account_id,symbol,exchange,currency'))

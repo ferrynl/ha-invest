@@ -125,6 +125,8 @@ def open_preview(store,batch_id):
     return dict(batch_id=batch_id,account=account,rows=rows,instruments=[dict(ticker=t,currency=c) for t,c in instruments],warnings=['Dividend zonder voorafgaande aankoop wordt apart opgeslagen met een melding over ontbrekende aankoophistorie; er wordt geen positie of kostprijs aangemaakt.', 'Beursnoteringen worden automatisch gekoppeld. Bronbedragen blijven bewaard; afwijkende noteringsvaluta wordt met historische dagreferentiekoersen omgerekend.'])
 
 def book_row(db,batch_id,account_id,provider,row,mapping,trace):
+    from datetime import date
+    if date.fromisoformat(row['day']).year<1900:raise ValueError('Gebruik een transactiedatum vanaf 1900. Controleer het volledige jaartal.')
     from charges import book as book_charges
     book_charges(db,batch_id,account_id,provider,row)
     standalone_dividends=0

@@ -9,6 +9,28 @@ from cache import StateCache,memory_size
 from resource_stats import ResourceMonitor,process_memory
 
 class ResourceTests(unittest.TestCase):
+ def test_year_0026_does_not_expand_centuries_and_preserves_ledger_totals(self):
+  from history import daily_values
+  from datetime import date
+  lots=[dict(quantity='2',price='100',purchased_on='0026-02-21',side='BUY')]
+  prices=[dict(day='2026-09-30',price='110')]
+  points=daily_values(lots,prices,[],today=date(2026,11,2))
+  self.assertEqual(len(points),34);self.assertEqual(points[-1]['cost'],'200');self.assertEqual(points[-1]['quantity'],'2')
+  self.assertEqual(points[-1]['value'],'220');self.assertEqual(lots[0]['purchased_on'],'0026-02-21')
+  self.assertEqual(len(daily_values(lots,[],[],today=date(2026,11,2))),1)
+  with self.store.connect() as db:db.execute("UPDATE purchases SET purchased_on='0026-02-21'")
+  self.store.quote('TEST','TEST','EUR','110','2026-09-30T10:00:00+00:00','test')
+  small=self.store.state(compact_view=True)
+  self.assertEqual(small['history_date_issues'],['0026-02-21'])
+  self.assertLess(len(small['portfolios'][0]['history']),1000)
+  self.assertEqual(small['positions'][0]['cost'],'200')
+  from home_euro import overview
+  euro=overview(self.store,small,fetch_rates=False,positions=self.store.position_histories(small),retain_history=False)
+  self.assertEqual(euro['positions'][0]['cost'],'200');self.assertEqual(euro['positions'][0]['value'],'220')
+  with self.store.read() as db:self.assertEqual(db.execute('SELECT purchased_on FROM purchases').fetchone()[0],'0026-02-21')
+ def test_new_manual_entry_rejects_accidental_ancient_year(self):
+  with self.assertRaisesRegex(ValueError,'1900'):
+   self.store.add(dict(symbol='BAD',exchange='TEST',currency='EUR',name='Bad',quantity='1',price='1',purchased_on='0026-02-21'))
  def setUp(self):
   temp=tempfile.TemporaryDirectory();self.addCleanup(temp.cleanup);self.store=Store(temp.name);self.cache=StateCache(store=self.store)
   self.store.add(dict(symbol='TEST',exchange='TEST',currency='EUR',name='Test',quantity='2',price='100',purchased_on='2024-01-02'))

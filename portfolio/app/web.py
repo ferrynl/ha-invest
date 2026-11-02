@@ -54,7 +54,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
     assets['/world-countries.json']=('world-countries.json','application/json; charset=utf-8')
     for media in (static/'broker-media').glob('*.png'):assets['/broker-media/'+media.name]=('broker-media/'+media.name,'image/png')
     for flag in (static/'flags').glob('*.svg'):assets['/flags/'+flag.name]=('flags/'+flag.name,'image/svg+xml')
-    for name in ('brokers','feedback','i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','funds','tasks','resource-stats','reports','charges','purchase-fx','report-charts','conversions','performance'):
+    for name in ('brokers','feedback','i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','funds','tasks','resource-stats','maintenance','reports','charges','purchase-fx','report-charts','conversions','performance'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     assets['/country-map.js']=('country-map.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
@@ -363,6 +363,17 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))
                 data=json.loads(body)
                 if not isinstance(data,dict):raise ValueError('Ongeldige aanvraag.')
+                if path in ('/api/portfolio/cleanup-preview','/api/portfolio/cleanup'):
+                    from maintenance import preview as cleanup_preview,clean as cleanup_run
+                    if path.endswith('-preview'):return self.respond(cleanup_preview(store,data))
+                    if not refresh_lock.acquire(blocking=False):return self.respond({'error':'Er loopt een achtergrondtaak. Probeer het opschonen straks opnieuw.'},409)
+                    try:result=cleanup_run(store,cache,data)
+                    except OSError as error:
+                        record(store,'ERROR','system','cleanup_failed','Opschonen kon niet worden afgerond.',{'error_type':type(error).__name__})
+                        return self.respond({'error':'Opschonen kon niet worden afgerond. Controleer de logs en eventuele herstelback-up.'},503)
+                    finally:refresh_lock.release()
+                    with resources.lock:resources.storage=None
+                    return self.respond(result)
                 if path in ('/api/feedback/connect','/api/feedback/submit'):
                     try:
                         result=feedback_connect(store,integration_options,data) if path.endswith('/connect') else feedback_enqueue(store,integration_options,user,data)

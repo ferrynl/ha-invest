@@ -60,7 +60,7 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
             source_points=p['history'] if include_history else [{**p['history'][-1],'day':today.isoformat()}]
             if sparse_history:
                 basis={point['day']:daily_values(converted,[],[],date.fromisoformat(point['day']),summary_only=True)[-1] for point in source_points}
-            else:basis={point['day']:point for point in daily_values(converted,[],[],today,summary_only=not include_history)}
+            else:basis={point['day']:point for point in daily_values(converted,[],[],today,summary_only=not include_history,history_start=date.fromisoformat(source_points[0]['day']) if include_history and source_points else None)}
             history=[]
             for point in source_points:
                 if point['day'] not in basis:continue
