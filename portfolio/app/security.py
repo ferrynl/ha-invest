@@ -84,6 +84,22 @@ class Auth:
                 db.execute('INSERT INTO auth_sessions VALUES(?,?,?,?,?)',(hashlib.sha256(token.encode()).hexdigest(),row['id'],row['revision'],secrets.token_urlsafe(32),time.time()+SESSION_TTL))
             return token
 
+    def login_by_id(self,user_id):
+        """Issue a normal, revocable session after a verified WebAuthn assertion."""
+        with self.lock:
+            with self.store.connect() as db:
+                user=db.execute('SELECT id,active,revision FROM users WHERE id=?',(user_id,)).fetchone()
+                if not user or not user['active'] or not self.enabled():
+                    raise ValueError('Dit account is niet meer actief.')
+                db.execute('DELETE FROM auth_sessions WHERE expires_at<=?',(time.time(),))
+                if db.execute('SELECT COUNT(*) FROM auth_sessions').fetchone()[0]>=1000:
+                    raise PermissionError('Te veel actieve sessies.')
+                token=secrets.token_urlsafe(32)
+                db.execute('INSERT INTO auth_sessions VALUES(?,?,?,?,?)',
+                    (hashlib.sha256(token.encode()).hexdigest(),user['id'],user['revision'],
+                     secrets.token_urlsafe(32),time.time()+SESSION_TTL))
+                return token
+
     def logout(self,token):
         with self.lock, self.store.connect() as db:
             db.execute('DELETE FROM auth_sessions WHERE token_hash=?',(hashlib.sha256(token.encode()).hexdigest(),))
