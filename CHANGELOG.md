@@ -1,3 +1,9 @@
+## 0.56.0
+
+- Dividend: instelbare jaarlijkse dividendgroei, standaard 3%, samengesteld vanaf volgend kalenderjaar.
+- Verwachtingen duidelijk onderscheiden van niet-beschikbare aangekondigde uitkeringen.
+- Toekomstige jaarvergelijking toont volledige kalenderjaren.
+
 ## 0.55.0 · 2 november 2026
 
 - Instellingen > Gegevens opschonen biedt een gecontroleerd overzicht, volledige veiligheidskopie, verwijdering van tijdelijke/verlopen caches en overtollige koerswaarnemingen en het verkleinen van de database. Boekingen, dagelijkse koershistorie en ETF-samenstellingen blijven behouden. Bij back-upopschoning blijven de vijf nieuwste app-back-ups staan; dit beleid geldt ook voor volgende automatische app-back-ups.

@@ -42,6 +42,7 @@ jobs:
       - run: node --check portfolio/app/static/performance.js
       - run: node --check portfolio/app/static/category-status.js
       - run: node --check portfolio/app/static/dividends.js
+      - run: node tests/test_dividend_growth.cjs
       - run: node --check portfolio/app/static/stocks.js
       - run: node tests/test_i18n.cjs
       - run: node tests/test_broker_scope.cjs

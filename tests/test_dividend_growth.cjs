@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const source=fs.readFileSync('portfolio/app/static/dividends.js','utf8');
+const fn=source.slice(source.indexOf('function dividendGrowthScenario('),source.indexOf('function drawDividendDashboard('));
+const context={dividendData:{as_of:'2026-11-03'}};vm.createContext(context);vm.runInContext(fn,context);
+const forecast=Array.from({length:60},(_,i)=>({month:new Date(Date.UTC(2026,11+i,1)).toISOString().slice(0,7),amount:'10'}));
+const input={forecast,next12:'120',contributors:[{expected:'120'}],yearly:[2027,2028,2029,2030].map(year=>({year,received:'0',months_expected:12}))};
+const original=JSON.stringify(input);const result=context.dividendGrowthScenario(input,3);
+assert.equal(JSON.stringify(input),original);
+assert.equal(Number(result.forecast[0].amount),10);
+assert.equal(Number(result.forecast[1].amount),10.3);
+assert.ok(Math.abs(Number(result.yearly[1].expected)/Number(result.yearly[0].expected)-1.03)<1e-12);
+assert.equal(Number(result.next12),result.forecast.slice(0,12).reduce((s,p)=>s+Number(p.amount),0));
+assert.equal(Number(context.dividendGrowthScenario(input,0).yearly[0].expected),120);
+console.log('Dividend growth: compounding, monthly/yearly consistency, zero growth and unchanged source passed.');
