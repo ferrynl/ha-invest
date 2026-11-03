@@ -49,6 +49,8 @@ def _new_challenge(store, kind, origin, rp_id, user_id=None, session_token=''):
     ceremony_id = secrets.token_urlsafe(24)
     with store.connect() as db:
         db.execute('DELETE FROM passkey_challenges WHERE expires_at < ?', (time.time(),))
+        if db.execute('SELECT COUNT(*) FROM passkey_challenges').fetchone()[0] >= 200:
+            raise ValueError('Te veel passkey-aanvragen. Probeer het later opnieuw.')
         db.execute(
             'INSERT INTO passkey_challenges (id,kind,challenge,origin,rp_id,user_id,session_hash,expires_at) VALUES (?,?,?,?,?,?,?,?)',
             (ceremony_id,kind,challenge,origin,rp_id,user_id,
@@ -128,7 +130,7 @@ def finish_registration(store, user, session_token, ceremony_id, credential, lab
             expected_origin=entry['origin'], expected_rp_id=entry['rp_id'],
             require_user_verification=True,
         )
-    except (ValueError, TypeError) as error:
+    except Exception as error:
         raise ValueError('Passkey-verificatie mislukt.') from error
     with store.connect() as db:
         account = db.execute('SELECT active FROM users WHERE id=?', (user['id'],)).fetchone()
@@ -165,7 +167,7 @@ def finish_login(store, auth, ceremony_id, credential):
         raise ValueError('Ongeldige passkey.')
     try:
         credential_id = base64url_to_bytes(credential['id'])
-    except (ValueError, TypeError) as error:
+    except Exception as error:
         raise ValueError('Ongeldige passkey.') from error
     with store.read() as db:
         saved = db.execute('''SELECT p.*,u.active,u.revision FROM passkeys p
@@ -183,7 +185,7 @@ def finish_login(store, auth, ceremony_id, credential):
             credential_current_sign_count=saved['sign_count'],
             require_user_verification=True,
         )
-    except (ValueError, TypeError) as error:
+    except Exception as error:
         raise ValueError('Passkey-verificatie mislukt.') from error
     # Compare-and-swap the counter to reject stale, concurrent assertions.
     with store.connect() as db:
