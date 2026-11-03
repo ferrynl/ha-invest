@@ -12,6 +12,7 @@ from pathlib import Path
 from provider import search_stocks,listing as resolve_listing
 from restore import restore_backup
 from security import verify_password,SESSION_TTL
+import passkeys
 from version import APP_VERSION
 from i18n import localize,LANGUAGES
 from updates import check_updates
@@ -109,6 +110,9 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             user=auth.user(self.token())
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
+            if path=='/api/passkeys':
+                try:return self.respond(passkeys.list_keys(store,user)) if self.allowed(user) else None
+                except ValueError as error:return self.respond({'error':str(error)},400)
             if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path=='/api/charges/export' or path in ('/api/home-assistant','/api/users','/api/backup','/api/export','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs','/api/resource-stats')):return
             if path in ('/api/accounts/edit','/api/accounts/delete-preview'):
                 query=parse_qs(urlsplit(self.path).query)
@@ -372,7 +376,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 return self.respond({'error':'Ongeldige aanvraag.'},403)
             user=auth.user(self.token())
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
-            if path!='/api/auth/login':
+            if path not in ('/api/auth/login','/api/passkey/login/begin','/api/passkey/login/finish'):
                 if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path in ('/api/feedback/connect','/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation','/api/instrument/holdings','/api/tasks/etf') or path in ('/api/purchases','/api/dividends','/api/settings','/api/restore','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/') or path.startswith('/api/charges/')):return
                 if auth.enabled() and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),user['csrf'] or ''):
                     return self.respond({'error':'Ongeldige sessiebeveiliging. Meld je opnieuw aan.'},403)
@@ -520,6 +524,19 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     result=resolve_issue(store,data);cache.invalidate();refresh_requested.set();return self.respond(result)
                 if path=='/api/imports/resolve':return self.respond(resolve_instrument(store,int(data['batch_id']),str(data['key'])))
                 if path=='/api/imports/open':return self.respond(open_preview(store,int(data['batch_id'])))
+                if path=='/api/passkey/login/begin':
+                    if not auth.enabled():raise ValueError('Schakel gebruikersbeveiliging in.')
+                    return self.respond(passkeys.begin_login(store,self.headers.get('Origin','')))
+                if path=='/api/passkey/login/finish':
+                    token=passkeys.finish_login(store,auth,data.get('ceremony_id'),data.get('credential'))
+                    return self.respond({'ok':True},cookie=self.cookie(token))
+                if path=='/api/passkey/register/begin':
+                    result=passkeys.begin_registration(store,user,self.token(),data.get('password',''),self.headers.get('Origin',''))
+                    return self.respond(result)
+                if path=='/api/passkey/register/finish':
+                    return self.respond(passkeys.finish_registration(store,user,self.token(),data.get('ceremony_id'),data.get('credential'),data.get('label','')))
+                if path=='/api/passkey/delete':
+                    return self.respond(passkeys.delete_key(store,user,data.get('id'),data.get('password','')))
                 if path=='/api/auth/login':
                     if not auth.enabled():raise ValueError('Gebruikersbeveiliging is niet ingeschakeld.')
                     token=auth.login(data.get('username',''),data.get('password',''),self.client_address[0])
