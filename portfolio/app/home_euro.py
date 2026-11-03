@@ -29,7 +29,7 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
         row=indexed[base][i]
         if (date.fromisoformat(day)-date.fromisoformat(row['day'])).days>7:return None
         used.add((currency,day,row['day']));return scale/Decimal(row['rate']),row['day']
-    trades={};income={};totals={}
+    trades={};income={};totals={};by_currency={}
     for row in snapshot['purchases']:trades.setdefault(identity(row),[]).append(row)
     for row in snapshot['dividends']:income.setdefault(identity(row),[]).append(row)
     for p in position_source:
@@ -73,22 +73,25 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
             # needs hundreds of full converted position histories in memory.
             for point in history:
                 day=point['day']
-                row=totals.setdefault(day,dict(cost=Decimal(0),invested=Decimal(0),dividend=Decimal(0),value=Decimal(0),with_dividends=Decimal(0),total_gain=Decimal(0),return_invested=Decimal(0),active=0,known=0,carried=False))
-                row['active']+=1;row['carried']=row['carried'] or point['carried']
-                for field in ('cost','invested','dividend'):row[field]+=Decimal(point[field])
-                if point['value'] is not None:
-                    row['known']+=1
-                    for field in ('value','with_dividends','total_gain'):row[field]+=Decimal(point[field])
-                    row['return_invested']+=Decimal(point['invested'])
+                for group in (totals,by_currency.setdefault(p['currency'],{})):
+                    row=group.setdefault(day,dict(cost=Decimal(0),invested=Decimal(0),dividend=Decimal(0),value=Decimal(0),with_dividends=Decimal(0),total_gain=Decimal(0),return_invested=Decimal(0),active=0,known=0,carried=False))
+                    row['active']+=1;row['carried']=row['carried'] or point['carried']
+                    for field in ('cost','invested','dividend'):row[field]+=Decimal(point[field])
+                    if point['value'] is not None:
+                        row['known']+=1
+                        for field in ('value','with_dividends','total_gain'):row[field]+=Decimal(point[field])
+                        row['return_invested']+=Decimal(point['invested'])
         except (ArithmeticError,ValueError,TypeError,KeyError,IndexError):
             if not skip_invalid:raise
             excluded.append({**{field:p.get(field,'') for field in ('symbol','exchange','currency','account_id','name','account_name')},'reason':'Ontbrekende of ongeldige positiegegevens','dates':[]})
-    history=[]
-    for day,row in sorted(totals.items()):
-        point={field:str(row[field]) for field in ('cost','invested','dividend','return_invested')}
-        point.update({field:str(row[field]) if row['known'] else None for field in ('value','with_dividends','total_gain')})
-        history.append(dict(point,day=day,return_gain=point['total_gain'],price=None,carried=row['carried'],missing=row['active']-row['known'],count=row['known']))
-    return dict(account_id=str(account),as_of=today.isoformat(),positions=positions,portfolios=[dict(name='Alle valuta’s in euro',currency='EUR',history=history,excluded_count=len(excluded))],excluded=excluded,fx_dates=[dict(currency=c,requested_on=d,rate_on=r) for c,d,r in sorted(used)])
+    def aggregate(group):
+        history=[]
+        for day,row in sorted(group.items()):
+            point={field:str(row[field]) for field in ('cost','invested','dividend','return_invested')}
+            point.update({field:str(row[field]) if row['known'] else None for field in ('value','with_dividends','total_gain')})
+            history.append(dict(point,day=day,return_gain=point['total_gain'],price=None,carried=row['carried'],missing=row['active']-row['known'],count=row['known']))
+        return history
+    return dict(account_id=str(account),as_of=today.isoformat(),positions=positions,portfolios=[dict(name='Alle valuta’s in euro',currency='EUR',history=aggregate(totals),excluded_count=len(excluded)),*[dict(name=c,native_currency=c,currency='EUR',history=aggregate(group)) for c,group in sorted(by_currency.items())]],excluded=excluded,fx_dates=[dict(currency=c,requested_on=d,rate_on=r) for c,d,r in sorted(used)])
 
 def prepare_portfolio_rates(store,snapshot,account='all'):
     # Validate scope before requesting any external rates.

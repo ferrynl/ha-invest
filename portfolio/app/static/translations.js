@@ -3381,6 +3381,11 @@ const UI_TRANSLATIONS = {
   "en": "First create a Trading 212 broker account in Settings.",
   "es": "Primero crea una cuenta de bróker de Trading 212 en Configuración."
  },
+ "Marktwaarde per valuta, omgerekend naar EUR.": {
+  "nl": "Marktwaarde per valuta, omgerekend naar EUR.",
+  "en": "Market value by currency, converted to EUR.",
+  "es": "Valor de mercado por divisa, convertido a euros."
+ },
  "Marktwaarde en openstaande kostprijs in": {
   "nl": "Marktwaarde en openstaande kostprijs in",
   "en": "Market value and open cost basis in",

@@ -1,3 +1,7 @@
+## 0.59.0
+
+- Home opent met alle valuta’s geselecteerd en toont de marktwaarde per valuta in een eigen kleur, omgerekend naar euro.
+
 ## 0.58.0
 
 - Log via HTTPS in bij Home Invest met een passkey, bijvoorbeeld via Windows Hello, je vingerafdruk of de schermvergrendeling van je telefoon.

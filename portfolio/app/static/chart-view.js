@@ -6,9 +6,11 @@ function drawDashboardChart(state,range,selection,comparisonMembers=[]){
  const svg=$('chart');svg.replaceChildren();$('chart-legend').replaceChildren();$('chart-days').replaceChildren();svg.onpointermove=null;svg.onpointerleave=null;svg.onkeydown=null;
  const comparison=selection==='all',holding=selection.startsWith('portfolio:')?state.portfolios.find(p=>p.currency===selection.slice(10)):state.positions[Number(selection)];
  const returnMode=!comparison&&$('chart-measure').value==='return';$('chart-measure').disabled=comparison;$('chart-return-badge').textContent='';
- const members=comparison?comparisonMembers.slice(0,6):holding?[holding]:[];
+ const breakdown=!returnMode&&selection.startsWith('portfolio:')?state.portfolios.filter(p=>p.native_currency):[];
+ const members=breakdown.length?breakdown:comparison?comparisonMembers.slice(0,6):holding?[holding]:[];
  $('home-chart-title').textContent=comparison?ui('Vergelijk je selectie'):holding?.symbol?holding.name:ui('Je portefeuille in beeld');
  $('chart-description').textContent=comparison?ui('Maximaal 6 posities. Totale winst sinds aankoop als % van de totale inleg, inclusief dividend.'):holding?.symbol?holding.symbol+' · '+holding.account_name+' · '+holding.currency+' · '+(holding.quote?ui('Koerstijd ')+new Date(holding.quote.quoted_at).toLocaleString((typeof appLocale==='function'?appLocale():'nl-NL')):ui('Wacht op een koers')):ui('Marktwaarde en openstaande kostprijs in ')+(holding?.currency??ui('de gekozen valuta'))+'.';
+ if(breakdown.length)$('chart-description').textContent=ui('Marktwaarde per valuta, omgerekend naar EUR.');
  if(returnMode)$('chart-description').textContent=ui('Resultaat sinds aankoop als percentage van de totale aankoopinleg, inclusief dividend en gerealiseerd resultaat. De periodeknoppen kiezen welke dagwaarden je ziet.');
  let dailyLimit=250,dailyRows=null;
  function renderDays(){
@@ -22,8 +24,12 @@ function drawDashboardChart(state,range,selection,comparisonMembers=[]){
  const allDays=[...new Set(members.flatMap(p=>p.history.map(point=>point.day)))].sort(),days=chartPeriodPoints(allDays.map(day=>({day})),range).map(p=>p.day);
  const missingCount=returnMode?Math.max(0,...chartPeriodPoints(holding.history,range).map(p=>Number(p.missing)||0))+(Number(holding.excluded_count)||0):0;
  if(missingCount)$('chart-description').textContent=ui('Resultaat van bekende posities. Winst en aankoopinleg worden per dag voor dezelfde posities berekend. Ontbrekende posities: maximaal {count}. De samenstelling van dit deel kan per dag verschillen.',{count:missingCount});
- const palette=['#47dcb0','#70b7ff','#ffce6b','#d49bff','#ff929d','#72dce9'],lines=[];
- if(comparison){members.forEach((p,i)=>{const history=new Map(p.history.map(point=>[point.day,point]));lines.push({name:p.symbol+' · '+p.account_name,color:palette[i],values:days.map(day=>{const point=history.get(day),basis=Number(point?.invested??point?.cost);return !point||point.total_gain==null||basis<=0?null:Number(point.total_gain)/basis*100;})});});}
+ const palette=['#47dcb0','#70b7ff','#ffce6b','#d49bff','#ff929d','#72dce9','#f39757','#a8de72','#eb8bd9','#b3a5ff','#f1ed8a','#6ccac0'],lines=[];
+ if(breakdown.length){breakdown.forEach((p,i)=>{
+  const history=new Map(p.history.map(point=>[point.day,point.value]));
+  lines.push({name:p.native_currency,color:palette[i%palette.length],values:days.map(day=>history.get(day)==null?null:Number(history.get(day)))});
+ });}
+ else if(comparison){members.forEach((p,i)=>{const history=new Map(p.history.map(point=>[point.day,point]));lines.push({name:p.symbol+' · '+p.account_name,color:palette[i],values:days.map(day=>{const point=history.get(day),basis=Number(point?.invested??point?.cost);return !point||point.total_gain==null||basis<=0?null:Number(point.total_gain)/basis*100;})});});}
  else{const history=new Map(holding.history.map(point=>[point.day,point]));if(returnMode)lines.push({name:missingCount?ui('Resultaat bekende posities (%)'):ui('Resultaat sinds aankoop (%)'),color:'#20c79b',values:days.map(day=>chartProfitValue(history.get(day)))});else for(const [field,name,color] of [['value',ui('Marktwaarde'),'#47dcb0'],['cost',ui('Openstaande kostprijs'),'#8694ac'],['with_dividends',ui('Waarde + dividend'),'#70b7ff']])lines.push({name,color,values:days.map(day=>{const value=history.get(day)?.[field];return value==null?null:Number(value);})});}
  const format=value=>comparison||returnMode?homePercent(value):money(value,holding.currency);
  let min=Infinity,max=-Infinity,hasGaps=false;for(const line of lines)for(const value of line.values){if(value==null)hasGaps=true;else{min=Math.min(min,value);max=Math.max(max,value);}}
