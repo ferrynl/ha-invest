@@ -4,6 +4,33 @@ Experimentele versie (0.41.2). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
 
+## Passkeys (v0.58.0)
+
+Naast het bestaande wachtwoord kun je op een ondersteund apparaat een **passkey**
+registreren. Meld je eerst aan met je eigen account, open **Mijn account** en
+gebruik **Passkeys → Passkey toevoegen**. Bevestig met je huidige wachtwoord,
+geef de passkey een herkenbare naam en volg de beveiligingsprompt van je apparaat.
+De knop **Inloggen met passkey** verschijnt op het inlogscherm op apparaten met
+browserondersteuning. Beheerders en gewone gebruikers hebben hun eigen passkeys;
+meerdere passkeys per account zijn mogelijk, maximaal tien.
+
+Deze implementatie gebruikt de WebAuthn-standaard: de server verifieert elke
+eenmalige uitdaging en cryptografische handtekening. Alleen de publieke sleutel,
+teller en herkomst worden in SQLite bewaard. Er worden geen biometrische gegevens
+naar Home Invest gestuurd. Je wachtwoord blijft als reserve beschikbaar en is
+ook nodig om passkeys toe te voegen of te verwijderen.
+
+**Vereisten en beperkingen:** open Home Invest via een vertrouwde HTTPS-hostnaam
+(of localhost voor ontwikkeling); een gewoon HTTP-adres op je lokale IP-adres
+ondersteunt geen passkeys. Een passkey wordt gekoppeld aan de volledige oorsprong
+(hostnaam) waarop hij is geregistreerd. Als je via een ander Home Assistant-domein
+werkt, kan een nieuwe registratie nodig zijn. Bij gebruik als iframe binnen
+Home Assistant hangt ondersteuning ook af van de browser en het iframebeleid van
+Home Assistant. Open Home Assistant zo nodig in een reguliere browser. Test eerst
+een passkey voordat je op passkeys vertrouwt voor aanmelden. Houd je wachtwoord
+altijd beschikbaar en controleer of je herstelback-up ook de nieuwe SQLite-tabel
+bevat.
+
 ## Installatie via GitHub
 
 1. De app-repository is [ferrynl/ha-invest](https://github.com/ferrynl/ha-invest).

@@ -217,4 +217,4 @@ class MigrationTests(unittest.TestCase):
             self.assertEqual(db.execute('SELECT COUNT(*) FROM fund_compositions').fetchone()[0],0)
             self.assertEqual(db.execute('SELECT price FROM purchases').fetchone()[0],'999')
             self.assertEqual(db.execute('SELECT amount FROM dividends').fetchone()[0],'5.25')
-        self.assertTrue(list((self.path.parent/'backups/migrations').glob('before-v21-to-v22-*.sqlite3')))
+        self.assertTrue(list((self.path.parent/'backups/migrations').glob(f'before-v21-to-v{SCHEMA_VERSION}-*.sqlite3')))
