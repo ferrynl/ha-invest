@@ -31,7 +31,7 @@ toegang tot de app. Wijzigen en instellen gebeurt in pop-ups; Home opent direct 
 - **Instellingen → Valuta**: historische omrekening en opgeslagen dagreferentiekoersen.
 - **Rapporten**: portefeuille, rendement, dividend, kosten en belastingen.
 - **Imports** (admin): een overzicht met brokerlogo’s en eigen stappenhandleidingen met schermafbeeldingen voor Trading 212 CSV/API, Trade Republic en Revolut CSV. Importvoorbeeld, importgeschiedenis, exporteren, API-instellingen, beurskoppelingen en beoordelingen hebben aparte pagina’s.
-- **Instellingen** (admin): accounts, beveiliging, back-ups en versiecontrole.
+- **Instellingen** (admin): accounts, beveiliging, back-ups en versiecontrole. Bij **Back-ups en updates** staan alle lokale back-ups (ook veiligheidskopieën in submappen) en lokale updatebestanden met grootte, downloaden en verwijderen. SQLite-back-ups kunnen na bevestiging rechtstreeks worden hersteld; vooraf wordt een veiligheidskopie gemaakt. Home Assistant beheert installatiepakketten en eigen back-ups afzonderlijk.
 - **Instellingen → Logs** (admin): afgeschermde foutdetails en Log-ID zoeken.
 
 Koersen komen van Yahoo Finance en kunnen vertraagd of tijdelijk onbeschikbaar zijn. Apollo LU3170240538 in EUR gebruikt de openbare DivvyDiary-koers, zonder vermelde koersdatum; de app toont het ophaalmoment. Bij Instellingen → TMX omboeken naar TDT kun je de VanEck-fusie per brokeraccount verwerken met behoud van kostprijs en een herstelback-up.

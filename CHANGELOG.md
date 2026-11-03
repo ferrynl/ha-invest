@@ -1,3 +1,10 @@
+## 0.57.0
+
+- Back-ups en updates toont alle lokale back-up- en updatebestanden, inclusief migratie- en veiligheidskopieën in submappen, met datum, grootte en totaalgebruik.
+- Opgeslagen bestanden kunnen worden gedownload of na bevestiging verwijderd. SQLite-back-ups kunnen rechtstreeks worden hersteld, ook boven de uploadlimiet van 25 MB, met behoud van gebruikers en beveiliging.
+- Herstellen maakt vooraf een veiligheidskopie; bestandsacties vereisen adminrechten, sessiebeveiliging en een ongewijzigd bestand.
+- Statistieken verwijst naar bestandsbeheer; op mobiel worden bestanden als leesbare kaarten weergegeven.
+
 ## 0.56.0
 
 - Dividend: instelbare jaarlijkse dividendgroei, standaard 3%, samengesteld vanaf volgend kalenderjaar.

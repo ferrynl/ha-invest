@@ -35,10 +35,13 @@ TABLES={
  'import_fx':(8,('id','batch_id','external_id','kind','source_currency','target_currency','original_amount','converted_amount','rate','requested_on','rate_on','source')),
 }
 
-def restore_backup(store,content):
-    if not content.startswith(b'SQLite format 3\x00') or len(content)>25*1024*1024:raise ValueError('Kies een geldige SQLite-back-up van maximaal 25 MB.')
+def restore_backup(store,content=None,source_path=None):
+    if source_path is None and (not content.startswith(b'SQLite format 3\x00') or len(content)>25*1024*1024):raise ValueError('Kies een geldige SQLite-back-up van maximaal 25 MB.')
     with tempfile.TemporaryDirectory(prefix='.restore-',dir=store.root) as folder:
-        uploaded=Path(folder)/'input.sqlite3';uploaded.write_bytes(content)
+        uploaded=Path(source_path) if source_path is not None else Path(folder)/'input.sqlite3'
+        if source_path is None:uploaded.write_bytes(content)
+        with uploaded.open('rb') as header:
+            if header.read(16)!=b'SQLite format 3\x00':raise ValueError('Ongeldig back-upbestand.')
         rows={}
         with closing(sqlite3.connect(uploaded.as_uri()+'?mode=ro&immutable=1',uri=True)) as source:
             source.execute('PRAGMA trusted_schema=OFF')
@@ -129,7 +132,7 @@ def restore_backup(store,content):
                 if setting and setting[0] in ('1W','1M','3M','6M','YTD','1Y','ALL'):default_range=setting[0]
         # Live schema, users and authentication stay intact, including when restoring old backups.
         with store.lock:
-            safety=store.backup();safety_folder=store.root/'backups'/'restores';safety_folder.mkdir(exist_ok=True)
+            safety=store.backup(retain=False);safety_folder=store.root/'backups'/'restores';safety_folder.mkdir(exist_ok=True)
             safety.rename(safety_folder/('before-restore-'+safety.name))
             with store.connect() as target:
                 for table in reversed(TABLES):target.execute(f'DELETE FROM {table}')

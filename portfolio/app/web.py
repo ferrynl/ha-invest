@@ -7,7 +7,7 @@ import re
 import sqlite3
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler
-from urllib.parse import urlsplit,parse_qs
+from urllib.parse import quote,urlsplit,parse_qs
 from pathlib import Path
 from provider import search_stocks,listing as resolve_listing
 from restore import restore_backup
@@ -54,7 +54,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
     assets['/world-countries.json']=('world-countries.json','application/json; charset=utf-8')
     for media in (static/'broker-media').glob('*.png'):assets['/broker-media/'+media.name]=('broker-media/'+media.name,'image/png')
     for flag in (static/'flags').glob('*.svg'):assets['/flags/'+flag.name]=('flags/'+flag.name,'image/svg+xml')
-    for name in ('brokers','feedback','i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','funds','tasks','resource-stats','maintenance','reports','charges','purchase-fx','report-charts','conversions','performance'):
+    for name in ('brokers','feedback','i18n','translations','loading','dashboard-layout','home','app','pages','chart','chart-view','access','imports','logs','currencies','import-mappings','import-issues','transactions','popups','table-filters','stock-detail','category-status','dividends','stocks','funds','tasks','resource-stats','maintenance','backup-files','reports','charges','purchase-fx','report-charts','conversions','performance'):
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     assets['/country-map.js']=('country-map.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
@@ -318,6 +318,29 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 except ValueError:return self.respond({'error':'Ongeldig brokeraccount.'},400)
                 except LookupError:return self.respond({'error':'Brokeraccount niet gevonden.'},404)
                 return self.respond({**{k:v for k,v in state.items() if k!='quotes'},'status':status,'refresh_minutes':interval//60,'app_version':APP_VERSION},etag=True)
+            if path=='/api/portfolio/files':
+                from backup_files import inventory
+                return self.respond(inventory(store))
+            if path=='/api/portfolio/file':
+                from backup_files import file_path
+                try:
+                    with store.lock:
+                        backup=file_path(store,parse_qs(urlsplit(self.path).query).get('name',[''])[0])
+                        stream=backup.open('rb')
+                except (ValueError,OSError):return self.respond({'error':'Back-upbestand niet gevonden.'},404)
+                # Stream large files without reading the entire backup into RAM.
+                with stream:
+                    import os,shutil
+                    self.send_response(200)
+                    self.send_header('Content-Type','application/octet-stream')
+                    self.send_header('Content-Length',str(os.fstat(stream.fileno()).st_size))
+                    self.send_header('Content-Disposition',"attachment; filename*=UTF-8''"+quote(backup.name,safe=''))
+                    self.send_header('Cache-Control','no-store')
+                    self.send_header('X-Content-Type-Options','nosniff')
+                    self.end_headers()
+                    try:shutil.copyfileobj(stream,self.wfile,1024*1024)
+                    except (BrokenPipeError,ConnectionResetError):pass
+                return
             if path=='/api/backup':
                 backup=store.backup();return self.respond(backup.read_bytes(),kind='application/vnd.sqlite3',filename=backup.name)
             if path=='/api/listing':
@@ -363,6 +386,25 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))
                 data=json.loads(body)
                 if not isinstance(data,dict):raise ValueError('Ongeldige aanvraag.')
+                if path in ('/api/portfolio/file-delete','/api/portfolio/file-restore'):
+                    from backup_files import reviewed_file
+                    restoring=path.endswith('file-restore')
+                    if data.get('confirmation')!=('RESTORE' if restoring else 'DELETE'):raise ValueError('Bevestig de bestandsactie.')
+                    if not refresh_lock.acquire(blocking=False):return self.respond({'error':'Er loopt een achtergrondtaak. Probeer het later opnieuw.'},409)
+                    try:
+                        with store.lock:
+                            selected=reviewed_file(store,data)
+                            if restoring:
+                                result=restore_backup(store,source_path=selected);cache.invalidate();auth.clear_sessions()
+                            else:selected.unlink()
+                    except OSError:
+                        return self.respond({'error':'De bestandsactie is mislukt. Vernieuw het overzicht.'},400)
+                    finally:refresh_lock.release()
+                    with resources.lock:resources.storage=None
+                    if restoring:
+                        refresh_requested.set()
+                        return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))
+                    return self.respond({'ok':True})
                 if path in ('/api/portfolio/cleanup-preview','/api/portfolio/cleanup'):
                     from maintenance import preview as cleanup_preview,clean as cleanup_run
                     if path.endswith('-preview'):return self.respond(cleanup_preview(store,data))

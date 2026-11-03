@@ -39,6 +39,7 @@ function lockApp(){
  if(typeof clearImportMappings==='function')clearImportMappings();
  if(typeof clearLogs==='function')clearLogs();
  if(typeof clearFeedback==='function')clearFeedback();
+ if(typeof clearBackupFiles==='function')clearBackupFiles();
  for(const id of ['ha-export-status','ha-export-values','ha-export-yaml']){const item=document.getElementById(id);if(item)item.textContent='';}
  if(typeof clearCurrencies==='function')clearCurrencies();
  if(typeof closeMenu==='function')closeMenu();

@@ -82,6 +82,7 @@ function showPage(){
  if(page==='import-beoordeling')loadImportIssues();
  if(page==='instellingen-taken')loadETFTasks();
  if(page==='instellingen-statistieken')loadResourceStats();
+ if(page==='instellingen-backups')loadBackupFiles();
  if(page==='valuta')loadCurrencies();
  if(page==='instellingen-sensoren'&&state)loadHomeAssistant();
  if(page==='tmx-omboeken')loadConversions();
