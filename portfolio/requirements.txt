@@ -2,3 +2,4 @@ cryptography==50.0.2
 
 reportlab==4.4.3
 duckdb==2.0.0
+webauthn==2.7.0
