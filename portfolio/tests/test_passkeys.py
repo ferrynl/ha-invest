@@ -69,6 +69,34 @@ class PasskeyTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             passkeys.finish_login(self.store,self.auth,begin['ceremony_id'],{'id':'dGVzdA'})
 
+    def test_register_and_login_uses_checked_public_key(self):
+        registration = passkeys.begin_registration(
+            self.store,self.user,self.session,'a-sufficiently-long-password',
+            'https://invest.example.org')
+        verified = SimpleNamespace(credential_id=b'credential-id',
+                                   credential_public_key=b'server-verified-public-key',
+                                   sign_count=0)
+        with patch.object(passkeys, 'verify_registration_response', return_value=verified) as check:
+            result = passkeys.finish_registration(
+                self.store,self.user,self.session,registration['ceremony_id'],
+                {'id':'Y3JlZGVudGlhbC1pZA'},'My phone')
+            self.assertTrue(result['ok'])
+            self.assertEqual(check.call_args.kwargs['expected_origin'],'https://invest.example.org')
+            self.assertTrue(check.call_args.kwargs['require_user_verification'])
+        begin = passkeys.begin_login(self.store,'https://invest.example.org')
+        verified_login = SimpleNamespace(new_sign_count=2)
+        with patch.object(passkeys,'verify_authentication_response',return_value=verified_login) as check:
+            token=passkeys.finish_login(self.store,self.auth,begin['ceremony_id'],
+                                        {'id':'Y3JlZGVudGlhbC1pZA'})
+            self.assertEqual(check.call_args.kwargs['credential_public_key'],b'server-verified-public-key')
+            self.assertTrue(check.call_args.kwargs['require_user_verification'])
+            self.assertEqual(self.auth.user(token)['username'],'tester')
+        with self.store.read() as db:
+            self.assertEqual(db.execute('SELECT sign_count FROM passkeys').fetchone()[0],2)
+        with self.assertRaises(ValueError):
+            passkeys.finish_login(self.store,self.auth,begin['ceremony_id'],
+                                  {'id':'Y3JlZGVudGlhbC1pZA'})
+
     def test_migration_tables_present(self):
         with self.store.read() as db:
             self.assertIsNotNone(db.execute("SELECT name FROM sqlite_master WHERE name='passkeys'").fetchone())
