@@ -20,6 +20,95 @@ async function apiFetch(url,options={}){
   return response;
  }finally{if(timer!==null)clearTimeout(timer);finish();}
 }
+// Passkeys use only standard browser WebAuthn APIs. No external JavaScript/CDN.
+function passkeySupported(){
+ return Boolean(window.isSecureContext&&window.PublicKeyCredential&&navigator.credentials?.create&&navigator.credentials?.get);
+}
+function b64urlDecode(value){
+ const s=value.replace(/-/g,'+').replace(/_/g,'/');
+ const binary=atob(s+'='.repeat((4-s.length%4)%4));
+ return Uint8Array.from(binary,c=>c.charCodeAt(0));
+}
+function b64urlEncode(bytes){
+ const view=new Uint8Array(bytes);
+ let binary='';for(const byte of view)binary+=String.fromCharCode(byte);
+ return btoa(binary).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+}
+function passkeyCreateOptions(options){
+ return {...options,challenge:b64urlDecode(options.challenge),
+  user:{...options.user,id:b64urlDecode(options.user.id)},
+  excludeCredentials:(options.excludeCredentials||[]).map(x=>({...x,id:b64urlDecode(x.id)}))};
+}
+function passkeyGetOptions(options){
+ return {...options,challenge:b64urlDecode(options.challenge),
+  allowCredentials:(options.allowCredentials||[]).map(x=>({...x,id:b64urlDecode(x.id)}))};
+}
+function passkeyJSON(credential){
+ if(typeof credential.toJSON==='function')return credential.toJSON();
+ const response=credential.response;
+ const result={id:credential.id,rawId:b64urlEncode(credential.rawId),type:credential.type,
+  authenticatorAttachment:credential.authenticatorAttachment,
+  clientExtensionResults:credential.getClientExtensionResults(),response:{}};
+ for(const key of ['clientDataJSON','attestationObject','authenticatorData','signature','userHandle']){
+  if(response[key]!=null)result.response[key]=b64urlEncode(response[key]);
+ }
+ return result;
+}
+async function passkeyPost(path,data){
+ const response=await apiFetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},
+  body:JSON.stringify(data)});
+ const result=await response.json();if(!response.ok)throw Error(result.error||'Passkey-aanvraag mislukt.');
+ return result;
+}
+async function passkeySignIn(){
+ const status=$('login-feedback');
+ status.textContent='';
+ try{
+  const begin=await passkeyPost('api/passkey/login/begin',{});
+  const credential=await navigator.credentials.get({publicKey:passkeyGetOptions(begin.options)});
+  if(!credential)throw Error('Passkey-aanmelding geannuleerd.');
+  await passkeyPost('api/passkey/login/finish',{ceremony_id:begin.ceremony_id,credential:passkeyJSON(credential)});
+  await startSession();
+ }catch(error){status.textContent=error.name==='NotAllowedError'?'Passkey-aanmelding geannuleerd of niet toegestaan.':error.message;}
+}
+async function loadPasskeys(){
+ const list=$('passkey-list');
+ if(!accessSession?.enabled||!accessSession.user?.id){list.replaceChildren();return;}
+ const response=await apiFetch('api/passkeys');
+ if(!response.ok)throw Error('Passkeys ophalen mislukt.');
+ const data=await response.json();list.replaceChildren();
+ if(!data.passkeys.length){const p=document.createElement('p');p.textContent='Nog geen passkeys toegevoegd.';list.append(p);return;}
+ for(const key of data.passkeys){
+  const line=document.createElement('div');line.className='passkey-row';
+  const label=document.createElement('span');label.textContent=key.label;
+  const button=document.createElement('button');button.type='button';button.className='secondary';button.textContent='Verwijderen';
+  button.addEventListener('click',async()=>{
+   const password=prompt('Bevestig met je huidige wachtwoord om deze passkey te verwijderen.');
+   if(password===null)return;
+   try{await passkeyPost('api/passkey/delete',{id:key.id,password});await loadPasskeys();$('passkey-feedback').textContent='Passkey verwijderd.';}
+   catch(error){$('passkey-feedback').textContent=error.message;}
+  });
+  line.append(label,button);list.append(line);
+ }
+}
+function bindPasskeys(){
+ $('passkey-login').hidden=!passkeySupported();
+ $('passkey-login').addEventListener('click',passkeySignIn);
+ $('passkey-create-form').addEventListener('submit',async(event)=>{
+  event.preventDefault();const form=event.currentTarget;const button=form.querySelector('button');button.disabled=true;
+  try{
+   const fields=Object.fromEntries(new FormData(form));
+   const begin=await passkeyPost('api/passkey/register/begin',{password:fields.password});
+   const credential=await navigator.credentials.create({publicKey:passkeyCreateOptions(begin.options)});
+   if(!credential)throw Error('Passkey registreren geannuleerd.');
+   await passkeyPost('api/passkey/register/finish',{ceremony_id:begin.ceremony_id,
+     credential:passkeyJSON(credential),label:fields.label});
+   form.reset();await loadPasskeys();$('passkey-feedback').textContent='Passkey toegevoegd.';
+  }catch(error){$('passkey-feedback').textContent=error.name==='NotAllowedError'?
+    'Passkey niet toegestaan of geannuleerd. Open Home Invest zo nodig via HTTPS in de browser.':error.message;}
+  finally{button.disabled=false;form.elements.namedItem('password').value='';}
+ });
+}
 function lockApp(){
  closeAllPopups();
  if(typeof clearDashboardLayout==='function')clearDashboardLayout();
@@ -77,6 +166,8 @@ async function startSession(){
  document.getElementById('disable-auth').hidden=!accessSession.enabled;
  document.getElementById('security-status').textContent=accessSession.enabled?ui('Ingeschakeld. Accounts en rollen worden door de server gecontroleerd.'):ui('Uitgeschakeld. Toegang loopt momenteel via Home Assistant.');
  document.getElementById('user-management').hidden=!admin||!accessSession.enabled;
+ document.getElementById('passkey-settings').hidden=!accessSession.enabled||!passkeySupported();
+ if(accessSession.enabled&&passkeySupported())loadPasskeys().catch(error=>{$('passkey-feedback').textContent=error.message;});
  if(currentProfile==='demo')homeCurrency='ALL';
  await loadDashboardLayout();
  stateETag=null;rangeInitialized=false;showPage();await load();
@@ -101,6 +192,7 @@ function bindAccess(){
  $('profile-select').addEventListener('change',()=>switchProfile($('profile-select').value));
  $('profile-personal').addEventListener('click',()=>switchProfile('personal'));
 
+ bindPasskeys();
  function formAction(id,callback,feedback){$(id).addEventListener('submit',async event=>{event.preventDefault();const button=event.target.querySelector('button[type="submit"]');button.disabled=true;try{await callback(event.target);}catch(error){$(feedback).textContent=error.message;}finally{button.disabled=false;}});}
  formAction('login-form',async form=>{await jsonAction('api/auth/login',Object.fromEntries(new FormData(form)));form.reset();await startSession();},'login-feedback');
  formAction('enable-auth',async form=>{await jsonAction('api/auth/enable',Object.fromEntries(new FormData(form)));form.reset();await startSession();$('security-feedback').textContent=ui('Gebruikersbeveiliging ingeschakeld.');},'security-feedback');
