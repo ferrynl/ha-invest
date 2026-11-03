@@ -8258,5 +8258,180 @@ const UI_TRANSLATIONS = {
   "nl": "Aandeel, handelsvaluta en splitsingscontrole kunnen hier niet worden gewijzigd.",
   "en": "The instrument, trading currency and split verification cannot be changed here.",
   "es": "Aquí no se pueden cambiar el instrumento, la moneda de cotización ni el control del desdoblamiento."
-}
+},
+  "Inloggen met passkey": {
+    "nl": "Inloggen met passkey",
+    "en": "Sign in with a passkey",
+    "es": "Iniciar sesión con una llave de acceso"
+  },
+  "Mijn telefoon": {
+    "nl": "Mijn telefoon",
+    "en": "My phone",
+    "es": "Mi teléfono"
+  },
+  "Naam van je passkey": {
+    "nl": "Naam van je passkey",
+    "en": "Passkey name",
+    "es": "Nombre de la llave de acceso"
+  },
+  "Passkey toevoegen": {
+    "nl": "Passkey toevoegen",
+    "en": "Add passkey",
+    "es": "Añadir llave de acceso"
+  },
+  "Passkeys": {
+    "nl": "Passkeys",
+    "en": "Passkeys",
+    "es": "Llaves de acceso"
+  },
+  "Bevestig met je huidige wachtwoord om deze passkey te verwijderen.": {
+    "nl": "Bevestig met je huidige wachtwoord om deze passkey te verwijderen.",
+    "en": "Confirm with your current password to remove this passkey.",
+    "es": "Confirma con tu contraseña actual para eliminar esta llave de acceso."
+  },
+  "Nog geen passkeys toegevoegd.": {
+    "nl": "Nog geen passkeys toegevoegd.",
+    "en": "No passkeys added yet.",
+    "es": "Aún no se han añadido llaves de acceso."
+  },
+  "Passkey registreren geannuleerd.": {
+    "nl": "Passkey registreren geannuleerd.",
+    "en": "Passkey registration cancelled.",
+    "es": "Se canceló el registro de la llave de acceso."
+  },
+  "Passkey toegevoegd.": {
+    "nl": "Passkey toegevoegd.",
+    "en": "Passkey added.",
+    "es": "Se añadió la llave de acceso."
+  },
+  "Passkey verwijderd.": {
+    "nl": "Passkey verwijderd.",
+    "en": "Passkey removed.",
+    "es": "Se eliminó la llave de acceso."
+  },
+  "Passkey-aanmelding geannuleerd of niet toegestaan.": {
+    "nl": "Passkey-aanmelding geannuleerd of niet toegestaan.",
+    "en": "Passkey sign-in cancelled or denied.",
+    "es": "Se canceló o denegó el inicio de sesión con la llave de acceso."
+  },
+  "Passkey-aanmelding geannuleerd.": {
+    "nl": "Passkey-aanmelding geannuleerd.",
+    "en": "Passkey sign-in cancelled.",
+    "es": "Se canceló el inicio de sesión con la llave de acceso."
+  },
+  "Passkey-aanvraag mislukt.": {
+    "nl": "Passkey-aanvraag mislukt.",
+    "en": "Passkey request failed.",
+    "es": "Falló la solicitud de la llave de acceso."
+  },
+  "Passkeys ophalen mislukt.": {
+    "nl": "Passkeys ophalen mislukt.",
+    "en": "Could not load passkeys.",
+    "es": "No se pudieron cargar las llaves de acceso."
+  },
+  "Passkey niet toegestaan of geannuleerd. Open Home Invest zo nodig via HTTPS in de browser.": {
+    "nl": "Passkey niet toegestaan of geannuleerd. Open Home Invest zo nodig via HTTPS in de browser.",
+    "en": "Passkey request denied or cancelled. If needed, open Home Invest over HTTPS in your browser.",
+    "es": "Se denegó o canceló la solicitud. Si es necesario, abre Home Invest mediante HTTPS en el navegador."
+  },
+  "Account is niet meer actief.": {
+    "nl": "Account is niet meer actief.",
+    "en": "The account is no longer active.",
+    "es": "La cuenta ya no está activa."
+  },
+  "Dit account is niet meer actief.": {
+    "nl": "Dit account is niet meer actief.",
+    "en": "This account is no longer active.",
+    "es": "Esta cuenta ya no está activa."
+  },
+  "Deze passkey hoort bij een ander Home Assistant-adres.": {
+    "nl": "Deze passkey hoort bij een ander Home Assistant-adres.",
+    "en": "This passkey belongs to another Home Assistant address.",
+    "es": "Esta llave de acceso pertenece a otra dirección de Home Assistant."
+  },
+  "Deze passkey is al geregistreerd.": {
+    "nl": "Deze passkey is al geregistreerd.",
+    "en": "This passkey is already registered.",
+    "es": "Esta llave de acceso ya está registrada."
+  },
+  "Maximaal tien passkeys per account.": {
+    "nl": "Maximaal tien passkeys per account.",
+    "en": "Up to ten passkeys per account.",
+    "es": "Hasta diez llaves de acceso por cuenta."
+  },
+  "Meld je aan met je eigen gebruikersaccount.": {
+    "nl": "Meld je aan met je eigen gebruikersaccount.",
+    "en": "Sign in with your own user account.",
+    "es": "Inicia sesión con tu propia cuenta."
+  },
+  "Meld je aan om passkeys te verwijderen.": {
+    "nl": "Meld je aan om passkeys te verwijderen.",
+    "en": "Sign in to remove passkeys.",
+    "es": "Inicia sesión para eliminar llaves de acceso."
+  },
+  "Meld je aan voordat je een passkey toevoegt.": {
+    "nl": "Meld je aan voordat je een passkey toevoegt.",
+    "en": "Sign in before adding a passkey.",
+    "es": "Inicia sesión antes de añadir una llave de acceso."
+  },
+  "Meld je eerst aan.": {
+    "nl": "Meld je eerst aan.",
+    "en": "Sign in first.",
+    "es": "Inicia sesión primero."
+  },
+  "Ongeldige passkey.": {
+    "nl": "Ongeldige passkey.",
+    "en": "Invalid passkey.",
+    "es": "Llave de acceso no válida."
+  },
+  "Passkey niet gevonden.": {
+    "nl": "Passkey niet gevonden.",
+    "en": "Passkey not found.",
+    "es": "No se encontró la llave de acceso."
+  },
+  "Passkey niet herkend.": {
+    "nl": "Passkey niet herkend.",
+    "en": "Passkey not recognized.",
+    "es": "No se reconoce la llave de acceso."
+  },
+  "Passkey-aanvraag hoort bij een ander account.": {
+    "nl": "Passkey-aanvraag hoort bij een ander account.",
+    "en": "The passkey request belongs to another account.",
+    "es": "La solicitud de la llave de acceso pertenece a otra cuenta."
+  },
+  "Passkey-aanvraag verlopen. Probeer opnieuw.": {
+    "nl": "Passkey-aanvraag verlopen. Probeer opnieuw.",
+    "en": "Passkey request expired. Try again.",
+    "es": "La solicitud de la llave de acceso caducó. Inténtalo de nuevo."
+  },
+  "Passkey-verificatie mislukt.": {
+    "nl": "Passkey-verificatie mislukt.",
+    "en": "Passkey verification failed.",
+    "es": "Falló la verificación de la llave de acceso."
+  },
+  "Passkeys vereisen een veilige HTTPS-verbinding.": {
+    "nl": "Passkeys vereisen een veilige HTTPS-verbinding.",
+    "en": "Passkeys require a secure HTTPS connection.",
+    "es": "Las llaves de acceso requieren una conexión HTTPS segura."
+  },
+  "Passkeys werken alleen via HTTPS (of localhost voor ontwikkeling).": {
+    "nl": "Passkeys werken alleen via HTTPS (of localhost voor ontwikkeling).",
+    "en": "Passkeys work over HTTPS or on localhost for development.",
+    "es": "Las llaves de acceso funcionan mediante HTTPS o en localhost para desarrollo."
+  },
+  "Te veel passkey-aanvragen. Probeer het later opnieuw.": {
+    "nl": "Te veel passkey-aanvragen. Probeer het later opnieuw.",
+    "en": "Too many passkey requests. Try again later.",
+    "es": "Demasiadas solicitudes de llaves de acceso. Inténtalo más tarde."
+  },
+  "Schakel gebruikersbeveiliging in.": {
+    "nl": "Schakel gebruikersbeveiliging in.",
+    "en": "Enable user security.",
+    "es": "Activa la seguridad de usuarios."
+  },
+  "Log in met je vingerafdruk, gezichtsherkenning of schermvergrendeling. Je wachtwoord blijft als reserve beschikbaar. Gebruik een beveiligde HTTPS-verbinding en open Home Invest in de browser als de Home Assistant-app geen passkeys ondersteunt.": {
+    "nl": "Log in met je vingerafdruk, gezichtsherkenning of schermvergrendeling. Je wachtwoord blijft als reserve beschikbaar. Gebruik een beveiligde HTTPS-verbinding en open Home Invest in de browser als de Home Assistant-app geen passkeys ondersteunt.",
+    "en": "Sign in with your fingerprint, face recognition or screen lock. You can still use your password. Use a secure HTTPS connection and open Home Invest in your browser if the Home Assistant app does not support passkeys.",
+    "es": "Inicia sesión con tu huella, reconocimiento facial o bloqueo de pantalla. Puedes seguir usando tu contraseña. Usa una conexión HTTPS segura y abre Home Invest en el navegador si la aplicación de Home Assistant no admite llaves de acceso."
+  }
 };

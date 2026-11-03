@@ -64,6 +64,7 @@ def _consume(store, ceremony_id, kind, session_token=''):
     if not isinstance(ceremony_id, str) or len(ceremony_id) > 100:
         raise ValueError('Passkey-aanvraag verlopen. Probeer opnieuw.')
     with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE')
         entry = db.execute('SELECT * FROM passkey_challenges WHERE id=? AND kind=?',
                            (ceremony_id, kind)).fetchone()
         db.execute('DELETE FROM passkey_challenges WHERE id=?', (ceremony_id,))
@@ -133,6 +134,7 @@ def finish_registration(store, user, session_token, ceremony_id, credential, lab
     except Exception as error:
         raise ValueError('Passkey-verificatie mislukt.') from error
     with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE')
         account = db.execute('SELECT active FROM users WHERE id=?', (user['id'],)).fetchone()
         if not account or not account['active']:
             raise ValueError('Account is niet meer actief.')
@@ -189,6 +191,7 @@ def finish_login(store, auth, ceremony_id, credential):
         raise ValueError('Passkey-verificatie mislukt.') from error
     # Compare-and-swap the counter to reject stale, concurrent assertions.
     with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE')
         row = db.execute('SELECT p.sign_count,u.active,u.revision FROM passkeys p JOIN users u ON u.id=p.user_id WHERE p.id=?',
                          (saved['id'],)).fetchone()
         if (not row or not row['active'] or row['revision'] != saved['revision']
