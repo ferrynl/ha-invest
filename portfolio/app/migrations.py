@@ -119,7 +119,7 @@ MIGRATIONS = {
     23: (
         'CREATE TABLE passkeys (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, credential_id BLOB NOT NULL UNIQUE, public_key BLOB NOT NULL, sign_count INTEGER NOT NULL DEFAULT 0, origin TEXT NOT NULL, rp_id TEXT NOT NULL, label TEXT NOT NULL, created_at REAL NOT NULL, last_used_at REAL)',
         'CREATE INDEX passkeys_user ON passkeys(user_id)',
-        'CREATE TABLE passkey_challenges (id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN (\\'register\\',\\'login\\')), challenge BLOB NOT NULL, origin TEXT NOT NULL, rp_id TEXT NOT NULL, user_id INTEGER, session_hash TEXT NOT NULL DEFAULT \\'\\', expires_at REAL NOT NULL)',
+        "CREATE TABLE passkey_challenges (id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('register','login')), challenge BLOB NOT NULL, origin TEXT NOT NULL, rp_id TEXT NOT NULL, user_id INTEGER, session_hash TEXT NOT NULL DEFAULT '', expires_at REAL NOT NULL)",
         'CREATE INDEX passkey_challenges_expiry ON passkey_challenges(expires_at)',
     ),
 }
