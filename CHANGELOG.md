@@ -1,3 +1,9 @@
+## 0.58.0
+
+- Log via HTTPS in bij Home Invest met een passkey, bijvoorbeeld via Windows Hello, je vingerafdruk of de schermvergrendeling van je telefoon.
+- Voeg passkeys toe of verwijder ze via je accountinstellingen met bevestiging van je huidige wachtwoord. Inloggen met je wachtwoord blijft beschikbaar.
+- Als de Home Assistant-app geen passkeys ondersteunt, open Home Invest via HTTPS in een gewone browser.
+
 ## 0.57.0
 
 - Back-ups en updates toont alle lokale back-up- en updatebestanden, inclusief migratie- en veiligheidskopieën in submappen, met datum, grootte en totaalgebruik.
