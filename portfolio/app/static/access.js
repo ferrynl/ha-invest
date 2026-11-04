@@ -92,7 +92,9 @@ async function loadPasskeys(){
  }
 }
 function bindPasskeys(){
- $('passkey-login').hidden=!passkeySupported();
+ const supported=passkeySupported();
+ $('passkey-login').disabled=!supported;
+ $('passkey-unavailable').hidden=supported;
  $('passkey-login').addEventListener('click',passkeySignIn);
  $('passkey-create-form').addEventListener('submit',async(event)=>{
   event.preventDefault();const form=event.currentTarget;const button=form.querySelector('button');button.disabled=true;

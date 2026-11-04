@@ -1,3 +1,7 @@
+## 0.60.0
+
+- Het inlogscherm krijgt een 3D-uitstraling, aparte keuzes voor wachtwoord en passkey, en een zichtbare melding over lokale opslag.
+
 ## 0.59.0
 
 - Home opent met alle valuta’s geselecteerd en toont de marktwaarde per valuta in een eigen kleur, omgerekend naar euro.

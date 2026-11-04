@@ -50,6 +50,7 @@
     "passkey-feedback",
     "passkey-list",
     "passkey-login",
+    "passkey-unavailable",
     "passkey-row",
     "passkey-settings",
     "signature",

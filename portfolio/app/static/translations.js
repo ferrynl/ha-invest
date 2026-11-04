@@ -8264,6 +8264,14 @@ const UI_TRANSLATIONS = {
   "en": "The instrument, trading currency and split verification cannot be changed here.",
   "es": "Aquí no se pueden cambiar el instrumento, la moneda de cotización ni el control del desdoblamiento."
 },
+  "Kies hoe je wilt inloggen.": {"nl":"Kies hoe je wilt inloggen.","en":"Choose how to sign in.","es":"Elige cómo iniciar sesión."},
+  "Met wachtwoord": {"nl":"Met wachtwoord","en":"With a password","es":"Con contraseña"},
+  "Met passkey": {"nl":"Met passkey","en":"With a passkey","es":"Con llave de acceso"},
+  "Inloggen met wachtwoord": {"nl":"Inloggen met wachtwoord","en":"Sign in with a password","es":"Iniciar sesión con contraseña"},
+  "Gebruik een eerder ingestelde passkey met je vingerafdruk, gezicht of schermvergrendeling.": {"nl":"Gebruik een eerder ingestelde passkey met je vingerafdruk, gezicht of schermvergrendeling.","en":"Use a passkey you already set up with your fingerprint, face recognition or screen lock.","es":"Usa una llave de acceso que ya hayas configurado con tu huella, reconocimiento facial o bloqueo de pantalla."},
+  "Passkeys zijn hier niet beschikbaar. Open Home Invest via HTTPS in een browser die passkeys ondersteunt.": {"nl":"Passkeys zijn hier niet beschikbaar. Open Home Invest via HTTPS in een browser die passkeys ondersteunt.","en":"Passkeys are unavailable here. Open Home Invest over HTTPS in a browser that supports passkeys.","es":"Las llaves de acceso no están disponibles aquí. Abre Home Invest mediante HTTPS en un navegador compatible con llaves de acceso."},
+  "Draait lokaal": {"nl":"Draait lokaal","en":"Runs locally","es":"Se ejecuta localmente"},
+  "Home Invest draait op je eigen Home Assistant. Je account en portefeuille worden lokaal opgeslagen.": {"nl":"Home Invest draait op je eigen Home Assistant. Je account en portefeuille worden lokaal opgeslagen.","en":"Home Invest runs on your own Home Assistant. Your account and portfolio are stored locally.","es":"Home Invest se ejecuta en tu propio Home Assistant. Tu cuenta y tu cartera se guardan localmente."},
   "Inloggen met passkey": {
     "nl": "Inloggen met passkey",
     "en": "Sign in with a passkey",
