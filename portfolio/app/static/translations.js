@@ -1,5 +1,15 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+ "Standaardgrafiek op Home": {"nl": "Standaardgrafiek op Home", "en": "Default chart on Home", "es": "Gráfico predeterminado en Inicio"},
+ "Marktwaarde als vlakgrafiek": {"nl": "Marktwaarde als vlakgrafiek", "en": "Market value area chart", "es": "Gráfico de área del valor de mercado"},
+ "Marktwaarde als kolommen": {"nl": "Marktwaarde als kolommen", "en": "Market value column chart", "es": "Gráfico de columnas del valor de mercado"},
+ "Cumulatief ontvangen dividend": {"nl": "Cumulatief ontvangen dividend", "en": "Cumulative dividends received", "es": "Dividendos recibidos acumulados"},
+ "Resultaat sinds aankoop (bedrag)": {"nl": "Resultaat sinds aankoop (bedrag)", "en": "Gain since purchase (amount)", "es": "Resultado desde la compra (importe)"},
+ "Marktwaarde en ontvangen dividend": {"nl": "Marktwaarde en ontvangen dividend", "en": "Market value and dividends received", "es": "Valor de mercado y dividendos recibidos"},
+ "Marktwaarde en aankoopinleg": {"nl": "Marktwaarde en aankoopinleg", "en": "Market value and purchase investment", "es": "Valor de mercado e importe invertido en compras"},
+ "Deze keuze wordt gebruikt wanneer je Home opent. Op Home kun je tijdelijk een andere grafiek kiezen.": {"nl": "Deze keuze wordt gebruikt wanneer je Home opent. Op Home kun je tijdelijk een andere grafiek kiezen.", "en": "This choice is used when you open Home. You can temporarily choose another chart on Home.", "es": "Esta opción se usa al abrir Inicio. En Inicio puedes elegir temporalmente otro gráfico."},
+ "Standaardgrafiek opgeslagen.": {"nl": "Standaardgrafiek opgeslagen.", "en": "Default chart saved.", "es": "Gráfico predeterminado guardado."},
+ "Resultaat sinds aankoop in geld, inclusief dividend en gerealiseerd resultaat.": {"nl": "Resultaat sinds aankoop in geld, inclusief dividend en gerealiseerd resultaat.", "en": "Gain since purchase in money, including dividends and realised gains.", "es": "Resultado monetario desde la compra, incluidos dividendos y resultados realizados."},
  "Koersproblemen en afwikkelingen": {"nl":"Koersproblemen en afwikkelingen","en":"Price issues and settlements","es":"Problemas de cotización y liquidaciones"},
  "Beheer ontbrekende koersen, beursbeëindigingen en omboekingen. De oorspronkelijke transacties en opgeslagen koershistorie blijven beschikbaar.": {"nl":"Beheer ontbrekende koersen, beursbeëindigingen en omboekingen. De oorspronkelijke transacties en opgeslagen koershistorie blijven beschikbaar.","en":"Manage missing prices, delistings and transfers. Original transactions and saved price history remain available.","es":"Gestiona cotizaciones faltantes, exclusiones de bolsa y traspasos. Se conservan las operaciones originales y el historial de precios guardado."},
  "Geen koersproblemen of handmatig beheerde noteringen voor deze selectie.": {"nl":"Geen koersproblemen of handmatig beheerde noteringen voor deze selectie.","en":"No price issues or manually managed listings for this selection.","es":"No hay problemas de cotización ni valores gestionados manualmente en esta selección."},

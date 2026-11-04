@@ -1,3 +1,7 @@
+## 0.64.0
+
+- Home heeft tien grafiekkeuzes en een persoonlijke standaardgrafiek onder Instellingen → Dashboard. De grafiek verwerkt de gekozen periode en laadt eurohistorie pas wanneer ze bijna in beeld komt.
+
 ## 0.63.0
 
 - Beheer ontbrekende koersen, contante afwikkelingen en de TMX-omboeking op één pagina. Een volledig afgewikkelde notering stopt automatisch met koersaanvragen en blijft in de historie.

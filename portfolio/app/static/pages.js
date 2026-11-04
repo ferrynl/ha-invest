@@ -5,13 +5,15 @@ const settingsSections=['koersbeheer','verwijderen','brokers','versie','beveilig
 const settingsRoot=document.querySelector('[data-page="instellingen"]');
 const settingsNav=document.createElement('div');settingsNav.id='settings-types';settingsNav.className='report-sidebar';
 document.querySelector('[data-route="instellingen"]').after(settingsNav);
-for(const [index,panel] of [...settingsRoot.children].entries()){
+const passkeySettings=$('passkey-settings');
+for(const [index,panel] of [...settingsRoot.children].filter(panel=>panel!==passkeySettings).entries()){
  const route='instellingen-'+settingsSections[index];
  const title=panel.querySelector('h2').textContent;
  const link=document.createElement('a');link.href='#'+route;link.dataset.route=route;link.textContent=title;settingsNav.append(link);
  if(index===0){panel.remove();continue;}
  const view=document.createElement('div');view.dataset.page=route;view.hidden=true;panel.before(view);view.append(panel);settingsRoot.after(view);
 }
+document.querySelector('[data-page="instellingen-beveiliging"]').append(passkeySettings);
 const tasksLink=homeNode('a',ui('Taken'));tasksLink.href='#instellingen-taken';tasksLink.dataset.route='instellingen-taken';settingsNav.append(tasksLink);
 const resourceLink=homeNode('a',ui('Statistieken'));resourceLink.href='#instellingen-statistieken';resourceLink.dataset.route='instellingen-statistieken';settingsNav.append(resourceLink);
 const cleanupLink=homeNode('a',ui('Gegevens opschonen'));cleanupLink.href='#instellingen-opschonen';cleanupLink.dataset.route='instellingen-opschonen';settingsNav.append(cleanupLink);
@@ -57,6 +59,7 @@ function showPage(){
  for(const view of document.querySelectorAll('[data-page]'))view.hidden=view.dataset.page!==(isReport?'rapporten':isTransactions?'transacties':page);
  for(const link of document.querySelectorAll('[data-route]')){if(link.dataset.route===page||(isReport&&link.dataset.route==='rapporten')||(isTransactions&&link.dataset.route==='transacties')||(isSettings&&link.dataset.route==='instellingen')||(brokerPage&&link.dataset.route==='imports')||(page==='aandeel'&&link.dataset.route==='aandelen')||(page.startsWith('import-')&&link.dataset.route==='imports'))link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  for(const link of document.querySelectorAll('.import-nav a')){if(link.hash==='#'+page)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
+ if(page==='home'&&!document.body.classList.contains('home-page'))applyHomeChartPreference();
  document.body.classList.toggle('home-page',page==='home');
  document.body.classList.toggle('feedback-page',page==='feedback');
  document.body.classList.toggle('reports-page',isReport);

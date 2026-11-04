@@ -171,8 +171,8 @@ async function startSession(){
  document.getElementById('passkey-settings').hidden=!accessSession.enabled||!passkeySupported();
  if(accessSession.enabled&&passkeySupported())loadPasskeys().catch(error=>{$('passkey-feedback').textContent=error.message;});
  if(currentProfile==='demo')homeCurrency='ALL';
- await loadDashboardLayout();
- stateETag=null;rangeInitialized=false;showPage();await load();
+ const layout=loadDashboardLayout();
+ stateETag=null;rangeInitialized=false;showPage();await Promise.all([layout,load()]);
  if(admin&&accessSession?.enabled)await loadUsers();
  }finally{finish();}
 }

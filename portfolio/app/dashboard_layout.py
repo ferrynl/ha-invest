@@ -8,6 +8,16 @@ MODULES = (
     ('holdings', 'full'),
 )
 
+CHARTS = frozenset(('value', 'area', 'columns', 'cost', 'invested', 'dividend',
+                    'gain', 'return', 'income_value', 'value_invested'))
+
+
+def chart_preference(data):
+    chart = data.get('chart', 'value') if isinstance(data, dict) else 'value'
+    if not isinstance(chart, str) or chart not in CHARTS:
+        raise ValueError('Ongeldige dashboardindeling.')
+    return chart
+
 
 def defaults():
     return [{'id': key, 'enabled': True, 'width': width} for key, width in MODULES]
@@ -43,15 +53,26 @@ def read(store, user, profile):
     with store.read() as db:
         row = db.execute('SELECT value FROM app_settings WHERE key=?', (key,)).fetchone()
     try:
-        modules = validate(json.loads(row[0])) if row else defaults()
+        data = json.loads(row[0]) if row else {'modules': defaults()}
+        modules = validate(data)
+        chart = chart_preference(data)
     except (ValueError, TypeError):
-        modules = defaults()
-    return {'modules': modules}
+        modules, chart = defaults(), 'value'
+    return {'modules': modules, 'chart': chart}
 
 
 def save(store, user, profile, data):
     key = preference_key(user, profile)
-    result = {'modules': validate(data)}
+    modules = validate(data)
     with store.connect() as db:
+        chart = chart_preference(data)
+        if 'chart' not in data:
+            row = db.execute('SELECT value FROM app_settings WHERE key=?', (key,)).fetchone()
+            if row:
+                try:
+                    chart = chart_preference(json.loads(row[0]))
+                except (ValueError, TypeError):
+                    pass
+        result = {'modules': modules, 'chart': chart}
         db.execute('INSERT INTO app_settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', (key, json.dumps(result)))
     return result

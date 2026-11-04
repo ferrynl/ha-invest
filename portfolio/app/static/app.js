@@ -3,7 +3,13 @@ var ui=globalThis.HomeInvestTranslate||((value)=>value);
 let state,stateRequest=0;
 const quantityLabel=value=>{const text=String(value??'0');if(Number(text)===0)return '0';const separator=typeof appLocale==='function'&&appLocale()==='en-GB'?'.':',';return text.replace(/(\.\d*?[1-9])0+$|\.0+$/, '$1').replace('.',separator);};
 const $ = id => document.getElementById(id);
-const money = (n,c) => n === null ? ui('Nog geen koers') : new Intl.NumberFormat((typeof appLocale==='function'?appLocale():'nl-NL'),{style:'currency',currency:c}).format(Number(n));
+const moneyFormats=new Map();
+function money(n,c){
+ if(n===null)return ui('Nog geen koers');
+ const locale=typeof appLocale==='function'?appLocale():'nl-NL',key=locale+'|'+c;
+ if(!moneyFormats.has(key))moneyFormats.set(key,new Intl.NumberFormat(locale,{style:'currency',currency:c}));
+ return moneyFormats.get(key).format(Number(n));
+}
 function cell(row,value){const td=document.createElement('td');td.textContent=value;row.append(td);return td;}
 async function load(){
  try{
@@ -20,13 +26,18 @@ async function load(){
 let chartRange='1M',rangeInitialized=false;
 function syncRangeButtons(){for(const button of $('chart-ranges').querySelectorAll('button'))button.setAttribute('aria-pressed',String(button.dataset.range===chartRange));}
 const dayLabel=day=>new Date(day+'T00:00:00Z').toLocaleDateString((typeof appLocale==='function'?appLocale():'nl-NL'),{timeZone:'UTC'});
+let homeChartNearView=typeof IntersectionObserver==='undefined';
+if(!homeChartNearView){
+ const observer=new IntersectionObserver(([entry])=>{homeChartNearView=entry.isIntersecting;if(homeChartNearView)draw();},{rootMargin:'200px'});
+ observer.observe($('home-chart-panel'));
+}
 function draw(){
  if(!state||!document.body.classList.contains('home-page')||(typeof dashboardModuleEnabled==='function'&&!dashboardModuleEnabled('chart')))return;
  const view=homeViewState(),selection=$('instrument').value;
  const members=selection==='all'?homeChartMembers():selection.startsWith('portfolio:')?[]:[view.positions[Number(selection)]].filter(Boolean);
  if(members.some(p=>p.history_loaded===false)){loadHomePositionHistory(members);return;}
  drawDashboardChart(view,chartRange,selection,homeChartMembers());
- if(homeCurrency==='ALL'&&selection.startsWith('portfolio:'))showHomeEuroChartProgress();
+ if(homeCurrency==='ALL'&&selection.startsWith('portfolio:'))showHomeEuroChartProgress(homeChartNearView);
 }
 $('chart-ranges').addEventListener('click',event=>{const button=event.target.closest('button[data-range]');if(!button)return;chartRange=button.dataset.range;for(const choice of $('chart-ranges').querySelectorAll('button'))choice.setAttribute('aria-pressed',String(choice===button));draw();});
 $('instrument').addEventListener('change',()=>{homeChartChanged();draw();});

@@ -20,6 +20,7 @@ function moveDashboardModule(rows,id,target){
 }
 
 function updateDashboardModule(rows,id,settings){return rows.map(row=>row.id===id?{...row,...settings,id}:({...row}));}
+let dashboardChart='value';
 let dashboardLayout=defaultDashboardLayout(),dashboardDraft=[],dashboardLayoutReady=false,dashboardLayoutRequest=0,dashboardEditing=false,dashboardSaving=false,dashboardDrag=null,dashboardScrollFrame=null,dashboardSettingsId=null;
 const dashboardNodes=new Map();
 const activeDashboardLayout=()=>dashboardEditing?dashboardDraft:dashboardLayout;
@@ -67,10 +68,10 @@ function applyDashboardLayout(){
 }
 function dashboardModuleEnabled(id){return activeDashboardLayout().some(row=>row.id===id&&row.enabled);}
 function refreshDashboardPreview(){if(typeof state!=='undefined'&&state&&document.body.classList.contains('home-page')){renderHomeDashboard();requestAnimationFrame(draw);}}
-function clearDashboardLayout(){finishDashboardDrag(true);dashboardLayoutRequest++;dashboardEditing=false;dashboardSaving=false;dashboardLayoutReady=false;dashboardLayout=defaultDashboardLayout();dashboardDraft=[];applyDashboardLayout();}
+function clearDashboardLayout(){finishDashboardDrag(true);dashboardLayoutRequest++;dashboardEditing=false;dashboardSaving=false;dashboardLayoutReady=false;dashboardLayout=defaultDashboardLayout();dashboardChart='value';dashboardDraft=[];applyDashboardLayout();applyHomeChartPreference();$('dashboard-chart-status').textContent='';$('dashboard-chart-feedback').textContent='';$('dashboard-chart-form').querySelector('button[type="submit"]').disabled=false;}
 async function loadDashboardLayout(){
  const request=++dashboardLayoutRequest;
- try{const response=await apiFetch('api/account/dashboard');if(!response.ok)throw Error();const result=await response.json();if(request!==dashboardLayoutRequest||!accessSession?.user)return;dashboardLayout=result.modules;dashboardLayoutReady=true;applyDashboardLayout();}
+ try{const response=await apiFetch('api/account/dashboard');if(!response.ok)throw Error();const result=await response.json();if(request!==dashboardLayoutRequest||!accessSession?.user)return;dashboardLayout=result.modules;dashboardChart=result.chart||'value';dashboardLayoutReady=true;applyDashboardLayout();applyHomeChartPreference();refreshDashboardPreview();}
  catch{if(request===dashboardLayoutRequest){dashboardLayoutReady=false;$('dashboard-layout-error').textContent=ui('Indeling laden mislukt. Probeer Dashboard aanpassen opnieuw.');}}
 }
 async function openDashboardEditor(){
@@ -82,7 +83,7 @@ async function openDashboardEditor(){
 function cancelDashboardEditor(){if(dashboardSaving)return;finishDashboardDrag(true);$('dashboard-module-dialog').close();dashboardEditing=false;dashboardDraft=[];applyDashboardLayout();refreshDashboardPreview();$('dashboard-layout-open').focus();}
 async function saveDashboardLayout(){
  if(!dashboardEditing||!dashboardLayoutReady||dashboardSaving)return;finishDashboardDrag(false);const request=dashboardLayoutRequest,modules=dashboardDraft.map(row=>({...row}));dashboardSaving=true;applyDashboardLayout();
- try{const result=await jsonAction('api/account/dashboard',{modules});if(request!==dashboardLayoutRequest||!accessSession?.user)return;dashboardLayout=result.modules;dashboardEditing=false;dashboardDraft=[];applyDashboardLayout();refreshDashboardPreview();$('dashboard-layout-open').focus();}
+ try{const result=await jsonAction('api/account/dashboard',{modules,chart:dashboardChart});if(request!==dashboardLayoutRequest||!accessSession?.user)return;dashboardLayout=result.modules;dashboardEditing=false;dashboardDraft=[];applyDashboardLayout();refreshDashboardPreview();$('dashboard-layout-open').focus();}
  catch{if(request===dashboardLayoutRequest)$('dashboard-layout-feedback').textContent=ui('Indeling opslaan mislukt. Probeer opnieuw.');}
  finally{if(request===dashboardLayoutRequest){dashboardSaving=false;applyDashboardLayout();}}
 }
@@ -127,8 +128,35 @@ function finishDashboardDrag(cancel){
 function openDashboardModuleSettings(id){
  if(!dashboardEditing||dashboardSaving)return;finishDashboardDrag(false);dashboardSettingsId=id;const row=dashboardDraft.find(item=>item.id===id),module=dashboardModules.find(item=>item.id===id);$('dashboard-module-title').textContent=ui('Instellingen voor {name}',{name:module.title});$('dashboard-module-enabled').checked=row.enabled;$('dashboard-module-width').value=row.width;$('dashboard-module-dialog').showModal();
 }
+
+function applyHomeChartPreference(){$('chart-measure').value=dashboardChart;}
+function bindDashboardChartSettings(){
+ const dialog=$('dashboard-chart-dialog'),form=$('dashboard-chart-form'),choice=$('dashboard-chart-choice'),open=$('dashboard-chart-open'),submit=form.querySelector('button[type="submit"]');
+ fillChartPresets(choice);
+ open.addEventListener('click',async()=>{
+  if(dashboardSaving)return;
+  open.disabled=true;
+  if(!dashboardLayoutReady)await loadDashboardLayout();
+  open.disabled=false;
+  if(!dashboardLayoutReady||!accessSession?.user)return;
+  choice.value=dashboardChart;$('dashboard-chart-feedback').textContent='';dialog.showModal();
+ });
+ $('dashboard-chart-cancel').addEventListener('click',()=>dialog.close());
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();if(dashboardSaving||!dashboardLayoutReady||!accessSession?.user)return;
+  const request=dashboardLayoutRequest;
+  dashboardSaving=true;submit.disabled=true;
+  try{
+   const result=await jsonAction('api/account/dashboard',{modules:dashboardLayout,chart:choice.value});
+   if(request!==dashboardLayoutRequest||!accessSession?.user)return;
+   dashboardLayout=result.modules;dashboardChart=result.chart;applyHomeChartPreference();
+   $('dashboard-chart-status').textContent=ui('Standaardgrafiek opgeslagen.');dialog.close();refreshDashboardPreview();
+  }catch{if(request===dashboardLayoutRequest)$('dashboard-chart-feedback').textContent=ui('Indeling opslaan mislukt. Probeer opnieuw.');}
+  finally{if(request===dashboardLayoutRequest){dashboardSaving=false;submit.disabled=false;}}
+ });
+}
 function bindDashboardLayout(){
- initializeDashboardModules();$('dashboard-layout-open').addEventListener('click',openDashboardEditor);
+ initializeDashboardModules();bindDashboardChartSettings();$('dashboard-layout-open').addEventListener('click',openDashboardEditor);
  for(const id of ['dashboard-module-close','dashboard-module-cancel'])$(id).addEventListener('click',()=>$('dashboard-module-dialog').close());
  $('dashboard-module-dialog').addEventListener('close',()=>{const id=dashboardSettingsId;dashboardSettingsId=null;if(dashboardEditing&&id)dashboardNodes.get(id).querySelector('.dashboard-widget-settings').focus({preventScroll:true});});
  $('dashboard-module-form').addEventListener('submit',event=>{event.preventDefault();if(!dashboardEditing||dashboardSaving||!dashboardSettingsId)return;dashboardDraft=updateDashboardModule(dashboardDraft,dashboardSettingsId,{enabled:$('dashboard-module-enabled').checked,width:$('dashboard-module-width').value});applyDashboardLayout();$('dashboard-module-dialog').close();refreshDashboardPreview();});

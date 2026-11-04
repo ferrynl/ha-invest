@@ -198,7 +198,7 @@ Rapporten rekenen de actuele ETF-marktwaarde naar onderliggende beleggingen door
 
 Klik in een ETF-samenstelling of rapport op een belegging om de aandeelpagina te openen. Die vermeldt dat de belegging via de ETF wordt aangehouden, met weging en peildatum. Dit maakt geen rechtstreekse positie of boeking aan. Bedrijfsprofielen worden alleen gekoppeld bij een gecontroleerde identiteit; ontbrekende informatie blijft zichtbaar.
 
-Home toont standaard het resultaat sinds aankoop als percentage van de totale aankoopinleg. Groen is positief en rood negatief. Kies **Grafiekmeting** voor de bestaande marktwaarde/kostprijsgrafiek. Periodeknoppen kiezen de getoonde dagwaarden; 1D is een dagwaarde, geen intraday-koers. De grafiek is geen tijdgewogen rendement van de gekozen periode. Handelsvolume voor een portefeuille wordt niet gesimuleerd.
+Via **Instellingen → Dashboard → Standaardgrafiek op Home** kies je uit tien weergaven. **Grafiekmeting** op Home wijzigt de huidige weergave tijdelijk. Groen is positief en rood negatief. Kies **Grafiekmeting** voor de bestaande marktwaarde/kostprijsgrafiek. Periodeknoppen kiezen de getoonde dagwaarden; 1D is een dagwaarde, geen intraday-koers. De grafiek is geen tijdgewogen rendement van de gekozen periode. Handelsvolume voor een portefeuille wordt niet gesimuleerd.
 
 Bij ontbrekende koersen toont de resultaatgrafiek het bekende deel. Winst en aankoopinleg komen per dag van dezelfde posities. De grafiek vermeldt het ontbrekende aantal; het getoonde deel kan per dag verschillen. Dit is geen volledig portefeuillerendement. Dagen waarop geen resultaat kan worden berekend blijven leeg.
 

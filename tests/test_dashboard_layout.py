@@ -60,6 +60,18 @@ class DashboardLayoutTests(unittest.TestCase):
         self.assertFalse((self.store.root / 'demo').exists(), 'Layout changes must not create or modify a demo ledger')
         self.assertEqual(self.request('POST', '/api/purchases', {}, basic, basic_csrf, extra=demo)[0], 403)
 
+    def test_chart_preference_is_validated_and_survives_layout_only_saves(self):
+        user = {'id': None}
+        self.assertEqual(read(self.store, user, 'personal')['chart'], 'value')
+        save(self.store, user, 'personal', {'modules': defaults(), 'chart': 'columns'})
+        save(self.store, user, 'personal', {'modules': defaults()[::-1]})
+        self.assertEqual(read(Store(self.store.root), user, 'personal')['chart'], 'columns')
+        self.assertEqual(read(self.store, user, 'demo')['chart'], 'value')
+        for invalid in ('unknown', [], None):
+            with self.assertRaises(ValueError):
+                save(self.store, user, 'personal', {'modules': defaults(), 'chart': invalid})
+        self.assertEqual(read(self.store, user, 'personal')['chart'], 'columns')
+
     def test_restore_keeps_current_account_layout_and_ignores_uploaded_preferences(self):
         user = {'id': None}
         original = defaults()
