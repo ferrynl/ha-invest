@@ -130,6 +130,28 @@ class DashboardCacheHttpTests(unittest.TestCase):
   self.assertEqual(code,200);self.assertNotIn('positions',chart)
   self.assertGreater(len(chart['portfolios'][0]['history']),1)
   self.assertEqual(chart['data_revision'],summary['data_revision'])
+ def test_euro_chart_retries_revision_change_and_isolates_invalid_history(self):
+  from storage import PortfolioRevisionChanged
+  import home_euro
+  self.request('/api/state?compact=1')
+  original=home_euro.overview
+  attempts=[]
+  def race(*args,**kwargs):
+   attempts.append(kwargs['expected_revision'])
+   if len(attempts)==1:raise PortfolioRevisionChanged()
+   return original(*args,**kwargs)
+  histories=self.store.position_histories
+  def damaged(*args,**kwargs):
+   for position in histories(*args,**kwargs):
+    yield {**position,'symbol':'BAD','history':[]}
+    yield position
+  with patch('home_euro.overview',side_effect=race),patch.object(self.store,'position_histories',side_effect=damaged):
+   code,chart=self.request('/api/home/euro/history')
+  self.assertEqual(code,200)
+  self.assertEqual(len(attempts),2)
+  self.assertEqual([row['symbol'] for row in chart['excluded']],['BAD'])
+  self.assertGreater(len(chart['portfolios'][0]['history']),1)
+
  def test_slow_chart_does_not_block_summary_request(self):
   import threading
   import home_euro

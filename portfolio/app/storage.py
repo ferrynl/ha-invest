@@ -33,6 +33,10 @@ def valid_position_income(rows):
     return valid
 
 
+class PortfolioRevisionChanged(ValueError):
+    pass
+
+
 class Store:
     def __init__(self, root):
         self.root = Path(root)
@@ -226,7 +230,7 @@ class Store:
         with self.read() as db:
             db.execute('BEGIN')
             if db.execute('SELECT revision FROM dashboard_revision WHERE id=1').fetchone()[0]!=snapshot['data_revision']:
-                raise ValueError('De portefeuille is gewijzigd. Vernieuw het overzicht.')
+                raise PortfolioRevisionChanged('De portefeuille is gewijzigd. Vernieuw het overzicht.')
             for p in snapshot['positions']:
                 if account!='all' and str(p['account_id'])!=str(account):continue
                 listing=tuple(p[k] for k in ('symbol','exchange','currency'))

@@ -8,7 +8,7 @@ from diagnostics import record
 from functools import lru_cache
 
 def identity(row):return tuple(row[k] for k in ('account_id','symbol','exchange','currency'))
-def build(snapshot,rates,account='all',today=None,include_history=True,skip_invalid=False,sparse_history=False,retain_history=True,positions=None):
+def build(snapshot,rates,account='all',today=None,include_history=True,skip_invalid=False,sparse_history=False,retain_history=True,positions=None,allow_missing_value=False):
     today=today or date.today();owner=None
     if str(account)!='all':
         try:owner=int(account)
@@ -16,7 +16,15 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
         if not any(a['id']==owner for a in snapshot['accounts']):raise ValueError('Brokeraccount niet gevonden.')
     indexed={}
     for row in rates:
-        if row['base']=='EUR':indexed.setdefault(row['quote'],[]).append(row)
+        if row['base']!='EUR':continue
+        if skip_invalid:
+            try:
+                date.fromisoformat(row['day'])
+                value=Decimal(row['rate'])
+                if not value.is_finite() or value<=0:continue
+            except (ArithmeticError,ValueError,TypeError):
+                continue
+        indexed.setdefault(row['quote'],[]).append(row)
     for rows in indexed.values():rows.sort(key=lambda row:row['day'])
     position_source=snapshot['positions'] if positions is None else positions
     days={currency:[row['day'] for row in rows] for currency,rows in indexed.items()};used=set();positions=[];excluded=[]
@@ -38,6 +46,7 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
             if skip_invalid:
                 for field in ('quantity','cost','value','realised','dividend'):
                     raw=p.get(field)
+                    if field=='value' and raw is None and allow_missing_value:continue
                     if raw is None or str(raw).strip()=='' or not Decimal(str(raw)).is_finite():raise ValueError()
                 if Decimal(p['quantity'])<0:raise ValueError()
             key=identity(p);lots=trades[key];dividends=income.get(key,[]);converted=[];converted_income=[];missing=[]
@@ -57,6 +66,7 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
             if current is None:missing.append(today.isoformat())
             if missing:
                 excluded.append({**{field:p[field] for field in ('symbol','exchange','currency','account_id','name','account_name')},'reason':'Geen opgeslagen wisselkoers','dates':sorted(set(missing))});continue
+            if not p['history']:raise ValueError()
             source_points=p['history'] if include_history else [{**p['history'][-1],'day':today.isoformat()}]
             if sparse_history:
                 basis={point['day']:daily_values(converted,[],[],date.fromisoformat(point['day']),summary_only=True)[-1] for point in source_points}
@@ -65,6 +75,7 @@ def build(snapshot,rates,account='all',today=None,include_history=True,skip_inva
             for point in source_points:
                 if point['day'] not in basis:continue
                 cost=basis[point['day']]
+                if skip_invalid and any(point[field] is not None and not Decimal(point[field]).is_finite() for field in ('price','value')):raise ValueError()
                 fx=rate(p['currency'],point['day']);value=Decimal(point['value'])*fx[0] if point['value'] is not None and fx else (Decimal(0) if point['value'] is not None and Decimal(point['value'])==0 else None)
                 history.append({**point,'cost':cost['cost'],'realised':cost['realised'],'invested':cost['invested'],'value':str(value) if value is not None else None,'price':str(Decimal(point['price'])*fx[0]) if point['price'] is not None and fx else None})
             with_dividends(history,converted_income);last=history[-1];value=Decimal(p['value'])*current[0] if p['value'] is not None else None;cost=Decimal(last['cost']);realised=Decimal(last['realised']);received=Decimal(last['dividend'])
@@ -103,8 +114,13 @@ def prepare_portfolio_rates(store,snapshot,account='all'):
     try:prepare_rates(store,requests)
     except Exception as error:record(store,'WARNING','fx','home_euro_rates_failed','Wisselkoersen voor het totaaloverzicht konden niet volledig worden opgehaald.',{'error_type':type(error).__name__,'requested_pairs':len(set((a,b) for a,b,d in requests))})
 
-def overview(store,snapshot,account='all',fetch_rates=True,include_history=True,retain_history=True,skip_invalid=False,positions=None):
+def overview(store,snapshot,account='all',fetch_rates=True,include_history=True,retain_history=True,skip_invalid=False,positions=None,expected_revision=None,allow_missing_value=False):
     if str(account)!='all' and not any(str(a['id'])==str(account) for a in snapshot['accounts']):raise ValueError('Brokeraccount niet gevonden.')
     if fetch_rates:prepare_portfolio_rates(store,snapshot,account)
-    with store.read() as db:rates=[dict(row) for row in db.execute("SELECT base,quote,day,rate FROM fx_rates WHERE base='EUR'")]
-    return build(snapshot,rates,account,include_history=include_history,retain_history=retain_history,skip_invalid=skip_invalid,positions=positions)
+    with store.read() as db:
+        db.execute('BEGIN')
+        if expected_revision is not None and db.execute('SELECT revision FROM dashboard_revision WHERE id=1').fetchone()[0]!=expected_revision:
+            from storage import PortfolioRevisionChanged
+            raise PortfolioRevisionChanged('De portefeuille is gewijzigd. Vernieuw het overzicht.')
+        rates=[dict(row) for row in db.execute("SELECT base,quote,day,rate FROM fx_rates WHERE base='EUR'")]
+    return build(snapshot,rates,account,include_history=include_history,retain_history=retain_history,skip_invalid=skip_invalid,positions=positions,allow_missing_value=allow_missing_value)

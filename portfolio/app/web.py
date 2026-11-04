@@ -23,6 +23,7 @@ from imports.partial import commit_partial,list_issues,resolve_issue
 from imports.matching import resolve_instrument
 from imports.registry import discover as mapping_list,edit as mapping_edit
 from imports import trading212_api
+from storage import PortfolioRevisionChanged
 import transactions
 import broker_accounts
 import instruments
@@ -38,11 +39,18 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
     def home_euro(account,compact_view=False,chart_only=False):
         from home_euro import overview
         def build():
-            if compact_view or chart_only:
-                snapshot=compact_state()
-            else:snapshot=cache.get(store.state)
-            result={**overview(store,snapshot,account,fetch_rates=False,include_history=not compact_view,retain_history=not chart_only,positions=store.position_histories(snapshot,account) if chart_only else None),'data_revision':snapshot['data_revision']}
-            if chart_only:return {k:result[k] for k in ('portfolios','data_revision','as_of')}
+            for attempt in range(2):
+                snapshot=compact_state() if compact_view or chart_only else cache.get(store.state)
+                try:
+                    result=overview(store,snapshot,account,fetch_rates=False,include_history=not compact_view,
+                                    retain_history=not chart_only,skip_invalid=True,allow_missing_value=True,
+                                    expected_revision=snapshot['data_revision'],
+                                    positions=store.position_histories(snapshot,account,skip_invalid=True) if chart_only else None)
+                    break
+                except PortfolioRevisionChanged:
+                    if attempt:raise
+            result['data_revision']=snapshot['data_revision']
+            if chart_only:return {k:result[k] for k in ('portfolios','data_revision','as_of','excluded')}
             if compact_view:
                 from dashboard import compact
                 result=compact(result)
@@ -230,6 +238,8 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 try:
                     result=home_euro(account,compact_view=query.get('compact')==['1'] and path=='/api/home/euro',chart_only=path.endswith('/history'))
                     return self.respond(result,etag=True)
+                except PortfolioRevisionChanged:
+                    return self.respond({'error':'De portefeuille is gewijzigd. Vernieuw het overzicht.'},409)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
                 except Exception as error:
                     reference=record(store,'ERROR','market','home_euro_failed','Het euro-overzicht kon niet worden geladen.',{'error_type':type(error).__name__,'chart':path.endswith('/history')})

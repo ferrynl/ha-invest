@@ -1,5 +1,8 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+ "De koershistorie duurde te lang om te laden.": {"nl":"De koershistorie duurde te lang om te laden.","en":"The price history took too long to load.","es":"El historial de cotizaciones tardó demasiado en cargar."},
+ "De koershistorie is niet beschikbaar door een verbindingsprobleem.": {"nl":"De koershistorie is niet beschikbaar door een verbindingsprobleem.","en":"Price history is unavailable due to a connection problem.","es":"El historial de cotizaciones no está disponible por un problema de conexión."},
+ "Posities overgeslagen in de grafiek": {"nl":"Posities overgeslagen in de grafiek","en":"Positions skipped in the chart","es":"Posiciones omitidas en el gráfico"},
  "Module toevoegen": {"nl": "Module toevoegen", "en": "Add module", "es": "Añadir módulo"},
  "Extra cijferkaart": {"nl": "Extra cijferkaart", "en": "Extra metric card", "es": "Tarjeta de indicador adicional"},
  "Gegeven op kaart": {"nl": "Gegeven op kaart", "en": "Card metric", "es": "Indicador de la tarjeta"},

@@ -15,12 +15,12 @@ function homeRows(positions,query,filter,sort){
 }
 let homeCurrency='ALL',homePage=0,homeMode='overview',homeFocus='',homeSelected=new Set();
 let homeEuro=null,homeEuroSource=null,homeEuroRequest=0,homeEuroPending=false,homeEuroAccount='';
-let homeEuroChartController=null,homeEuroChartPending=false,homeEuroError=false;
+let homeEuroChartController=null,homeEuroChartPending=false,homeEuroChartRefreshes=0,homeEuroError=false;
 const homeDisplayCurrency=()=>homeCurrency==='ALL'?'EUR':homeCurrency;
 const homeViewState=()=>homeCurrency==='ALL'?{...state,positions:homeEuro?.positions??[],portfolios:homeEuro?.portfolios??[]}:state;
 const homeScope=()=>homeCurrency==='ALL'?(homeEuro?.positions??[]):state?.positions.filter(p=>p.currency===homeCurrency)??[];
 function homeChartMembers(){return homeScope().filter(p=>homeSelected.has(homeKey(p))).slice(0,6);}
-function clearHomeDashboard(){homeEuroChartController?.abort();homeEuroChartController=null;homeEuroChartPending=false;homeEuroError=false;$('chart-return-badge').textContent='';$('chart-measure').value='value';for(const box of document.querySelectorAll('#home-module-board .home-metric'))box.replaceChildren();homeHistoryPending.clear();homeEuroRequest++;homeEuroPending=false;homeEuro=null;homeEuroSource=null;homeEuroAccount='';$('home-euro-status').textContent='';homeCurrency='ALL';homePage=0;homeMode='overview';homeFocus='';homeSelected.clear();for(const id of ['home-currencies','home-positions','home-allocation','home-movers'])$(id).replaceChildren();for(const id of ['home-summary','home-health','home-table-note','home-selection-count','home-page-note','home-table-empty','home-allocation-note'])$(id).textContent='';$('home-search').value='';$('home-position-filter').value='open';$('home-sort').value='value';$('home-ranking').value='best';$('chart').onpointermove=null;$('chart').onpointerleave=null;$('chart').onkeydown=null;$('chart-day-details').ontoggle=null;$('chart-days-more').onclick=null;$('chart-day-details').open=false;$('chart-days-note').textContent='';$('instrument').replaceChildren();$('chart-legend').replaceChildren();$('chartnote').textContent='';$('chart-detail').textContent='';}
+function clearHomeDashboard(){homeEuroChartController?.abort();homeEuroChartController=null;homeEuroChartPending=false;homeEuroChartRefreshes=0;homeEuroError=false;$('chart-return-badge').textContent='';$('chart-measure').value='value';for(const box of document.querySelectorAll('#home-module-board .home-metric'))box.replaceChildren();homeHistoryPending.clear();homeEuroRequest++;homeEuroPending=false;homeEuro=null;homeEuroSource=null;homeEuroAccount='';$('home-euro-status').textContent='';homeCurrency='ALL';homePage=0;homeMode='overview';homeFocus='';homeSelected.clear();for(const id of ['home-currencies','home-positions','home-allocation','home-movers'])$(id).replaceChildren();for(const id of ['home-summary','home-health','home-table-note','home-selection-count','home-page-note','home-table-empty','home-allocation-note'])$(id).textContent='';$('home-search').value='';$('home-position-filter').value='open';$('home-sort').value='value';$('home-ranking').value='best';$('chart').onpointermove=null;$('chart').onpointerleave=null;$('chart').onkeydown=null;$('chart-day-details').ontoggle=null;$('chart-days-more').onclick=null;$('chart-day-details').open=false;$('chart-days-note').textContent='';$('instrument').replaceChildren();$('chart-legend').replaceChildren();$('chartnote').textContent='';$('chart-detail').textContent='';}
 function homeNode(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}
 function homePercent(value){return value==null?'—':new Intl.NumberFormat((typeof appLocale==='function'?appLocale():'nl-NL'),{maximumFractionDigits:2,signDisplay:'exceptZero'}).format(value)+'%';}
 const homeMetricOptions={
@@ -71,7 +71,7 @@ function renderHomeMetricCards(scope,summary){
  }
 }
 function renderHomeDashboard(){
- if(!state)return;const currencies=[...new Set(state.positions.map(p=>p.currency))].sort();if(homeEuroAccount&&homeEuroAccount!==String(currentBroker)){homeEuro=null;homeEuroSource=null;homeEuroAccount='';homeEuroRequest++;homeEuroPending=false;}if(homeCurrency!=='ALL'&&!currencies.includes(homeCurrency))homeCurrency='ALL';
+ if(!state)return;const currencies=[...new Set(state.positions.map(p=>p.currency))].sort();if(homeEuroAccount&&homeEuroAccount!==String(currentBroker)){homeEuro=null;homeEuroSource=null;homeEuroAccount='';homeEuroRequest++;homeEuroPending=false;homeEuroChartRefreshes=0;}if(homeCurrency!=='ALL'&&!currencies.includes(homeCurrency))homeCurrency='ALL';
  if(homeEuro?.data_revision===state.data_revision&&homeEuroAccount===String(currentBroker)&&homeEuro.as_of===(state.portfolios?.[0]?.history?.at(-1)?.day||homeEuro.as_of))homeEuroSource=state;
  if(homeCurrency==='ALL'&&homeEuroSource!==state&&!homeEuroPending)loadHomeEuro();
  const keys=new Set(homeViewState().positions.map(homeKey));homeSelected=new Set([...homeSelected].filter(key=>keys.has(key)));
@@ -136,7 +136,7 @@ function homeDividendLabel(positions){
 async function loadHomeEuro(){
  if(!state||!accessSession?.user)return;const source=state,account=String(currentBroker),request=++homeEuroRequest;homeEuroPending=true;homeEuroError=false;homeEuroAccount=account;homeEuroChartController?.abort();homeEuroChartController=null;homeEuroChartPending=false;$('home-euro-status').textContent=ui('Opgeslagen euro-overzicht laden; wisselkoersen worden op de achtergrond bijgewerkt…');
  try{const response=await apiFetch('api/home/euro?account_id='+encodeURIComponent(account)+'&compact=1');const data=await response.json();if(request!==homeEuroRequest||!accessSession?.user||account!==String(currentBroker))return;if(!response.ok)throw Error();if(state.data_revision!==source.data_revision)return;
- if(homeEuro?.data_revision===data.data_revision&&homeEuro.as_of===data.as_of&&homeEuro.chart_status==='ready'){data.portfolios=homeEuro.portfolios;data.chart_status='ready';}homeEuro=data;homeEuroSource=state;showHomeEuroStatus(data);
+ if(homeEuro?.data_revision===data.data_revision&&homeEuro.as_of===data.as_of&&homeEuro.chart_status==='ready'){data.portfolios=homeEuro.portfolios;data.chart_excluded=homeEuro.chart_excluded;data.chart_status='ready';}homeEuro=data;homeEuroSource=state;showHomeEuroStatus(data);
  }catch{if(request===homeEuroRequest){homeEuroSource=state;homeEuroError=true;}}
  finally{if(request===homeEuroRequest){homeEuroPending=false;if(homeCurrency==='ALL'&&document.body.classList.contains('home-page')){renderHomeDashboard();draw();}}}
 }
@@ -144,8 +144,31 @@ async function loadHomeEuro(){
 async function loadHomeEuroChart(){
  if(!homeEuro||homeEuroChartPending||homeEuro.chart_status!=='pending'||!accessSession?.user)return;
  const target=homeEuro,account=String(currentBroker),controller=new AbortController();homeEuroChartController=controller;homeEuroChartPending=true;target.chart_status='loading';const timer=setTimeout(()=>controller.abort(),60000);
- try{const response=await apiFetch('api/home/euro/history?account_id='+encodeURIComponent(account),{signal:controller.signal,background:true}),data=await response.json();if(target!==homeEuro||account!==String(currentBroker)||!accessSession?.user)return;if(!response.ok)throw Error();if(data.data_revision!==target.data_revision||(data.as_of&&data.as_of!==target.as_of)){target.chart_status='error';stateETag=null;await load();return;}target.portfolios=data.portfolios;target.chart_status='ready';}
- catch{if(target===homeEuro&&accessSession?.user)target.chart_status='error';}
+ try{
+  const response=await apiFetch('api/home/euro/history?account_id='+encodeURIComponent(account),{signal:controller.signal,background:true});
+  const data=await response.json();
+  if(target!==homeEuro||account!==String(currentBroker)||!accessSession?.user)return;
+  const changed=response.status===409||(response.ok&&(data.data_revision!==target.data_revision||(data.as_of&&data.as_of!==target.as_of)));
+  if(changed){
+   target.chart_error=ui('De portefeuille is gewijzigd. Vernieuw het overzicht.');
+   target.chart_status='error';
+   if(homeEuroChartRefreshes++===0){
+    stateETag=null;await load();
+    if(target===homeEuro&&!homeEuroPending&&accessSession?.user&&account===String(currentBroker))await loadHomeEuro();
+   }
+   return;
+  }
+  if(!response.ok){
+   target.chart_error=[data.error,data.log_id?'Log-ID '+data.log_id:''].filter(Boolean).join(' · ');
+   target.chart_status='error';return;
+  }
+  target.portfolios=data.portfolios;target.chart_excluded=data.excluded;target.chart_status='ready';homeEuroChartRefreshes=0;
+ }catch{
+  if(target===homeEuro&&accessSession?.user){
+   target.chart_error=controller.signal.aborted?ui('De koershistorie duurde te lang om te laden.'):ui('De koershistorie is niet beschikbaar door een verbindingsprobleem.');
+   target.chart_status='error';
+  }
+ }
  finally{clearTimeout(timer);if(homeEuroChartController===controller){homeEuroChartController=null;homeEuroChartPending=false;if(homeCurrency==='ALL'&&document.body.classList.contains('home-page'))draw();}}
 }
 function showHomeEuroChartProgress(loadHistory=true){
@@ -154,7 +177,24 @@ function showHomeEuroChartProgress(loadHistory=true){
   if(loadHistory)loadHomeEuroChart();
  }
  if(homeEuro.chart_status==='loading')$('chartnote').textContent=ui('Totalen geladen. De historische grafiek wordt op de achtergrond berekend…');
- if(homeEuro.chart_status==='error'){$('chartnote').replaceChildren(document.createTextNode(ui('Grafiek laden mislukt. De totalen blijven beschikbaar.')));const retry=homeNode('button',ui('Grafiek opnieuw laden'),'secondary');retry.type='button';retry.onclick=()=>{homeEuro.chart_status='pending';draw();};$('chartnote').append(retry);}
+ if(homeEuro.chart_status==='error'){
+  $('chartnote').replaceChildren(document.createTextNode(ui('Grafiek laden mislukt. De totalen blijven beschikbaar.')));
+  if(homeEuro.chart_error)$('chartnote').append(homeNode('p',homeEuro.chart_error));
+  const retry=homeNode('button',ui('Grafiek opnieuw laden'),'secondary');retry.type='button';
+  retry.onclick=()=>{homeEuroChartRefreshes=0;homeEuro.chart_status='pending';draw();};
+  $('chartnote').append(retry);
+ }
+ if(homeEuro.chart_status==='ready'&&homeEuro.chart_excluded?.length){
+  const details=homeNode('details');
+  details.append(homeNode('summary',ui('Posities overgeslagen in de grafiek')+' · '+homeEuro.chart_excluded.length));
+  const list=homeNode('ul');
+  for(const row of homeEuro.chart_excluded){
+   const item=homeNode('li'),link=homeNode('a',row.name||row.symbol);link.href=stockDetailLink(row);
+   item.append(link,document.createTextNode(' · '+[row.symbol,row.account_name,row.currency,ui(row.reason),...row.dates.map(dayLabel)].filter(Boolean).join(' · ')));
+   list.append(item);
+  }
+  details.append(list);$('chartnote').append(details);
+ }
 }
 
 let homeHistoryPending=new Set();

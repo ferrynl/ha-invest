@@ -1,3 +1,7 @@
+## 0.66.0
+
+- De Home-grafiek blijft werken als een positie ongeldige koershistorie heeft. Bij gewijzigde gegevens probeert de app opnieuw en bij een fout toont hij de oorzaak en een beschikbaar Log-ID.
+
 ## 0.65.0
 
 - Dashboard aanpassen biedt grafiek- en kaartvoorbeelden, verwisselbare cijfers, eigen titels en stijlen, en extra cijferkaarten.
