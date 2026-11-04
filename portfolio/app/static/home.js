@@ -23,8 +23,53 @@ function homeChartMembers(){return homeScope().filter(p=>homeSelected.has(homeKe
 function clearHomeDashboard(){homeEuroChartController?.abort();homeEuroChartController=null;homeEuroChartPending=false;homeEuroError=false;$('chart-return-badge').textContent='';$('chart-measure').value='value';for(const box of document.querySelectorAll('#home-module-board .home-metric'))box.replaceChildren();homeHistoryPending.clear();homeEuroRequest++;homeEuroPending=false;homeEuro=null;homeEuroSource=null;homeEuroAccount='';$('home-euro-status').textContent='';homeCurrency='ALL';homePage=0;homeMode='overview';homeFocus='';homeSelected.clear();for(const id of ['home-currencies','home-positions','home-allocation','home-movers'])$(id).replaceChildren();for(const id of ['home-summary','home-health','home-table-note','home-selection-count','home-page-note','home-table-empty','home-allocation-note'])$(id).textContent='';$('home-search').value='';$('home-position-filter').value='open';$('home-sort').value='value';$('home-ranking').value='best';$('chart').onpointermove=null;$('chart').onpointerleave=null;$('chart').onkeydown=null;$('chart-day-details').ontoggle=null;$('chart-days-more').onclick=null;$('chart-day-details').open=false;$('chart-days-note').textContent='';$('instrument').replaceChildren();$('chart-legend').replaceChildren();$('chartnote').textContent='';$('chart-detail').textContent='';}
 function homeNode(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}
 function homePercent(value){return value==null?'—':new Intl.NumberFormat((typeof appLocale==='function'?appLocale():'nl-NL'),{maximumFractionDigits:2,signDisplay:'exceptZero'}).format(value)+'%';}
-let homeMetricIndex=0;
-function homeMetric(label,value,detail,tone){const box=$('home-module-'+['market','cost','gain','income'][homeMetricIndex++]);box.replaceChildren(homeNode('span',label,'home-metric-label'),homeNode('strong',value,tone??''),homeNode('small',detail));}
+const homeMetricOptions={
+ market:()=>ui('Marktwaarde'),cost:()=>ui('Openstaande kostprijs'),gain:()=>ui('Totale winst'),income:()=>ui('Ontvangen dividend'),
+ invested:()=>ui('Totale aankoopinleg'),return:()=>ui('Resultaat sinds aankoop (%)'),realised:()=>ui('Gerealiseerd resultaat'),
+ unrealised:()=>ui('Ongerealiseerd'),open:()=>ui('Open posities'),closed:()=>ui('Gesloten posities'),
+ missing:()=>ui('Posities zonder koers'),dividend_yield:()=>ui('Dividend als % van aankoopinleg')
+};
+function homeDashboardMetrics(scope,summary){
+ const currency=homeDisplayCurrency();
+ const counts=new Intl.NumberFormat(appLocale());
+ const totals={invested:0,knownInvested:0,realised:0,unrealised:0};
+ for(const p of scope){
+  const invested=Number(p.history?.at(-1)?.invested??p.cost)||0;
+  totals.invested+=invested;
+  if(p.total_gain!=null)totals.knownInvested+=invested;
+  if(p.value!=null)totals.unrealised+=Number(p.value)-Number(p.cost);
+  totals.realised+=Number(p.realised)||0;
+ }
+ const amount=(value,detail,signed=false)=>({value:money(value,currency),detail,tone:signed?(value>=0?'positive':'negative'):''});
+ const countScope=homeCurrency==='ALL'?state.positions:scope;
+ const count=value=>({value:counts.format(value),detail:ui('Binnen de huidige selectie')});
+ return {
+  market:amount(summary.value,summary.missing?ui('Bekende waarde · ')+summary.missing+ui(' posities zonder koers'):ui('Alle posities in ')+currency+ui(' met beschikbare koers')),
+  cost:amount(summary.cost,summary.open+(homeCurrency==='ALL'?ui(' omgerekende open posities'):ui(' open posities in deze valuta'))),
+  gain:amount(summary.gain,summary.missing?ui('Bekende posities · ')+summary.missing+ui(' zonder koers overgeslagen'):ui('Inclusief gerealiseerde winst en gekoppeld dividend'),true),
+  income:amount(summary.dividend,homeDividendLabel(scope)),
+  invested:amount(totals.invested,ui('Aankopen zonder aftrek van verkopen')),
+  return:{value:homePercent(totals.knownInvested>0?summary.gain/totals.knownInvested*100:null),detail:ui('Winst als % van de inleg van bekende posities')},
+  realised:amount(totals.realised,ui('Verkopen met geboekt resultaat'),true),
+  unrealised:amount(totals.unrealised,ui('Marktwaarde min openstaande kostprijs'),true),
+  open:count(countScope.filter(p=>Number(p.quantity)>0).length),
+  closed:count(countScope.filter(p=>p.quantity!=null&&Number(p.quantity)===0).length),
+  missing:count(countScope.filter(p=>p.value==null).length),
+  dividend_yield:{value:homePercent(totals.invested>0?summary.dividend/totals.invested*100:null),detail:ui('Dividend als % van aankoopinleg')}
+ };
+}
+function renderHomeMetricCards(scope,summary){
+ const values=homeDashboardMetrics(scope,summary);
+ for(const row of activeDashboardLayout()){
+  const key=row.metric||(Object.hasOwn(homeMetricOptions,row.id)?row.id:null);
+  if(!key||!row.enabled)continue;
+  const box=$('home-module-'+row.id),data=values[key],pending=homeCurrency==='ALL'&&!homeEuro&&!['open','closed','missing'].includes(key);
+  box.dataset.style=row.style||'standard';
+  box.replaceChildren(homeNode('span',row.title||homeMetricOptions[key](),'home-metric-label'),
+   homeNode('strong',pending?(homeEuroPending?ui('Laden…'):ui('Niet beschikbaar')):data.value,pending?'':data.tone));
+  if(row.note!==false)box.append(homeNode('small',data.detail));
+ }
+}
 function renderHomeDashboard(){
  if(!state)return;const currencies=[...new Set(state.positions.map(p=>p.currency))].sort();if(homeEuroAccount&&homeEuroAccount!==String(currentBroker)){homeEuro=null;homeEuroSource=null;homeEuroAccount='';homeEuroRequest++;homeEuroPending=false;}if(homeCurrency!=='ALL'&&!currencies.includes(homeCurrency))homeCurrency='ALL';
  if(homeEuro?.data_revision===state.data_revision&&homeEuroAccount===String(currentBroker)&&homeEuro.as_of===(state.portfolios?.[0]?.history?.at(-1)?.day||homeEuro.as_of))homeEuroSource=state;
@@ -32,13 +77,12 @@ function renderHomeDashboard(){
  const keys=new Set(homeViewState().positions.map(homeKey));homeSelected=new Set([...homeSelected].filter(key=>keys.has(key)));
  $('home-currencies').replaceChildren();for(const currency of ['ALL',...currencies]){const count=state.positions.filter(p=>(currency==='ALL'||p.currency===currency)&&Number(p.quantity)>0).length;const button=homeNode('button',currency==='ALL'?ui('Alle valuta’s in euro'):currency+' · '+count+ui(' posities'));button.type='button';button.setAttribute('aria-pressed',String(currency===homeCurrency));button.addEventListener('click',()=>{homeCurrency=currency;homePage=0;homeMode='overview';homeFocus='';homeSelected.clear();renderHomeDashboard();draw();$('home-currencies').querySelector('[aria-pressed="true"]')?.focus({preventScroll:true});});$('home-currencies').append(button);}
  const scope=homeScope(),summary=homeSummary(scope);$('home-summary').textContent=state.positions.length?state.positions.filter(p=>Number(p.quantity)>0).length+ui(' open posities · ')+currencies.length+ui(' valuta · ')+(homeCurrency==='ALL'?ui('totaal omgerekend naar EUR'):ui('overzicht in ')+homeCurrency):ui('Voeg een aankoop toe of importeer je portefeuille om te beginnen.');
- homeMetricIndex=0;homeMetric(ui('Marktwaarde'),money(summary.value,homeDisplayCurrency()),summary.missing?ui('Bekende waarde · ')+summary.missing+ui(' posities zonder koers'):ui('Alle posities in ')+homeDisplayCurrency()+ui(' met beschikbare koers'));homeMetric(ui('Openstaande kostprijs'),money(summary.cost,homeDisplayCurrency()),summary.open+(homeCurrency==='ALL'?ui(' omgerekende open posities'):ui(' open posities in deze valuta')));homeMetric(ui('Totale winst'),money(summary.gain,homeDisplayCurrency()),summary.missing?ui('Bekende posities · ')+summary.missing+ui(' zonder koers overgeslagen'):ui('Inclusief gerealiseerde winst en gekoppeld dividend'),summary.gain>=0?'positive':'negative');homeMetric(ui('Ontvangen dividend'),money(summary.dividend,homeDisplayCurrency()),homeDividendLabel(scope));
+ renderHomeMetricCards(scope,summary);
  const missing=state.positions.filter(p=>p.value==null);$('home-health').replaceChildren();
  if(missing.length){$('home-health').append(homeNode('strong',ui('Zonder koers, overgeslagen bij de bekende totalen: ')));for(const [index,p] of missing.entries()){if(index)$('home-health').append(document.createTextNode(' · '));const link=homeNode('a',p.name+' ('+p.symbol+' · '+p.account_name+')');link.href=stockDetailLink(p);$('home-health').append(link);if(p.valuation_log_id)$('home-health').append(document.createTextNode(' · Log-ID '+p.valuation_log_id));}if(accessSession?.user?.role==='admin'){const manage=homeNode('a',ui('Koersproblemen en afwikkelingen'));manage.href='#instellingen-koersbeheer';$('home-health').append(homeNode('span',' · '),manage);}}
  else $('home-health').textContent=homeCurrency==='ALL'?ui('Alle bekende bedragen omgerekend naar euro. Aankopen, verkopen en dividend tegen de koers op de transactiedatum.'):ui('Bedragen blijven per valuta gescheiden. Koersen kunnen vertraagd zijn; de laatste koerstijd staat bij een geselecteerde positie.');
  if(state.history_date_issues?.length){$('home-health').append(homeNode('p',ui('Er zijn transactiedatums vóór 1900. De grafiek toont deze periode niet. Controleer de oorspronkelijke boekingen.')));const link=homeNode('a',ui('Betrokken transacties controleren'));link.href='#transacties?datum='+encodeURIComponent(state.history_date_issues[0]);$('home-health').append(link);}
  if(homeCurrency==='ALL'&&homeEuro?.excluded.length){$('home-health').append(document.createTextNode(ui(' Niet omgerekend: ')));for(const [i,p] of homeEuro.excluded.entries()){if(i)$('home-health').append(document.createTextNode(' · '));const link=homeNode('a',p.name+' ('+p.currency+' · '+p.account_name+')');link.href=stockDetailLink(p);$('home-health').append(link,document.createTextNode(ui(' · wisselkoers ontbreekt op ')+p.dates.slice(0,3).map(dayLabel).join(', ')));}}
- if(homeCurrency==='ALL'&&!homeEuro)for(const box of document.querySelectorAll('#home-module-board .home-metric'))box.querySelector('strong').textContent=homeEuroPending?ui('Laden…'):ui('Niet beschikbaar');
  if(homeCurrency!=='ALL')$('home-euro-status').textContent='';
  else if(homeEuro&&!homeEuroPending)showHomeEuroStatus(homeEuro);
  if(homeCurrency==='ALL'&&homeEuroError){$('home-euro-status').replaceChildren(document.createTextNode(ui('Euro-overzicht laden mislukt. Beschikbare gegevens blijven staan.')));const retry=homeNode('button',ui('Opnieuw proberen'),'secondary');retry.type='button';retry.onclick=loadHomeEuro;$('home-euro-status').append(retry);}

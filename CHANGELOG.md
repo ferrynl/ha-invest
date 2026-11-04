@@ -1,3 +1,7 @@
+## 0.65.0
+
+- Dashboard aanpassen biedt grafiek- en kaartvoorbeelden, verwisselbare cijfers, eigen titels en stijlen, en extra cijferkaarten.
+
 ## 0.64.0
 
 - Home heeft tien grafiekkeuzes en een persoonlijke standaardgrafiek onder Instellingen → Dashboard. De grafiek verwerkt de gekozen periode en laadt eurohistorie pas wanneer ze bijna in beeld komt.

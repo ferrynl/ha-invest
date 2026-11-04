@@ -215,3 +215,14 @@ main input,main select,main textarea{max-width:100%}
 }
 .quote-management-actions { white-space: normal; }
 .quote-management-actions button { margin: 3px 8px 3px 0; }
+
+.dashboard-module-preview{display:grid;gap:8px;padding:12px;border:1px solid #3c526c;border-radius:10px;background:#0b1424;overflow-wrap:anywhere}
+.dashboard-module-preview>svg{width:100%;height:72px;max-width:260px}
+.dashboard-module-preview>span{font-size:13px;color:#bbcee5}
+.dashboard-module-preview .home-metric{margin:0}
+#dashboard-module-metric{display:grid;gap:12px}
+.home-metric[data-style="compact"]{padding:12px 14px}
+.home-metric[data-style="compact"] strong{font-size:1.25rem;margin:4px 0}
+.home-metric[data-style="accent"]{background:linear-gradient(145deg,#123d39,#18273a);border-color:#428878}
+.home-metric[data-style="accent"] strong{color:#9bf6d7}
+.home-metric[data-style="accent"] strong.negative{color:#ff929d}

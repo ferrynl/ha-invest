@@ -34,7 +34,7 @@ De app heeft een linkerzijbalk zoals Home Assistant, met acht afzonderlijke pagi
 
 Onder **Instellingen → Koersproblemen en afwikkelingen** zie je noteringen zonder actuele koers en handmatig beheerde noteringen. Gebruik **Koers instellen** als je een geverifieerde laatste koers en datum hebt. Bij een contante overname gebruik je **Contante afwikkeling boeken** met de datum en het bedrag per aandeel uit het brokerafschrift. Controleer eerst of de brokerboeking al is geïmporteerd. De app sluit de positie in dat brokeraccount en stopt koersaanvragen zodra de notering in alle accounts gesloten is. De positie, oorspronkelijke boekingen en opgeslagen koershistorie blijven opvraagbaar. Via **Koers instellen → Automatisch** kun je koersaanvragen weer inschakelen. De TMX-omboeking staat op dezelfde pagina.
 
-Kies onder **Instellingen → Dashboard → Standaardgrafiek op Home** uit tien grafiekweergaven. Op Home kun je via **Grafiekmeting** tijdelijk een andere weergave kiezen.
+Kies onder **Instellingen → Dashboard → Standaardgrafiek op Home** uit tien grafiekweergaven. Op Home kun je via **Grafiekmeting** tijdelijk een andere weergave kiezen. Met **Dashboard aanpassen** open je de instellingen van een module. Kies een grafiek of cijfer met een voorbeeld, stel bij cijferkaarten een titel en stijl in en voeg via **Module toevoegen** extra cijferkaarten toe. Kies **Indeling opslaan** om alles te bewaren.
 
 Op een klein scherm opent het menu via de menuknop. De pagina staat in het
 URL-fragment, zodat herladen en de terugknop blijven werken binnen HA ingress.

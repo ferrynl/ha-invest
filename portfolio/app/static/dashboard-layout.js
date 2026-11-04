@@ -20,7 +20,7 @@ function moveDashboardModule(rows,id,target){
 }
 
 function updateDashboardModule(rows,id,settings){return rows.map(row=>row.id===id?{...row,...settings,id}:({...row}));}
-let dashboardChart='value';
+let dashboardChart='value',dashboardChartDraft='value',dashboardChartBeforeEdit='value';
 let dashboardLayout=defaultDashboardLayout(),dashboardDraft=[],dashboardLayoutReady=false,dashboardLayoutRequest=0,dashboardEditing=false,dashboardSaving=false,dashboardDrag=null,dashboardScrollFrame=null,dashboardSettingsId=null;
 const dashboardNodes=new Map();
 const activeDashboardLayout=()=>dashboardEditing?dashboardDraft:dashboardLayout;
@@ -28,8 +28,25 @@ function initializeDashboardModules(){
  const home=document.querySelector('[data-page="home"]'),board=document.createElement('div');board.id='home-module-board';board.className='home-module-board';$('totals').before(board);
  const insights=home.querySelector('.home-insights'),original={currencies:$('home-currencies'),chart:$('home-chart-panel'),allocation:insights.children[0],movers:insights.children[1],holdings:home.querySelector('.home-holdings')};
  const notice=document.createElement('section');notice.append($('home-euro-status'),$('home-health'));original.notice=notice;
- for(const module of dashboardModules){
-  const content=original[module.id]||document.createElement('article');if(!original[module.id])content.className='home-metric';content.id='home-module-'+module.id;content.classList.add('dashboard-widget-content');
+ for(const module of dashboardModules)mountDashboardModule(board,module,original[module.id]);
+ insights.remove();$('totals').hidden=true;
+ const error=document.createElement('p');error.id='dashboard-layout-error';error.setAttribute('role','status');board.before(error);
+ const toolbar=document.createElement('section');toolbar.id='dashboard-edit-toolbar';toolbar.className='dashboard-edit-toolbar';toolbar.hidden=true;
+ const note=document.createElement('p');note.textContent=ui('Versleep onderdelen op je dashboard. Gebruik de instellingenknop per onderdeel.');
+ const actions=document.createElement('div');actions.className='dashboard-edit-actions';
+ const save=dashboardEditorButton(ui('Indeling opslaan'),saveDashboardLayout);save.id='dashboard-edit-save';
+ const cancel=dashboardEditorButton(ui('Annuleren'),cancelDashboardEditor);cancel.id='dashboard-edit-cancel';
+ const reset=dashboardEditorButton(ui('Standaardindeling'),()=>{if(dashboardSaving)return;dashboardDraft=defaultDashboardLayout();dashboardChartDraft='value';$('chart-measure').value=dashboardChartDraft;applyDashboardLayout();refreshDashboardPreview();});reset.id='dashboard-edit-reset';
+ const feedback=document.createElement('p');feedback.id='dashboard-layout-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');actions.append(save,cancel,reset);toolbar.append(note,actions,feedback);board.before(toolbar);
+ const add=dashboardEditorButton(ui('Module toevoegen'),()=>{
+  const id=dashboardExtraIds.find(key=>!dashboardDraft.some(row=>row.id===key));
+  if(id)openDashboardModuleSettings(id);
+ });
+ add.id='dashboard-add-module';actions.prepend(add);
+ const empty=document.createElement('p');empty.id='dashboard-layout-empty';empty.className='home-muted';empty.textContent=ui('Je dashboard is leeg. Kies Dashboard aanpassen om modules aan te zetten.');board.after(empty);applyDashboardLayout();
+}
+function mountDashboardModule(board,module,existing){
+  const content=existing||document.createElement('article');if(!existing)content.className='home-metric';content.id='home-module-'+module.id;content.classList.add('dashboard-widget-content');
   if(module.id==='currencies')content.id='home-currencies';if(module.id==='chart')content.id='home-chart-panel';
   const node=document.createElement('section');node.className='home-module dashboard-widget';node.dataset.module=module.id;
   const controls=document.createElement('div');controls.className='dashboard-widget-controls';controls.hidden=true;
@@ -42,28 +59,69 @@ function initializeDashboardModules(){
   const settings=dashboardEditorButton(ui('Instellingen'),()=>openDashboardModuleSettings(module.id));settings.textContent='⚙';settings.setAttribute('title',ui('Instellingen'));settings.setAttribute('aria-label',ui('Instellingen voor {name}',{name:module.title}));settings.classList.add('dashboard-widget-settings');actions.append(settings);
   const disabled=document.createElement('p');disabled.className='dashboard-widget-disabled';disabled.textContent=ui('Uitgeschakeld');disabled.hidden=true;
   controls.append(handle,title,actions);node.append(controls,content,disabled);dashboardNodes.set(module.id,node);board.append(node);
+}
+
+const dashboardExtraIds=Array.from({length:12},(_,index)=>'extra-'+(index+1));
+function dashboardModuleTitle(row){
+ if(row.title)return row.title;
+ const metric=row.metric||row.id;
+ if(Object.hasOwn(homeMetricOptions,metric))return homeMetricOptions[metric]();
+ return dashboardModules.find(module=>module.id===row.id)?.title||ui('Extra cijferkaart');
+}
+function dashboardPreview(){
+ const id=dashboardSettingsId,chart=id==='chart',target=$('dashboard-module-preview');
+ target.replaceChildren();
+ if(target.hidden)return;
+ target.append(homeNode('small',ui('Voorbeeld')));
+ if(chart){
+  const choice=$('dashboard-module-chart-choice').value,preset=chartPresets[choice],svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 120 38');svg.setAttribute('aria-hidden','true');
+  const path=(d,stroke,fill='none')=>{
+   const node=document.createElementNS(svg.namespaceURI,'path');node.setAttribute('d',d);
+   node.setAttribute('stroke',stroke);node.setAttribute('stroke-width','2');node.setAttribute('fill',fill);svg.append(node);
+  };
+  path('M1 2V36H119','#526680');
+  const line='M4 29L24 22 43 26 64 15 82 18 113 6';
+  if(preset.shape==='columns')path('M7 35V26H19V35ZM26 35V20H38V35ZM45 35V23H57V35ZM64 35V13H76V35ZM83 35V17H95V35ZM102 35V5H114V35Z','#47dcb0','#47dcb0');
+  else if(preset.shape==='step')path('M4 29H24V24H47V17H72V12H92V5H113','#47dcb0');
+  else{
+   if(preset.shape==='area'||choice==='return')path(line+'V35H4Z','none','#47dcb048');
+   if(preset.fields.length>1)path('M4 32L26 29 46 30 67 24 87 25 113 20','#70b7ff');
+   path(line,'#47dcb0');
+  }
+  target.append(svg,homeNode('span',preset.label()));
+ }else{
+  const metric=$('dashboard-module-metric-choice').value;
+  const card=homeNode('div',undefined,'home-metric');
+  card.dataset.style=$('dashboard-module-style').value;
+  const value=['open','closed','missing'].includes(metric)?'12':['return','dividend_yield'].includes(metric)?homePercent(8.4):money(1234.56,homeDisplayCurrency());
+  card.append(homeNode('span',$('dashboard-module-custom-title').value.trim()||homeMetricOptions[metric](),'home-metric-label'),homeNode('strong',value));
+  if($('dashboard-module-note').checked)card.append(homeNode('small',ui('Binnen de huidige selectie')));
+  target.append(card);
  }
- insights.remove();$('totals').hidden=true;
- const error=document.createElement('p');error.id='dashboard-layout-error';error.setAttribute('role','status');board.before(error);
- const toolbar=document.createElement('section');toolbar.id='dashboard-edit-toolbar';toolbar.className='dashboard-edit-toolbar';toolbar.hidden=true;
- const note=document.createElement('p');note.textContent=ui('Versleep onderdelen op je dashboard. Gebruik de instellingenknop per onderdeel.');
- const actions=document.createElement('div');actions.className='dashboard-edit-actions';
- const save=dashboardEditorButton(ui('Indeling opslaan'),saveDashboardLayout);save.id='dashboard-edit-save';
- const cancel=dashboardEditorButton(ui('Annuleren'),cancelDashboardEditor);cancel.id='dashboard-edit-cancel';
- const reset=dashboardEditorButton(ui('Standaardindeling'),()=>{if(dashboardSaving)return;dashboardDraft=defaultDashboardLayout();applyDashboardLayout();refreshDashboardPreview();});reset.id='dashboard-edit-reset';
- const feedback=document.createElement('p');feedback.id='dashboard-layout-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');actions.append(save,cancel,reset);toolbar.append(note,actions,feedback);board.before(toolbar);
- const empty=document.createElement('p');empty.id='dashboard-layout-empty';empty.className='home-muted';empty.textContent=ui('Je dashboard is leeg. Kies Dashboard aanpassen om modules aan te zetten.');board.after(empty);applyDashboardLayout();
 }
 function dashboardEditorButton(text,action){const button=document.createElement('button');button.type='button';button.className='secondary';button.textContent=text;button.addEventListener('click',action);return button;}
 function applyDashboardLayout(){
  const rows=activeDashboardLayout(),board=$('home-module-board');document.body.classList.toggle('dashboard-editing',dashboardEditing);
- rows.forEach((row,index)=>{const node=dashboardNodes.get(row.id);node.hidden=!dashboardEditing&&!row.enabled;node.dataset.width=row.width;node.classList.toggle('is-disabled',!row.enabled);node.querySelector('.dashboard-widget-controls').hidden=!dashboardEditing;node.querySelector('.dashboard-widget-disabled').hidden=!dashboardEditing||row.enabled;
+ const activeIds=new Set(rows.map(row=>row.id));
+ for(const id of dashboardExtraIds){
+  if(!activeIds.has(id)&&dashboardNodes.has(id)){dashboardNodes.get(id).remove();dashboardNodes.delete(id);}
+ }
+ rows.forEach((row,index)=>{
+  if(!dashboardNodes.has(row.id))mountDashboardModule(board,{id:row.id,title:dashboardModuleTitle(row)});
+  const node=dashboardNodes.get(row.id);
+  if(dashboardEditing){
+   const title=dashboardModuleTitle(row);
+   node.querySelector('.dashboard-widget-controls strong').textContent=title;
+   node.querySelector('.dashboard-widget-settings').setAttribute('aria-label',ui('Instellingen voor {name}',{name:title}));
+  }node.hidden=!dashboardEditing&&!row.enabled;node.dataset.width=row.width;node.classList.toggle('is-disabled',!row.enabled);node.querySelector('.dashboard-widget-controls').hidden=!dashboardEditing;node.querySelector('.dashboard-widget-disabled').hidden=!dashboardEditing||row.enabled;
   for(const button of node.querySelectorAll('.dashboard-widget-controls button'))button.disabled=dashboardSaving;
   for(const button of node.querySelectorAll('[data-direction]'))button.disabled=dashboardSaving||index+Number(button.dataset.direction)<0||index+Number(button.dataset.direction)>=rows.length;
   // Insert only moved nodes, preserving focus and pointer gestures on other widgets.
   if(board.children[index]!==node)board.insertBefore(node,board.children[index]||null);
  });
  $('dashboard-edit-toolbar').hidden=!dashboardEditing;$('dashboard-layout-open').hidden=dashboardEditing;$('dashboard-layout-empty').hidden=dashboardEditing||rows.some(row=>row.enabled);
+ $('dashboard-add-module').disabled=dashboardSaving||dashboardExtraIds.every(id=>activeIds.has(id));
  for(const id of ['dashboard-edit-save','dashboard-edit-cancel','dashboard-edit-reset'])$(id).disabled=dashboardSaving;
 }
 function dashboardModuleEnabled(id){return activeDashboardLayout().some(row=>row.id===id&&row.enabled);}
@@ -78,18 +136,18 @@ async function openDashboardEditor(){
  if(dashboardEditing||dashboardSaving)return;$('dashboard-layout-error').textContent='';closeAllPopups();$('dashboard-layout-open').disabled=true;
  if(!dashboardLayoutReady)await loadDashboardLayout();$('dashboard-layout-open').disabled=false;
  if(!dashboardLayoutReady||!accessSession?.user)return;
- dashboardDraft=dashboardLayout.map(row=>({...row}));dashboardEditing=true;$('dashboard-layout-feedback').textContent='';applyDashboardLayout();$('dashboard-edit-save').focus();
+ dashboardDraft=dashboardLayout.map(row=>({...row}));dashboardChartBeforeEdit=$('chart-measure').value;dashboardChartDraft=dashboardChart;dashboardEditing=true;$('dashboard-layout-feedback').textContent='';applyDashboardLayout();$('dashboard-edit-save').focus();
 }
-function cancelDashboardEditor(){if(dashboardSaving)return;finishDashboardDrag(true);$('dashboard-module-dialog').close();dashboardEditing=false;dashboardDraft=[];applyDashboardLayout();refreshDashboardPreview();$('dashboard-layout-open').focus();}
+function cancelDashboardEditor(){if(dashboardSaving)return;finishDashboardDrag(true);$('dashboard-module-dialog').close();dashboardEditing=false;dashboardDraft=[];$('chart-measure').value=dashboardChartBeforeEdit;applyDashboardLayout();refreshDashboardPreview();$('dashboard-layout-open').focus();}
 async function saveDashboardLayout(){
  if(!dashboardEditing||!dashboardLayoutReady||dashboardSaving)return;finishDashboardDrag(false);const request=dashboardLayoutRequest,modules=dashboardDraft.map(row=>({...row}));dashboardSaving=true;applyDashboardLayout();
- try{const result=await jsonAction('api/account/dashboard',{modules,chart:dashboardChart});if(request!==dashboardLayoutRequest||!accessSession?.user)return;dashboardLayout=result.modules;dashboardEditing=false;dashboardDraft=[];applyDashboardLayout();refreshDashboardPreview();$('dashboard-layout-open').focus();}
+ try{const result=await jsonAction('api/account/dashboard',{modules,chart:dashboardChartDraft});if(request!==dashboardLayoutRequest||!accessSession?.user)return;dashboardLayout=result.modules;dashboardChart=result.chart;applyHomeChartPreference();dashboardEditing=false;dashboardDraft=[];applyDashboardLayout();refreshDashboardPreview();$('dashboard-layout-open').focus();}
  catch{if(request===dashboardLayoutRequest)$('dashboard-layout-feedback').textContent=ui('Indeling opslaan mislukt. Probeer opnieuw.');}
  finally{if(request===dashboardLayoutRequest){dashboardSaving=false;applyDashboardLayout();}}
 }
 function moveDashboardDraft(id,target,focus=false){
  if(!dashboardEditing||dashboardSaving)return;dashboardDraft=moveDashboardModule(dashboardDraft,id,target);applyDashboardLayout();
- const module=dashboardModules.find(row=>row.id===id),index=dashboardDraft.findIndex(row=>row.id===id);$('dashboard-layout-feedback').textContent=ui('Module {name} verplaatst naar plek {position}.',{name:module.title,position:index+1});
+ const index=dashboardDraft.findIndex(row=>row.id===id);$('dashboard-layout-feedback').textContent=ui('Module {name} verplaatst naar plek {position}.',{name:dashboardModuleTitle(dashboardDraft[index]),position:index+1});
  if(focus)dashboardNodes.get(id).querySelector('.dashboard-widget-handle').focus({preventScroll:true});
 }
 function startDashboardDrag(event,id){
@@ -126,7 +184,41 @@ function finishDashboardDrag(cancel){
  if(!dashboardDrag)return;const id=dashboardDrag.id;if(cancel)dashboardDraft=dashboardDrag.before;dashboardDrag=null;dashboardNodes.get(id)?.classList.remove('is-dragging');if(dashboardEditing)applyDashboardLayout();
 }
 function openDashboardModuleSettings(id){
- if(!dashboardEditing||dashboardSaving)return;finishDashboardDrag(false);dashboardSettingsId=id;const row=dashboardDraft.find(item=>item.id===id),module=dashboardModules.find(item=>item.id===id);$('dashboard-module-title').textContent=ui('Instellingen voor {name}',{name:module.title});$('dashboard-module-enabled').checked=row.enabled;$('dashboard-module-width').value=row.width;$('dashboard-module-dialog').showModal();
+ if(!dashboardEditing||dashboardSaving)return;
+ finishDashboardDrag(false);
+ const existing=dashboardDraft.find(item=>item.id===id),extra=dashboardExtraIds.includes(id);
+ if(!existing&&!extra)return;
+ const row=existing||{id,width:'quarter',enabled:true,metric:'market'};
+ dashboardSettingsId=id;
+ $('dashboard-module-title').textContent=existing?ui('Instellingen voor {name}',{name:dashboardModuleTitle(row)}):ui('Extra cijferkaart');
+ $('dashboard-module-enabled').checked=row.enabled;$('dashboard-module-width').value=row.width;
+ const isMetric=extra||Object.hasOwn(homeMetricOptions,id);
+ $('dashboard-module-chart').hidden=id!=='chart';$('dashboard-module-metric').hidden=!isMetric;
+ $('dashboard-module-remove').hidden=!extra||!existing;
+ $('dashboard-module-preview').hidden=id!=='chart'&&!isMetric;
+ $('dashboard-module-chart-choice').value=dashboardChartDraft;
+ if(isMetric){
+  $('dashboard-module-metric-choice').value=row.metric||id;
+  $('dashboard-module-custom-title').value=row.title||'';
+  $('dashboard-module-style').value=row.style||'standard';
+  $('dashboard-module-note').checked=row.note!==false;
+ }
+ dashboardPreview();$('dashboard-module-dialog').showModal();
+}
+function applyDashboardModuleSettings(event){
+ event.preventDefault();if(!dashboardEditing||dashboardSaving||!dashboardSettingsId)return;
+ const id=dashboardSettingsId;
+ const settings={enabled:$('dashboard-module-enabled').checked,width:$('dashboard-module-width').value};
+ if(!$('dashboard-module-metric').hidden)Object.assign(settings,{
+  metric:$('dashboard-module-metric-choice').value,title:$('dashboard-module-custom-title').value.trim(),
+  style:$('dashboard-module-style').value,note:$('dashboard-module-note').checked
+ });
+ if(id==='chart'){
+  dashboardChartDraft=$('dashboard-module-chart-choice').value;
+  $('chart-measure').value=dashboardChartDraft;
+ }
+ dashboardDraft=dashboardDraft.some(row=>row.id===id)?updateDashboardModule(dashboardDraft,id,settings):[...dashboardDraft,{id,...settings}];
+ applyDashboardLayout();$('dashboard-module-dialog').close();refreshDashboardPreview();
 }
 
 function applyHomeChartPreference(){$('chart-measure').value=dashboardChart;}
@@ -156,10 +248,19 @@ function bindDashboardChartSettings(){
  });
 }
 function bindDashboardLayout(){
+ fillChartPresets($('dashboard-module-chart-choice'));
+ for(const [id,label] of Object.entries(homeMetricOptions)){
+  const option=homeNode('option',label());option.value=id;$('dashboard-module-metric-choice').append(option);
+ }
  initializeDashboardModules();bindDashboardChartSettings();$('dashboard-layout-open').addEventListener('click',openDashboardEditor);
  for(const id of ['dashboard-module-close','dashboard-module-cancel'])$(id).addEventListener('click',()=>$('dashboard-module-dialog').close());
- $('dashboard-module-dialog').addEventListener('close',()=>{const id=dashboardSettingsId;dashboardSettingsId=null;if(dashboardEditing&&id)dashboardNodes.get(id).querySelector('.dashboard-widget-settings').focus({preventScroll:true});});
- $('dashboard-module-form').addEventListener('submit',event=>{event.preventDefault();if(!dashboardEditing||dashboardSaving||!dashboardSettingsId)return;dashboardDraft=updateDashboardModule(dashboardDraft,dashboardSettingsId,{enabled:$('dashboard-module-enabled').checked,width:$('dashboard-module-width').value});applyDashboardLayout();$('dashboard-module-dialog').close();refreshDashboardPreview();});
+ $('dashboard-module-dialog').addEventListener('close',()=>{const id=dashboardSettingsId;dashboardSettingsId=null;if(dashboardEditing&&id)(dashboardNodes.get(id)?.querySelector('.dashboard-widget-settings')||$('dashboard-add-module')).focus({preventScroll:true});});
+ $('dashboard-module-form').addEventListener('submit',applyDashboardModuleSettings);
+ $('dashboard-module-form').addEventListener('input',dashboardPreview);
+ $('dashboard-module-remove').addEventListener('click',()=>{
+  if(!dashboardEditing||dashboardSaving||!dashboardExtraIds.includes(dashboardSettingsId))return;
+  dashboardDraft=dashboardDraft.filter(row=>row.id!==dashboardSettingsId);applyDashboardLayout();$('dashboard-module-dialog').close();refreshDashboardPreview();
+ });
  document.addEventListener('keydown',event=>{if(event.key!=='Escape'||!dashboardEditing||document.querySelector('dialog[open]'))return;event.preventDefault();if(dashboardDrag)finishDashboardDrag(true);else cancelDashboardEditor();});
  window.addEventListener('hashchange',()=>{if(dashboardEditing&&!dashboardSaving)cancelDashboardEditor();});
 }

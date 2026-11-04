@@ -72,6 +72,22 @@ class DashboardLayoutTests(unittest.TestCase):
                 save(self.store, user, 'personal', {'modules': defaults(), 'chart': invalid})
         self.assertEqual(read(self.store, user, 'personal')['chart'], 'columns')
 
+    def test_custom_metric_cards_are_personal_and_can_be_removed(self):
+        user = {'id': 1}
+        base = defaults()
+        base[1].update(metric='return', title='Resultaat', style='accent', note=False)
+        extra = dict(id='extra-1', enabled=True, width='half', metric='invested', style='compact')
+        save(self.store, user, 'personal', {'modules': [extra, *base], 'chart': 'area'})
+        result = read(Store(self.store.root), user, 'personal')
+        self.assertEqual(result['modules'], [extra, *base])
+        self.assertEqual(result['chart'], 'area')
+        self.assertEqual(read(self.store, {'id': 2}, 'personal')['modules'], defaults())
+        for patch in ({'id': 'extra-13'}, {'metric': 'unknown'}, {'title': 'x' * 61}, {'note': 'false'}):
+            with self.assertRaises(ValueError):
+                validate({'modules': [{**extra, **patch}]})
+        save(self.store, user, 'personal', {'modules': base})
+        self.assertEqual(read(self.store, user, 'personal')['modules'], base)
+
     def test_restore_keeps_current_account_layout_and_ignores_uploaded_preferences(self):
         user = {'id': None}
         original = defaults()
