@@ -24,7 +24,7 @@ function applyCategoryOverview(result){
  const saved=new Map((state.instrument_categories||[]).map(entry=>[categoryKey(entry),entry]));for(const entry of result.entries)saved.set(categoryKey(entry),{symbol:entry.symbol,exchange:entry.exchange,currency:entry.currency,...entry.categories});state.instrument_categories=[...saved.values()];
  for(const row of $('positions').querySelectorAll('tr[data-category-key]')){
   const entry=categoryItems.get(row.dataset.categoryKey);if(!entry)continue;
-  for(const fieldCell of row.querySelectorAll('[data-category-field]')){const label=categoryFieldLabel(entry.categories,entry.sync,fieldCell.dataset.categoryField);if(fieldCell.textContent!==label)fieldCell.textContent=label;}
+  for(const fieldCell of row.querySelectorAll('[data-category-field]')){const label=categoryFieldLabel(entry.categories,entry.sync,fieldCell.dataset.categoryField);if(fieldCell.dataset.categoryField==='sector'&&typeof renderStockSectorField==='function')renderStockSectorField(fieldCell,label,entry.categories.sector);else if(fieldCell.textContent!==label)fieldCell.textContent=label;}
  }
  if(typeof updateStocksCategories==='function')updateStocksCategories(result.entries);
  $('stock-categories-summary').textContent=categoryProgressLabel(result.counts);$('stock-categories-progress').max=Math.max(1,result.counts.total);$('stock-categories-progress').value=result.counts.processed;

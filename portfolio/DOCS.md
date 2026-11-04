@@ -36,6 +36,8 @@ Onder **Instellingen → Koersproblemen en afwikkelingen** zie je noteringen zon
 
 Kies onder **Instellingen → Dashboard → Standaardgrafiek op Home** uit tien grafiekweergaven. Op Home kun je via **Grafiekmeting** tijdelijk een andere weergave kiezen. Met **Dashboard aanpassen** open je de instellingen van een module. Kies een grafiek of cijfer met een voorbeeld, stel bij cijferkaarten een titel en stijl in en voeg via **Module toevoegen** extra cijferkaarten toe. Kies **Indeling opslaan** om alles te bewaren.
 
+Klik op een sector op **Aandelen** om de noteringen, landen en sectorinformatie te bekijken. **Vergelijk met de sector** vergelijkt de huidige aantallen met een Amerikaanse sector-ETF op gedeelde koersdagen in EUR. Dividend, kosten en tussentijdse transacties zijn niet inbegrepen.
+
 Op een klein scherm opent het menu via de menuknop. De pagina staat in het
 URL-fragment, zodat herladen en de terugknop blijven werken binnen HA ingress.
 De standaard grafiekperiode wordt in SQLite opgeslagen en blijft na herstart behouden.

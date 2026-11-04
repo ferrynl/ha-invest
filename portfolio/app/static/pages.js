@@ -38,7 +38,7 @@ document.querySelector('[data-route="transacties"]').after(transactionNav);
 for(const [route,title] of [['transacties-dividend',ui('Dividend')],['transacties-omzettingen',ui('Splitsingen en omzettingen')]]){
  const link=document.createElement('a');link.href='#'+route;link.dataset.route=route;link.textContent=title;transactionNav.append(link);
 }
-const pageNames={'over-ons':ui('Over ons'),'import-voorbeeld':ui('Importvoorbeeld'),feedback:ui('Wensen & bugs'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
+const pageNames={'over-ons':ui('Over ons'),'import-voorbeeld':ui('Importvoorbeeld'),feedback:ui('Wensen & bugs'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),sector:ui('Sectoroverzicht'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
 for(const a of [...settingsNav.querySelectorAll('a'),...importNav.querySelectorAll('a'),...transactionNav.querySelectorAll('a')])pageNames[a.dataset.route]=a.textContent;
 for(const [key,title] of reportDefinitions)pageNames['rapporten-'+key]=title;
 function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches&&!document.body.classList.contains('locked');$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label',ui('Menu openen'));}
@@ -57,7 +57,7 @@ function showPage(){
  if(isReport){reportType=page==='rapporten'?'portfolio':page.slice(10);renderReportNavigation();}
  $('report-types').hidden=!isReport;document.querySelector('[data-route=rapporten]').setAttribute('aria-expanded',String(isReport));
  for(const view of document.querySelectorAll('[data-page]'))view.hidden=view.dataset.page!==(isReport?'rapporten':isTransactions?'transacties':page);
- for(const link of document.querySelectorAll('[data-route]')){if(link.dataset.route===page||(isReport&&link.dataset.route==='rapporten')||(isTransactions&&link.dataset.route==='transacties')||(isSettings&&link.dataset.route==='instellingen')||(brokerPage&&link.dataset.route==='imports')||(page==='aandeel'&&link.dataset.route==='aandelen')||(page.startsWith('import-')&&link.dataset.route==='imports'))link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
+ for(const link of document.querySelectorAll('[data-route]')){if(link.dataset.route===page||(isReport&&link.dataset.route==='rapporten')||(isTransactions&&link.dataset.route==='transacties')||(isSettings&&link.dataset.route==='instellingen')||(brokerPage&&link.dataset.route==='imports')||(['aandeel','sector'].includes(page)&&link.dataset.route==='aandelen')||(page.startsWith('import-')&&link.dataset.route==='imports'))link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  for(const link of document.querySelectorAll('.import-nav a')){if(link.hash==='#'+page)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}
  if(page==='home'&&!document.body.classList.contains('home-page'))applyHomeChartPreference();
  document.body.classList.toggle('home-page',page==='home');
@@ -65,7 +65,7 @@ function showPage(){
  document.body.classList.toggle('reports-page',isReport);
  document.body.classList.toggle('countries-page',page==='rapporten-countries');
  document.body.classList.toggle('dividend-page',page==='dividend');
- document.body.classList.toggle('stocks-page',page==='aandelen'||page==='aandeel');
+ document.body.classList.toggle('stocks-page',['aandelen','aandeel','sector'].includes(page));
  document.body.classList.toggle('stocks-list-page',page==='aandelen');
  const brokerSlot={home:'home-broker-slot',aandelen:'stocks-broker-slot',dividend:'dividend-broker-slot',rapporten:'reports-broker-slot'}[isReport?'rapporten':page];
  $(brokerSlot||'page-header').append($('broker-filter-control'));
@@ -75,6 +75,7 @@ function showPage(){
  if(isTransactions){configureTransactionPage(page);if(state)loadTransactions();}
  if(page==='aandelen'&&state)renderStockPage();
  if(page==='aandeel'&&state)loadStockDetail();
+ if(page==='sector'&&state)loadStockSector();
  if(page==='dividend'&&state)renderDividendPage();
  if(page==='home'&&state){renderHomeDashboard();requestAnimationFrame(draw);}
  if(isReport&&state)renderReports();

@@ -226,3 +226,6 @@ main input,main select,main textarea{max-width:100%}
 .home-metric[data-style="accent"]{background:linear-gradient(145deg,#123d39,#18273a);border-color:#428878}
 .home-metric[data-style="accent"] strong{color:#9bf6d7}
 .home-metric[data-style="accent"] strong.negative{color:#ff929d}
+a.stock-sector-card{color:inherit;text-decoration:none}
+a.stock-sector-card:hover,a.stock-sector-card:focus-visible{border-color:var(--sector-color)}
+.stock-sector-country{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid #26344b}

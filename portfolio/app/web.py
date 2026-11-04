@@ -232,6 +232,15 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
                 try:return self.respond(overview(store,compact_state(),account))
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
+            if path=='/api/stocks/sector-benchmark':
+                from stocks_dashboard import overview
+                from sector_benchmark import compare
+                query=parse_qs(urlsplit(self.path).query)
+                account=query.get('account_id',['all'])[0];sector=query.get('sector',[''])[0]
+                try:
+                    positions=overview(store,compact_state(),account)['positions']
+                    return self.respond(compare(store,positions,sector))
+                except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
             if path in ('/api/home/euro','/api/home/euro/history'):
                 from dashboard import compact
                 query=parse_qs(urlsplit(self.path).query);account=query.get('account_id',['all'])[0]

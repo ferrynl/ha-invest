@@ -1,3 +1,7 @@
+## 0.67.0
+
+- Open vanaf Aandelen een sectorpagina met posities, landen en algemene sectorinformatie. Vergelijk de koersontwikkeling van je huidige selectie in EUR met een sector-ETF.
+
 ## 0.66.0
 
 - De Home-grafiek blijft werken als een positie ongeldige koershistorie heeft. Bij gewijzigde gegevens probeert de app opnieuw en bij een fout toont hij de oorzaak en een beschikbaar Log-ID.

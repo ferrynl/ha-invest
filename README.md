@@ -61,6 +61,8 @@ toegang tot de app. Wijzigen en instellen gebeurt in pop-ups; Home opent direct 
 - **Instellingen** (admin): accounts, beveiliging, back-ups en versiecontrole. Bij **Back-ups en updates** staan alle lokale back-ups (ook veiligheidskopieën in submappen) en lokale updatebestanden met grootte, downloaden en verwijderen. SQLite-back-ups kunnen na bevestiging rechtstreeks worden hersteld; vooraf wordt een veiligheidskopie gemaakt. Home Assistant beheert installatiepakketten en eigen back-ups afzonderlijk.
 - **Instellingen → Logs** (admin): afgeschermde foutdetails en Log-ID zoeken.
 
+Op **Aandelen** kun je doorklikken naar een sector met posities, landen, algemene informatie en een koersvergelijking in EUR met een Amerikaanse sector-ETF.
+
 Koersen komen van Yahoo Finance en kunnen vertraagd of tijdelijk onbeschikbaar zijn. Apollo LU3170240538 in EUR gebruikt de openbare DivvyDiary-koers, zonder vermelde koersdatum; de app toont het ophaalmoment. Via **Instellingen → Koersproblemen en afwikkelingen** kun je een laatste koers vastleggen, een bevestigde contante afwikkeling per brokeraccount boeken en de TMX-omboeking uitvoeren.
 Bedragen in verschillende valuta blijven gescheiden. De app voert geen orders uit. Home gebruikt opgeslagen databasegegevens en een blijvende overzichtcache; koersen worden op de achtergrond ververst.
 

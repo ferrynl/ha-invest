@@ -18,6 +18,7 @@ async function load(){
  if(location.hash==='#transacties'||location.hash.startsWith('#transacties-'))loadTransactions();
  if(location.hash==='#aandelen')renderStockPage();
  if(location.hash.startsWith('#aandeel?'))loadStockDetail();
+ if(location.hash.startsWith('#sector?'))loadStockSector();
  if(location.hash==='#dividend')renderDividendPage();
  if(!rangeInitialized){chartRange=state.settings.default_range;rangeInitialized=true;syncRangeButtons();}
  renderPages();renderBrokerAccounts();if(document.body.classList.contains('home-page')){renderHomeDashboard();draw();}
