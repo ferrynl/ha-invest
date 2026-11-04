@@ -63,7 +63,7 @@ function reportAnalytics(positions,dividends,year,stock='',currency=''){
 function reportPortfolioSource(source,keys){return {...source,positions:source.positions.filter(p=>keys.has(reportKey(p))),dividends:source.dividends.filter(p=>keys.has(reportKey(p)))};}
 function reportPortfolioKeys(positions,stock,sector,status){return new Set(positions.filter(p=>(!stock||reportKey(p)===stock)&&(!sector||(p.categories?.sector||ui('Niet ingedeeld'))===sector)&&(!status||(status==='open'?Number(p.quantity)>0:Number(p.quantity)===0))).map(reportKey));}
 function reportOptions(id,items,label){const select=$(id),previous=select.value;select.replaceChildren();for(const [value,text] of [['',label],...items]){const option=homeNode('option',text);option.value=value;select.append(option);}if(items.some(([value])=>value===previous))select.value=previous;}
-function clearReports(){if(typeof clearChargeReport==='function')clearChargeReport();if(typeof clearCountryMaps==='function')clearCountryMaps();if(typeof clearPerformance==='function')clearPerformance();reportCombinedRequest?.cancel();reportHistoryRequest?.cancel();reportCombinedRefreshes=0;reportHistoryRefreshes=0;reportCombinedGeneration++;reportCombined=null;reportCombinedKey='';reportCombinedPending=false;reportCombinedError=false;reportCombinedErrorDetails='';reportHistoryGeneration++;reportHistory=null;reportHistoryKey='';reportHistoryPending=false;reportHistoryError=false;for(const id of ['report-charts','report-insights','report-metrics','report-rows','report-currency','report-holding','report-sector','report-funds'])$(id).replaceChildren();$('report-status').textContent='';$('report-count').textContent='';$('report-year').replaceChildren();$('report-position-status').value='';$('report-show-currencies').checked=false;}
+function clearReports(){if(typeof clearChargeReport==='function')clearChargeReport();if(typeof clearCountryMaps==='function')clearCountryMaps();if(typeof clearPerformance==='function')clearPerformance();reportCombinedRequest?.cancel();reportHistoryRequest?.cancel();reportCombinedRefreshes=0;reportHistoryRefreshes=0;reportCombinedGeneration++;reportCombined=null;reportCombinedKey='';reportCombinedPending=false;reportCombinedError=false;reportCombinedErrorDetails='';reportHistoryGeneration++;reportHistory=null;reportHistoryKey='';reportHistoryPending=false;reportHistoryError=false;for(const id of ['report-charts','report-insights','report-metrics','report-rows','report-currency','report-holding','report-sector','report-funds','report-issues'])$(id).replaceChildren();$('report-status').textContent='';$('report-count').textContent='';$('report-year').replaceChildren();$('report-position-status').value='';$('report-show-currencies').checked=false;}
 function reportHistoryScope(){return JSON.stringify([String(currentBroker),state?.data_revision,$('report-currency').value]);}
 async function loadReportHistory(){
  if(!state||!accessSession?.user||reportType!=='growth')return;
@@ -84,8 +84,24 @@ function renderReportNavigation(){
 }
 function reportChartCard(group,title,note,wide=false){const card=homeNode('section',undefined,'panel report-chart-card'+(wide?' report-wide':''));const heading=homeNode('div',undefined,'section-head'),copy=homeNode('div');copy.append(homeNode('small',group.label||group.currency,'eyebrow'),homeNode('h3',title));heading.append(copy);card.append(heading,homeNode('p',note,'report-chart-note'));const plot=homeNode('div',undefined,'report-plot'),detail=homeNode('p',ui('Bekijk details met je muis of toetsenbord.'),'report-chart-detail');detail.setAttribute('aria-live','polite');card.append(plot,detail);$('report-charts').append(card);return {plot,detail};}
 function reportMoney(value,currency){return money(value,currency);}
+function renderReportIssues(issues){
+ const footer=$('report-issues');footer.replaceChildren();
+ if(!issues.length)return;
+ const heading=homeNode('h3',ui('Toelichting en overgeslagen regels'));
+ const list=homeNode('ul');
+ for(const issue of issues){
+  const row=homeNode('li');
+  const details=[issue.scope,issue.kind,issue.symbol,issue.exchange,issue.currency,issue.account_name,issue.id==null?'':'#'+issue.id,...(issue.dates||[]).map(day=>reportDate(day)?dayLabel(day):day)].filter(Boolean);
+  if(details.length)row.append(homeNode('strong',details.join(' · ')));
+  row.append(homeNode('div',issue.reason));
+  list.append(row);
+ }
+ footer.append(heading,list);
+}
 function renderReports(){
- if(!state)return;const income=reportIncome(reportType),year=$('report-year').value||String(new Date().getFullYear());
+ if(!state)return;
+ $('report-status').textContent='';renderReportIssues([]);
+ const income=reportIncome(reportType),year=$('report-year').value||String(new Date().getFullYear());
  reportOptions('report-currency',[...new Set([...([...state.positions,...state.dividends].filter(reportInstrument).map(p=>p.currency)),...(state.charges||[]).map(p=>p.currency)])].sort().map(c=>[c,c]),ui('Alle valuta’s'));
  if(reportType==='countries')$('report-currency').value='';
  $('report-portfolio-filters').hidden=reportType!=='portfolio';
@@ -107,14 +123,13 @@ function renderReports(){
  const combinedKey=reportCombinedScope();if(reportCombinedKey!==combinedKey){reportCombined=null;reportCombinedError=false;}
  if(reportCombined){const combinedSource=portfolioKeys?reportPortfolioSource(reportCombined,portfolioKeys):reportCombined;const total=reportAnalytics(combinedSource.positions,combinedSource.dividends,year).groups;for(const g of total){g.label=ui('Totaal alle valuta’s in EUR');g.combined=true;g.reportSource=reportCombined;}groups=[...total,...groups];}
  else{if(reportType==='portfolio')reportMetric(ui('Totaal alle valuta’s in EUR'),reportCombinedError?ui('Niet beschikbaar'):ui('Laden…'),ui('Totaal in euro laden…'));const box=homeNode('section',undefined,'panel report-wide');box.append(homeNode('h3',ui('Totaal alle valuta’s in EUR')),homeNode('p',reportCombinedError?(reportCombinedErrorDetails||ui('Totaal laden mislukt. Probeer opnieuw.')):ui('Totaal in euro laden…')));if(reportCombinedError){const button=homeNode('button',ui('Opnieuw proberen'),'secondary');button.type='button';button.onclick=()=>{reportCombinedKey='';reportCombinedError=false;reportCombinedRefreshes=0;renderReports();};box.append(button);}$('report-charts').append(box);if(!reportCombinedError)loadReportCombined();}
- const coverage=reportCombined?reportCombined.excluded.length+reportCombined.missing_dividends.length:0;
- if(reportCombined&&!groups.some(g=>g.combined)){if(reportType==='portfolio')reportMetric(ui('Totaal alle valuta’s in EUR'),coverage?ui('Onvolledig'):ui('Geen gegevens voor deze selectie.'),ui('Totaal alle valuta’s in EUR'));$('report-charts').append(homeNode('h3',ui('Totaal alle valuta’s in EUR'),'report-group-heading report-wide'),homeNode('p',coverage?ui('Onvolledig totaal: regels met ontbrekende of ongeldige gegevens overgeslagen.'):ui('Geen gegevens voor deze selectie.'),'report-total-note report-wide'));}
- if(reportCombined&&(coverage||reportType==='portfolio')){const note=homeNode('p',(coverage?ui('Onvolledig totaal: regels met ontbrekende of ongeldige gegevens overgeslagen.')+' '+coverage:'')+(reportType==='portfolio'?' '+ui('Dividend tegen de koers op betaaldatum; marktwaarde tegen beschikbare recente koersen.')+' '+ui('Koersdatum')+': '+dayLabel(reportCombined.fx_dates.map(p=>p.rate_on).sort().at(-1)||reportCombined.as_of):''),'report-total-note report-wide');$('report-charts').append(note);}
+ if(reportCombined&&!groups.some(g=>g.combined)){if(reportType==='portfolio')reportMetric(ui('Totaal alle valuta’s in EUR'),ui('Geen gegevens voor deze selectie.'),ui('Totaal alle valuta’s in EUR'));$('report-charts').append(homeNode('h3',ui('Totaal alle valuta’s in EUR'),'report-group-heading report-wide'),homeNode('p',ui('Geen gegevens voor deze selectie.'),'report-total-note report-wide'));}
+
 
  if(reportType==='portfolio'&&!$('report-show-currencies').checked)groups=groups.filter(g=>g.combined);
  $('report-metrics').classList.toggle('portfolio-metrics',reportType==='portfolio');
  for(const g of groups){
-  const c=g.currency,scope=(g.label||c)+(g.combined&&coverage?' · '+ui('Onvolledig'):'');
+  const c=g.currency,scope=g.label||c;
   if(reportType!=='growth'&&reportType!=='countries')$('report-charts').append(homeNode('h3',g.combined?scope:ui('Uitsplitsing per valuta')+' · '+c,'report-group-heading report-wide'));
   if(reportType==='portfolio'){
    $('report-metrics').append(homeNode('h3',scope,'report-metric-heading'));
@@ -156,9 +171,38 @@ function renderReports(){
    const bars=reportChartCard(g,ui('Blootstelling in bedragen'),ui('Spreiding inclusief beschikbare ETF-samenstellingen. Niet uitgesplitste delen blijven apart zichtbaar.'));reportBars(bars,reportTop(g.sectors,10),c);
   }
  }
- if(reportType==='growth')renderReportHistory();
- const skipped=reportType==='calendar'?model.calendarSkipped:income?model.incomeSkipped:model.skipped;
- $('report-status').textContent=[groups.length||reportType==='growth'?'':ui('Geen gegevens voor deze selectie.'),skipped?ui('Regels met ontbrekende of ongeldige gegevens overgeslagen:')+' '+new Intl.NumberFormat(appLocale()).format(skipped)+'. '+ui('De totalen zijn alleen gebaseerd op de meegenomen regels.'):''].filter(Boolean).join(' ');
+ const sourceCurrency=$('report-currency').value;
+ const issues=reportType==='growth'?renderReportHistory():[];
+ const sourceRows=income?source.dividends:source.positions;
+ for(const row of sourceRows){
+  if(sourceCurrency&&row.currency!==sourceCurrency)continue;
+  if(income&&reportDate(row.paid_on)&&(reportType==='calendar'
+    ? Number(row.paid_on.slice(0,4))<Number(year)-5||Number(row.paid_on.slice(0,4))>Number(year)
+    : row.paid_on.slice(0,4)!==year))continue;
+  if(income){
+   if(reportInstrument(row)&&reportNumber(row.amount)&&reportDate(row.paid_on))continue;
+   issues.push({...row,kind:ui('Dividend'),reason:ui('Ontbrekende of ongeldige dividendgegevens'),dates:row.paid_on?[row.paid_on]:[]});
+  }else if(!reportInstrument(row)||![row.cost,row.value,row.realised,row.dividend].every(reportNumber)){
+   issues.push({...row,kind:ui('Positie'),reason:row.value==null&&!row.invalid_position?ui('Geen actuele koers beschikbaar'):ui('Ontbrekende of ongeldige positiegegevens')});
+  }
+ }
+ if(reportCombined){
+  const scope=ui('Totaal alle valuta’s in EUR');
+  for(const row of income?reportCombined.missing_dividends:reportCombined.excluded){
+   if(portfolioKeys&&!portfolioKeys.has(reportKey(row)))continue;
+   if(income&&reportDate(row.day)&&(reportType==='calendar'
+     ? Number(row.day.slice(0,4))<Number(year)-5||Number(row.day.slice(0,4))>Number(year)
+     : row.day.slice(0,4)!==year))continue;
+   const reason=row.reason?ui(row.reason):ui('Geen opgeslagen wisselkoers');
+   issues.push({...row,scope,kind:income?ui('Dividend'):ui('Positie'),reason,dates:row.dates||(row.day?[row.day]:[])});
+  }
+ }
+ $('report-status').textContent=issues.length?ui('De totalen zijn alleen gebaseerd op de meegenomen regels.'):groups.length||reportType==='growth'?'':ui('Geen gegevens voor deze selectie.');
+ if(reportType==='portfolio'&&reportCombined?.as_of){
+  const date=reportCombined.fx_dates.map(p=>p.rate_on).sort().at(-1)||reportCombined.as_of;
+  $('report-status').textContent=[$('report-status').textContent,ui('Dividend tegen de koers op betaaldatum; marktwaarde tegen beschikbare recente koersen.')+' '+ui('Koersdatum')+': '+dayLabel(date)].filter(Boolean).join(' ');
+ }
+ renderReportIssues(issues);
  renderReportTable({...model,groups},year);
 }
 function renderReportHistory(){
@@ -166,12 +210,24 @@ function renderReportHistory(){
  if(!reportHistory){
   const message=homeNode('div',undefined,'panel report-wide');message.append(homeNode('p',reportHistoryError?ui('Historie laden mislukt. Probeer het opnieuw.'):ui('Opgeslagen koershistorie laden…')));
   if(reportHistoryError){const button=homeNode('button',ui('Opnieuw proberen'),'secondary');button.type='button';button.onclick=()=>{reportHistoryKey='';reportHistoryError=false;reportHistoryRefreshes=0;renderReports();};message.append(button);}
-  $('report-charts').append(message);if(!reportHistoryError)loadReportHistory();return;
+  $('report-charts').append(message);if(!reportHistoryError)loadReportHistory();return [];
  }
+ const issues=[];
  for(const g of [...(reportCombined?.history?[{...reportCombined.history,label:ui('Totaal alle valuta’s in EUR')}]:[]),...reportHistory.currencies]){$('report-charts').append(homeNode('h3',g.label||ui('Uitsplitsing per valuta')+' · '+g.currency,'report-group-heading report-wide'));const points=reportHistoryWindow(g,reportRange);const card=reportChartCard(g,ui('Marktwaarde naast kostprijs'),ui('Bekende dagwaarden; aankopen en verkopen beïnvloeden de waarde. Ontbrekende posities tellen die dag niet mee.'),true);reportLine(card,points,[{key:'value',name:ui('Marktwaarde'),color:'#47dcb0'},{key:'cost',name:ui('Openstaande kostprijs'),color:'#70b7ff'}],g.currency);
-  const start=g.as_of?chartPeriodStart(g.as_of,reportRange):'0001-01-01',missing=points.filter(p=>p.skipped).length+(g.omitted_dates||[]).filter(day=>day>=start).length;if(missing)card.detail.textContent=ui('Dagen met overgeslagen gegevens:')+' '+missing+'. '+ui('De totalen zijn alleen gebaseerd op de meegenomen regels.');
+  const start=g.as_of?chartPeriodStart(g.as_of,reportRange):'0001-01-01';
+  if(g.issues){
+   for(const issue of g.issues){
+    const dates=issue.dates.filter(day=>day>=start);
+    if(dates.length)issues.push({...issue,kind:ui('Positie'),dates,reason:issue.reason==='historic_quote'
+      ?ui('Ontbrekende koers'):ui('Ontbrekende of ongeldige positiegegevens')});
+   }
+  }else{
+   const dates=[...points.filter(p=>p.skipped).map(p=>p.day),...(g.omitted_dates||[]).filter(day=>day>=start)].sort();
+   if(dates.length)issues.push({scope:g.label||g.currency,reason:ui('Dagen met overgeslagen gegevens:')+' '+dates.length,dates});
+  }
  }
  if(!reportHistory.currencies.length)$('report-charts').append(homeNode('p',ui('Geen gegevens voor deze selectie.'),'report-wide'));
+ return issues;
 }
 function renderReportTable(model,year){
  const income=reportIncome(reportType),head=$('report-head'),body=$('report-rows');head.replaceChildren();body.replaceChildren();

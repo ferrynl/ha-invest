@@ -22,6 +22,17 @@ def positive(value):
     except InvalidOperation as exc:
         raise ValueError('Ongeldig getal; gebruik een punt als decimaalteken.') from exc
 
+def valid_position_income(rows):
+    valid=[]
+    for row in rows:
+        try:
+            date.fromisoformat(row['paid_on'])
+            if Decimal(row['amount']).is_finite():valid.append(row)
+        except (ArithmeticError,ValueError,TypeError,KeyError):
+            continue
+    return valid
+
+
 class Store:
     def __init__(self, root):
         self.root = Path(root)
@@ -174,16 +185,26 @@ class Store:
                 observations,prices=self.history_inputs(db,instrument)
             else:observations=quotes_by_listing.get(instrument,[]);prices=daily_by_listing.get(instrument,[])
             group['quote']=observations[-1] if observations else None
-            chart = daily_values(purchases_by_position[key],prices,observations)
-            income = income_by_position.get(key,[])
-            chart = with_dividends(chart, income)
-            received = sum((Decimal(d['amount']) for d in income), Decimal(0))
-            last=chart[-1];quantity,cost,realised=Decimal(last['quantity']),Decimal(last['cost']),Decimal(last['realised'])
-            value = quantity * Decimal(group['quote']['price']) if group['quote'] else (Decimal(0) if not quantity else None)
-            positions.append({**group, 'dividend': str(received), 'realised':str(realised),'total_gain': str(value - cost +realised+ received) if value is not None else None,
-                              'history': chart, 'quantity': str(quantity), 'cost': str(cost),
-                              'value': str(value) if value is not None else None,
-                              'gain': str(value - cost+realised) if value is not None else None})
+            income = valid_position_income(income_by_position.get(key,[]))
+            try:
+                chart = daily_values(purchases_by_position[key],prices,observations)
+                chart = with_dividends(chart, income)
+                received = sum((Decimal(d['amount']) for d in income), Decimal(0))
+                last=chart[-1];quantity,cost,realised=Decimal(last['quantity']),Decimal(last['cost']),Decimal(last['realised'])
+                if not all(number.is_finite() for number in (quantity,cost,realised)):
+                    raise ValueError()
+                value = quantity * Decimal(group['quote']['price']) if group['quote'] else (Decimal(0) if not quantity else None)
+                if value is not None and not value.is_finite():raise ValueError()
+                positions.append({**group, 'dividend': str(received), 'realised':str(realised),'total_gain': str(value - cost +realised+ received) if value is not None else None,
+                                  'history': chart, 'quantity': str(quantity), 'cost': str(cost),
+                                  'value': str(value) if value is not None else None,
+                                  'gain': str(value - cost+realised) if value is not None else None})
+            except (ArithmeticError,ValueError,TypeError,KeyError,IndexError):
+                # Preserve the identity and raw ledger rows for report diagnostics.
+                positions.append({**group,'history':[],'invalid_position':True,'quantity':None,
+                                  'cost':None,'realised':None,'dividend':None,'value':None,
+                                  'gain':None,'total_gain':None})
+                continue
             if accumulator is not None:
                 accumulator.add(positions[-1]);positions[-1]['history']=chart[-1:];positions[-1]['history_loaded']=False
         scoped=lambda rows:[r for r in rows if account=='all' or str(r['account_id'])==str(account)]
@@ -194,7 +215,7 @@ class Store:
         if compact_view:result['compact']=True
         return result
 
-    def position_histories(self,snapshot,account='all'):
+    def position_histories(self,snapshot,account='all',skip_invalid=False):
         """Yield a single complete position; never materialise all daily histories."""
         trades={};income={}
         identity=lambda r:tuple(r[k] for k in ('account_id','symbol','exchange','currency'))
@@ -207,8 +228,17 @@ class Store:
             for p in snapshot['positions']:
                 if account!='all' and str(p['account_id'])!=str(account):continue
                 listing=tuple(p[k] for k in ('symbol','exchange','currency'))
+                if p.get('invalid_position'):
+                    yield p
+                    continue
                 quotes,daily=self.history_inputs(db,listing)
-                yield {**p,'history':with_dividends(daily_values(trades[identity(p)],daily,quotes),income.get(identity(p),[]))}
+                try:
+                    history=with_dividends(daily_values(trades[identity(p)],daily,quotes),valid_position_income(income.get(identity(p),[])))
+                except (ArithmeticError,ValueError,TypeError,KeyError,IndexError):
+                    if not skip_invalid:raise
+                    yield {**p,'history':[],'invalid_position':True}
+                    continue
+                yield {**p,'history':history}
 
     def sampled_state(self,snapshot,mode,account='all'):
         """Retain only annual boundaries or dividend dates for specialist reports."""
@@ -217,7 +247,7 @@ class Store:
             key=tuple(row[k] for k in ('account_id','symbol','exchange','currency'))
             payments.setdefault(key,set()).add(row['paid_on'])
         positions=[]
-        for p in self.position_histories(snapshot,account):
+        for p in self.position_histories(snapshot,account,skip_invalid=mode=='annual'):
             if mode=='annual':
                 from performance import annual_points
                 points=annual_points(p['history'])

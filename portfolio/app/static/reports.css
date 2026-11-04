@@ -31,7 +31,12 @@
 .report-section-heading p{font-size:13px;margin:0;color:#93a8c2}
 .report-scope-note{color:#87a09f;border:1px solid #29413f;border-radius:30px;padding:6px 10px;font-size:10px;white-space:nowrap}
 .report-coverage{font-size:12px;line-height:1.7;color:#d8c08e;background:#342c1d55;border:1px solid #66523266;border-radius:10px;padding:12px 16px;margin:14px 0}
-.report-coverage:empty{display:none}
+.report-coverage:empty,.report-issues:empty{display:none}
+.report-issues{margin:14px 0;padding:16px;border:1px solid #66523266;border-radius:10px;background:#342c1d55;overflow-wrap:anywhere}
+.report-issues h3,.report-issues ul{margin:0}
+.report-issues ul{padding-inline-start:20px}
+.report-issues li{margin-top:10px;color:#d8c08e}
+.report-issues strong{color:#e6edf7}
 .reports-dashboard #report-description{font-size:11px;max-width:110ch;margin:10px 0 18px}
 .reports-dashboard .home-metrics{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:16px 0 20px}
 .reports-dashboard .home-metric{background:linear-gradient(130deg,#162337,#111d2e);border:1px solid #2a3b51;border-radius:13px;padding:21px 24px;container-type:inline-size}

@@ -109,26 +109,41 @@ def report(store,account='all',year='',currency='',view='all'):
         target['total']+=value;target['included' if row['included_in_net'] else 'additional']+=value
         target['categories'][row['category']]=target['categories'].get(row['category'],Decimal(0))+value
         month=row['paid_on'][:7];target['months'][month]=target['months'].get(month,Decimal(0))+value
-    total=group('EUR');native={};missing=[]
+    valid_rates=[]
+    for row in rates:
+        try:
+            date.fromisoformat(row['day'])
+            rate=number(row['rate'])
+            if rate>0:valid_rates.append({**row,'rate':rate})
+        except (ValueError,TypeError):
+            continue
+    total=group('EUR');native={};missing=[];invalid=[];included=[]
     for row in rows:
-        value=number(row['amount']);add(native.setdefault(row['currency'],group(row['currency'])),row,value)
+        try:
+            day=date.fromisoformat(row['paid_on'])
+            value=number(row['amount'])
+            code(row['currency'])
+        except (ValueError,TypeError):
+            invalid.append(dict(id=row['id'],currency=row['currency'],paid_on=row['paid_on'],
+                                account_name=row['account_name'],ticker=row['ticker']))
+            continue
+        included.append(row)
+        add(native.setdefault(row['currency'],group(row['currency'])),row,value)
         base,scale=unit(row['currency']);found=None
         if base=='EUR':factor=scale;actual=row['paid_on'];source='identity'
         else:
-            candidates=[r for r in rates if r['quote']==base and (date.fromisoformat(row['paid_on'])-timedelta(days=7)).isoformat()<=r['day']<=row['paid_on']]
+            candidates=[r for r in valid_rates if r['quote']==base and (day-timedelta(days=7)).isoformat()<=r['day']<=row['paid_on']]
             if candidates:found=candidates[-1]
             if not found:
                 row.update(eur_amount=None,rate=None,rate_on=None);missing.append(dict(id=row['id'],currency=row['currency'],day=row['paid_on']));continue
-            rate=number(found['rate'])
-            if rate<=0:raise ValueError('Ongeldige wisselkoers ontvangen.')
-            factor=scale/rate;actual=found['day'];source=found['source']
+            factor=scale/found['rate'];actual=found['day'];source=found['source']
         row.update(eur_amount=str(value*factor),rate=str(factor),rate_on=actual,fx_source=source)
         add(total,row,value*factor)
     def serialize(value):
         if isinstance(value,Decimal):return str(value)
         if isinstance(value,dict):return {k:serialize(v) for k,v in value.items()}
         return value
-    return dict(total=serialize(total),currencies=[serialize(g) for _,g in sorted(native.items())],entries=rows,missing_fx=missing,complete=not missing,known_only=True)
+    return dict(total=serialize(total),currencies=[serialize(g) for _,g in sorted(native.items())],entries=included,missing_fx=missing,invalid=invalid,complete=not (missing or invalid),known_only=True)
 
 def refresh_fx(store,account='all',year='',currency='',view='all'):
     rows=entries(store,account,year,currency,view)

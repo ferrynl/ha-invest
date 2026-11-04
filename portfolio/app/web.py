@@ -279,7 +279,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 try:
                     selection=json.loads(instrument) if instrument else None
                     key='reports-history:'+json.dumps([account,selection,currency],separators=(',',':'))
-                    return self.respond(cache.derived(key,lambda:report_history({**compact_state(),'positions':store.position_histories(compact_state(),account)},account,selection,currency)),etag=True)
+                    return self.respond(cache.derived(key,lambda:report_history({**compact_state(),'positions':store.position_histories(compact_state(),account,skip_invalid=True)},account,selection,currency)),etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
             if path=='/api/home/history':
                 from dashboard import histories

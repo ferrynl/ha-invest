@@ -6871,6 +6871,18 @@ const UI_TRANSLATIONS = {
   "en": "Not recorded",
   "es": "No registrado"
  },
+ "Toelichting en overgeslagen regels": {"nl":"Toelichting en overgeslagen regels","en":"Notes and skipped records","es":"Notas y registros omitidos"},
+ "Rendement over de meegenomen gegevens": {"nl":"Rendement over de meegenomen gegevens","en":"Return on included data","es":"Rentabilidad de los datos incluidos"},
+ "Het resultaat en XIRR gebruiken de gegevens die konden worden meegenomen.": {"nl":"Het resultaat en XIRR gebruiken de gegevens die konden worden meegenomen.","en":"The result and XIRR use the data that could be included.","es":"El resultado y la TIR usan los datos que se pudieron incluir."},
+ "Jaarresultaat gebruikt alleen posities met vergelijkbare waarderingen.": {"nl":"Jaarresultaat gebruikt alleen posities met vergelijkbare waarderingen.","en":"Annual results use positions with comparable valuations.","es":"El resultado anual usa posiciones con valoraciones comparables."},
+ "Geen actuele koers beschikbaar": {"nl":"Geen actuele koers beschikbaar","en":"No current price available","es":"No hay una cotización actual disponible"},
+ "Geen koers op de jaargrens": {"nl":"Geen koers op de jaargrens","en":"No price at the year boundary","es":"No hay cotización en el cierre del año"},
+ "Geen wisselkoers op de jaargrens": {"nl":"Geen wisselkoers op de jaargrens","en":"No exchange rate at the year boundary","es":"No hay tipo de cambio en el cierre del año"},
+ "Ontbrekende of ongeldige transactiegegevens": {"nl":"Ontbrekende of ongeldige transactiegegevens","en":"Missing or invalid transaction data","es":"Datos de transacción incompletos o no válidos"},
+ "Ontbrekende of ongeldige kostengegevens": {"nl":"Ontbrekende of ongeldige kostengegevens","en":"Missing or invalid charge data","es":"Datos de gastos incompletos o no válidos"},
+ "Gekoppelde omboeking bevat een overgeslagen positie": {"nl":"Gekoppelde omboeking bevat een overgeslagen positie","en":"A linked transfer contains a skipped position","es":"Un traspaso vinculado contiene una posición omitida"},
+ "Positie": {"nl":"Positie","en":"Holding","es":"Posición"},
+ "Kostenpost": {"nl":"Kostenpost","en":"Charge","es":"Gasto"},
  "Onvolledig: ontbrekende koersen of omrekeningen. Totaalrendement en XIRR zijn niet berekend.": {
   "nl": "Onvolledig: ontbrekende koersen of omrekeningen. Totaalrendement en XIRR zijn niet berekend.",
   "en": "Incomplete: missing prices or currency conversions. Total return and XIRR have not been calculated.",

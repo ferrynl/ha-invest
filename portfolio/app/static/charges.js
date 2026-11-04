@@ -15,6 +15,7 @@ function chargeButton(label,handler){const button=homeNode('button',label,'secon
 function renderChargeReport(){
  $('report-description').textContent=ui('Alleen expliciet vastgelegde bedragen. Ontbrekende kosten zijn onbekend, niet nul. Btw wordt niet uit een tarief geschat.');
  for(const id of ['report-metrics','report-charts','report-insights','report-rows','report-head'])$(id).replaceChildren();
+ renderReportIssues([]);
  const key=chargeScope();if(key!==chargeDataKey){loadChargeReport();}
  const controls=homeNode('section',undefined,'panel report-wide');
  if(accessSession?.user?.role==='admin'&&currentProfile!=='demo'){
@@ -27,6 +28,11 @@ function renderChargeReport(){
  if(chargeError){$('report-status').textContent=chargeError;controls.append(chargeButton(ui('Opnieuw proberen'),()=>{clearChargeReport();renderChargeReport();}));return;}
  if(!chargeData){$('report-status').textContent=ui('Geen kosten vastgelegd.');return;}
  $('report-status').textContent=chargeData.missing_fx.length?ui('Onvolledig totaal: ontbrekende historische wisselkoersen.')+' '+chargeData.missing_fx.length:ui('Rapport bevat uitsluitend de vastgelegde kosten en belastingen.');
+ const issues=chargeData.entries.filter(row=>row.eur_amount===null).map(row=>({...row,
+  symbol:row.ticker,kind:ui('Kostenpost'),reason:ui('Geen opgeslagen wisselkoers'),dates:[row.paid_on]}));
+ for(const row of chargeData.invalid||[])issues.push({...row,symbol:row.ticker,kind:ui('Kostenpost'),
+  reason:ui('Ontbrekende of ongeldige kostengegevens'),dates:row.paid_on?[row.paid_on]:[]});
+ renderReportIssues(issues);
  $('report-count').textContent=String(chargeData.entries.length);
  const group=chargeData.total,known=chargeData.entries.length>0,converted=group.count>0;
  reportMetric(ui('Totaal alle valuta’s in EUR'),converted?money(group.total,'EUR'):'—',chargeData.complete?ui('Geboekte kosten en belastingen'):ui('Onvolledig'));

@@ -32,7 +32,6 @@ function performanceBars(card,years,currency,key){
   reportSvgNode('text',{x:x+width/2,y:270,'text-anchor':'middle',fill:'#a7bad1','font-size':12},row.year,svg);
  });
  const legend=homeNode('p',ui('Groen/rood: jaarresultaat. Grijs: aankopen in dat jaar. Het lopende jaar is tot vandaag.'),'report-chart-note');card.plot.append(legend);
- if(rows.some(r=>r.gain===null))card.detail.textContent=ui('Jaren zonder betrouwbare begin- of eindwaarde tonen geen resultaatbalk.');
 }
 function renderPerformanceReport(){
  $('report-metrics').replaceChildren();$('report-charts').replaceChildren();$('report-insights').replaceChildren();$('report-head').replaceChildren();$('report-rows').replaceChildren();$('report-count').textContent='';
@@ -40,11 +39,22 @@ function renderPerformanceReport(){
  const key=reportHistoryScope();if(performanceKey!==key){clearPerformance();performanceKey=key;}
  if(!performanceData){const panel=homeNode('section',undefined,'panel report-wide');panel.append(homeNode('p',performanceError?ui('Rendementsrapport laden mislukt.'):ui('Rendement berekenen…')));$('report-charts').append(panel);if(performanceError){if(performanceErrorDetails)panel.append(homeNode('p',performanceErrorDetails));const retry=homeNode('button',ui('Opnieuw proberen'),'secondary');retry.type='button';retry.onclick=()=>{clearPerformance();renderReports();};panel.append(retry);}else if(!performanceRequest)loadPerformance(key);return;}
  $('report-status').textContent=ui('Vastgelegde aanvullende kosten en belastingen zijn afgetrokken. Reeds netto verwerkte inhoudingen tellen niet dubbel. Ontbrekende kosten blijven onbekend.');
+ const issues=[];
+ const reasons={quote:ui('Geen actuele koers beschikbaar'),position:ui('Ontbrekende of ongeldige positiegegevens'),
+  fx:ui('Geen opgeslagen wisselkoers'),historic_quote:ui('Geen koers op de jaargrens'),historic_fx:ui('Geen wisselkoers op de jaargrens'),
+  trade:ui('Ontbrekende of ongeldige transactiegegevens'),dividend:ui('Ontbrekende of ongeldige dividendgegevens'),
+  charge:ui('Ontbrekende of ongeldige kostengegevens'),transfer:ui('Gekoppelde omboeking bevat een overgeslagen positie')};
+ const kinds={position:ui('Positie'),trade:ui('Transactie'),dividend:ui('Dividend'),charge:ui('Kostenpost')};
+ let partial=false,historical=false;
  const header=homeNode('tr');for(const label of [ui('Valuta'),ui('Jaar'),ui('Aankoopbedrag'),ui('Jaarresultaat')])header.append(homeNode('th',label));$('report-head').append(header);
  let count=0;
  for(const group of performanceData.groups){
   const label=group.combined?ui('Totaal alle valuta’s in EUR'):ui('Uitsplitsing per valuta')+' · '+group.currency;
-  const card=reportChartCard({label},ui('Rendementsoverzicht'),ui('Winst en verlies per kalenderjaar, naast de aankoopbedragen.'),true);performanceBars(card,group.years,group.currency,label);
+  const skipped=(group.issues||[]);
+  partial ||= Boolean(group.omitted);
+  historical ||= skipped.length>group.omitted;
+  for(const issue of skipped)issues.push({...issue,scope:label,kind:kinds[issue.kind],reason:reasons[issue.reason]});
+  const card=reportChartCard({label},group.omitted&&group.total!==null?ui('Rendement over de meegenomen gegevens'):ui('Rendementsoverzicht'),ui('Winst en verlies per kalenderjaar, naast de aankoopbedragen.'),true);performanceBars(card,group.years,group.currency,label);
   const list=homeNode('div',undefined,'performance-breakdown');card.plot.append(list);
   const amount=value=>value===null?ui('Niet beschikbaar'):money(Number(value)===0?0:value,group.currency);
   list.append(homeNode('h4',ui('Kapitaal')));performanceRow(list,ui('Totale aankoopinleg'),amount(group.invested),null,ui('Alle aankoopbedragen; verkopen worden hier niet afgetrokken. Omboekingen tellen niet dubbel.'));
@@ -56,9 +66,11 @@ function renderPerformanceReport(){
   performanceRow(list,ui('Totaal resultaat'),amount(group.total),group.total_percent,ui('Koersresultaat plus gerealiseerd resultaat en netto dividend, na vastgelegde aanvullende kosten en belastingen.'),true);
   performanceRow(list,ui('Intern rendement (XIRR)'),group.irr===null?ui('Niet berekenbaar'):performancePercent(group.irr),null,ui('Op jaarbasis uit gedateerde aankopen, verkopen, netto dividend, aanvullende kosten en de actuele eindwaarde. Een niet-eenduidige uitkomst blijft leeg.'));
   performanceRow(list,ui('Exact tijdgewogen rendement'),ui('Niet berekenbaar'),null,ui('Hiervoor ontbreken portefeuillewaarderingen op ieder moment van een externe geldstroom.'));
-  if(!group.complete)list.prepend(homeNode('p',ui('Onvolledig: ontbrekende koersen of omrekeningen. Totaalrendement en XIRR zijn niet berekend.'),'report-coverage'));
   for(const year of group.years){const row=homeNode('tr');for(const text of [label,year.year,amount(year.invested),amount(year.gain)])cell(row,text);$('report-rows').append(row);count++;}
  }
+ if(partial)$('report-status').textContent+=' '+ui('Het resultaat en XIRR gebruiken de gegevens die konden worden meegenomen.');
+ if(historical)$('report-status').textContent+=' '+ui('Jaarresultaat gebruikt alleen posities met vergelijkbare waarderingen.');
+ renderReportIssues(issues);
  $('report-count').textContent=new Intl.NumberFormat(appLocale()).format(count);
 }
 window.addEventListener('resize',()=>{if(state&&reportType==='performance'&&location.hash.startsWith('#rapporten'))renderReports();});

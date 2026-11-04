@@ -40,7 +40,8 @@ class PerformanceTests(unittest.TestCase):
   self.assertEqual([Decimal(y['invested']) for y in group['years']],[100,120])
  def test_missing_quote_never_becomes_zero_profit_or_rate(self):
   self.trade('1','100','2026-01-01');group=self.report()['groups'][1]
-  self.assertFalse(group['complete']);self.assertIsNone(group['total']);self.assertIsNone(group['irr']);self.assertIsNone(group['years'][0]['gain'])
+  self.assertFalse(group['complete']);self.assertIsNone(group['total']);self.assertIsNone(group['irr']);self.assertEqual(group['years'],[])
+  self.assertEqual(group['issues'][0]['reason'],'quote')
  def test_combined_fx_missing_and_native_currency_scope(self):
   self.stock.update(currency='USD',exchange='NYSE');self.trade('1','100','2026-01-01')
   self.store.quote('TEST','NYSE','USD','110','2026-10-30T10:00:00+00:00','Test')
@@ -57,6 +58,35 @@ class PerformanceTests(unittest.TestCase):
   self.assertEqual(Decimal(group['invested']),800);self.assertEqual(Decimal(group['total']),Decimal('137.6300'))
   self.assertIsNotNone(group['irr'])
   self.assertIsNone(self.report(instrument=['TDT.AS','AMSTERDAM','EUR'])['groups'][0]['irr'])
+ def test_bad_positions_and_unconvertible_costs_do_not_block_known_returns(self):
+  self.trade('1','100','2026-01-01')
+  self.store.quote('TEST','AMSTERDAM','EUR','125','2026-10-30T10:00:00+00:00','Test')
+  self.store.add(dict(symbol='NOQUOTE',exchange='NYSE',currency='USD',name='No quote',quantity='1',price='50',purchased_on='2026-01-02'))
+  snapshot=self.store.state()
+  account=snapshot['accounts'][0]['id']
+  snapshot['charges']=[
+   dict(id=1,account_id=account,category='COMMISSION',currency='EUR',amount='5',paid_on='2026-01-03',included_in_net=False),
+   dict(id=2,account_id=account,category='WITHHOLDING_TAX',currency='EUR',amount='3',paid_on='2026-01-04',included_in_net=True),
+   dict(id=3,account_id=account,category='COMMISSION',currency='USD',amount='7',paid_on='2026-01-05',included_in_net=False),
+  ]
+  group=overview(self.store,snapshot,today=date(2026,10,30))['groups'][0]
+  self.assertFalse(group['complete'])
+  self.assertEqual(tuple(Decimal(group[k]) for k in ('invested','total','additional_costs','included_charges')),(100,20,5,3))
+  self.assertIsNotNone(group['irr'])
+  self.assertIn(('NOQUOTE',None,'quote'),[(i['symbol'],i['id'],i['reason']) for i in group['issues']])
+  self.assertIn((None,3,'fx'),[(i['symbol'],i['id'],i['reason']) for i in group['issues']])
+
+ def test_damaged_transaction_keeps_other_positions_and_identifies_booking(self):
+  self.trade('1','100','2026-01-01')
+  self.store.quote('TEST','AMSTERDAM','EUR','125','2026-10-30T10:00:00+00:00','Test')
+  self.store.add(dict(symbol='BAD',exchange='AMSTERDAM',currency='EUR',name='Bad',quantity='1',price='50',purchased_on='2026-01-02'))
+  with self.store.connect() as db:
+   db.execute("UPDATE purchases SET price='invalid' WHERE symbol='BAD'")
+  snapshot=self.store.sampled_state(self.store.state(compact_view=True),'annual')
+  group=overview(self.store,snapshot,today=date(2026,10,30))['groups'][0]
+  self.assertEqual(Decimal(group['total']),25)
+  self.assertTrue(any(i['symbol']=='BAD' and i['kind']=='trade' and i['id'] and i['dates']==['2026-01-02'] for i in group['issues']))
+
  def test_account_filter_rejects_unknown_accounts(self):
   with self.assertRaises(ValueError):self.report(account='999')
  def test_sparse_year_boundaries_match_full_daily_report_with_dated_fx(self):

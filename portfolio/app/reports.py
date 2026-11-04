@@ -10,6 +10,7 @@ def history(snapshot, account='all', instrument=None, currency=''):
                                    or any(not isinstance(v, str) for v in instrument)):
         raise ValueError('Ongeldige positie.')
     groups = {}
+    issues = {}
     for position in snapshot['positions']:
         if owner is not None and position['account_id'] != owner:
             continue
@@ -18,6 +19,8 @@ def history(snapshot, account='all', instrument=None, currency=''):
         if instrument is not None and [position[k] for k in ('symbol', 'exchange', 'currency')] != instrument:
             continue
         days = groups.setdefault(position['currency'], {})
+        missing = []
+        invalid = []
         for point in position['history']:
             day = days.setdefault(point['day'], dict(value=Decimal(0), cost=Decimal(0),
                                                      dividend=Decimal(0), count=0, skipped=0))
@@ -27,14 +30,21 @@ def history(snapshot, account='all', instrument=None, currency=''):
                     raise InvalidOperation
             except (InvalidOperation, TypeError, KeyError, ValueError):
                 day['skipped'] += 1
+                (missing if point.get('value') is None else invalid).append(point['day'])
                 continue
             for key, value in zip(('value', 'cost', 'dividend'), amounts):
                 day[key] += value
             day['count'] += 1
+        for reason, dates in (('historic_quote',missing),('position',invalid)):
+            if dates:
+                issues.setdefault(position['currency'],[]).append({
+                    **{key:position.get(key) for key in ('symbol','exchange','currency','account_name')},
+                    'reason':reason,'dates':dates})
     return dict(data_revision=snapshot.get('data_revision'), currencies=[
         dict(currency=code, as_of=max(days, default=''), history=[dict(day=date, **{
             key: str(value) if isinstance(value, Decimal) else value for key, value in point.items()
         }) for date, point in sorted(days.items()) if point['count']],
+             issues=issues.get(code,[]),
              omitted_days=sum(not point['count'] for point in days.values()),
              omitted_dates=[day for day, point in sorted(days.items()) if not point['count']])
         for code, days in sorted(groups.items())
@@ -66,7 +76,7 @@ def combined(store, snapshot, account='all', instrument=None, currency='', inclu
             if number.is_finite() and number>0:valid_rates.append(row)
         except (ArithmeticError,ValueError,TypeError,KeyError):continue
     rates=valid_rates
-    euro = build(scoped, rates, account, today, include_history=include_history, skip_invalid=True,retain_history=not stream_history,positions=store.position_histories(scoped,account) if stream_history and include_history else None)
+    euro = build(scoped, rates, account, today, include_history=include_history, skip_invalid=True,retain_history=not stream_history,positions=store.position_histories(scoped,account,skip_invalid=True) if stream_history and include_history else None)
     indexed = {}
     for row in rates:
         indexed.setdefault(row['quote'], []).append(row)

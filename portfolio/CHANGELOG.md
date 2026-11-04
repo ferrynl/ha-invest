@@ -1,3 +1,7 @@
+## 0.62.0
+
+- Het rendementsoverzicht rekent verder met bruikbare gegevens bij ontbrekende koersen, omrekeningen of ongeldige regels. Onder elk rapport staan de toelichting en de gevonden problemen per regel.
+
 ## 0.61.0
 
 - Het inlogscherm krijgt een beursachtergrond met koerslijnen en candlesticks.
