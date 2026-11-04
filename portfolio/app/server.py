@@ -38,6 +38,7 @@ def refresh():
         seen=set()
         for p in snapshot['positions']:
             instrument=(p['symbol'],p['exchange'],p['currency'])
+            if p.get('invalid_position') or p.get('quote_paused'):continue
             if Decimal(p['quantity'])==0 and any(row.get('transfer_id') and row['side']=='SELL' and (row['symbol'],row['exchange'],row['currency'])==instrument for row in snapshot['purchases']):continue
             if instrument in seen:continue
             seen.add(instrument)

@@ -1,12 +1,12 @@
 /* UI strings use the shared catalogue; pure Node tests retain Dutch defaults. */
 var ui=globalThis.HomeInvestTranslate||((value)=>value);
 // Subpages share existing editors and account controls.
-const settingsSections=['tmx-omboeken','verwijderen','brokers','versie','beveiliging','gebruikers','dashboard','sensoren','opslag','backups'];
+const settingsSections=['koersbeheer','verwijderen','brokers','versie','beveiliging','gebruikers','dashboard','sensoren','opslag','backups'];
 const settingsRoot=document.querySelector('[data-page="instellingen"]');
 const settingsNav=document.createElement('div');settingsNav.id='settings-types';settingsNav.className='report-sidebar';
 document.querySelector('[data-route="instellingen"]').after(settingsNav);
 for(const [index,panel] of [...settingsRoot.children].entries()){
- const route=index===0?'tmx-omboeken':'instellingen-'+settingsSections[index];
+ const route='instellingen-'+settingsSections[index];
  const title=panel.querySelector('h2').textContent;
  const link=document.createElement('a');link.href='#'+route;link.dataset.route=route;link.textContent=title;settingsNav.append(link);
  if(index===0){panel.remove();continue;}
@@ -36,16 +36,16 @@ document.querySelector('[data-route="transacties"]').after(transactionNav);
 for(const [route,title] of [['transacties-dividend',ui('Dividend')],['transacties-omzettingen',ui('Splitsingen en omzettingen')]]){
  const link=document.createElement('a');link.href='#'+route;link.dataset.route=route;link.textContent=title;transactionNav.append(link);
 }
-const pageNames={'over-ons':ui('Over ons'),'import-voorbeeld':ui('Importvoorbeeld'),feedback:ui('Wensen & bugs'),'tmx-omboeken':ui('TMX omboeken naar TDT'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
+const pageNames={'over-ons':ui('Over ons'),'import-voorbeeld':ui('Importvoorbeeld'),feedback:ui('Wensen & bugs'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
 for(const a of [...settingsNav.querySelectorAll('a'),...importNav.querySelectorAll('a'),...transactionNav.querySelectorAll('a')])pageNames[a.dataset.route]=a.textContent;
 for(const [key,title] of reportDefinitions)pageNames['rapporten-'+key]=title;
 function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches&&!document.body.classList.contains('locked');$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label',ui('Menu openen'));}
 function showPage(){
  closeAllPopups();
- let requested=location.hash.slice(1).split('?')[0];if(requested==='instellingen-export')requested='import-export';if(requested==='instellingen')requested='instellingen-dashboard';let page=Object.hasOwn(pageNames,requested)?requested:'home';
- if((page.startsWith('instellingen-')||page.startsWith('import-')||page==='tmx-omboeken'||page==='instellingen'||page==='imports'||page==='import-koppelingen'||page==='import-beoordeling'||page==='import-api')&&accessSession?.user?.role!=='admin')page='home';
+ let requested=location.hash.slice(1).split('?')[0];if(requested==='tmx-omboeken')requested='instellingen-koersbeheer';if(requested==='instellingen-export')requested='import-export';if(requested==='instellingen')requested='instellingen-dashboard';let page=Object.hasOwn(pageNames,requested)?requested:'home';
+ if((page.startsWith('instellingen-')||page.startsWith('import-')||page==='instellingen'||page==='imports'||page==='import-koppelingen'||page==='import-beoordeling'||page==='import-api')&&accessSession?.user?.role!=='admin')page='home';
  if(page==='logs'&&(accessSession?.user?.role!=='admin'||!accessSession?.enabled))page='home';
- const isSettings=page.startsWith('instellingen-')||page==='logs'||page==='valuta'||page==='tmx-omboeken';settingsNav.hidden=!isSettings;document.querySelector('[data-route=instellingen]').setAttribute('aria-expanded',String(isSettings));
+ const isSettings=page.startsWith('instellingen-')||page==='logs'||page==='valuta';settingsNav.hidden=!isSettings;document.querySelector('[data-route=instellingen]').setAttribute('aria-expanded',String(isSettings));
  const isTransactions=page==='transacties'||page.startsWith('transacties-');transactionNav.hidden=!isTransactions;document.querySelector('[data-route=transacties]').setAttribute('aria-expanded',String(isTransactions));
  const brokerPage=page.match(/^import-(trading212|traderepublic|revolut)$/);importNav.hidden=!(page==='imports'||page.startsWith('import-'));document.querySelector('[data-route=imports]').setAttribute('aria-expanded',String(!importNav.hidden));
  document.body.classList.toggle('broker-import-page',!!brokerPage);$('import-provider').disabled=!!brokerPage;
@@ -85,7 +85,7 @@ function showPage(){
  if(page==='instellingen-backups')loadBackupFiles();
  if(page==='valuta')loadCurrencies();
  if(page==='instellingen-sensoren'&&state)loadHomeAssistant();
- if(page==='tmx-omboeken')loadConversions();
+ if(page==='instellingen-koersbeheer'){renderQuoteManagement();loadConversions();}
  window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',showPage);
@@ -105,7 +105,7 @@ function renderPages(){
  $('report-year').replaceChildren();for(const year of years){const option=document.createElement('option');option.value=year;option.textContent=year;$('report-year').append(option);}$('report-year').value=years.includes(selected)?selected:String(new Date().getFullYear());
  if(location.hash.startsWith('#rapporten'))renderReports();
  if(location.hash==='#instellingen')loadHomeAssistant();
- if(location.hash==='#tmx-omboeken')loadConversions();
+ if(['#tmx-omboeken','#instellingen-koersbeheer'].includes(location.hash)){renderQuoteManagement();loadConversions();}
 }
 async function loadHomeAssistant(){
  const request=stateRequest;

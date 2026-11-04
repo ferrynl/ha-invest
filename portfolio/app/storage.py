@@ -158,6 +158,7 @@ class Store:
         fund_compositions=all_saved(db)
         manual=[dict(r) for r in db.execute('SELECT * FROM instrument_valuations')]
         from valuations import apply_final_prices
+        paused={tuple(row) for row in db.execute('SELECT symbol,exchange,currency FROM instrument_quote_pauses')}
         quotes,daily=apply_final_prices(quotes,daily,manual)
         category_map={(r['symbol'],r['exchange'],r['currency']):r for r in categories}
         account_names={a['id']:a for a in accounts}
@@ -185,6 +186,7 @@ class Store:
                 observations,prices=self.history_inputs(db,instrument)
             else:observations=quotes_by_listing.get(instrument,[]);prices=daily_by_listing.get(instrument,[])
             group['quote']=observations[-1] if observations else None
+            group['quote_paused']=instrument in paused
             income = valid_position_income(income_by_position.get(key,[]))
             try:
                 chart = daily_values(purchases_by_position[key],prices,observations)

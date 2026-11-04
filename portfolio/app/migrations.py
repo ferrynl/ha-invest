@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from contextlib import closing
 
-SCHEMA_VERSION = 23
+SCHEMA_VERSION = 24
 MIGRATIONS = {
     1: (
         'CREATE TABLE IF NOT EXISTS purchases (id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, exchange TEXT NOT NULL, name TEXT NOT NULL, quantity TEXT NOT NULL, price TEXT NOT NULL, currency TEXT NOT NULL, purchased_on TEXT NOT NULL, created_at TEXT NOT NULL)',
@@ -121,6 +121,12 @@ MIGRATIONS = {
         'CREATE INDEX passkeys_user ON passkeys(user_id)',
         "CREATE TABLE passkey_challenges (id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('register','login')), challenge BLOB NOT NULL, origin TEXT NOT NULL, rp_id TEXT NOT NULL, user_id INTEGER, session_hash TEXT NOT NULL DEFAULT '', expires_at REAL NOT NULL)",
         'CREATE INDEX passkey_challenges_expiry ON passkey_challenges(expires_at)',
+    ),
+    24: (
+        'CREATE TABLE instrument_quote_pauses (symbol TEXT NOT NULL, exchange TEXT NOT NULL, currency TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(symbol,exchange,currency))',
+    ) + tuple(
+        f'CREATE TRIGGER dashboard_instrument_quote_pauses_{action.lower()} AFTER {action} ON instrument_quote_pauses BEGIN UPDATE dashboard_revision SET revision=revision+1 WHERE id=1; END'
+        for action in ('INSERT','UPDATE','DELETE')
     ),
 }
 

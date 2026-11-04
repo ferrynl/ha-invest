@@ -35,6 +35,7 @@ def save(store,data):
         if day>date.today():raise ValueError('De koersdatum mag niet in de toekomst liggen.')
     with store.connect() as db:
         if not db.execute('SELECT 1 FROM purchases WHERE symbol=? AND exchange=? AND currency=?',key).fetchone():raise ValueError('Aandeel niet gevonden.')
+        db.execute('DELETE FROM instrument_quote_pauses WHERE symbol=? AND exchange=? AND currency=?',key)
         if automatic:db.execute('DELETE FROM instrument_valuations WHERE symbol=? AND exchange=? AND currency=?',key)
         else:db.execute('INSERT OR REPLACE INTO instrument_valuations VALUES(?,?,?,?,?,?)',(*key,price,day.isoformat(),now()))
     record(store,'INFO','market','valuation_changed','Koersinstelling aangepast.',dict(symbol=key[0],exchange=key[1],currency=key[2],automatic=automatic,**({} if automatic else dict(price=price,day=day.isoformat()))))
@@ -50,3 +51,48 @@ def missing_diagnostics(store,positions):
         with store.read() as db:previous=db.execute('SELECT 1 FROM app_logs WHERE reference=? AND event=? AND created_at>?',(reference,'valuation_missing',since)).fetchone()
         if not previous:record(store,'WARNING','valuation','valuation_missing','Positie zonder koers overgeslagen bij bekende marktwaarde en winst.',details,reference=reference)
         p['valuation_log_id']=reference
+
+
+def settle(store,data):
+    """Book verified cash proceeds and pause the listing once every account is closed."""
+    from history import daily_values
+    from instruments import identity
+    from storage import now,positive
+    from transactions import scope
+
+    key=identity(data)
+    day=date.fromisoformat(str(data.get('day','')))
+    if day.year<1900 or day>date.today():
+        raise ValueError('Kies een afwikkeldatum vanaf 1900 tot en met vandaag.')
+    price=positive(data.get('price'))
+    expected=Decimal(positive(data.get('quantity')))
+    with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE')
+        account=scope(db,data.get('account_id'))
+        if account is None:raise ValueError('Kies één brokeraccount voor de afwikkeling.')
+        rows=[dict(row) for row in db.execute(
+            'SELECT * FROM purchases WHERE symbol=? AND exchange=? AND currency=? ORDER BY id',key)]
+        trades=[row for row in rows if row['account_id']==account]
+        if not trades or any(row['purchased_on']>day.isoformat() for row in trades):
+            raise ValueError('Controleer de afwikkeldatum. Er ontbreken transacties of er staan latere transacties.')
+        quantity=Decimal(daily_values(trades,[],[],day,summary_only=True)[-1]['quantity'])
+        if quantity!=expected:
+            raise ValueError('De open positie is gewijzigd. Vernieuw de pagina en controleer de afwikkeling opnieuw.')
+        created=now()
+        cursor=db.execute(
+            "INSERT INTO purchases(symbol,exchange,currency,name,quantity,price,purchased_on,created_at,account_id,side,trade_time) VALUES(?,?,?,?,?,?,?,?,?,'SELL',?)",
+            (*key,trades[-1]['name'],str(quantity),price,day.isoformat(),created,account,day.isoformat()+'T23:59:59'))
+        trade_id=cursor.lastrowid
+        booked=[dict(row) for row in db.execute(
+            'SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',
+            (account,*key))]
+        daily_values(booked,[],[],summary_only=True)
+        grouped={}
+        for row in rows:
+            if row['account_id']!=account:grouped.setdefault(row['account_id'],[]).append(row)
+        closed=all(Decimal(daily_values(other,[],[],summary_only=True)[-1]['quantity'])==0 for other in grouped.values())
+        if closed:
+            db.execute('INSERT OR REPLACE INTO instrument_quote_pauses VALUES(?,?,?,?)',(*key,created))
+    record(store,'INFO','valuation','position_settled','Positie met een contante afwikkeling gesloten.',
+           dict(symbol=key[0],exchange=key[1],currency=key[2],account_id=account,trade_id=trade_id,quotes_paused=closed))
+    return dict(ok=True,quotes_paused=closed)

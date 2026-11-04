@@ -10,6 +10,7 @@ from storage import positive
 from migrations import SCHEMA_VERSION
 
 TABLES={
+ 'instrument_quote_pauses':(24,('symbol','exchange','currency','updated_at')),
  'fund_compositions':(22,('symbol','exchange','currency','source_url','as_of','fetched_at','payload')),
  'instrument_valuations':(15,('symbol','exchange','currency','price','day','updated_at')),
  'broker_accounts':(6,('id','name','broker','created_at')),

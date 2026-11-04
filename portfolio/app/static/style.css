@@ -213,3 +213,5 @@ main input,main select,main textarea{max-width:100%}
 @media (max-width: 580px) {
   .login-methods { grid-template-columns: 1fr; }
 }
+.quote-management-actions { white-space: normal; }
+.quote-management-actions button { margin: 3px 8px 3px 0; }

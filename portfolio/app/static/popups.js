@@ -27,6 +27,7 @@ function formPopup(id,title,label,feedbackIds=[]){
  const cancel=document.createElement('button');cancel.type='button';cancel.className='secondary';cancel.textContent=ui('Annuleren');cancel.addEventListener('click',()=>closePopup(panel.id));form.append(cancel);
 }
 function bindPopups(){
+ registerPopup('settlement-editor',ui('Contante afwikkeling boeken'));
  registerPopup('backup-file-editor',ui('Back-upbestand beheren'));
  registerPopup('cleanup-editor',ui('Gegevens opschonen'));
  registerPopup('broker-editor',ui('Brokeraccount aanpassen'));

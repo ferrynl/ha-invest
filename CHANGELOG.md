@@ -1,3 +1,7 @@
+## 0.63.0
+
+- Beheer ontbrekende koersen, contante afwikkelingen en de TMX-omboeking op één pagina. Een volledig afgewikkelde notering stopt automatisch met koersaanvragen en blijft in de historie.
+
 ## 0.62.0
 
 - Het rendementsoverzicht rekent verder met bruikbare gegevens bij ontbrekende koersen, omrekeningen of ongeldige regels. Onder elk rapport staan de toelichting en de gevonden problemen per regel.

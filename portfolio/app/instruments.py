@@ -48,6 +48,7 @@ def details(store,data,account='all',include_pending=True):
         prices=[dict(r) for r in db.execute('SELECT day,price FROM daily_prices WHERE symbol=? AND exchange=? AND currency=? ORDER BY day',key)]
         quote=db.execute('SELECT price,quoted_at,source FROM quotes WHERE symbol=? AND exchange=? AND currency=? ORDER BY quoted_at DESC,id DESC LIMIT 1',key).fetchone()
         manual=db.execute('SELECT * FROM instrument_valuations WHERE symbol=? AND exchange=? AND currency=?',key).fetchone()
+        paused=db.execute('SELECT 1 FROM instrument_quote_pauses WHERE symbol=? AND exchange=? AND currency=?',key).fetchone() is not None
         if manual:
             from valuations import final_quote
             quote=final_quote(dict(manual));prices=[row for row in prices if row['day']<manual['day']]+[dict(day=manual['day'],price=manual['price'])]
@@ -94,7 +95,7 @@ def details(store,data,account='all',include_pending=True):
         from fund_holdings import saved, KNOWN
         fund_composition=saved(store,key)
         from fundamentals import supported
-        return dict(fund_composition=fund_composition,fund_source=KNOWN.get(key,''),is_etf=bool(fund_composition) or bool(categories and categories['asset_type']=='ETF') or key in KNOWN,fundamentals_supported=supported(key),manual_valuation=dict(manual) if manual else None,summary=summary,category_sync=dict(sync) if sync else {'status':'pending'},symbol=key[0],exchange=key[1],currency=key[2],name=trades[0]['name'] if trades else key[0],categories=dict(categories) if categories else {field:'' for field in FIELDS},prices=prices,quote=dict(quote) if quote else None,events=events,account_id=account)
+        return dict(fund_composition=fund_composition,fund_source=KNOWN.get(key,''),is_etf=bool(fund_composition) or bool(categories and categories['asset_type']=='ETF') or key in KNOWN,fundamentals_supported=supported(key),manual_valuation=dict(manual) if manual else None,quote_paused=paused,summary=summary,category_sync=dict(sync) if sync else {'status':'pending'},symbol=key[0],exchange=key[1],currency=key[2],name=trades[0]['name'] if trades else key[0],categories=dict(categories) if categories else {field:'' for field in FIELDS},prices=prices,quote=dict(quote) if quote else None,events=events,account_id=account)
 
 
 def category_overview(store,account='all'):

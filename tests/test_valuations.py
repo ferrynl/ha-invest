@@ -4,7 +4,7 @@ from unittest.mock import patch
 from decimal import Decimal
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'portfolio'/'app'))
 from storage import Store
-from valuations import save
+from valuations import save,settle
 from instruments import details
 from restore import restore_backup
 from diagnostics import read_logs
@@ -52,3 +52,34 @@ class ValuationTests(unittest.TestCase):
    original=self.store.state
    with patch.object(self.store,'state',side_effect=lambda **kwargs:dict(original(**kwargs),positions=[p for p in original()['positions'] if p['exchange']=='PRIVATE'])):server.refresh()
    quote.assert_not_called();history.assert_not_called();profile.assert_not_called()
+
+ def test_settlement_is_scoped_and_stops_market_requests_after_last_account(self):
+  import server
+  self.store.add_account(dict(name='Second',broker='Test'))
+  self.store.add(dict(**STOCK,quantity='1',price='50',purchased_on='2026-10-02',account_id=2))
+  self.store.save_history('TEST','NASDAQ','USD','2026-10-01',[dict(day='2026-10-02',price='85')])
+  data=dict(**STOCK,day='2026-10-09',price='0.124231039613383',quantity='2',account_id=1)
+  self.assertFalse(settle(self.store,data)['quotes_paused'])
+  with self.assertRaises(ValueError):settle(self.store,data)
+  self.assertTrue(settle(self.store,{**data,'account_id':2,'quantity':'1'})['quotes_paused'])
+  snapshot=self.store.state()
+  self.assertEqual(len(snapshot['purchases']),4)
+  self.assertEqual(len(snapshot['dividends']),1)
+  self.assertTrue(all(p['quote_paused'] and Decimal(p['quantity'])==0 for p in snapshot['positions']))
+  self.assertEqual(Decimal(snapshot['positions'][0]['realised']),Decimal('0.248462079226766')-200)
+  self.assertEqual(details(self.store,STOCK)['prices'][0]['price'],'85')
+  with patch.object(server,'store',self.store),patch.object(server,'fetch_quote') as quote,patch.object(server,'fetch_history') as history:
+   server.refresh();quote.assert_not_called();history.assert_not_called()
+  backup=self.store.backup().read_bytes()
+  save(self.store,dict(**STOCK,automatic=True))
+  self.assertFalse(self.store.state()['positions'][0]['quote_paused'])
+  restore_backup(self.store,backup)
+  self.assertTrue(Store(self.tmp.name).state()['positions'][0]['quote_paused'])
+
+ def test_settlement_rejects_later_ledger_rows_and_stale_quantity(self):
+  data=dict(**STOCK,day='2026-10-01',price='1',quantity='2',account_id=1)
+  self.store.add(dict(**STOCK,quantity='1',price='50',purchased_on='2026-10-02'))
+  with self.assertRaises(ValueError):settle(self.store,data)
+  with self.assertRaises(ValueError):settle(self.store,{**data,'day':'2026-10-02'})
+  self.assertEqual(len(self.store.state()['purchases']),2)
+  self.assertFalse(self.store.state()['positions'][0]['quote_paused'])

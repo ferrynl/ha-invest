@@ -451,6 +451,12 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                         result=save_valuation(store,data);cache.invalidate()
                     refresh_requested.set()
                     return self.respond(result)
+                if path=='/api/portfolio/settlement':
+                    from valuations import settle
+                    with refresh_lock:
+                        result=settle(store,data);cache.invalidate()
+                    refresh_requested.set()
+                    return self.respond(result)
                 if path in ('/api/portfolio/conversion-preview','/api/portfolio/conversion'):
                     from conversions import preview,commit
                     with refresh_lock:
