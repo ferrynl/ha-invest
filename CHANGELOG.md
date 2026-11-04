@@ -1,3 +1,7 @@
+## 0.61.0
+
+- Het inlogscherm krijgt een beursachtergrond met koerslijnen en candlesticks.
+
 ## 0.60.0
 
 - Het inlogscherm krijgt een 3D-uitstraling, aparte keuzes voor wachtwoord en passkey, en een zichtbare melding over lokale opslag.

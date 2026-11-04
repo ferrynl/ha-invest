@@ -51,6 +51,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
         return cache.derived(('home-euro-chart:' if chart_only else 'home-euro-compact:' if compact_view else 'home-euro:')+str(account),build)
     static=Path(__file__).parent/'static'
     assets={'/':('index.html','text/html; charset=utf-8'),'/style.css':('style.css','text/css'),'/reports.css':('reports.css','text/css')}
+    assets['/login-market.svg']=('login-market.svg','image/svg+xml')
     assets['/fonts/Roboto.ttf']=('fonts/Roboto.ttf','font/ttf')
     assets['/world-countries.json']=('world-countries.json','application/json; charset=utf-8')
     for media in (static/'broker-media').glob('*.png'):assets['/broker-media/'+media.name]=('broker-media/'+media.name,'image/png')

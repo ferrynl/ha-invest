@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900">
+  <!-- Illustrative prices. The backdrop does not use market or portfolio data. -->
+  <defs>
+    <pattern id="grid" width="72" height="60" patternUnits="userSpaceOnUse">
+      <path d="M72 0H0V60" fill="none" stroke="#7292b5" stroke-opacity=".2"/>
+    </pattern>
+    <linearGradient id="area" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop stop-color="#3ecdb8" stop-opacity=".24"/>
+      <stop offset="1" stop-color="#3ecdb8" stop-opacity="0"/>
+    </linearGradient>
+    <style>
+      .up { color: #63ebc1; }
+      .down { color: #fc91a5; }
+      .candles path { stroke: currentColor; }
+      .candles rect { fill: currentColor; }
+    </style>
+  </defs>
+  <rect width="1440" height="900" fill="url(#grid)"/>
+  <polygon points="20,900 20,737 56,718 92,742 128,709 164,699 200,689 236,654 272,635 308,656 344,610 380,593 416,563 452,590 488,641 524,632 560,563 596,545 632,567 668,530 704,515 740,500 776,471 812,440 848,464 884,442 920,428 956,390 992,378 1028,415 1064,377 1100,317 1136,342 1172,295 1208,321 1244,282 1280,229 1316,258 1352,224 1388,248 1424,216 1424,900" fill="url(#area)"/>
+  <polyline points="20,737 56,718 92,742 128,709 164,699 200,689 236,654 272,635 308,656 344,610 380,593 416,563 452,590 488,641 524,632 560,563 596,545 632,567 668,530 704,515 740,500 776,471 812,440 848,464 884,442 920,428 956,390 992,378 1028,415 1064,377 1100,317 1136,342 1172,295 1208,321 1244,282 1280,229 1316,258 1352,224 1388,248 1424,216" fill="none" stroke="#66d0fc" stroke-width="2.5" stroke-opacity=".65" stroke-linejoin="round"/>
+  <path d="M0 790l82-38 76 9 64-44 94 12 82-64 81 14 69-52 96 24 72-61 79 14 92-51 89 15 71-53 78 18 69-41 91 12 155-61" fill="none" stroke="#94a8ee" stroke-width="2" stroke-opacity=".45" stroke-linejoin="round"/>
+  <g class="candles" stroke-width="2" opacity=".78">
+    <g class="up"><path d="M20 681V727"/><rect x="13" y="692" width="14" height="23" rx="2"/></g>
+    <g class="up"><path d="M56 653V697"/><rect x="49" y="665" width="14" height="19" rx="2"/></g>
+    <g class="down"><path d="M92 662V695"/><rect x="85" y="675" width="14" height="6" rx="2"/></g>
+    <g class="up"><path d="M128 626V692"/><rect x="121" y="640" width="14" height="37" rx="2"/></g>
+    <g class="up"><path d="M164 607V662"/><rect x="157" y="622" width="14" height="24" rx="2"/></g>
+    <g class="down"><path d="M200 598V656"/><rect x="193" y="614" width="14" height="30" rx="2"/></g>
+    <g class="up"><path d="M236 584V667"/><rect x="229" y="601" width="14" height="53" rx="2"/></g>
+    <g class="up"><path d="M272 563V611"/><rect x="265" y="574" width="14" height="23" rx="2"/></g>
+    <g class="down"><path d="M308 568V602"/><rect x="301" y="580" width="14" height="7" rx="2"/></g>
+    <g class="up"><path d="M344 520V595"/><rect x="337" y="533" width="14" height="46" rx="2"/></g>
+    <g class="down"><path d="M380 529V560"/><rect x="373" y="543" width="14" height="5" rx="2"/></g>
+    <g class="up"><path d="M416 495V557"/><rect x="409" y="510" width="14" height="34" rx="2"/></g>
+    <g class="down"><path d="M452 500V543"/><rect x="445" y="516" width="14" height="13" rx="2"/></g>
+    <g class="down"><path d="M488 504V587"/><rect x="481" y="521" width="14" height="51" rx="2"/></g>
+    <g class="up"><path d="M524 544V598"/><rect x="517" y="555" width="14" height="27" rx="2"/></g>
+    <g class="up"><path d="M560 506V563"/><rect x="553" y="518" width="14" height="33" rx="2"/></g>
+    <g class="up"><path d="M596 479V537"/><rect x="589" y="492" width="14" height="32" rx="2"/></g>
+    <g class="down"><path d="M632 470V520"/><rect x="625" y="484" width="14" height="22" rx="2"/></g>
+    <g class="up"><path d="M668 446V531"/><rect x="661" y="461" width="14" height="55" rx="2"/></g>
+    <g class="up"><path d="M704 422V473"/><rect x="697" y="438" width="14" height="19" rx="2"/></g>
+    <g class="down"><path d="M740 427V467"/><rect x="733" y="444" width="14" height="11" rx="2"/></g>
+    <g class="up"><path d="M776 407V460"/><rect x="769" y="418" width="14" height="29" rx="2"/></g>
+    <g class="up"><path d="M812 367V442"/><rect x="805" y="379" width="14" height="49" rx="2"/></g>
+    <g class="down"><path d="M848 362V410"/><rect x="841" y="375" width="14" height="20" rx="2"/></g>
+    <g class="up"><path d="M884 351V417"/><rect x="877" y="365" width="14" height="36" rx="2"/></g>
+    <g class="down"><path d="M920 342V395"/><rect x="913" y="357" width="14" height="26" rx="2"/></g>
+    <g class="up"><path d="M956 321V406"/><rect x="949" y="337" width="14" height="56" rx="2"/></g>
+    <g class="up"><path d="M992 300V347"/><rect x="985" y="317" width="14" height="16" rx="2"/></g>
+    <g class="down"><path d="M1028 312V361"/><rect x="1021" y="323" width="14" height="23" rx="2"/></g>
+    <g class="up"><path d="M1064 288V354"/><rect x="1057" y="300" width="14" height="38" rx="2"/></g>
+    <g class="up"><path d="M1100 259V322"/><rect x="1093" y="272" width="14" height="38" rx="2"/></g>
+    <g class="down"><path d="M1136 254V302"/><rect x="1129" y="268" width="14" height="21" rx="2"/></g>
+    <g class="up"><path d="M1172 219V309"/><rect x="1165" y="234" width="14" height="61" rx="2"/></g>
+    <g class="down"><path d="M1208 210V267"/><rect x="1201" y="226" width="14" height="26" rx="2"/></g>
+    <g class="up"><path d="M1244 188V278"/><rect x="1237" y="205" width="14" height="57" rx="2"/></g>
+    <g class="up"><path d="M1280 173V213"/><rect x="1273" y="184" width="14" height="17" rx="2"/></g>
+    <g class="down"><path d="M1316 178V218"/><rect x="1309" y="190" width="14" height="15" rx="2"/></g>
+    <g class="up"><path d="M1352 150V211"/><rect x="1345" y="163" width="14" height="34" rx="2"/></g>
+    <g class="down"><path d="M1388 159V194"/><rect x="1381" y="173" width="14" height="6" rx="2"/></g>
+    <g class="up"><path d="M1424 124V191"/><rect x="1417" y="139" width="14" height="36" rx="2"/></g>
+  </g>
+</svg>

@@ -139,7 +139,10 @@ main input,main select,main textarea{max-width:100%}
 
 /* Sign-in */
 .locked {
-  background: radial-gradient(ellipse at 68% 16%, #203e4c, transparent 60%), #0b1220;
+  background:
+    linear-gradient(180deg, #0b122034, #0b122000 62%, #0b12207a),
+    url("login-market.svg") center / cover no-repeat,
+    radial-gradient(ellipse at 78% 22%, #17394a, #0b1220 75%);
   min-height: 100vh;
   display: flow-root;
 }
