@@ -34,6 +34,16 @@
     "secrets.yaml"
   ],
   "js": [
+    "-empty",
+    "daily-movers",
+    "home-daily-",
+    "home-daily-gainers",
+    "home-daily-listing",
+    "home-daily-losers",
+    "home-daily-movers-panel",
+    "home-daily-row",
+    "no-referrer",
+    "stock-company-mark",
     "+",
     "/",
     "NotAllowedError",

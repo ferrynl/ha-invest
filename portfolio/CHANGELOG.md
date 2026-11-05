@@ -1,3 +1,7 @@
+## 0.68.0
+
+- Home toont de top vijf stijgers en dalers van vandaag binnen je broker- en valutaselectie, met logo, naam, beurs en procentueel koersverschil.
+
 ## 0.67.0
 
 - Open vanaf Aandelen een sectorpagina met posities, landen en algemene sectorinformatie. Vergelijk de koersontwikkeling van je huidige selectie in EUR met een sector-ETF.

@@ -13,7 +13,12 @@ function money(n,c){
 function cell(row,value){const td=document.createElement('td');td.textContent=value;row.append(td);return td;}
 async function load(){
  try{
- const request=++stateRequest;const response=await apiFetch('api/state?account_id='+encodeURIComponent(currentBroker)+'&compact=1');if(response.status===304)return;if(!response.ok)throw Error();const result=await response.json();if(request!==stateRequest||!accessSession?.user)return;state=result;
+ const request=++stateRequest;const response=await apiFetch('api/state?account_id='+encodeURIComponent(currentBroker)+'&compact=1');
+ if(response.status===304){
+  if(request===stateRequest&&state&&accessSession?.user&&document.body.classList.contains('home-page'))renderHomeDailyMovers();
+  return;
+ }
+ if(!response.ok)throw Error();const result=await response.json();if(request!==stateRequest||!accessSession?.user)return;state=result;
  $('status').textContent=state.status.message+ui(' Automatische controle elke ')+state.refresh_minutes+ui(' minuten.');
  if(location.hash==='#transacties'||location.hash.startsWith('#transacties-'))loadTransactions();
  if(location.hash==='#aandelen')renderStockPage();

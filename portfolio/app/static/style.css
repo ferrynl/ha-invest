@@ -229,3 +229,13 @@ main input,main select,main textarea{max-width:100%}
 a.stock-sector-card{color:inherit;text-decoration:none}
 a.stock-sector-card:hover,a.stock-sector-card:focus-visible{border-color:var(--sector-color)}
 .stock-sector-country{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid #26344b}
+
+/* Daily movers also fit when the dashboard module is resized. */
+.home-daily-rankings{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px 28px}
+.home-daily-rankings h3{margin:12px 0 4px}
+.home-daily-list{list-style:none;margin:0;padding:0}
+.home-daily-row{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #26344b;font-size:13px;font-variant-numeric:tabular-nums}
+.home-daily-row .stock-company-mark{width:30px;height:30px;border-radius:7px;font-size:11px}
+.home-daily-row .stock-company-mark img{width:24px;height:24px}
+.home-daily-listing a{overflow-wrap:anywhere}
+.home-daily-listing small{display:block;margin-top:3px;color:#91a4bf;overflow-wrap:anywhere}

@@ -180,9 +180,11 @@ class Store:
         for row in quotes:quotes_by_listing.setdefault(listing(row),[]).append(row)
         for row in dividends:income_by_position.setdefault((row['account_id'],*listing(row)),[]).append(row)
         from history import PortfolioAccumulator
+        from dashboard import daily_move
         accumulator=PortfolioAccumulator() if compact_view else None
         if account!='all' and not any(str(a['id'])==str(account) for a in accounts):raise LookupError('Brokeraccount niet gevonden.')
         positions = []
+        daily_moves = {}
         for key,group in groups.items():
             if account!='all' and str(key[0])!=str(account):continue
             instrument=key[1:]
@@ -211,6 +213,10 @@ class Store:
                                   'cost':None,'realised':None,'dividend':None,'value':None,
                                   'gain':None,'total_gain':None})
                 continue
+            if quantity > 0 and instrument not in paused:
+                if instrument not in daily_moves:
+                    daily_moves[instrument] = daily_move(db,instrument,group['quote'],prices)
+                positions[-1]['daily_move'] = daily_moves[instrument]
             if accumulator is not None:
                 accumulator.add(positions[-1]);positions[-1]['history']=chart[-1:];positions[-1]['history_loaded']=False
         scoped=lambda rows:[r for r in rows if account=='all' or str(r['account_id'])==str(account)]

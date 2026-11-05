@@ -7,11 +7,12 @@ assert.equal(moved[0].id,'cost');
 assert.equal(moved[0].enabled,false);
 assert.equal(moved[0].width,'full');
 assert.equal(original[2].id,'cost','draft movement must not mutate the saved layout');
-assert.equal(new Set(moved.map(row=>row.id)).size,10);
+assert.equal(new Set(moved.map(row=>row.id)).size,11);
+assert.deepEqual(original.find(row=>row.id==='daily-movers'),{id:'daily-movers',width:'full',enabled:true});
 assert.deepEqual(moveDashboardModule(original,'cost',-1),original);
-assert.deepEqual(moveDashboardModule(original,'cost',10),original);
+assert.deepEqual(moveDashboardModule(original,'cost',original.length),original);
 assert.deepEqual(moveDashboardModule(original,'missing',0),original);
-assert.equal(moveDashboardModule(moved,'cost',9).at(-1).id,'cost');
+assert.equal(moveDashboardModule(moved,'cost',original.length-1).at(-1).id,'cost');
 assert.equal(defaultDashboardLayout()[2].enabled,true,'reset creates fresh defaults');
 console.log('Dashboard modules: reordering, boundary moves, hidden state, widths and reset passed.');
 

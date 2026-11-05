@@ -5,7 +5,7 @@ import re
 MODULES = (
     ('currencies', 'full'), ('market', 'quarter'), ('cost', 'quarter'),
     ('gain', 'quarter'), ('income', 'quarter'), ('notice', 'full'),
-    ('chart', 'full'), ('allocation', 'half'), ('movers', 'half'),
+    ('chart', 'full'), ('daily-movers', 'full'), ('allocation', 'half'), ('movers', 'half'),
     ('holdings', 'full'),
 )
 

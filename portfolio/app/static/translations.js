@@ -1,5 +1,11 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+ "Stijgers en dalers vandaag": {"nl":"Stijgers en dalers vandaag","en":"Today’s gainers and losers","es":"Mayores subidas y bajadas de hoy"},
+ "Koersverschil ten opzichte van de vorige beschikbare slotkoers, in de noteringsvaluta.": {"nl":"Koersverschil ten opzichte van de vorige beschikbare slotkoers, in de noteringsvaluta.","en":"Price change from the previous available close, in the listing currency.","es":"Variación respecto al último cierre disponible, en la moneda de cotización."},
+ "Grootste stijgers": {"nl":"Grootste stijgers","en":"Top gainers","es":"Mayores subidas"},
+ "Grootste dalers": {"nl":"Grootste dalers","en":"Top losers","es":"Mayores bajadas"},
+ "Vandaag zijn er geen stijgers met beschikbare koersdata.": {"nl":"Vandaag zijn er geen stijgers met beschikbare koersdata.","en":"No gainers with available prices today.","es":"Hoy no hay subidas con precios disponibles."},
+ "Vandaag zijn er geen dalers met beschikbare koersdata.": {"nl":"Vandaag zijn er geen dalers met beschikbare koersdata.","en":"No losers with available prices today.","es":"Hoy no hay bajadas con precios disponibles."},
  "Bekende marktwaarde": {"nl":"Bekende marktwaarde","en":"Known market value","es":"Valor de mercado conocido"},
  "Je huidige aandelen presteerden beter dan de benchmark.": {"nl":"Je huidige aandelen presteerden beter dan de benchmark.","en":"Your current holdings outperformed the benchmark.","es":"Tus valores actuales superaron al índice de referencia."},
  "Je huidige aandelen presteerden minder goed dan de benchmark.": {"nl":"Je huidige aandelen presteerden minder goed dan de benchmark.","en":"Your current holdings underperformed the benchmark.","es":"Tus valores actuales rindieron menos que el índice de referencia."},

@@ -8,6 +8,7 @@ const dashboardModules=[
  {id:'income',title:ui('Ontvangen dividend'),width:'quarter'},
  {id:'notice',title:ui('Koers- en valuta-informatie'),width:'full'},
  {id:'chart',title:ui('Je portefeuille in beeld'),width:'full'},
+ {id:'daily-movers',title:ui('Stijgers en dalers vandaag'),width:'full'},
  {id:'allocation',title:ui('Grootste posities'),width:'half'},
  {id:'movers',title:ui('Resultaten in beeld'),width:'half'},
  {id:'holdings',title:ui('Je posities'),width:'full'}
@@ -28,6 +29,7 @@ function initializeDashboardModules(){
  const home=document.querySelector('[data-page="home"]'),board=document.createElement('div');board.id='home-module-board';board.className='home-module-board';$('totals').before(board);
  const insights=home.querySelector('.home-insights'),original={currencies:$('home-currencies'),chart:$('home-chart-panel'),allocation:insights.children[0],movers:insights.children[1],holdings:home.querySelector('.home-holdings')};
  const notice=document.createElement('section');notice.append($('home-euro-status'),$('home-health'));original.notice=notice;
+ original['daily-movers']=$('home-daily-movers-panel');
  for(const module of dashboardModules)mountDashboardModule(board,module,original[module.id]);
  insights.remove();$('totals').hidden=true;
  const error=document.createElement('p');error.id='dashboard-layout-error';error.setAttribute('role','status');board.before(error);

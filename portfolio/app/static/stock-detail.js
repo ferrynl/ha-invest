@@ -77,7 +77,8 @@ async function loadStockCompany(params,request,route){
  }catch{if(request===stockDetailRequest)$('stock-company-description').textContent=ui('Bedrijfsinformatie is tijdelijk niet beschikbaar.');}
 }
 function fundCompanyDescription(info){return ui('ETF van {issuer}. De beschikbare samenstelling bevat {count} beleggingen; peildatum {day}.',{issuer:({invesco:'Invesco',vanguard:'Vanguard',vaneck:ui('VanEck'),ishares:'iShares'})[info.issuer]||info.issuer,count:new Intl.NumberFormat(appLocale()).format(info.holdings_count),day:info.as_of?dayLabel(info.as_of):ui('Niet beschikbaar')});}
-function showCompanyLogo(domain,request){const image=$('stock-company-logo');image.onload=()=>{if(request!==stockDetailRequest)return;image.hidden=false;$('stock-company-initials').hidden=true;};image.onerror=()=>{if(request!==stockDetailRequest)return;image.hidden=true;$('stock-company-initials').hidden=false;};image.src='https://www.google.com/s2/favicons?sz=128&domain='+encodeURIComponent(domain);}
+const companyLogoUrl=domain=>'https://www.google.com/s2/favicons?sz=128&domain='+encodeURIComponent(domain);
+function showCompanyLogo(domain,request){const image=$('stock-company-logo');image.onload=()=>{if(request!==stockDetailRequest)return;image.hidden=false;$('stock-company-initials').hidden=true;};image.onerror=()=>{if(request!==stockDetailRequest)return;image.hidden=true;$('stock-company-initials').hidden=false;};image.src=companyLogoUrl(domain);}
 
 async function loadConstituentDetail(params){
  const request=++stockDetailRequest,route=location.hash;params.set('account_id',currentBroker);stockDetail=null;$('stock-detail-content').hidden=true;$('stock-detail-feedback').textContent=ui('Aandeel laden…');

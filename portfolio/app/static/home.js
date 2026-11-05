@@ -20,7 +20,7 @@ const homeDisplayCurrency=()=>homeCurrency==='ALL'?'EUR':homeCurrency;
 const homeViewState=()=>homeCurrency==='ALL'?{...state,positions:homeEuro?.positions??[],portfolios:homeEuro?.portfolios??[]}:state;
 const homeScope=()=>homeCurrency==='ALL'?(homeEuro?.positions??[]):state?.positions.filter(p=>p.currency===homeCurrency)??[];
 function homeChartMembers(){return homeScope().filter(p=>homeSelected.has(homeKey(p))).slice(0,6);}
-function clearHomeDashboard(){homeEuroChartController?.abort();homeEuroChartController=null;homeEuroChartPending=false;homeEuroChartRefreshes=0;homeEuroError=false;$('chart-return-badge').textContent='';$('chart-measure').value='value';for(const box of document.querySelectorAll('#home-module-board .home-metric'))box.replaceChildren();homeHistoryPending.clear();homeEuroRequest++;homeEuroPending=false;homeEuro=null;homeEuroSource=null;homeEuroAccount='';$('home-euro-status').textContent='';homeCurrency='ALL';homePage=0;homeMode='overview';homeFocus='';homeSelected.clear();for(const id of ['home-currencies','home-positions','home-allocation','home-movers'])$(id).replaceChildren();for(const id of ['home-summary','home-health','home-table-note','home-selection-count','home-page-note','home-table-empty','home-allocation-note'])$(id).textContent='';$('home-search').value='';$('home-position-filter').value='open';$('home-sort').value='value';$('home-ranking').value='best';$('chart').onpointermove=null;$('chart').onpointerleave=null;$('chart').onkeydown=null;$('chart-day-details').ontoggle=null;$('chart-days-more').onclick=null;$('chart-day-details').open=false;$('chart-days-note').textContent='';$('instrument').replaceChildren();$('chart-legend').replaceChildren();$('chartnote').textContent='';$('chart-detail').textContent='';}
+function clearHomeDashboard(){homeEuroChartController?.abort();homeEuroChartController=null;homeEuroChartPending=false;homeEuroChartRefreshes=0;homeEuroError=false;$('chart-return-badge').textContent='';$('chart-measure').value='value';for(const box of document.querySelectorAll('#home-module-board .home-metric'))box.replaceChildren();homeHistoryPending.clear();homeEuroRequest++;homeEuroPending=false;homeEuro=null;homeEuroSource=null;homeEuroAccount='';$('home-euro-status').textContent='';homeCurrency='ALL';homePage=0;homeMode='overview';homeFocus='';homeSelected.clear();for(const id of ['home-currencies','home-positions','home-allocation','home-movers','home-daily-gainers','home-daily-losers'])$(id).replaceChildren();for(const id of ['home-summary','home-health','home-table-note','home-selection-count','home-page-note','home-table-empty','home-allocation-note'])$(id).textContent='';$('home-search').value='';$('home-position-filter').value='open';$('home-sort').value='value';$('home-ranking').value='best';$('chart').onpointermove=null;$('chart').onpointerleave=null;$('chart').onkeydown=null;$('chart-day-details').ontoggle=null;$('chart-days-more').onclick=null;$('chart-day-details').open=false;$('chart-days-note').textContent='';$('instrument').replaceChildren();$('chart-legend').replaceChildren();$('chartnote').textContent='';$('chart-detail').textContent='';}
 function homeNode(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}
 function homePercent(value){return value==null?'—':new Intl.NumberFormat((typeof appLocale==='function'?appLocale():'nl-NL'),{maximumFractionDigits:2,signDisplay:'exceptZero'}).format(value)+'%';}
 const homeMetricOptions={
@@ -89,7 +89,51 @@ function renderHomeDashboard(){
  const selected=$('instrument');selected.replaceChildren();const add=(value,label)=>{const option=homeNode('option',label);option.value=value;selected.append(option);};add('portfolio:'+homeDisplayCurrency(),ui('Portefeuilletotaal · ')+(homeCurrency==='ALL'?ui('alle valuta’s in EUR'):homeCurrency));add('all',ui('Vergelijk gekozen posities · maximaal 6'));
  const focus=homeViewState().positions.findIndex(p=>homeKey(p)===homeFocus);if(focus>=0)add(String(focus),homeViewState().positions[focus].name+' · '+homeViewState().positions[focus].account_name);
  selected.value=homeMode==='compare'?'all':homeMode==='position'&&focus>=0?String(focus):'portfolio:'+homeDisplayCurrency();
- renderHomeTable();renderHomeInsights();
+ renderHomeTable();renderHomeInsights();renderHomeDailyMovers();
+}
+function homeDailyMovers(positions,currency,today){
+ const listings=new Map();
+ for(const position of positions){
+  if(Number(position.quantity)<=0||position.daily_move?.day!==today||currency!=='ALL'&&position.currency!==currency)continue;
+  const change=Number(position.daily_move.percent);
+  if(!Number.isFinite(change)||!change)continue;
+  const key=JSON.stringify([position.symbol,position.exchange,position.currency]);
+  listings.set(key,{position,change});
+ }
+ const ranked=[...listings.values()].sort((a,b)=>b.change-a.change);
+ return {
+  gainers:ranked.filter(row=>row.change>0).slice(0,5),
+  losers:ranked.filter(row=>row.change<0).reverse().slice(0,5)
+ };
+}
+function renderHomeDailyMovers(){
+ const today=state.settings.demo_day||new Date().toLocaleDateString('en-CA');
+ const movers=homeDailyMovers(state.positions,homeCurrency,today);
+ for(const [side,rows] of Object.entries(movers)){
+  const list=$('home-daily-'+side),empty=$('home-daily-'+side+'-empty');
+  list.replaceChildren();
+  empty.hidden=rows.length>0;
+  for(const [index,{position,change}] of rows.entries()){
+   const row=homeNode('li',undefined,'home-daily-row');
+   const mark=homeNode('span',position.name.trim().split(/\s+/).slice(0,2).map(word=>word[0]).join('').toUpperCase(),'stock-company-mark');
+   mark.setAttribute('aria-hidden','true');
+   if(position.daily_move.domain){
+    const image=homeNode('img');
+    image.alt='';
+    image.referrerPolicy='no-referrer';
+    image.hidden=true;
+    image.onload=()=>{image.hidden=false;mark.replaceChildren(image);};
+    image.src=companyLogoUrl(position.daily_move.domain);
+    mark.append(image);
+   }
+   const link=homeNode('a',position.name);
+   link.href=stockDetailLink(position);
+   const listing=homeNode('div',undefined,'home-daily-listing');
+   listing.append(link,homeNode('small',position.exchange));
+   row.append(homeNode('span',index+1),mark,listing,homeNode('strong',homePercent(change),change>0?'positive':'negative'));
+   list.append(row);
+  }
+ }
 }
 function homeChartChanged(){const value=$('instrument').value;homeMode=value==='all'?'compare':value.startsWith('portfolio:')?'overview':'position';if(homeMode==='compare'&&!homeSelected.size)for(const p of homeRows(homeScope(),'','open','value').slice(0,6))homeSelected.add(homeKey(p));renderHomeTable();}
 function homeFocusPosition(p){if(typeof dashboardModuleEnabled==='function'&&!dashboardModuleEnabled('chart')){openDashboardEditor();return;}homeFocus=homeKey(p);homeMode='position';renderHomeDashboard();draw();$('home-chart-panel').scrollIntoView({behavior:'smooth',block:'start'});$('instrument').focus({preventScroll:true});}
@@ -126,7 +170,7 @@ function renderHomeInsights(){
 function bindHomeDashboard(){
  for(const id of ['home-search','home-position-filter','home-sort'])$(id).addEventListener(id==='home-search'?'input':'change',()=>{if(id==='home-sort')clearTableSort('home-positions');homePage=0;renderHomeTable();});$('home-ranking').addEventListener('change',renderHomeInsights);$('home-prev').addEventListener('click',()=>{homePage--;renderHomeTable();});$('home-next').addEventListener('click',()=>{homePage++;renderHomeTable();});$('home-clear-selection').addEventListener('click',()=>{homeSelected.clear();homeMode='overview';renderHomeDashboard();draw();});
 }
-if(typeof module!=='undefined')module.exports={homeKey,homeReturn,homeSummary,homeRows};
+if(typeof module!=='undefined')module.exports={homeKey,homeReturn,homeSummary,homeRows,homeDailyMovers};
 
 function homeDividendLabel(positions){
  const invested=positions.reduce((sum,p)=>sum+Number(p.history?.at(-1)?.invested??p.cost),0),received=positions.reduce((sum,p)=>sum+Number(p.dividend),0);
