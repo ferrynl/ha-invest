@@ -36,6 +36,7 @@
   "js": [
     "-empty",
     "daily-movers",
+    "gainers",
     "home-daily-",
     "home-daily-gainers",
     "home-daily-listing",

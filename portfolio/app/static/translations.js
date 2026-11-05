@@ -1,5 +1,6 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+ "Koerscijfers van gisteren ({date}).": {"nl":"Koerscijfers van gisteren ({date}).","en":"Price changes from yesterday ({date}).","es":"Variaciones de ayer ({date})."},
  "Stijgers en dalers vandaag": {"nl":"Stijgers en dalers vandaag","en":"Today’s gainers and losers","es":"Mayores subidas y bajadas de hoy"},
  "Koersverschil ten opzichte van de vorige beschikbare slotkoers, in de noteringsvaluta.": {"nl":"Koersverschil ten opzichte van de vorige beschikbare slotkoers, in de noteringsvaluta.","en":"Price change from the previous available close, in the listing currency.","es":"Variación respecto al último cierre disponible, en la moneda de cotización."},
  "Grootste stijgers": {"nl":"Grootste stijgers","en":"Top gainers","es":"Mayores subidas"},

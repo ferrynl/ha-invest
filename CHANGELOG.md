@@ -1,3 +1,7 @@
+## 0.68.1
+
+- Home toont de cijfers van gisteren met datum wanneer de lijst met stijgers of dalers van vandaag leeg is.
+
 ## 0.68.0
 
 - Home toont de top vijf stijgers en dalers van vandaag binnen je broker- en valutaselectie, met logo, naam, beurs en procentueel koersverschil.

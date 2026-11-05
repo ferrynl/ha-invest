@@ -1,10 +1,11 @@
 """Small initial responses and on-demand history for at most six positions."""
 from datetime import date
 from decimal import Decimal
+from itertools import islice
 import json
 
 
-def daily_move(db, listing, quote, prices):
+def daily_moves(db, listing, quote, prices):
     if listing[1] == 'PRIVATE' or (quote and quote.get('manual')):
         return None
     latest_close = prices[-1] if prices else None
@@ -15,18 +16,20 @@ def daily_move(db, listing, quote, prices):
         day, price = quote_day, quote['price']
     else:
         return None
-    previous = next((row for row in reversed(prices) if row['day'] < day), None)
-    if previous is None:
-        return None
-    try:
-        date.fromisoformat(day)
-        current, close = Decimal(price), Decimal(previous['price'])
-        if not (current.is_finite() and close.is_finite() and current > 0 and close > 0):
-            return None
-        change = (current / close - 1) * 100
-        if not change:
-            return None
-    except (ArithmeticError, ValueError, TypeError):
+    earlier = (row for row in reversed(prices) if row['day'] < day)
+    sessions = [{'day': day, 'price': price}, *islice(earlier, 2)]
+    moves = []
+    for current, previous in zip(sessions, sessions[1:]):
+        try:
+            date.fromisoformat(current['day'])
+            price, close = Decimal(current['price']), Decimal(previous['price'])
+            if price.is_finite() and close.is_finite() and price > 0 and close > 0:
+                change = (price / close - 1) * 100
+                if change:
+                    moves.append({'day': current['day'], 'percent': str(change)})
+        except (ArithmeticError, ValueError, TypeError):
+            continue
+    if not moves:
         return None
     domain = ''
     for row in db.execute(
@@ -40,7 +43,7 @@ def daily_move(db, listing, quote, prices):
             continue
         if isinstance(domain, str) and domain:
             break
-    return {'day': day, 'percent': str(change), 'domain': domain if isinstance(domain, str) else ''}
+    return {'sessions': moves, 'domain': domain if isinstance(domain, str) else ''}
 
 
 def compact(snapshot):

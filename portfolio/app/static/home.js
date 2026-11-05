@@ -91,11 +91,11 @@ function renderHomeDashboard(){
  selected.value=homeMode==='compare'?'all':homeMode==='position'&&focus>=0?String(focus):'portfolio:'+homeDisplayCurrency();
  renderHomeTable();renderHomeInsights();renderHomeDailyMovers();
 }
-function homeDailyMovers(positions,currency,today){
+function homeDailyMovers(positions,currency,day){
  const listings=new Map();
  for(const position of positions){
-  if(Number(position.quantity)<=0||position.daily_move?.day!==today||currency!=='ALL'&&position.currency!==currency)continue;
-  const change=Number(position.daily_move.percent);
+  if(Number(position.quantity)<=0||currency!=='ALL'&&position.currency!==currency)continue;
+  const change=Number(position.daily_moves?.sessions.find(session=>session.day===day)?.percent);
   if(!Number.isFinite(change)||!change)continue;
   const key=JSON.stringify([position.symbol,position.exchange,position.currency]);
   listings.set(key,{position,change});
@@ -106,24 +106,36 @@ function homeDailyMovers(positions,currency,today){
   losers:ranked.filter(row=>row.change<0).reverse().slice(0,5)
  };
 }
+function homeDailyRankings(positions,currency,today){
+ const previousDay=new Date(today+'T00:00:00Z');
+ previousDay.setUTCDate(previousDay.getUTCDate()-1);
+ const yesterday=previousDay.toISOString().slice(0,10);
+ const current=homeDailyMovers(positions,currency,today);
+ const previous=homeDailyMovers(positions,currency,yesterday);
+ return Object.fromEntries(Object.entries(current).map(([side,rows])=>[
+  side,{rows:rows.length?rows:previous[side],fallbackDay:!rows.length&&previous[side].length?yesterday:null}
+ ]));
+}
 function renderHomeDailyMovers(){
  const today=state.settings.demo_day||new Date().toLocaleDateString('en-CA');
- const movers=homeDailyMovers(state.positions,homeCurrency,today);
- for(const [side,rows] of Object.entries(movers)){
-  const list=$('home-daily-'+side),empty=$('home-daily-'+side+'-empty');
+ const movers=homeDailyRankings(state.positions,homeCurrency,today);
+ for(const [side,{rows,fallbackDay}] of Object.entries(movers)){
+  const list=$('home-daily-'+side),notice=$('home-daily-'+side+'-empty');
   list.replaceChildren();
-  empty.hidden=rows.length>0;
+  notice.hidden=rows.length>0&&!fallbackDay;
+  notice.textContent=fallbackDay?ui('Koerscijfers van gisteren ({date}).',{date:dayLabel(fallbackDay)}):
+   side==='gainers'?ui('Vandaag zijn er geen stijgers met beschikbare koersdata.'):ui('Vandaag zijn er geen dalers met beschikbare koersdata.');
   for(const [index,{position,change}] of rows.entries()){
    const row=homeNode('li',undefined,'home-daily-row');
    const mark=homeNode('span',position.name.trim().split(/\s+/).slice(0,2).map(word=>word[0]).join('').toUpperCase(),'stock-company-mark');
    mark.setAttribute('aria-hidden','true');
-   if(position.daily_move.domain){
+   if(position.daily_moves.domain){
     const image=homeNode('img');
     image.alt='';
     image.referrerPolicy='no-referrer';
     image.hidden=true;
     image.onload=()=>{image.hidden=false;mark.replaceChildren(image);};
-    image.src=companyLogoUrl(position.daily_move.domain);
+    image.src=companyLogoUrl(position.daily_moves.domain);
     mark.append(image);
    }
    const link=homeNode('a',position.name);
@@ -170,7 +182,7 @@ function renderHomeInsights(){
 function bindHomeDashboard(){
  for(const id of ['home-search','home-position-filter','home-sort'])$(id).addEventListener(id==='home-search'?'input':'change',()=>{if(id==='home-sort')clearTableSort('home-positions');homePage=0;renderHomeTable();});$('home-ranking').addEventListener('change',renderHomeInsights);$('home-prev').addEventListener('click',()=>{homePage--;renderHomeTable();});$('home-next').addEventListener('click',()=>{homePage++;renderHomeTable();});$('home-clear-selection').addEventListener('click',()=>{homeSelected.clear();homeMode='overview';renderHomeDashboard();draw();});
 }
-if(typeof module!=='undefined')module.exports={homeKey,homeReturn,homeSummary,homeRows,homeDailyMovers};
+if(typeof module!=='undefined')module.exports={homeKey,homeReturn,homeSummary,homeRows,homeDailyMovers,homeDailyRankings};
 
 function homeDividendLabel(positions){
  const invested=positions.reduce((sum,p)=>sum+Number(p.history?.at(-1)?.invested??p.cost),0),received=positions.reduce((sum,p)=>sum+Number(p.dividend),0);
