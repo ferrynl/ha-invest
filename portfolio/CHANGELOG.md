@@ -1,3 +1,7 @@
+## 0.68.2
+
+- Home laadt bedrijfsiconen ook als de bedrijfsinformatie nog niet is opgeslagen. Links hebben appbreed een witte standaardkleur en de ranglijsten gebruiken neutrale scheidingslijnen.
+
 ## 0.68.1
 
 - Home toont de cijfers van gisteren met datum wanneer de lijst met stijgers of dalers van vandaag leeg is.

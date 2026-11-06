@@ -18,6 +18,8 @@ async function loadStockDetail(){
   $('stock-valuation-open').hidden=accessSession.user.role!=='admin';$('stock-valuation-status').textContent=data.quote_paused?ui('Automatisch ophalen gestopt'):data.manual_valuation?ui('Handmatige laatste koers: ')+money(data.manual_valuation.price,data.currency)+' · '+dayLabel(data.manual_valuation.day)+ui(' · automatisch ophalen uitgeschakeld.'):data.exchange==='PRIVATE'?(data.symbol==='LU3170240538'&&data.currency==='EUR'?ui('Apollo · automatisch via DivvyDiary. De bron vermeldt geen koersdatum; de getoonde datum is het ophaalmoment.'):ui('Niet-beursgenoteerd fonds · actuele fondskoers handmatig instellen.')):'';
   $('stock-company-description').textContent=ui('Bedrijfsinformatie laden…');$('stock-company-logo').hidden=true;$('stock-company-logo').onload=null;$('stock-company-logo').onerror=null;$('stock-company-logo').removeAttribute('src');$('stock-company-initials').hidden=false;$('stock-company-initials').textContent=data.name.split(/\s+/).slice(0,2).map(word=>word[0]).join('').toUpperCase();
   loadStockCompany(params,request,route);
+  const localLogo=localCompanyLogo(data.name);
+  if(localLogo)showCompanyLogo('',request,localLogo);
   const issuer=['invesco','vanguard','vaneck','ishares'].find(name=>data.name.toLowerCase().includes(name));if(issuer&&data.is_etf){showCompanyLogo(({invesco:'invesco.com',vanguard:'vanguard.com',vaneck:'vaneck.com',ishares:'ishares.com'})[issuer],request);$('stock-company-description').textContent=fundCompanyDescription({issuer,holdings_count:data.fund_composition?.holdings.length||0,as_of:data.fund_composition?.as_of||''});}
   $('stock-fundamentals-panel').hidden=!data.fundamentals_supported;
   if(data.fundamentals_supported)loadStockFundamentals(params,request,route);
@@ -73,12 +75,35 @@ function renderStockMetrics(data){
 async function loadStockCompany(params,request,route){
  try{const response=await apiFetch((params.has('holding')?'api/fund/constituent/company?':'api/instrument/company?')+params);if(!response.ok)throw Error();const info=await response.json();if(request!==stockDetailRequest||route!==location.hash||!accessSession?.user)return;
  $('stock-company-description').textContent=info.description||(info.issuer?fundCompanyDescription(info):ui('Geen bedrijfsomschrijving beschikbaar.'));
- if(info.domain)showCompanyLogo(info.domain,request);
+ const local=localCompanyLogo($('stock-detail-name').textContent);
+ if(local||info.domain)showCompanyLogo(info.domain,request,local);
  }catch{if(request===stockDetailRequest)$('stock-company-description').textContent=ui('Bedrijfsinformatie is tijdelijk niet beschikbaar.');}
 }
 function fundCompanyDescription(info){return ui('ETF van {issuer}. De beschikbare samenstelling bevat {count} beleggingen; peildatum {day}.',{issuer:({invesco:'Invesco',vanguard:'Vanguard',vaneck:ui('VanEck'),ishares:'iShares'})[info.issuer]||info.issuer,count:new Intl.NumberFormat(appLocale()).format(info.holdings_count),day:info.as_of?dayLabel(info.as_of):ui('Niet beschikbaar')});}
 const companyLogoUrl=domain=>'https://www.google.com/s2/favicons?sz=128&domain='+encodeURIComponent(domain);
-function showCompanyLogo(domain,request){const image=$('stock-company-logo');image.onload=()=>{if(request!==stockDetailRequest)return;image.hidden=false;$('stock-company-initials').hidden=true;};image.onerror=()=>{if(request!==stockDetailRequest)return;image.hidden=true;$('stock-company-initials').hidden=false;};image.src=companyLogoUrl(domain);}
+const companyLogoFiles=new Map([
+ ['unity software','unity'],['seek','seek'],['adyen','adyen'],['proximus','proximus'],
+ ['tencent holdings','tencent'],['sandisk','sandisk'],['micron technology','micron'],
+ ['western digital','western-digital'],['advanced micro devices','amd'],['amd','amd'],['rheinmetall','rheinmetall']
+]);
+function localCompanyLogo(name){
+ const key=name.toLowerCase().replace(/[.,]/g,'').trim().replace(/\s+(?:inc|limited|ltd|plc|corporation|corp|nv|ag)$/,'');
+ const file=companyLogoFiles.get(key);
+ return file?'company-logos/'+file+'.png':'';
+}
+const companyDomainRequests=new Map();
+function lookupCompanyDomain(position){
+ const params=new URLSearchParams({symbol:position.symbol,exchange:position.exchange,currency:position.currency,account_id:currentBroker});
+ const key=currentProfile+'|'+params;
+ const cached=companyDomainRequests.get(key);
+ if(cached?.expires>Date.now())return cached.promise;
+ const promise=apiFetch('api/instrument/company?'+params,{background:true})
+  .then(async response=>response.ok?(await response.json()).domain||'':'')
+  .catch(()=>'');
+ companyDomainRequests.set(key,{expires:Date.now()+900000,promise});
+ return promise;
+}
+function showCompanyLogo(domain,request,local=''){const image=$('stock-company-logo');image.onload=()=>{if(request!==stockDetailRequest)return;image.hidden=false;$('stock-company-initials').hidden=true;};image.onerror=()=>{if(request!==stockDetailRequest)return;image.hidden=true;$('stock-company-initials').hidden=false;};image.src=local||companyLogoUrl(domain);}
 
 async function loadConstituentDetail(params){
  const request=++stockDetailRequest,route=location.hash;params.set('account_id',currentBroker);stockDetail=null;$('stock-detail-content').hidden=true;$('stock-detail-feedback').textContent=ui('Aandeel laden…');

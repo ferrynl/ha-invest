@@ -239,3 +239,10 @@ a.stock-sector-card:hover,a.stock-sector-card:focus-visible{border-color:var(--s
 .home-daily-row .stock-company-mark img{width:24px;height:24px}
 .home-daily-listing a{overflow-wrap:anywhere}
 .home-daily-listing small{display:block;margin-top:3px;color:#91a4bf;overflow-wrap:anywhere}
+
+:where(a:any-link){color:#fff;text-underline-offset:.18em}
+:where(a:focus-visible){outline:2px solid currentColor;outline-offset:3px}
+.home-daily-row{border-bottom-color:rgb(255 255 255 / 12%)}
+.home-daily-row:last-child{border-bottom:0}
+.home-daily-listing a{font-weight:600;text-decoration:none}
+.home-daily-listing a:hover,.home-daily-listing a:focus-visible{text-decoration:underline}

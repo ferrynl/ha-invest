@@ -129,15 +129,7 @@ function renderHomeDailyMovers(){
    const row=homeNode('li',undefined,'home-daily-row');
    const mark=homeNode('span',position.name.trim().split(/\s+/).slice(0,2).map(word=>word[0]).join('').toUpperCase(),'stock-company-mark');
    mark.setAttribute('aria-hidden','true');
-   if(position.daily_moves.domain){
-    const image=homeNode('img');
-    image.alt='';
-    image.referrerPolicy='no-referrer';
-    image.hidden=true;
-    image.onload=()=>{image.hidden=false;mark.replaceChildren(image);};
-    image.src=companyLogoUrl(position.daily_moves.domain);
-    mark.append(image);
-   }
+   loadHomeCompanyLogo(mark,position);
    const link=homeNode('a',position.name);
    link.href=stockDetailLink(position);
    const listing=homeNode('div',undefined,'home-daily-listing');
@@ -146,6 +138,16 @@ function renderHomeDailyMovers(){
    list.append(row);
   }
  }
+}
+async function loadHomeCompanyLogo(mark,position){
+ const local=localCompanyLogo(position.name);
+ const domain=local?'':position.daily_moves.domain||await lookupCompanyDomain(position);
+ if(!local&&(!domain||!mark.isConnected))return;
+ const image=homeNode('img');
+ image.alt='';
+ image.referrerPolicy='no-referrer';
+ image.onload=()=>mark.replaceChildren(image);
+ image.src=local||companyLogoUrl(domain);
 }
 function homeChartChanged(){const value=$('instrument').value;homeMode=value==='all'?'compare':value.startsWith('portfolio:')?'overview':'position';if(homeMode==='compare'&&!homeSelected.size)for(const p of homeRows(homeScope(),'','open','value').slice(0,6))homeSelected.add(homeKey(p));renderHomeTable();}
 function homeFocusPosition(p){if(typeof dashboardModuleEnabled==='function'&&!dashboardModuleEnabled('chart')){openDashboardEditor();return;}homeFocus=homeKey(p);homeMode='position';renderHomeDashboard();draw();$('home-chart-panel').scrollIntoView({behavior:'smooth',block:'start'});$('instrument').focus({preventScroll:true});}
