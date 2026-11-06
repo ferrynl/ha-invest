@@ -133,6 +133,20 @@ class DashboardCacheTests(unittest.TestCase):
 
 import test_transactions as support
 class DashboardCacheHttpTests(unittest.TestCase):
+ def test_euro_summary_recovers_when_quotes_change_after_loading_positions(self):
+  import home_euro
+  _,before=self.request('/api/state?compact=1')
+  original=home_euro.overview
+  def update(*args,**kwargs):
+   self.store.quote('ASML.AS','AMSTERDAM','EUR','125','2026-10-25T00:00:00+00:00','test')
+   return original(*args,**kwargs)
+  with patch('home_euro.overview',side_effect=update) as calculate:
+   code,result=self.request('/api/home/euro?compact=1')
+  self.assertEqual(code,200)
+  calculate.assert_called_once()
+  self.assertGreater(result['data_revision'],before['data_revision'])
+  self.assertEqual(result['positions'][0]['quote']['price'],'125')
+  self.assertEqual(result['chart_status'],'pending')
  def test_euro_summary_and_chart_are_separate_and_reuse_small_summary_state(self):
   from home_euro import daily_values
   self.request('/api/state?compact=1')

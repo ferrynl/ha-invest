@@ -1,3 +1,7 @@
+## 0.69.1
+
+- Home herstelt het euro-overzicht bij gelijktijdige koersupdates. Als het gecombineerde overzicht tijdelijk niet laadt, blijven posities in EUR zichtbaar met een toelichting.
+
 ## 0.69.0
 
 - Aandelen heeft een subpagina Stijgers en dalers met een brokerkeuze en ranglijsten voor de laatste handelsdag of de afgelopen 7, 30, 90 of 365 dagen.

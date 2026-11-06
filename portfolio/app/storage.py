@@ -147,6 +147,12 @@ class Store:
         missing_diagnostics(self,result['positions'])
         return result
 
+    def compact_state_with_euro_rates(self,account):
+        with self.read() as db:
+            snapshot=self._state(db,True,account)
+            rates=[dict(row) for row in db.execute("SELECT base,quote,day,rate FROM fx_rates WHERE base='EUR'")]
+        return snapshot,rates
+
     def _state(self,db,compact_view,account):
         db.execute('BEGIN')
         revision=db.execute('SELECT revision FROM dashboard_revision WHERE id=1').fetchone()[0]

@@ -37,12 +37,14 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
     resources=ResourceMonitor(store,cache)
     def compact_state():return cache.derived('state-compact:all',lambda:store.state(compact_view=True))
     def home_euro(account,compact_view=False,chart_only=False):
-        from home_euro import overview
+        from home_euro import compact_overview,overview
         def build():
+            if compact_view:
+                return compact_overview(store,compact_state(),account)
             for attempt in range(2):
-                snapshot=compact_state() if compact_view or chart_only else cache.get(store.state)
+                snapshot=compact_state() if chart_only else cache.get(store.state)
                 try:
-                    result=overview(store,snapshot,account,fetch_rates=False,include_history=not compact_view,
+                    result=overview(store,snapshot,account,fetch_rates=False,
                                     retain_history=not chart_only,skip_invalid=True,allow_missing_value=True,
                                     expected_revision=snapshot['data_revision'],
                                     positions=store.position_histories(snapshot,account,skip_invalid=True) if chart_only else None)
@@ -51,10 +53,6 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     if attempt:raise
             result['data_revision']=snapshot['data_revision']
             if chart_only:return {k:result[k] for k in ('portfolios','data_revision','as_of','excluded')}
-            if compact_view:
-                from dashboard import compact
-                result=compact(result)
-                result['chart_status']='pending'
             return result
         return cache.derived(('home-euro-chart:' if chart_only else 'home-euro-compact:' if compact_view else 'home-euro:')+str(account),build)
     static=Path(__file__).parent/'static'
@@ -254,14 +252,13 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond(compare(store,positions,sector))
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
             if path in ('/api/home/euro','/api/home/euro/history'):
-                from dashboard import compact
                 query=parse_qs(urlsplit(self.path).query);account=query.get('account_id',['all'])[0]
                 try:
                     result=home_euro(account,compact_view=query.get('compact')==['1'] and path=='/api/home/euro',chart_only=path.endswith('/history'))
                     return self.respond(result,etag=True)
                 except PortfolioRevisionChanged:
                     return self.respond({'error':'De portefeuille is gewijzigd. Vernieuw het overzicht.'},409)
-                except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
+                except (LookupError,ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount of onvolledige gegevens.'},400)
                 except Exception as error:
                     reference=record(store,'ERROR','market','home_euro_failed','Het euro-overzicht kon niet worden geladen.',{'error_type':type(error).__name__,'chart':path.endswith('/history')})
                     return self.respond({'error':'Het euro-overzicht kon niet worden geladen.','log_id':reference},503)

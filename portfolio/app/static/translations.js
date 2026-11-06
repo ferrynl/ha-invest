@@ -1,5 +1,7 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+ "Het gecombineerde euro-overzicht is tijdelijk niet beschikbaar. Hieronder staan de posities die in EUR noteren.": {"nl":"Het gecombineerde euro-overzicht is tijdelijk niet beschikbaar. Hieronder staan de posities die in EUR noteren.","en":"The combined euro overview is temporarily unavailable. The figures below cover holdings listed in EUR.","es":"El resumen combinado en euros no está disponible temporalmente. A continuación se muestran las posiciones que cotizan en EUR."},
+ "Het euro-overzicht duurde te lang om te laden.": {"nl":"Het euro-overzicht duurde te lang om te laden.","en":"The euro overview took too long to load.","es":"El resumen en euros tardó demasiado en cargarse."},
  "Stijgers en dalers": {"nl":"Stijgers en dalers","en":"Gainers and losers","es":"Subidas y bajadas"},
  "Laatste handelsdag": {"nl":"Laatste handelsdag","en":"Latest trading day","es":"Última sesión"},
  "Afgelopen 7 dagen": {"nl":"Afgelopen 7 dagen","en":"Past 7 days","es":"Últimos 7 días"},

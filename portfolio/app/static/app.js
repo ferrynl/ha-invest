@@ -15,7 +15,10 @@ async function load(){
  try{
  const request=++stateRequest;const response=await apiFetch('api/state?account_id='+encodeURIComponent(currentBroker)+'&compact=1');
  if(response.status===304){
-  if(request===stateRequest&&state&&accessSession?.user&&document.body.classList.contains('home-page'))renderHomeDailyMovers();
+  if(request===stateRequest&&state&&accessSession?.user&&document.body.classList.contains('home-page')){
+   renderHomeDailyMovers();
+   if(homeCurrency==='ALL'&&homeEuroError)loadHomeEuro();
+  }
   return;
  }
  if(!response.ok)throw Error();const result=await response.json();if(request!==stateRequest||!accessSession?.user)return;state=result;
@@ -44,7 +47,7 @@ function draw(){
  const members=selection==='all'?homeChartMembers():selection.startsWith('portfolio:')?[]:[view.positions[Number(selection)]].filter(Boolean);
  if(members.some(p=>p.history_loaded===false)){loadHomePositionHistory(members);return;}
  drawDashboardChart(view,chartRange,selection,homeChartMembers());
- if(homeCurrency==='ALL'&&selection.startsWith('portfolio:'))showHomeEuroChartProgress(homeChartNearView);
+ if(homeIsCombined()&&selection.startsWith('portfolio:'))showHomeEuroChartProgress(homeChartNearView);
 }
 $('chart-ranges').addEventListener('click',event=>{const button=event.target.closest('button[data-range]');if(!button)return;chartRange=button.dataset.range;for(const choice of $('chart-ranges').querySelectorAll('button'))choice.setAttribute('aria-pressed',String(choice===button));draw();});
 $('instrument').addEventListener('change',()=>{homeChartChanged();draw();});

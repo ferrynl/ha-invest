@@ -110,7 +110,7 @@ def prepare_portfolio_rates(store,snapshot,account='all'):
     owner=None if str(account)=='all' else int(account);requests=[];today=date.today().isoformat()
     for rows,field in [(snapshot['purchases'],'purchased_on'),(snapshot['dividends'],'paid_on'),(snapshot.get('charges',[]),'paid_on')]:
         requests.extend((row['currency'],'EUR',row[field]) for row in rows if (owner is None or row['account_id']==owner) and row['currency']!='EUR' and not row.get('split_before'))
-    requests.extend((p['currency'],'EUR',today) for p in snapshot['positions'] if (owner is None or p['account_id']==owner) and p['currency']!='EUR' and Decimal(p['quantity'])>0)
+    requests.extend((p['currency'],'EUR',today) for p in snapshot['positions'] if (owner is None or p['account_id']==owner) and p['currency']!='EUR' and Decimal(p['quantity'] or '0')>0)
     try:prepare_rates(store,requests)
     except Exception as error:record(store,'WARNING','fx','home_euro_rates_failed','Wisselkoersen voor het totaaloverzicht konden niet volledig worden opgehaald.',{'error_type':type(error).__name__,'requested_pairs':len(set((a,b) for a,b,d in requests))})
 
@@ -124,3 +124,16 @@ def overview(store,snapshot,account='all',fetch_rates=True,include_history=True,
             raise PortfolioRevisionChanged('De portefeuille is gewijzigd. Vernieuw het overzicht.')
         rates=[dict(row) for row in db.execute("SELECT base,quote,day,rate FROM fx_rates WHERE base='EUR'")]
     return build(snapshot,rates,account,include_history=include_history,retain_history=retain_history,skip_invalid=skip_invalid,positions=positions,allow_missing_value=allow_missing_value)
+
+
+def compact_overview(store,snapshot,account='all'):
+    from dashboard import compact
+    from storage import PortfolioRevisionChanged
+    try:
+        result=overview(store,snapshot,account,fetch_rates=False,include_history=False,
+                        skip_invalid=True,allow_missing_value=True,expected_revision=snapshot['data_revision'])
+    except PortfolioRevisionChanged:
+        # Read positions and FX in one transaction if quotes are being refreshed.
+        snapshot,rates=store.compact_state_with_euro_rates(account)
+        result=build(snapshot,rates,account,include_history=False,skip_invalid=True,allow_missing_value=True)
+    return compact({**result,'data_revision':snapshot['data_revision'],'chart_status':'pending'})
