@@ -22,6 +22,7 @@ async function load(){
  $('status').textContent=state.status.message+ui(' Automatische controle elke ')+state.refresh_minutes+ui(' minuten.');
  if(location.hash==='#transacties'||location.hash.startsWith('#transacties-'))loadTransactions();
  if(location.hash==='#aandelen')renderStockPage();
+ if(location.hash==='#stijgers-dalers')loadStockMovers();
  if(location.hash.startsWith('#aandeel?'))loadStockDetail();
  if(location.hash.startsWith('#sector?'))loadStockSector();
  if(location.hash==='#dividend')renderDividendPage();

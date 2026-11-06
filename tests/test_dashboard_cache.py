@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'portfolio'/'app'))
 from storage import Store
 from cache import StateCache
-from dashboard import compact
+from dashboard import compact,stock_movers
 from restore import restore_backup
 from forex import prepare_rates,save_rates
 from datetime import date,timedelta
@@ -18,6 +18,25 @@ class DashboardCacheTests(unittest.TestCase):
   tmp=tempfile.TemporaryDirectory();self.addCleanup(tmp.cleanup);self.store=Store(tmp.name)
   self.store.add(dict(symbol='TEST',exchange='NYSE',currency='USD',name='Example',quantity='2',price='100',purchased_on='2026-01-02'))
   self.cache=StateCache(0,store=self.store)
+ def test_stock_movers_compare_periods_and_scope_to_selected_broker(self):
+  self.store.add_account(dict(name='Other',broker='Other'))
+  other=self.store.state(compact_view=True)['accounts'][-1]['id']
+  self.store.add(dict(account_id=other,symbol='TEST',exchange='NYSE',currency='USD',name='Example',quantity='1',price='100',purchased_on='2026-01-02'))
+  self.store.add(dict(account_id=other,symbol='LOSS',exchange='NYSE',currency='USD',name='Loser',quantity='1',price='100',purchased_on='2026-01-02'))
+  for symbol,prices in [('TEST',('100','125','150')),('LOSS',('100','100','80'))]:
+   self.store.save_history(symbol,'NYSE','USD','2026-01-02',[
+    dict(day='2026-01-05',price=prices[0]),dict(day='2026-01-09',price=prices[1])])
+   self.store.quote(symbol,'NYSE','USD',prices[2],'2026-01-12T18:00:00+00:00','test')
+  snapshot=self.store.state(compact_view=True)
+  today=date(2026,1,12)
+  day=stock_movers(self.store,snapshot,'all',1,today)
+  self.assertEqual(day['day'],'2026-01-12')
+  self.assertEqual([(p['symbol'],float(p['change'])) for p in day['gainers']],[('TEST',20)])
+  self.assertEqual([p['symbol'] for p in day['losers']],['LOSS'])
+  week=stock_movers(self.store,snapshot,str(snapshot['accounts'][0]['id']),7,today)
+  self.assertEqual([(p['symbol'],float(p['change'])) for p in week['gainers']],[('TEST',50)])
+  self.assertEqual(week['losers'],[])
+  self.assertEqual(stock_movers(self.store,snapshot,'all',30,today)['gainers'],[])
  def test_snapshot_survives_ram_expiry_and_restart_without_rebuilding(self):
   loader=Mock(wraps=self.store.state);first=self.cache.get(loader);self.assertEqual(self.cache.get(loader),first);loader.assert_called_once()
   restarted=StateCache(0,store=Store(self.store.root))

@@ -34,6 +34,16 @@
     "secrets.yaml"
   ],
   "js": [
+    "#stijgers-dalers",
+    "[data-route=aandelen]",
+    "stijgers-dalers",
+    "stock-movers-broker-slot",
+    "stocks-nav",
+    "api/stocks/movers?",
+    "stock-movers-",
+    "stock-movers-period",
+    "stock-movers-results",
+    "stock-movers-status",
     ".png",
     "advanced micro devices",
     "adyen",

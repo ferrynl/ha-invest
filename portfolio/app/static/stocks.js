@@ -2,7 +2,7 @@
 var ui=globalThis.HomeInvestTranslate||((value)=>value);
 /* Listing-level portfolio presentation, shared across broker accounts. */
 let stocksData=null,stocksGeneration=0;
-function clearStocksDashboard(){clearStockSector();stocksGeneration++;stocksData=null;for(const id of ['stocks-metrics','stocks-sectors','stocks-countries','stocks-types','positions'])$(id).replaceChildren();$('stocks-feedback').textContent='';}
+function clearStocksDashboard(){clearStockSector();clearStockMovers();stocksGeneration++;stocksData=null;for(const id of ['stocks-metrics','stocks-sectors','stocks-countries','stocks-types','positions'])$(id).replaceChildren();$('stocks-feedback').textContent='';}
 async function loadStocksDashboard(){
  if(!state||!accessSession?.user)return;const request=++stocksGeneration,account=String(currentBroker);if(!stocksData)$('stocks-feedback').textContent=ui('Alle aandelen laden…');
  try{const response=await apiFetch('api/stocks?account_id='+encodeURIComponent(account));const data=await response.json();if(request!==stocksGeneration||account!==String(currentBroker)||!accessSession?.user)return;if(!response.ok)throw Error();stocksData=data;$('stocks-feedback').textContent='';renderStocksRows();renderStockComposition();refreshCategoryOverview(true);}
@@ -138,3 +138,38 @@ async function loadStockSector(){
 }
 if(typeof document!=='undefined')$('stocks-add').addEventListener('click',()=>openPopup('purchase-editor'));
 if(typeof module!=='undefined')module.exports={stockDistribution,stockSectorTheme};
+
+
+let stockMoversRequest=null;
+function clearStockMovers(){
+ stockMoversRequest?.abort();
+ stockMoversRequest=null;
+ $('stock-movers-results').hidden=true;
+ for(const side of ['gainers','losers'])$('stock-movers-'+side).replaceChildren();
+ $('stock-movers-status').textContent='';
+}
+async function loadStockMovers(){
+ clearStockMovers();
+ if(!state||!accessSession?.user)return;
+ const account=currentBroker,period=$('stock-movers-period').value,controller=new AbortController();
+ stockMoversRequest=controller;
+ const status=$('stock-movers-status');
+ status.textContent=ui('Ranglijsten laden…');
+ const params=new URLSearchParams({account_id:account,days:period});
+ try{
+  const signal=AbortSignal.any([controller.signal,AbortSignal.timeout(30000)]);
+  const response=await apiFetch('api/stocks/movers?'+params,{signal,background:true});
+  if(!response.ok)throw Error();
+  const data=await response.json();
+  if(controller.signal.aborted||!accessSession?.user||location.hash!=='#stijgers-dalers'||account!==currentBroker)return;
+  status.textContent=data.day?ui('Handelsdag {date}',{date:dayLabel(data.day)}):'';
+  for(const side of ['gainers','losers']){
+   const rows=data[side];
+   $('stock-movers-'+side).append(...rows.map((position,index)=>stockMoverRow(position,Number(position.change),index)));
+   $('stock-movers-'+side+'-empty').hidden=rows.length>0;
+  }
+  $('stock-movers-results').hidden=false;
+ }catch{
+  if(!controller.signal.aborted)status.textContent=ui('Ranglijsten laden mislukt. Open de pagina opnieuw om het nogmaals te proberen.');
+ }
+}

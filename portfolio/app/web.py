@@ -177,6 +177,17 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 query=parse_qs(urlsplit(self.path).query)
                 try:return self.respond(instruments.category_overview(store,query.get('account_id',['all'])[0]),etag=True)
                 except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
+            if path=='/api/stocks/movers':
+                from dashboard import MOVER_PERIODS,stock_movers
+                query=parse_qs(urlsplit(self.path).query)
+                account=query.get('account_id',['all'])[0]
+                try:
+                    period=int(query.get('days',['1'])[0])
+                    if period not in MOVER_PERIODS or (account!='all' and str(int(account))!=account):
+                        raise ValueError()
+                    return self.respond(cache.derived(f'stock-movers:{account}:{period}',lambda:stock_movers(store,compact_state(),account,period)))
+                except PortfolioRevisionChanged:return self.respond({'error':'De portefeuille is gewijzigd. Vernieuw het overzicht.'},409)
+                except (ValueError,TypeError):return self.respond({'error':'Ongeldige aanvraag of brokeraccount.'},400)
             if path=='/api/instrument/holdings':
                 from fund_holdings import saved,KNOWN
                 query=parse_qs(urlsplit(self.path).query)

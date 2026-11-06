@@ -125,28 +125,29 @@ function renderHomeDailyMovers(){
   notice.hidden=rows.length>0&&!fallbackDay;
   notice.textContent=fallbackDay?ui('Koerscijfers van gisteren ({date}).',{date:dayLabel(fallbackDay)}):
    side==='gainers'?ui('Vandaag zijn er geen stijgers met beschikbare koersdata.'):ui('Vandaag zijn er geen dalers met beschikbare koersdata.');
-  for(const [index,{position,change}] of rows.entries()){
-   const row=homeNode('li',undefined,'home-daily-row');
-   const mark=homeNode('span',position.name.trim().split(/\s+/).slice(0,2).map(word=>word[0]).join('').toUpperCase(),'stock-company-mark');
-   mark.setAttribute('aria-hidden','true');
-   loadHomeCompanyLogo(mark,position);
-   const link=homeNode('a',position.name);
-   link.href=stockDetailLink(position);
-   const listing=homeNode('div',undefined,'home-daily-listing');
-   listing.append(link,homeNode('small',position.exchange));
-   row.append(homeNode('span',index+1),mark,listing,homeNode('strong',homePercent(change),change>0?'positive':'negative'));
-   list.append(row);
-  }
+  list.append(...rows.map(({position,change},index)=>stockMoverRow(position,change,index)));
  }
 }
-async function loadHomeCompanyLogo(mark,position){
+function stockMoverRow(position,change,index){
+ const row=homeNode('li',undefined,'home-daily-row');
+ const mark=homeNode('span',position.name.trim().split(/\s+/).slice(0,2).map(word=>word[0]).join('').toUpperCase(),'stock-company-mark');
+ mark.setAttribute('aria-hidden','true');
+ loadMoverCompanyLogo(mark,position);
+ const link=homeNode('a',position.name);
+ link.href=stockDetailLink(position);
+ const listing=homeNode('div',undefined,'home-daily-listing');
+ listing.append(link,homeNode('small',position.exchange+(position.day?' · '+dayLabel(position.day):'')));
+ row.append(homeNode('span',index+1),mark,listing,homeNode('strong',homePercent(change),change>0?'positive':'negative'));
+ return row;
+}
+async function loadMoverCompanyLogo(mark,position){
  const local=localCompanyLogo(position.name);
- const domain=local?'':position.daily_moves.domain||await lookupCompanyDomain(position);
- if(!local&&(!domain||!mark.isConnected))return;
+ const domain=local?'':position.logo_domain||position.daily_moves?.domain||await lookupCompanyDomain(position);
+ if(!local&&!domain)return;
  const image=homeNode('img');
  image.alt='';
  image.referrerPolicy='no-referrer';
- image.onload=()=>mark.replaceChildren(image);
+ image.onload=()=>{if(mark.isConnected)mark.replaceChildren(image);};
  image.src=local||companyLogoUrl(domain);
 }
 function homeChartChanged(){const value=$('instrument').value;homeMode=value==='all'?'compare':value.startsWith('portfolio:')?'overview':'position';if(homeMode==='compare'&&!homeSelected.size)for(const p of homeRows(homeScope(),'','open','value').slice(0,6))homeSelected.add(homeKey(p));renderHomeTable();}

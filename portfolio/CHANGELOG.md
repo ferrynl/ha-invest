@@ -1,3 +1,7 @@
+## 0.69.0
+
+- Aandelen heeft een subpagina Stijgers en dalers met een brokerkeuze en ranglijsten voor de laatste handelsdag of de afgelopen 7, 30, 90 of 365 dagen.
+
 ## 0.68.2
 
 - Home laadt bedrijfsiconen ook als de bedrijfsinformatie nog niet is opgeslagen. Links hebben appbreed een witte standaardkleur en de ranglijsten gebruiken neutrale scheidingslijnen.

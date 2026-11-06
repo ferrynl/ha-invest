@@ -1,5 +1,17 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+ "Stijgers en dalers": {"nl":"Stijgers en dalers","en":"Gainers and losers","es":"Subidas y bajadas"},
+ "Laatste handelsdag": {"nl":"Laatste handelsdag","en":"Latest trading day","es":"Última sesión"},
+ "Afgelopen 7 dagen": {"nl":"Afgelopen 7 dagen","en":"Past 7 days","es":"Últimos 7 días"},
+ "Afgelopen 30 dagen": {"nl":"Afgelopen 30 dagen","en":"Past 30 days","es":"Últimos 30 días"},
+ "Afgelopen 90 dagen": {"nl":"Afgelopen 90 dagen","en":"Past 90 days","es":"Últimos 90 días"},
+ "Afgelopen 365 dagen": {"nl":"Afgelopen 365 dagen","en":"Past 365 days","es":"Últimos 365 días"},
+ "Maximaal tien per lijst, op basis van de koers in de noteringsvaluta. Alleen open posities met voldoende koershistorie tellen mee.": {"nl":"Maximaal tien per lijst, op basis van de koers in de noteringsvaluta. Alleen open posities met voldoende koershistorie tellen mee.","en":"Up to ten per list, based on prices in the listing currency. Only open positions with enough price history are included.","es":"Hasta diez por lista, según el precio en la moneda de cotización. Solo se incluyen posiciones abiertas con historial suficiente."},
+ "Geen stijgers in deze selectie.": {"nl":"Geen stijgers in deze selectie.","en":"No gainers in this selection.","es":"No hay subidas en esta selección."},
+ "Geen dalers in deze selectie.": {"nl":"Geen dalers in deze selectie.","en":"No losers in this selection.","es":"No hay bajadas en esta selección."},
+ "Handelsdag {date}": {"nl":"Handelsdag {date}","en":"Trading day {date}","es":"Sesión del {date}"},
+ "Ranglijsten laden…": {"nl":"Ranglijsten laden…","en":"Loading rankings…","es":"Cargando clasificaciones…"},
+ "Ranglijsten laden mislukt. Open de pagina opnieuw om het nogmaals te proberen.": {"nl":"Ranglijsten laden mislukt. Open de pagina opnieuw om het nogmaals te proberen.","en":"Could not load the rankings. Reopen the page to try again.","es":"No se pudieron cargar las clasificaciones. Vuelve a abrir la página para intentarlo de nuevo."},
  "Koerscijfers van gisteren ({date}).": {"nl":"Koerscijfers van gisteren ({date}).","en":"Price changes from yesterday ({date}).","es":"Variaciones de ayer ({date})."},
  "Stijgers en dalers vandaag": {"nl":"Stijgers en dalers vandaag","en":"Today’s gainers and losers","es":"Mayores subidas y bajadas de hoy"},
  "Koersverschil ten opzichte van de vorige beschikbare slotkoers, in de noteringsvaluta.": {"nl":"Koersverschil ten opzichte van de vorige beschikbare slotkoers, in de noteringsvaluta.","en":"Price change from the previous available close, in the listing currency.","es":"Variación respecto al último cierre disponible, en la moneda de cotización."},
