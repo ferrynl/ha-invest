@@ -1,3 +1,7 @@
+## 0.70.0
+
+- Dividendkolommen openen alle geboekte betalingen van de gekozen maand. De dividendkalender toont bedrijfslogo’s en opent per maand de geschatte bedragen per bedrijf en brokeraccount.
+
 ## 0.69.2
 
 - Dividend blijft laden bij posities met ontbrekende aantallen of onbruikbare koershistorie. Geboekte dividendbetalingen blijven zichtbaar.

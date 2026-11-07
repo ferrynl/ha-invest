@@ -246,3 +246,8 @@ a.stock-sector-card:hover,a.stock-sector-card:focus-visible{border-color:var(--s
 .home-daily-row:last-child{border-bottom:0}
 .home-daily-listing a{font-weight:600;text-decoration:none}
 .home-daily-listing a:hover,.home-daily-listing a:focus-visible{text-decoration:underline}
+
+#dividend-history-chart rect { cursor: pointer; }
+.dividend-company-logos { display: flex; flex-wrap: wrap; gap: .3rem; }
+.dividend-company-logo { display: inline-grid; place-items: center; width: 1.8rem; height: 1.8rem; overflow: hidden; border-radius: .35rem; background: #22334a; font-size: .65rem; }
+.dividend-company-logo img { width: 100%; height: 100%; object-fit: contain; }

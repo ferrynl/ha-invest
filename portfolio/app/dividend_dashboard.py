@@ -30,7 +30,7 @@ def overview(snapshot,account='all',today=None,force_currency=None):
     names={key(p):p for p in positions};accounts={a['id']:a['name'] for a in snapshot['accounts']}
     currencies=sorted({p['currency'] for p in positions+payments}|({force_currency} if force_currency else set()));result=[]
     for currency in currencies:
-        rows=[p for p in payments if p['currency']==currency];members=[p for p in positions if p['currency']==currency];by_month={};contributors={};baseline={m:ZERO for m in range(1,13)};modeled=set();excluded={}
+        rows=[p for p in payments if p['currency']==currency];members=[p for p in positions if p['currency']==currency];by_month={};contributors={};baseline={m:ZERO for m in range(1,13)};modeled=set();excluded={};monthly_estimates={}
         for p in members:
             contributors[key(p)]={**{field:p[field] for field in ('symbol','exchange','currency','account_id','name','account_name')},**({'native_currency':p['native_currency']} if p.get('native_currency') else {}),'received':ZERO,'expected':ZERO,'open':is_open(p)}
         for payment in rows:
@@ -51,11 +51,19 @@ def overview(snapshot,account='all',today=None,force_currency=None):
                 factor*=Decimal(trade['quantity'])/before
             if not valid:excluded[identity]='Splitsing zonder bekend oorspronkelijk aantal';continue
             estimate=Decimal(payment.get('forecast_amount',payment['amount']))/basis/factor*Decimal(position['quantity'])
-            baseline[int(payment['paid_on'][5:7])]+=estimate;contributors[identity]['expected']+=estimate;modeled.add(identity)
+            payment_month=int(payment['paid_on'][5:7])
+            estimates=monthly_estimates.setdefault(payment_month,{})
+            estimates[identity]=estimates.get(identity,ZERO)+estimate
+            baseline[payment_month]+=estimate;contributors[identity]['expected']+=estimate;modeled.add(identity)
         for p in members:
             if p['quantity'] is None:excluded[key(p)]='Geen betrouwbaar aantal op de betaaldatum'
             elif is_open(p) and key(p) not in modeled and key(p) not in excluded:excluded[key(p)]='Geen bruikbaar dividend in de afgelopen twaalf maanden'
         forecast=[dict(month=month_offset(today,i).strftime('%Y-%m'),amount=str(baseline[month_offset(today,i).month])) for i in range(1,61)]
+        for row in forecast:
+            month=int(row['month'][5:7])
+            row['companies']=[{**{k:v for k,v in contributors[identity].items() if k not in ('received','expected','open')},
+                               'amount':str(amount)}
+                              for identity,amount in monthly_estimates.get(month,{}).items() if amount]
         first=min(by_month,default=today.strftime('%Y-%m'));first_year=int(first[:4]);yearly=[]
         for year in range(first_year,today.year+6):
             received=sum((amount for month,amount in by_month.items() if month.startswith(str(year)+'-')),ZERO)
