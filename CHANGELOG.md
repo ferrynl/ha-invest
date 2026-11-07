@@ -1,3 +1,7 @@
+## 0.70.1
+
+- Dividend probeert het overzicht opnieuw op te bouwen als een koersupdate de portefeuille tegelijk wijzigt. Serverfouten krijgen een logreferentie en de browser onderscheidt laad- en weergavefouten.
+
 ## 0.70.0
 
 - Dividendkolommen openen alle geboekte betalingen van de gekozen maand. De dividendkalender toont bedrijfslogo’s en opent per maand de geschatte bedragen per bedrijf en brokeraccount.

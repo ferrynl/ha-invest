@@ -3168,6 +3168,11 @@ const UI_TRANSLATIONS = {
   "en": "Add dividend",
   "es": "Añadir dividendo"
  },
+ "Het dividendoverzicht kon niet worden geladen.": {
+  "nl": "Het dividendoverzicht kon niet worden geladen.",
+  "en": "The dividend overview could not be loaded.",
+  "es": "No se pudo cargar el resumen de dividendos."
+ },
  "Dividendoverzicht laden mislukt. Open de pagina opnieuw om het nog eens te proberen.": {
   "nl": "Dividendoverzicht laden mislukt. Open de pagina opnieuw om het nog eens te proberen.",
   "en": "Failed to load dividend overview. Reopen the page to retry.",

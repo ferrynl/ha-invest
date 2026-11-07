@@ -9,8 +9,21 @@ async function renderDividendDashboard(){
  if(!state||!accessSession?.user)return;const account=String(currentBroker),generation=++dividendGeneration;
  if(dividendAccount!==account){clearDividendDashboard();dividendAccount=account;return renderDividendDashboard();}
  if(!dividendData)$('dividend-dashboard-status').textContent=ui('Je dividendoverzicht laden…');
- try{const response=await apiFetch('api/dividends/overview?account_id='+encodeURIComponent(account)+(dividendCurrency==='ALL'?'&combined=1':''));const data=await response.json();if(generation!==dividendGeneration||account!==String(currentBroker)||!accessSession?.user)return;if(!response.ok)throw Error();dividendData=data;$('dividend-dashboard-status').textContent='';drawDividendDashboard();}
- catch{if(generation===dividendGeneration)$('dividend-dashboard-status').textContent=ui('Dividendoverzicht laden mislukt. Open de pagina opnieuw om het nog eens te proberen.');}
+ let stage='request',httpStatus=0,logId='';
+ try{
+  const response=await apiFetch('api/dividends/overview?account_id='+encodeURIComponent(account)+(dividendCurrency==='ALL'?'&combined=1':''));
+  httpStatus=response.status;stage='response';
+  const data=await response.json();
+  if(generation!==dividendGeneration||account!==String(currentBroker)||!accessSession?.user)return;
+  logId=data?.log_id||'';
+  if(!response.ok)throw Error();
+  stage='render';dividendData=data;
+  $('dividend-dashboard-status').textContent='';drawDividendDashboard();
+ }catch(error){
+  if(generation!==dividendGeneration)return;
+  console.error('dividend_overview_failed',{stage,httpStatus,errorType:error.name,logId});
+  $('dividend-dashboard-status').textContent=ui('Dividendoverzicht laden mislukt. Open de pagina opnieuw om het nog eens te proberen.')+(logId?' · Log-ID '+logId:'');
+ }
 }
 function dividendGrowthScenario(source,growth){
  const rate=Number.isFinite(growth)?Math.max(0,Math.min(10,growth))/100:0.03;

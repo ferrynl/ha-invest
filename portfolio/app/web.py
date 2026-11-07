@@ -234,9 +234,37 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 return self.respond({'providers':[{'id':key,'name':value['name'],'formats':value['formats']} for key,value in ADAPTERS.items() if not value.get('any_broker')],'batches':batches})
             if path=='/api/dividends/overview':
                 from dividend_dashboard import overview,euro_overview
-                account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
-                try:return self.respond(cache.derived('dividend-euro:'+str(account),lambda:euro_overview(store,store.sampled_state(compact_state(),'dividend',account),account,fetch_rates=False)) if parse_qs(urlsplit(self.path).query).get('combined')==['1'] else cache.derived('dividend:'+str(account),lambda:overview(store.sampled_state(compact_state(),'dividend',account),account)),etag=True)
-                except (ValueError,TypeError):return self.respond({'error':'Ongeldig brokeraccount.'},400)
+                query=parse_qs(urlsplit(self.path).query)
+                account=query.get('account_id',['all'])[0]
+                combined=query.get('combined')==['1']
+                slot=('dividend-euro:' if combined else 'dividend:')+account
+                stage='snapshot'
+                def build():
+                    nonlocal stage
+                    for attempt in range(2):
+                        stage='snapshot'
+                        snapshot=compact_state()
+                        if account!='all' and not any(str(row['id'])==account for row in snapshot['accounts']):
+                            raise ActionError('Ongeldig brokeraccount.')
+                        stage='history'
+                        try:
+                            snapshot=store.sampled_state(snapshot,'dividend',account)
+                            break
+                        except PortfolioRevisionChanged:
+                            if attempt:raise
+                    stage='forecast'
+                    return euro_overview(store,snapshot,account,fetch_rates=False) if combined else overview(snapshot,account)
+                try:
+                    return self.respond(cache.derived(slot,build),etag=True)
+                except ActionError as error:
+                    return self.respond({'error':str(error)},400)
+                except Exception as error:
+                    changed=isinstance(error,PortfolioRevisionChanged)
+                    reference=record(store,'WARNING' if changed else 'ERROR','dividend','dividend_overview_failed',
+                                     'Het dividendoverzicht kon niet worden geladen.',
+                                     {'stage':stage,'combined':combined,'scope':'all' if account=='all' else 'broker',
+                                      'error_type':type(error).__name__})
+                    return self.respond({'error':'Het dividendoverzicht kon niet worden geladen.','log_id':reference},409 if changed else 503)
             if path=='/api/stocks':
                 from stocks_dashboard import overview
                 account=parse_qs(urlsplit(self.path).query).get('account_id',['all'])[0]
