@@ -33,7 +33,10 @@ from forex import overview as fx_overview,convert as fx_convert,history as fx_hi
 
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested,integration_options=None,enable_demo=True):
     from logo_cache import LogoCache
-    logos=LogoCache(store.root)
+    def logo_error(group,stage,error_type,status):
+        record(store,'WARNING','logos','logo_cache_failed','Logo ophalen of opslaan mislukt.',
+               {'group':group,'stage':stage,'error_type':error_type,'http_status':status})
+    logos=LogoCache(store.root,logo_error)
     cache.bind(store)
     from resource_stats import ResourceMonitor
     resources=ResourceMonitor(store,cache)

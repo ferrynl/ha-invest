@@ -1,3 +1,7 @@
+## 0.70.8
+
+- Over ons laadt logo’s ook wanneer de logorij nog verborgen is. De lokale logo-opslag volgt doorverwijzingen binnen dezelfde CDN-host en registreert download-, afbeeldings- en opslagfouten.
+
 ## 0.70.7
 
 - Over ons toont grotere logo’s in kaarten over de volle breedte. Bronlogo’s en dividendlogo’s worden apart lokaal bewaard na de eerste download.
