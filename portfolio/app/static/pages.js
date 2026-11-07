@@ -76,7 +76,7 @@ function showPage(){
  if(page==='over-ons'){
   for(const image of document.querySelectorAll('[data-logo-src]')){
    image.hidden=true;
-   image.onload=()=>{image.hidden=false;image.parentElement.hidden=false;};
+   image.onload=()=>{image.hidden=false;image.nextElementSibling.hidden=true;};
    image.src=image.dataset.logoSrc;
    delete image.dataset.logoSrc;
   }

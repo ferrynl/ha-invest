@@ -1,3 +1,7 @@
+## 0.70.9
+
+- Over ons herstelt het kaart­raster. Alleen de logobalk vult de kaartbreedte en toont een bronnaam als er geen afbeelding beschikbaar is.
+
 ## 0.70.8
 
 - Over ons laadt logo’s ook wanneer de logorij nog verborgen is. De lokale logo-opslag volgt doorverwijzingen binnen dezelfde CDN-host en registreert download-, afbeeldings- en opslagfouten.
