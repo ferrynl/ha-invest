@@ -147,14 +147,14 @@ function stockMoverRow(position,change,index){
  row.append(homeNode('span',index+1),mark,listing,homeNode('strong',homePercent(change),change>0?'positive':'negative'));
  return row;
 }
-async function loadMoverCompanyLogo(mark,position){
+async function loadMoverCompanyLogo(mark,position,minSize=0){
  const local=localCompanyLogo(position.name);
  const domain=local?'':position.logo_domain||position.daily_moves?.domain||await lookupCompanyDomain(position);
  if(!local&&!domain)return;
  const image=homeNode('img');
  image.alt='';
  image.referrerPolicy='no-referrer';
- image.onload=()=>{if(mark.isConnected)mark.replaceChildren(image);};
+ image.onload=()=>{if(mark.isConnected&&Math.max(image.naturalWidth,image.naturalHeight)>=minSize)mark.replaceChildren(image);};
  image.src=local||companyLogoUrl(domain);
 }
 function homeChartChanged(){const value=$('instrument').value;homeMode=value==='all'?'compare':value.startsWith('portfolio:')?'overview':'position';if(homeMode==='compare'&&!homeSelected.size)for(const p of homeRows(homeScope(),'','open','value').slice(0,6))homeSelected.add(homeKey(p));renderHomeTable();}

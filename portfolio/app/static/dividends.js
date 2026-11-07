@@ -64,7 +64,7 @@ function drawDividendDashboard(){
    const mark=dividendNode('span',company.symbol.slice(0,4),'dividend-company-logo');
    mark.title=company.name;mark.setAttribute('role','img');mark.setAttribute('aria-label',company.name);
    logos.append(mark);
-   loadMoverCompanyLogo(mark,{...company,currency:company.native_currency||company.currency}).catch(()=>{});
+   loadMoverCompanyLogo(mark,{...company,currency:company.native_currency||company.currency},32).catch(()=>{});
   }
   tile.append(logos);tile.addEventListener('click',()=>openDividendMonth(row,currency,true));
   $('dividend-calendar').append(tile);

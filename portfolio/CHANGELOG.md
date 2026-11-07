@@ -1,3 +1,7 @@
+## 0.70.2
+
+- Bedrijfslogo’s in de dividendkalender krijgen lichte tegels met meer ruimte. Bij een te klein logo blijft de ticker zichtbaar.
+
 ## 0.70.1
 
 - Dividend probeert het overzicht opnieuw op te bouwen als een koersupdate de portefeuille tegelijk wijzigt. Serverfouten krijgen een logreferentie en de browser onderscheidt laad- en weergavefouten.
