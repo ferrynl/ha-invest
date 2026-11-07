@@ -153,7 +153,11 @@ class Store:
             rates=[dict(row) for row in db.execute("SELECT base,quote,day,rate FROM fx_rates WHERE base='EUR'")]
         return snapshot,rates
 
-    def _state(self,db,compact_view,account):
+    def dividend_state(self,account='all'):
+        with self.read() as db:
+            return self._state(db,True,account,dividend_history=True)
+
+    def _state(self,db,compact_view,account,dividend_history=False):
         db.execute('BEGIN')
         revision=db.execute('SELECT revision FROM dashboard_revision WHERE id=1').fetchone()[0]
         settings=dict(db.execute("SELECT key,value FROM app_settings WHERE key NOT LIKE 'dashboard_layout:%'"))
@@ -187,7 +191,7 @@ class Store:
         for row in dividends:income_by_position.setdefault((row['account_id'],*listing(row)),[]).append(row)
         from history import PortfolioAccumulator
         from dashboard import daily_moves
-        accumulator=PortfolioAccumulator() if compact_view else None
+        accumulator=PortfolioAccumulator() if compact_view and not dividend_history else None
         if account!='all' and not any(str(a['id'])==str(account) for a in accounts):raise LookupError('Brokeraccount niet gevonden.')
         positions = []
         moves_by_listing = {}
@@ -219,14 +223,17 @@ class Store:
                                   'cost':None,'realised':None,'dividend':None,'value':None,
                                   'gain':None,'total_gain':None})
                 continue
-            if quantity > 0 and instrument not in paused:
+            if not dividend_history and quantity > 0 and instrument not in paused:
                 if instrument not in moves_by_listing:
                     moves_by_listing[instrument] = daily_moves(db,instrument,group['quote'],prices)
                 positions[-1]['daily_moves'] = moves_by_listing[instrument]
-            if accumulator is not None:
+            if dividend_history:
+                payment_days={row['paid_on'] for row in income_by_position.get(key,[])}
+                positions[-1]['history']=[point for point in chart[:-1] if point['day'] in payment_days]+chart[-1:]
+            elif accumulator is not None:
                 accumulator.add(positions[-1]);positions[-1]['history']=chart[-1:];positions[-1]['history_loaded']=False
         scoped=lambda rows:[r for r in rows if account=='all' or str(r['account_id'])==str(account)]
-        result=dict(fund_compositions=fund_compositions,charges=charges,instrument_categories=categories,purchases=scoped(purchases), positions=positions, quotes=[] if compact_view else quotes, dividends=scoped(dividends), portfolios=accumulator.result() if accumulator else portfolio_values(positions),
+        result=dict(fund_compositions=fund_compositions,charges=charges,instrument_categories=categories,purchases=scoped(purchases), positions=positions, quotes=[] if compact_view else quotes, dividends=scoped(dividends), portfolios=[] if dividend_history else accumulator.result() if accumulator else portfolio_values(positions),
                     accounts=accounts,settings=settings, database_version=SCHEMA_VERSION,data_revision=revision)
         suspicious=sorted({row['purchased_on'] for row in purchases if row['purchased_on']<'1900-01-01'})
         if suspicious:result['history_date_issues']=suspicious

@@ -1,3 +1,7 @@
+## 0.70.4
+
+- Het dividendoverzicht leest posities en historie in dezelfde database-snapshot, zodat gelijktijdige koersupdates het laden niet meer afbreken.
+
 ## 0.70.3
 
 - De dividendkalender gebruikt lokale bedrijfslogo’s en optioneel Logo.dev. Bij een ontbrekend logo blijft de ticker zichtbaar.
