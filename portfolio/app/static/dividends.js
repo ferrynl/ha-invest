@@ -53,7 +53,6 @@ function drawDividendDashboard(){
  $('dividend-years').replaceChildren();const years=data.yearly.filter(row=>row.year>=Number(dividendData.as_of.slice(0,4))-3&&(row.year<=Number(dividendData.as_of.slice(0,4))||row.months_expected===12)),maximum=Math.max(1,...years.map(row=>Number(row.received)+Number(row.expected)));
  for(const row of years){const item=dividendNode('div',undefined,'dividend-year'),head=dividendNode('div',undefined,'dividend-year-label');head.append(dividendNode('strong',String(row.year)+(row.months_expected&&row.months_expected<12?' · '+row.months_expected+ui(' mnd vooruit'):'')),dividendNode('span',Number(row.expected)?(Number(row.received)?money(row.received,currency)+' + ':'')+money(row.expected,currency)+ui(' geschat'):row.year>Number(dividendData.as_of.slice(0,4))&&!data.coverage.modeled?ui('Geen basis'):money(row.received,currency)));const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 100 6');svg.setAttribute('preserveAspectRatio','none');svg.setAttribute('aria-hidden','true');let x=0;for(const [value,color] of [[row.received,'#47dcb0'],[row.expected,'#70b7ff']]){const rect=document.createElementNS(svg.namespaceURI,'rect');rect.setAttribute('x',String(x));rect.setAttribute('width',String(Number(value)/maximum*100));rect.setAttribute('height','6');rect.setAttribute('fill',color);svg.append(rect);x+=Number(value)/maximum*100;}item.append(head,svg);$('dividend-years').append(item);}
  $('dividend-calendar').replaceChildren();
- $('dividend-logo-credit').hidden=false;
  for(const row of data.forecast.slice(0,12)){
   const tile=dividendNode('button',undefined,'dividend-month secondary');tile.type='button';
   tile.append(dividendNode('span',dividendMonth(row.month)),dividendNode('strong',data.coverage.modeled?money(row.amount,currency):'-'),dividendNode('small',data.coverage.modeled?ui('Verwacht'):ui('Onvoldoende historie')));
@@ -103,7 +102,7 @@ async function loadDividendLogo(mark,company){
  async function loadRemote(){
   const domain=Object.hasOwn(dividendLogoDomains,company.symbol)?dividendLogoDomains[company.symbol]:
    await lookupCompanyDomain({...company,currency:company.native_currency||company.currency});
-  if(mark.isConnected&&domain)image.src='api/company-logo?'+new URLSearchParams({group:'dividend',domain});
+  if(mark.isConnected&&domain)image.src=companyLogoUrl(domain);
  }
  if(local){
   image.onerror=()=>{image.onerror=null;loadRemote().catch(()=>{});};
@@ -112,9 +111,6 @@ async function loadDividendLogo(mark,company){
 }
 function bindDividendMonth(){
  const panel=dividendNode('section',undefined,'popup-content');panel.id='dividend-month-details';
- const credit=dividendNode('a',ui('Logo’s via AllInvestView'));
- credit.id='dividend-logo-credit';credit.href='https://www.allinvestview.com/tools/ticker-logos/';credit.hidden=true;
- $('dividend-calendar').after(credit);
  document.body.append(panel);registerPopup(panel.id,ui('Dividend'));
 }
 function renderDividendLedger(){

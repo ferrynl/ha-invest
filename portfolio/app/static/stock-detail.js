@@ -20,7 +20,7 @@ async function loadStockDetail(){
   loadStockCompany(params,request,route);
   const localLogo=localCompanyLogo(data.name);
   if(localLogo)showCompanyLogo('',request,localLogo);
-  const issuer=['invesco','vanguard','vaneck','ishares'].find(name=>data.name.toLowerCase().includes(name));if(issuer&&data.is_etf){showCompanyLogo(({invesco:'invesco.com',vanguard:'vanguard.com',vaneck:'vaneck.com',ishares:'ishares.com'})[issuer],request);$('stock-company-description').textContent=fundCompanyDescription({issuer,holdings_count:data.fund_composition?.holdings.length||0,as_of:data.fund_composition?.as_of||''});}
+  const issuer=['invesco','vanguard','vaneck','ishares'].find(name=>data.name.toLowerCase().includes(name));if(issuer&&data.is_etf){showCompanyLogo(({invesco:'invesco.com',vanguard:'vanguard.com',vaneck:'vaneck.com',ishares:'ishares.com'})[issuer],request,localLogo);$('stock-company-description').textContent=fundCompanyDescription({issuer,holdings_count:data.fund_composition?.holdings.length||0,as_of:data.fund_composition?.as_of||''});}
   $('stock-fundamentals-panel').hidden=!data.fundamentals_supported;
   if(data.fundamentals_supported)loadStockFundamentals(params,request,route);
   $('stock-category-open').hidden=accessSession.user.role!=='admin';$('stock-detail-categories').replaceChildren();
@@ -80,7 +80,7 @@ async function loadStockCompany(params,request,route){
  }catch{if(request===stockDetailRequest)$('stock-company-description').textContent=ui('Bedrijfsinformatie is tijdelijk niet beschikbaar.');}
 }
 function fundCompanyDescription(info){return ui('ETF van {issuer}. De beschikbare samenstelling bevat {count} beleggingen; peildatum {day}.',{issuer:({invesco:'Invesco',vanguard:'Vanguard',vaneck:ui('VanEck'),ishares:'iShares'})[info.issuer]||info.issuer,count:new Intl.NumberFormat(appLocale()).format(info.holdings_count),day:info.as_of?dayLabel(info.as_of):ui('Niet beschikbaar')});}
-const companyLogoUrl=domain=>'https://www.google.com/s2/favicons?sz=128&domain='+encodeURIComponent(domain);
+const companyLogoUrl=domain=>'api/company-logo?'+new URLSearchParams({group:'dividend',domain});
 const companyLogoFiles=new Map([
  ['unity software','unity'],['seek','seek'],['adyen','adyen'],['proximus','proximus'],
  ['tencent holdings','tencent'],['sandisk','sandisk'],['micron technology','micron'],

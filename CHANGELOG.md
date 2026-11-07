@@ -1,3 +1,7 @@
+## 0.70.10
+
+- Home, Stijgers en dalers en Aandeeldetails gebruiken dezelfde lokale bedrijfslogo-opslag als Dividend. De bronvermelding staat in de voettekst.
+
 ## 0.70.9
 
 - Over ons herstelt het kaart­raster. Alleen de logobalk vult de kaartbreedte en toont een bronnaam als er geen afbeelding beschikbaar is.
