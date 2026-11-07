@@ -95,7 +95,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if compressed:self.send_header('Content-Encoding','gzip')
             self.send_header('X-Content-Type-Options','nosniff')
             self.send_header('Referrer-Policy','same-origin')
-            self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https://img.logo.dev https://www.google.com https://t0.gstatic.com https://t1.gstatic.com https://t2.gstatic.com https://t3.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'")
+            self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https://cdn.tickerlogos.com https://www.google.com https://t0.gstatic.com https://t1.gstatic.com https://t2.gstatic.com https://t3.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'")
             if digest:self.send_header('ETag',digest)
             if filename:self.send_header('Content-Disposition',f'attachment; filename="{filename}"')
             if cookie is None:cookie=getattr(self,'renew_cookie',None)
@@ -250,9 +250,6 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return euro_overview(store,snapshot,account,fetch_rates=False) if combined else overview(snapshot,account)
                 try:
                     result=cache.derived(slot,build)
-                    logo_key=str((integration_options or {}).get('logo_dev_publishable_key','')).strip()
-                    if re.fullmatch(r'pk_[A-Za-z0-9_-]{1,128}',logo_key):
-                        result={**result,'logo_dev_publishable_key':logo_key}
                     return self.respond(result,etag=True)
                 except ActionError as error:
                     return self.respond({'error':str(error)},400)

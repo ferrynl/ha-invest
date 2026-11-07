@@ -1050,4 +1050,4 @@ Bij transacties met een jaartal vóór 1900 voorkomt de app dat er eeuwen aan da
 
 ## Bedrijfslogo’s in de dividendkalender
 
-Vul in de Home Assistant-appconfiguratie bij `logo_dev_publishable_key` je [Logo.dev](https://www.logo.dev/)-sleutel in die begint met `pk_`. Sla op en herstart Home Invest. Deze openbare sleutel is zichtbaar in de browser. Logo.dev ontvangt bij het laden van een logo het tickersymbool met beurscode, zonder dividendbedrag of brokeraccount. Zonder sleutel gebruikt de kalender lokale logo’s en tickers.
+Logo’s laden automatisch via lokale afbeeldingen en [Ticker Logos van AllInvestView](https://www.allinvestview.com/tools/ticker-logos/). De externe bron ontvangt alleen het bedrijfsdomein en vereist geen account of sleutel. Bij een ontbrekend logo blijft de ticker zichtbaar.

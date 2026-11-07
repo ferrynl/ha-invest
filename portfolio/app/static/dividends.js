@@ -53,6 +53,7 @@ function drawDividendDashboard(){
  $('dividend-years').replaceChildren();const years=data.yearly.filter(row=>row.year>=Number(dividendData.as_of.slice(0,4))-3&&(row.year<=Number(dividendData.as_of.slice(0,4))||row.months_expected===12)),maximum=Math.max(1,...years.map(row=>Number(row.received)+Number(row.expected)));
  for(const row of years){const item=dividendNode('div',undefined,'dividend-year'),head=dividendNode('div',undefined,'dividend-year-label');head.append(dividendNode('strong',String(row.year)+(row.months_expected&&row.months_expected<12?' · '+row.months_expected+ui(' mnd vooruit'):'')),dividendNode('span',Number(row.expected)?(Number(row.received)?money(row.received,currency)+' + ':'')+money(row.expected,currency)+ui(' geschat'):row.year>Number(dividendData.as_of.slice(0,4))&&!data.coverage.modeled?ui('Geen basis'):money(row.received,currency)));const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 100 6');svg.setAttribute('preserveAspectRatio','none');svg.setAttribute('aria-hidden','true');let x=0;for(const [value,color] of [[row.received,'#47dcb0'],[row.expected,'#70b7ff']]){const rect=document.createElementNS(svg.namespaceURI,'rect');rect.setAttribute('x',String(x));rect.setAttribute('width',String(Number(value)/maximum*100));rect.setAttribute('height','6');rect.setAttribute('fill',color);svg.append(rect);x+=Number(value)/maximum*100;}item.append(head,svg);$('dividend-years').append(item);}
  $('dividend-calendar').replaceChildren();
+ $('dividend-logo-credit').hidden=false;
  for(const row of data.forecast.slice(0,12)){
   const tile=dividendNode('button',undefined,'dividend-month secondary');tile.type='button';
   tile.append(dividendNode('span',dividendMonth(row.month)),dividendNode('strong',data.coverage.modeled?money(row.amount,currency):'-'),dividendNode('small',data.coverage.modeled?ui('Verwacht'):ui('Onvoldoende historie')));
@@ -64,7 +65,7 @@ function drawDividendDashboard(){
    const mark=dividendNode('span',company.symbol.slice(0,4),'dividend-company-logo');
    mark.title=company.name;mark.setAttribute('role','img');mark.setAttribute('aria-label',company.name);
    logos.append(mark);
-   loadDividendLogo(mark,company);
+   loadDividendLogo(mark,company).catch(()=>{});
   }
   tile.append(logos);tile.addEventListener('click',()=>openDividendMonth(row,currency,true));
   $('dividend-calendar').append(tile);
@@ -91,25 +92,29 @@ function openDividendMonth(point,currency,expected){
  }
  openPopup(panel.id);
 }
-const dividendLogoSuffix={
- AMSTERDAM:'.AS',BRUSSELS:'.BR',PARIS:'.PA',XETRA:'.DE',FRANKFURT:'.F',
- LONDON:'.L',MADRID:'.MC',MILAN:'.MI',SWISS:'.SW',STOCKHOLM:'.ST',
- COPENHAGEN:'.CO',TORONTO:'.TO',TOKYO:'.T',ASX:'.AX','HONG KONG':'.HK',
- NASDAQ:'',NYSE:'',NYSEARCA:'',AMEX:'',OTC:''
+const dividendLogoDomains={
+ 'TDIV.AS':'vaneck.com','TDT.AS':'vaneck.com','EXSA.DE':'ishares.com',
+ 'ABEA.DE':'google.com','ABEA.F':'google.com','SAB.MC':'bancsabadell.com'
 };
-function loadDividendLogo(mark,company){
+async function loadDividendLogo(mark,company){
  const local=localCompanyLogo(company.name);
- const key=dividendData.logo_dev_publishable_key;
- const suffix=Object.hasOwn(dividendLogoSuffix,company.exchange)?dividendLogoSuffix[company.exchange]:undefined;
- const ticker=suffix===undefined?'':company.symbol.toUpperCase().endsWith(suffix)?company.symbol:company.symbol+suffix;
- const remote=key&&ticker?'https://img.logo.dev/ticker/'+encodeURIComponent(ticker)+'?'+new URLSearchParams({token:key,size:'96',fallback:'404'}):'';
  const image=dividendNode('img');image.alt='';image.referrerPolicy='no-referrer';
  image.onload=()=>{if(mark.isConnected)mark.replaceChildren(image);};
- if(local&&remote)image.onerror=()=>{image.onerror=null;if(mark.isConnected)image.src=remote;};
- if(local||remote)image.src=local||remote;
+ async function loadRemote(){
+  const domain=Object.hasOwn(dividendLogoDomains,company.symbol)?dividendLogoDomains[company.symbol]:
+   await lookupCompanyDomain({...company,currency:company.native_currency||company.currency});
+  if(mark.isConnected&&domain)image.src='https://cdn.tickerlogos.com/'+encodeURIComponent(domain);
+ }
+ if(local){
+  image.onerror=()=>{image.onerror=null;loadRemote().catch(()=>{});};
+  image.src=local;
+ }else await loadRemote();
 }
 function bindDividendMonth(){
  const panel=dividendNode('section',undefined,'popup-content');panel.id='dividend-month-details';
+ const credit=dividendNode('a','AllInvestView');
+ credit.id='dividend-logo-credit';credit.href='https://www.allinvestview.com/tools/ticker-logos/';credit.hidden=true;
+ $('dividend-calendar').after(credit);
  document.body.append(panel);registerPopup(panel.id,ui('Dividend'));
 }
 function renderDividendLedger(){

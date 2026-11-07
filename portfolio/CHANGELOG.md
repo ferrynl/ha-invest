@@ -1,3 +1,7 @@
+## 0.70.5
+
+- De dividendkalender haalt bedrijfslogo’s op via Ticker Logos zonder API-sleutel, met vaste bronverwijzingen voor VanEck, iShares, Alphabet en Banco Sabadell.
+
 ## 0.70.4
 
 - Het dividendoverzicht leest posities en historie in dezelfde database-snapshot, zodat gelijktijdige koersupdates het laden niet meer afbreken.
