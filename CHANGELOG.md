@@ -1,3 +1,7 @@
+## 0.70.6
+
+- Over ons toont logo’s bij bedrijven en databronnen en vermeldt AllInvestView als bron voor de dividendlogo’s.
+
 ## 0.70.5
 
 - De dividendkalender haalt bedrijfslogo’s op via Ticker Logos zonder API-sleutel, met vaste bronverwijzingen voor VanEck, iShares, Alphabet en Banco Sabadell.

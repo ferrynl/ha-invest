@@ -3173,6 +3173,9 @@ const UI_TRANSLATIONS = {
   "en": "The dividend overview could not be loaded.",
   "es": "No se pudo cargar el resumen de dividendos."
  },
+ "AllInvestView": {"nl": "AllInvestView", "en": "AllInvestView", "es": "AllInvestView"},
+ "Logo’s via AllInvestView": {"nl": "Logo’s via AllInvestView", "en": "Logos by AllInvestView", "es": "Logotipos de AllInvestView"},
+ "Bedrijfslogo’s in de dividendkalender worden via Ticker Logos opgehaald. De dienst ontvangt het bedrijfsdomein en vereist geen API-sleutel.": {"nl": "Bedrijfslogo’s in de dividendkalender worden via Ticker Logos opgehaald. De dienst ontvangt het bedrijfsdomein en vereist geen API-sleutel.", "en": "Company logos in the dividend calendar come from Ticker Logos. The service receives the company domain and requires no API key.", "es": "Los logotipos del calendario de dividendos proceden de Ticker Logos. El servicio recibe el dominio de la empresa y no requiere clave de API."},
  "Dividendoverzicht laden mislukt. Open de pagina opnieuw om het nog eens te proberen.": {
   "nl": "Dividendoverzicht laden mislukt. Open de pagina opnieuw om het nog eens te proberen.",
   "en": "Failed to load dividend overview. Reopen the page to retry.",

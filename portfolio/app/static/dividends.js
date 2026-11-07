@@ -112,7 +112,7 @@ async function loadDividendLogo(mark,company){
 }
 function bindDividendMonth(){
  const panel=dividendNode('section',undefined,'popup-content');panel.id='dividend-month-details';
- const credit=dividendNode('a','AllInvestView');
+ const credit=dividendNode('a',ui('Logo’s via AllInvestView'));
  credit.id='dividend-logo-credit';credit.href='https://www.allinvestview.com/tools/ticker-logos/';credit.hidden=true;
  $('dividend-calendar').after(credit);
  document.body.append(panel);registerPopup(panel.id,ui('Dividend'));

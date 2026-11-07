@@ -251,3 +251,6 @@ a.stock-sector-card:hover,a.stock-sector-card:focus-visible{border-color:var(--s
 .dividend-company-logos { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; margin-top: .55rem; }
 .dividend-month .dividend-company-logo { display: inline-grid; place-items: center; box-sizing: border-box; width: 2.125rem; height: 2.125rem; padding: .3rem; border-radius: .5rem; background: #f7f9fc; color: #243954; font-size: .625rem; font-weight: 700; text-transform: uppercase; }
 .dividend-company-logo img { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: contain; }
+
+.source-card h3, .source-links a { display: inline-flex; align-items: center; gap: .45rem; vertical-align: middle; }
+.source-logo { width: 1.75rem; height: 1.75rem; box-sizing: border-box; padding: .22rem; border-radius: .4rem; object-fit: contain; background: #f7f9fc; flex: none; }
