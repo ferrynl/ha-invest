@@ -1,3 +1,7 @@
+## 0.69.2
+
+- Dividend blijft laden bij posities met ontbrekende aantallen of onbruikbare koershistorie. Geboekte dividendbetalingen blijven zichtbaar.
+
 ## 0.69.1
 
 - Home herstelt het euro-overzicht bij gelijktijdige koersupdates. Als het gecombineerde overzicht tijdelijk niet laadt, blijven posities in EUR zichtbaar met een toelichting.

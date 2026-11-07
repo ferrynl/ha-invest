@@ -9,6 +9,10 @@ def month_offset(day,offset):
     return date(n//12,n%12+1,1)
 def key(row):return tuple((row.get('native_currency',row[k]) if k=='currency' else row[k]) for k in ('account_id','symbol','exchange','currency'))
 
+def is_open(position):
+    quantity=position['quantity']
+    return quantity is not None and Decimal(quantity)>0
+
 def overview(snapshot,account='all',today=None,force_currency=None):
     today=today or date.today()
     if str(account)!='all':
@@ -28,13 +32,13 @@ def overview(snapshot,account='all',today=None,force_currency=None):
     for currency in currencies:
         rows=[p for p in payments if p['currency']==currency];members=[p for p in positions if p['currency']==currency];by_month={};contributors={};baseline={m:ZERO for m in range(1,13)};modeled=set();excluded={}
         for p in members:
-            contributors[key(p)]={**{field:p[field] for field in ('symbol','exchange','currency','account_id','name','account_name')},**({'native_currency':p['native_currency']} if p.get('native_currency') else {}),'received':ZERO,'expected':ZERO,'open':Decimal(p['quantity'])>0}
+            contributors[key(p)]={**{field:p[field] for field in ('symbol','exchange','currency','account_id','name','account_name')},**({'native_currency':p['native_currency']} if p.get('native_currency') else {}),'received':ZERO,'expected':ZERO,'open':is_open(p)}
         for payment in rows:
             amount=Decimal(payment['amount']);month=payment['paid_on'][:7];by_month[month]=by_month.get(month,ZERO)+amount;identity=key(payment)
             if identity not in contributors:contributors[identity]=dict(symbol=payment['symbol'],exchange=payment['exchange'],currency=currency,account_id=payment['account_id'],name=payment['symbol'],account_name=accounts[payment['account_id']],received=ZERO,expected=ZERO,open=False,**({'native_currency':payment['native_currency']} if payment.get('native_currency') else {}))
             contributors[identity]['received']+=amount
             position=names.get(identity)
-            if payment['paid_on']<=start or not position or Decimal(position['quantity'])<=0:continue
+            if payment['paid_on']<=start or not position or not is_open(position):continue
             if payment.get('forecast_amount','available') is None:excluded[identity]='Geen actuele wisselkoers voor de verwachting';continue
             point=next((point for point in reversed(position['history']) if point['day']<=payment['paid_on']),None)
             basis=Decimal(point['quantity']) if point else ZERO
@@ -49,7 +53,8 @@ def overview(snapshot,account='all',today=None,force_currency=None):
             estimate=Decimal(payment.get('forecast_amount',payment['amount']))/basis/factor*Decimal(position['quantity'])
             baseline[int(payment['paid_on'][5:7])]+=estimate;contributors[identity]['expected']+=estimate;modeled.add(identity)
         for p in members:
-            if Decimal(p['quantity'])>0 and key(p) not in modeled and key(p) not in excluded:excluded[key(p)]='Geen bruikbaar dividend in de afgelopen twaalf maanden'
+            if p['quantity'] is None:excluded[key(p)]='Geen betrouwbaar aantal op de betaaldatum'
+            elif is_open(p) and key(p) not in modeled and key(p) not in excluded:excluded[key(p)]='Geen bruikbaar dividend in de afgelopen twaalf maanden'
         forecast=[dict(month=month_offset(today,i).strftime('%Y-%m'),amount=str(baseline[month_offset(today,i).month])) for i in range(1,61)]
         first=min(by_month,default=today.strftime('%Y-%m'));first_year=int(first[:4]);yearly=[]
         for year in range(first_year,today.year+6):
@@ -60,7 +65,7 @@ def overview(snapshot,account='all',today=None,force_currency=None):
         latest_months=[month_offset(today,i).strftime('%Y-%m') for i in range(-23,1)]
         for p in contributors.values():p['received']=str(p['received']);p['expected']=str(p['expected'])
         issues=[dict(symbol=identity[1],exchange=identity[2],currency=identity[3],account_id=identity[0],name=names[identity]['name'],account_name=names[identity]['account_name'],reason=reason) for identity,reason in excluded.items()]
-        result.append(dict(currency=currency,total=str(total),ytd=str(ytd),trailing12=str(trailing),previous12=str(previous),next12=str(sum(baseline.values(),ZERO)),monthly_average=str(sum(baseline.values(),ZERO)/12),payments=len(rows),first_month=first,monthly=[dict(month=m,amount=str(by_month.get(m,ZERO))) for m in latest_months],months=[dict(month=m,amount=str(a)) for m,a in sorted(by_month.items())],yearly=yearly,forecast=forecast,contributors=sorted(contributors.values(),key=lambda p:Decimal(p['received']),reverse=True),coverage=dict(modeled=len(modeled),open=sum(Decimal(p['quantity'])>0 for p in members),excluded=issues)))
+        result.append(dict(currency=currency,total=str(total),ytd=str(ytd),trailing12=str(trailing),previous12=str(previous),next12=str(sum(baseline.values(),ZERO)),monthly_average=str(sum(baseline.values(),ZERO)/12),payments=len(rows),first_month=first,monthly=[dict(month=m,amount=str(by_month.get(m,ZERO))) for m in latest_months],months=[dict(month=m,amount=str(a)) for m,a in sorted(by_month.items())],yearly=yearly,forecast=forecast,contributors=sorted(contributors.values(),key=lambda p:Decimal(p['received']),reverse=True),coverage=dict(modeled=len(modeled),open=sum(is_open(p) for p in members),excluded=issues)))
     return dict(account_id=str(account),as_of=today.isoformat(),currencies=result,method='historical_same_month_current_holdings')
 
 
@@ -71,7 +76,7 @@ def euro_overview(store,snapshot,account='all',today=None,fetch_rates=True):
     today=today or date.today();native=overview(snapshot,account,today);owner=None if str(account)=='all' else int(account)
     payments=[row for row in snapshot['dividends'] if (owner is None or row['account_id']==owner) and row['paid_on']<=today.isoformat()]
     payment_currencies={row['currency'] for row in payments}
-    requests=[(row['currency'],'EUR',row['paid_on']) for row in payments]+[(p['currency'],'EUR',today.isoformat()) for p in snapshot['positions'] if (owner is None or p['account_id']==owner) and Decimal(p['quantity'])>0 and p['currency'] in payment_currencies]
+    requests=[(row['currency'],'EUR',row['paid_on']) for row in payments]+[(p['currency'],'EUR',today.isoformat()) for p in snapshot['positions'] if (owner is None or p['account_id']==owner) and is_open(p) and p['currency'] in payment_currencies]
     if fetch_rates:
         try:prepare_rates(store,requests)
         except Exception as error:record(store,'WARNING','fx','dividend_euro_rates_failed','Wisselkoersen voor dividend konden niet volledig worden opgehaald.',{'error_type':type(error).__name__})

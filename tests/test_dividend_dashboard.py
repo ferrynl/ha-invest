@@ -21,6 +21,12 @@ class DividendDashboardTests(unittest.TestCase):
  def test_closed_positions_keep_actual_income_but_are_excluded_from_forecast(self):
   result=overview(snapshot([position(quantity='0')],[payment('2026-01-15')]),today=TODAY)['currencies'][0]
   self.assertEqual(Decimal(result['total']),10);self.assertEqual(Decimal(result['next12']),0);self.assertEqual(result['coverage']['modeled'],0);self.assertFalse(result['contributors'][0]['open'])
+ def test_missing_quantity_preserves_booked_income(self):
+  invalid={**position(quantity=None),'history':[],'invalid_position':True}
+  result=overview(snapshot([invalid],[payment('2026-01-15')]),today=TODAY)['currencies'][0]
+  self.assertEqual(result['total'],'10')
+  self.assertEqual(result['next12'],'0')
+  self.assertEqual(len(result['coverage']['excluded']),1)
  def test_currency_and_broker_scope_are_preserved(self):
   result=overview(snapshot([position(),position(account=2,currency='USD')],[payment('2026-01-15'),payment('2026-01-15','999',account=2,currency='USD')]),'1',TODAY)
   self.assertEqual([r['currency'] for r in result['currencies']],['EUR']);self.assertEqual(result['currencies'][0]['total'],'10')

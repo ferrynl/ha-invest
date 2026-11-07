@@ -265,7 +265,7 @@ class Store:
             key=tuple(row[k] for k in ('account_id','symbol','exchange','currency'))
             payments.setdefault(key,set()).add(row['paid_on'])
         positions=[]
-        for p in self.position_histories(snapshot,account,skip_invalid=mode=='annual'):
+        for p in self.position_histories(snapshot,account,skip_invalid=mode in ('annual','dividend')):
             if mode=='annual':
                 from performance import annual_points
                 points=annual_points(p['history'])
