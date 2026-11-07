@@ -64,7 +64,7 @@ function drawDividendDashboard(){
    const mark=dividendNode('span',company.symbol.slice(0,4),'dividend-company-logo');
    mark.title=company.name;mark.setAttribute('role','img');mark.setAttribute('aria-label',company.name);
    logos.append(mark);
-   loadMoverCompanyLogo(mark,{...company,currency:company.native_currency||company.currency},32).catch(()=>{});
+   loadDividendLogo(mark,company);
   }
   tile.append(logos);tile.addEventListener('click',()=>openDividendMonth(row,currency,true));
   $('dividend-calendar').append(tile);
@@ -90,6 +90,23 @@ function openDividendMonth(point,currency,expected){
   item.append(identity,dividendNode('strong',money(row.amount,currency)));panel.append(item);
  }
  openPopup(panel.id);
+}
+const dividendLogoSuffix={
+ AMSTERDAM:'.AS',BRUSSELS:'.BR',PARIS:'.PA',XETRA:'.DE',FRANKFURT:'.F',
+ LONDON:'.L',MADRID:'.MC',MILAN:'.MI',SWISS:'.SW',STOCKHOLM:'.ST',
+ COPENHAGEN:'.CO',TORONTO:'.TO',TOKYO:'.T',ASX:'.AX','HONG KONG':'.HK',
+ NASDAQ:'',NYSE:'',NYSEARCA:'',AMEX:'',OTC:''
+};
+function loadDividendLogo(mark,company){
+ const local=localCompanyLogo(company.name);
+ const key=dividendData.logo_dev_publishable_key;
+ const suffix=Object.hasOwn(dividendLogoSuffix,company.exchange)?dividendLogoSuffix[company.exchange]:undefined;
+ const ticker=suffix===undefined?'':company.symbol.toUpperCase().endsWith(suffix)?company.symbol:company.symbol+suffix;
+ const remote=key&&ticker?'https://img.logo.dev/ticker/'+encodeURIComponent(ticker)+'?'+new URLSearchParams({token:key,size:'96',fallback:'404'}):'';
+ const image=dividendNode('img');image.alt='';image.referrerPolicy='no-referrer';
+ image.onload=()=>{if(mark.isConnected)mark.replaceChildren(image);};
+ if(local&&remote)image.onerror=()=>{image.onerror=null;if(mark.isConnected)image.src=remote;};
+ if(local||remote)image.src=local||remote;
 }
 function bindDividendMonth(){
  const panel=dividendNode('section',undefined,'popup-content');panel.id='dividend-month-details';

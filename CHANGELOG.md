@@ -1,3 +1,7 @@
+## 0.70.3
+
+- De dividendkalender gebruikt lokale bedrijfslogo’s en optioneel Logo.dev. Bij een ontbrekend logo blijft de ticker zichtbaar.
+
 ## 0.70.2
 
 - Bedrijfslogo’s in de dividendkalender krijgen lichte tegels met meer ruimte. Bij een te klein logo blijft de ticker zichtbaar.

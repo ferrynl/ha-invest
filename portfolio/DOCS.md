@@ -1047,3 +1047,7 @@ De statistiekenpagina bevat ook diagnostiek voor geheugenpieken, actieve bereken
 Bij transacties met een jaartal vóór 1900 voorkomt de app dat er eeuwen aan dagwaarden worden opgebouwd. De boekingen blijven behouden. Home en Statistieken waarschuwen en linken naar de betrokken transacties; controleer en corrigeer de datum via de bestaande transactiepopup. De app gokt niet welke datum bedoeld was.
 
 **Instellingen > Gegevens opschonen** opent een controlevenster. De app maakt vóór het opschonen een volledige herstelback-up. Per beursnotering en dag kan alleen de laatste koerswaarneming worden bewaard; dagelijkse koershistorie en alle boekingen blijven behouden. Cacheopschoning bewaart bronwachttijden, ETF-taakstatus en Trading 212-brongegevens. Bij back-upopschoning blijven de vijf nieuwste kopieën staan, inclusief de veiligheidskopie; ook toekomstige app-back-ups gebruiken dan die limiet. Opschonen wacht niet op achtergrondtaken: probeer het opnieuw wanneer de lopende taak gereed is.
+
+## Bedrijfslogo’s in de dividendkalender
+
+Vul in de Home Assistant-appconfiguratie bij `logo_dev_publishable_key` je [Logo.dev](https://www.logo.dev/)-sleutel in die begint met `pk_`. Sla op en herstart Home Invest. Deze openbare sleutel is zichtbaar in de browser. Logo.dev ontvangt bij het laden van een logo het tickersymbool met beurscode, zonder dividendbedrag of brokeraccount. Zonder sleutel gebruikt de kalender lokale logo’s en tickers.
