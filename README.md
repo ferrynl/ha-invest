@@ -217,3 +217,5 @@ Bij transacties met een jaartal vóór 1900 voorkomt de app dat er eeuwen aan da
 ## Bedrijfslogo’s in de dividendkalender
 
 Logo’s laden automatisch via lokale afbeeldingen en [Ticker Logos van AllInvestView](https://www.allinvestview.com/tools/ticker-logos/). De externe bron ontvangt alleen het bedrijfsdomein en vereist geen account of sleutel. Bij een ontbrekend logo blijft de ticker zichtbaar.
+
+Home Invest bewaart opgehaalde logo’s onder `/data/logos/about/` en `/data/logos/dividend/`, met per domein een aparte map. De browser haalt afbeeldingen op bij Home Invest.

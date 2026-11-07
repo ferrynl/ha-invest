@@ -32,6 +32,8 @@ from diagnostics import read_logs,record,DiagnosticError,ActionError
 from forex import overview as fx_overview,convert as fx_convert,history as fx_history
 
 def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested,integration_options=None,enable_demo=True):
+    from logo_cache import LogoCache
+    logos=LogoCache(store.root)
     cache.bind(store)
     from resource_stats import ResourceMonitor
     resources=ResourceMonitor(store,cache)
@@ -95,7 +97,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if compressed:self.send_header('Content-Encoding','gzip')
             self.send_header('X-Content-Type-Options','nosniff')
             self.send_header('Referrer-Policy','same-origin')
-            self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https://cdn.tickerlogos.com https://www.google.com https://t0.gstatic.com https://t1.gstatic.com https://t2.gstatic.com https://t3.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'")
+            self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https://www.google.com https://t0.gstatic.com https://t1.gstatic.com https://t2.gstatic.com https://t3.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'")
             if digest:self.send_header('ETag',digest)
             if filename:self.send_header('Content-Disposition',f'attachment; filename="{filename}"')
             if cookie is None:cookie=getattr(self,'renew_cookie',None)
@@ -122,6 +124,10 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 try:return self.respond(passkeys.list_keys(store,user)) if self.allowed(user) else None
                 except ValueError as error:return self.respond({'error':str(error)},400)
             if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path=='/api/charges/export' or path in ('/api/home-assistant','/api/users','/api/backup','/api/export','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs','/api/resource-stats')):return
+            if path=='/api/company-logo':
+                query=parse_qs(urlsplit(self.path).query)
+                image=logos.get(query.get('group',[''])[0],query.get('domain',[''])[0])
+                return self.respond(image or b'',200 if image else 404,kind='image/png',etag=bool(image))
             if path in ('/api/accounts/edit','/api/accounts/delete-preview'):
                 query=parse_qs(urlsplit(self.path).query)
                 try:

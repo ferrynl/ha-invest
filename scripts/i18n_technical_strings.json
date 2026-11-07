@@ -803,6 +803,8 @@
     "dividend",
     "dividend-broker-slot",
     "dividend-calendar",
+    "[data-logo-src]",
+    "api/company-logo?",
     "ABEA.DE",
     "ABEA.F",
     "AllInvestView",

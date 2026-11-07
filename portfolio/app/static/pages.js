@@ -73,6 +73,14 @@ function showPage(){
  document.body.classList.toggle('stocks-list-page',page==='aandelen');
  const brokerSlot={home:'home-broker-slot',aandelen:'stocks-broker-slot','stijgers-dalers':'stock-movers-broker-slot',dividend:'dividend-broker-slot',rapporten:'reports-broker-slot'}[isReport?'rapporten':page];
  $(brokerSlot||'page-header').append($('broker-filter-control'));
+ if(page==='over-ons'){
+  for(const image of document.querySelectorAll('[data-logo-src]')){
+   image.hidden=true;
+   image.onload=()=>{image.hidden=false;image.parentElement.hidden=false;};
+   image.src=image.dataset.logoSrc;
+   delete image.dataset.logoSrc;
+  }
+ }
  $('broker-filter-control').hidden=page==='account'||page==='over-ons'||page==='instellingen-taken'||page==='instellingen-statistieken'||page==='instellingen-opschonen';
  updateExportLinks();
  $('page-title').textContent=pageNames[page];document.title=pageNames[page]+' · Home Invest';closeMenu();

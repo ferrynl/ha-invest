@@ -103,7 +103,7 @@ async function loadDividendLogo(mark,company){
  async function loadRemote(){
   const domain=Object.hasOwn(dividendLogoDomains,company.symbol)?dividendLogoDomains[company.symbol]:
    await lookupCompanyDomain({...company,currency:company.native_currency||company.currency});
-  if(mark.isConnected&&domain)image.src='https://cdn.tickerlogos.com/'+encodeURIComponent(domain);
+  if(mark.isConnected&&domain)image.src='api/company-logo?'+new URLSearchParams({group:'dividend',domain});
  }
  if(local){
   image.onerror=()=>{image.onerror=null;loadRemote().catch(()=>{});};

@@ -1,3 +1,7 @@
+## 0.70.7
+
+- Over ons toont grotere logo’s in kaarten over de volle breedte. Bronlogo’s en dividendlogo’s worden apart lokaal bewaard na de eerste download.
+
 ## 0.70.6
 
 - Over ons toont logo’s bij bedrijven en databronnen en vermeldt AllInvestView als bron voor de dividendlogo’s.
