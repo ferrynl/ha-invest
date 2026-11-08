@@ -1,3 +1,7 @@
+## 0.70.19
+
+- Toon de meegenomen kostprijs van bestaande omboekingen in Transacties en op de aandeeldetailpagina.
+
 ## 0.70.18
 
 - Zoek alle Amsterdamse noteringen op ticker zonder .AS, ook als ze nog niet in de portefeuille staan.
