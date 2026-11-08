@@ -562,7 +562,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                         result=instruments.save_categories(store,data);cache.invalidate()
                     return self.respond(result)
                 if path=='/api/transactions/edit':
-                    with refresh_lock:
+                    with store.lock:
                         result=transactions.edit(store,data,user['username']);cache.invalidate()
                     refresh_requested.set()
                     return self.respond(result)

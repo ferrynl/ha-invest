@@ -1,3 +1,7 @@
+## 0.70.22
+
+- Laat transactiewijzigingen opslaan tijdens een lopende koersverversing. Databasewijzigingen blijven geserialiseerd.
+
 ## 0.70.21
 
 - Vernieuw de portefeuille en transactielijst op de achtergrond na het opslaan van een correctie. Begrens de wachttijd op het opslagantwoord.
