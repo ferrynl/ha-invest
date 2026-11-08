@@ -187,7 +187,21 @@ function renderHomeInsights(){
  if(!$('home-allocation').children.length)$('home-allocation').append(homeNode('p',ui('Nog geen marktwaarden beschikbaar.')));
  }
  if(!enabled('movers'))return;
- $('home-movers').replaceChildren();for(const p of homeRows(scope,'','open',$('home-ranking').value==='best'?'return':'loss').filter(p=>homeReturn(p)!=null).slice(0,5)){const row=homeNode('a',undefined,'home-mover');row.href=stockDetailLink(p);const title=homeNode('div');title.append(homeNode('span',p.name),homeNode('small',p.symbol+' · '+p.account_name+(p.native_currency?ui(' · oorspronkelijk ')+p.native_currency:'')));row.append(title,homeNode('strong',homePercent(homeReturn(p)),homeReturn(p)>=0?'positive':'negative'));$('home-movers').append(row);}if(!$('home-movers').children.length)$('home-movers').append(homeNode('p',ui('Nog geen resultaten beschikbaar.')));
+ const list=$('home-movers'), daily=chartRange==='1D', best=$('home-ranking').value==='best';
+ list.previousElementSibling.textContent=daily?ui('Koersverschil ten opzichte van de vorige beschikbare slotkoers, in de noteringsvaluta.'):ui('Winst sinds aankoop als % van de totale inleg, inclusief dividend. Geen rendement over de gekozen grafiekperiode.');
+ list.replaceChildren();
+ const open=homeRows(scope,'','open',best?'return':'loss');
+ const day=open.flatMap(p=>p.daily_moves?.sessions.map(session=>session.day)||[]).sort().at(-1);
+ const rows=daily?open.map(p=>({p,change:p.daily_moves?.sessions.find(session=>session.day===day)?.percent})).filter(row=>row.change!=null&&Number.isFinite(Number(row.change))).sort((a,b)=>best?b.change-a.change:a.change-b.change):open.map(p=>({p,change:homeReturn(p)})).filter(row=>row.change!=null);
+ for(const {p,change} of rows.slice(0,5)){
+  const row=homeNode('a',undefined,'home-mover');
+  row.href=stockDetailLink(p,daily?day:undefined);
+  const title=homeNode('div');
+  title.append(homeNode('span',p.name),homeNode('small',[p.symbol,p.account_name,daily?dayLabel(day):p.native_currency].filter(Boolean).join(' · ')));
+  row.append(title,homeNode('strong',homePercent(Number(change)),change>=0?'positive':'negative'));
+  list.append(row);
+ }
+ if(!list.children.length)list.append(homeNode('p',ui('Nog geen resultaten beschikbaar.')));
 }
 function bindHomeDashboard(){
  for(const id of ['home-search','home-position-filter','home-sort'])$(id).addEventListener(id==='home-search'?'input':'change',()=>{if(id==='home-sort')clearTableSort('home-positions');homePage=0;renderHomeTable();});$('home-ranking').addEventListener('change',renderHomeInsights);$('home-prev').addEventListener('click',()=>{homePage--;renderHomeTable();});$('home-next').addEventListener('click',()=>{homePage++;renderHomeTable();});$('home-clear-selection').addEventListener('click',()=>{homeSelected.clear();homeMode='overview';renderHomeDashboard();draw();});

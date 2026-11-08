@@ -1,3 +1,7 @@
+## 0.70.13
+
+- Resultaten in beeld toont bij 1D de koersbeweging van de laatste beschikbare sessie en opent die sessie op de aandeeldetailpagina.
+
 ## 0.70.12
 
 - Toon bij een enkele grafiekdag een punt en geef de klikbare resultaten een groene aanwijskleur.

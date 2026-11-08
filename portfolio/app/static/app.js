@@ -49,7 +49,7 @@ function draw(){
  drawDashboardChart(view,chartRange,selection,homeChartMembers());
  if(homeIsCombined()&&selection.startsWith('portfolio:'))showHomeEuroChartProgress(homeChartNearView);
 }
-$('chart-ranges').addEventListener('click',event=>{const button=event.target.closest('button[data-range]');if(!button)return;chartRange=button.dataset.range;for(const choice of $('chart-ranges').querySelectorAll('button'))choice.setAttribute('aria-pressed',String(choice===button));draw();});
+$('chart-ranges').addEventListener('click',event=>{const button=event.target.closest('button[data-range]');if(!button)return;chartRange=button.dataset.range;for(const choice of $('chart-ranges').querySelectorAll('button'))choice.setAttribute('aria-pressed',String(choice===button));renderHomeInsights();draw();});
 $('instrument').addEventListener('change',()=>{homeChartChanged();draw();});
 $('chart-measure').addEventListener('change',draw);
 window.addEventListener('resize',()=>{clearTimeout(homeResizeTimer);homeResizeTimer=setTimeout(()=>{if(document.body.classList.contains('home-page'))draw();},120);});
