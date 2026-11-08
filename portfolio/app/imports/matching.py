@@ -55,7 +55,7 @@ def resolve(store,rows,provider,preferred=None):
             # Allianz issuer share information: WKN 840400, exchange code ALV.
             # allianz.com/en/investor_relations/share/share-information.html
             alias={'840400':'ALV.DE'}.get(ticker) if currency=='EUR' else None
-            symbols=([alias] if alias else [ticker] if currency=='USD' or ticker.endswith(('.DE','.F','.AS','.PA','.MI','.BR','.MC')) else
+            symbols=([alias] if alias else [ticker] if currency=='USD' or ticker.endswith(('.DE','.F','.AS','.PA','.MI','.BR','.MC','.IR')) else
                      [ticker+'.DE',ticker+'.F'] if currency=='EUR' else [])
             for symbol in symbols:
                 try:stock=listing(symbol,store=store)
