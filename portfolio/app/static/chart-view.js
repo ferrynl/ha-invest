@@ -82,7 +82,7 @@ function drawDashboardChart(state,range,selection,comparisonMembers=[]){
  if(!days.length||!Number.isFinite(min)){$('chartnote').textContent+=ui(' Historische koersen zijn nog niet beschikbaar.');return;}
  const width=Math.max(360,Math.round(svg.getBoundingClientRect().width||900)),height=330,left=width<550?78:98,right=width-16,top=24,bottom=280;
  svg.setAttribute('viewBox','0 0 '+width+' '+height);svg.setAttribute('tabindex','0');svg.setAttribute('aria-label',ui('Portefeuillegrafiek. Gebruik links en rechts voor de dagwaarden.'));
- const shape=comparison?'':preset.shape,zeroBased=['area','columns'].includes(shape),signed=comparison||returnMode||gainMode;
+ const shape=comparison||days.length===1&&preset.shape==='columns'?'':preset.shape,zeroBased=['area','columns'].includes(shape),signed=comparison||returnMode||gainMode;
  const padding=Math.max((max-min)*.12,Math.abs(max)*.01,1);
  const low=signed?Math.min(0,min-padding):zeroBased?0:Math.max(0,min-padding);
  const high=signed?Math.max(padding,max+padding):max+padding;
