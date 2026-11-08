@@ -5836,10 +5836,10 @@ const UI_TRANSLATIONS = {
   "en": "Search by company name or symbol. Stocks, ETFs and funds.",
   "es": "Busca por empresa o símbolo. Acciones, ETF y fondos."
  },
- "resultaten van Yahoo. Kies de juiste notering; typ verder om te verfijnen.": {
-  "nl": "resultaten van Yahoo. Kies de juiste notering; typ verder om te verfijnen.",
-  "en": "Yahoo results. Choose the correct listing; type more to refine.",
-  "es": "resultados de Yahoo. Elige la cotización correcta; escribe más para precisar."
+ "resultaten gevonden. Kies de juiste notering; typ verder om te verfijnen.": {
+  "nl": "resultaten gevonden. Kies de juiste notering; typ verder om te verfijnen.",
+  "en": "results found. Choose the correct listing; type more to refine.",
+  "es": "resultados encontrados. Elige la cotización correcta; escribe más para precisar."
  },
  "Geen passende aandelen, ETF’s of fondsen gevonden. Probeer meer letters of het symbool.": {
   "nl": "Geen passende aandelen, ETF’s of fondsen gevonden. Probeer meer letters of het symbool.",

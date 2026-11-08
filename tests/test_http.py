@@ -110,6 +110,21 @@ class HttpTests(unittest.TestCase):
         self.assertIn('attachment;', headers['Content-Disposition'])
         self.assertEqual(self.request('POST', '/api/purchases', '[]', headers={'Content-Type': 'application/json', 'X-Portfolio-Request': '1'})[0], 400)
 
+    def test_search_prioritizes_saved_ticker(self):
+        listing = dict(name='Monster Beverage', symbol='MNST', exchange='NASDAQ', currency='USD')
+        purchase = dict(listing, quantity='2', price='50', purchased_on=date.today().isoformat())
+        headers = {'Content-Type': 'application/json', 'X-Portfolio-Request': '1'}
+        self.assertEqual(self.request('POST', '/api/purchases', json.dumps(purchase), headers)[0], 201)
+        fund = dict(name='VanEck ETF', symbol='FSMTV.DE', exchange='XETRA', currency='EUR')
+        with patch('web.search_stocks', return_value=[fund, listing]):
+            status, body, _ = self.request('GET', '/api/search?q=%20mnst%20')
+            self.assertEqual(status, 200)
+            self.assertEqual(json.loads(body)['results'], [listing, fund])
+        with patch('web.search_stocks', side_effect=TimeoutError):
+            status, body, _ = self.request('GET', '/api/search?q=mnst')
+            self.assertEqual(status, 200)
+            self.assertEqual(json.loads(body)['results'], [listing])
+
     def test_search_validation_and_provider_failure(self):
         self.assertEqual(self.request('GET', '/api/search?q=a')[0], 400)
         self.assertEqual(self.request('GET', '/api/listing?symbol=bad%20symbol')[0],400)

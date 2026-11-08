@@ -1,3 +1,7 @@
+## 0.70.14
+
+- Toon opgeslagen noteringen bovenaan bij zoeken op exacte ticker, ook als Yahoo niet bereikbaar is.
+
 ## 0.70.13
 
 - Resultaten in beeld toont bij 1D de koersbeweging van de laatste beschikbare sessie en opent die sessie op de aandeeldetailpagina.
