@@ -34,7 +34,7 @@ function renderTransactions(){
  $('transaction-prev').disabled=transactionPage===0;$('transaction-next').disabled=transactionPage>=pages-1;
 }
 async function openTransaction(entry){
- editingTransaction=entry;const form=$('transaction-form'),admin=accessSession?.user?.role==='admin'&&!entry.transfer_id,trade=entry.kind==='trade',split=entry.type==='SPLIT';
+ editingTransaction=entry;const form=$('transaction-form'),transfer=Boolean(entry.transfer_id),repair=transfer&&entry.side==='BUY',admin=accessSession?.user?.role==='admin'&&(!transfer||repair),trade=entry.kind==='trade',split=entry.type==='SPLIT';
  openPopup('transaction-editor');$('transaction-edit-title').textContent=transactionLabels[entry.type]+' · '+(entry.name||entry.symbol||entry.ticker)+' · '+entry.account_name;
  $('transaction-identity').textContent=ui('Registratie ')+entry.id+' · '+(entry.symbol||entry.ticker)+' · '+(entry.exchange||ui('bronvaluta'))+' · '+entry.currency+(split?ui(' · Aantal vóór splitsing: ')+(entry.split_before==='0'?ui('niet in bronbestand'):entry.split_before):'');
  $('transaction-day').value=entry.day;$('transaction-time').value=entry.trade_time?.slice(11,19)||'';$('transaction-side').value=entry.side||'BUY';$('transaction-quantity').value=entry.quantity||'';$('transaction-price').value=entry.price||'';$('transaction-amount').value=(entry.transfer_id?entry.transfer_cost:entry.amount)||'';$('transaction-note').value=entry.note||'';
@@ -43,9 +43,9 @@ async function openTransaction(entry){
  const existing=$('transaction-cost-existing');existing.replaceChildren();const empty=document.createElement('option');empty.value='';empty.textContent=ui('Bestaande kosten koppelen');existing.append(empty);for(const charge of transactionRows.filter(r=>r.kind==='charge'&&r.account_id===entry.account_id&&!r.linked_transaction?.kind)){const option=document.createElement('option');option.value=charge.id;option.textContent=charge.day+' · '+chargeLabels[charge.category]+' · '+charge.amount+' '+charge.currency+' · '+(charge.ticker||'');existing.append(option);}existing.closest('label').hidden=!admin||entry.kind==='charge'||existing.options.length===1;
  $('transaction-costs').hidden=Boolean(entry.transfer_id)||split;$('transaction-cost-add').hidden=!admin||entry.kind==='charge';
  $('transaction-time-label').hidden=!trade;$('transaction-side-label').hidden=!trade||split||Boolean(entry.transfer_id);$('transaction-quantity-label').hidden=!trade;$('transaction-price-label').hidden=!trade||split||Boolean(entry.transfer_id);$('transaction-amount-label').hidden=trade&&!entry.transfer_id||entry.kind==='charge';$('transaction-note-label').hidden=entry.kind!=='dividend';
- for(const field of form.querySelectorAll('input,select,textarea'))field.disabled=!admin||Boolean(field.closest('[hidden]'));
- accounts.disabled=!admin||Boolean(entry.linked_transaction?.kind);
- $('transaction-save').hidden=!admin;$('transaction-edit-feedback').textContent=entry.transfer_id?ui('Omboeking bekijken; wijzigen kan alleen door de herstelback-up terug te zetten.'):admin?ui('Pas de gegevens aan en kies Wijzigingen opslaan.'):ui('Je kunt deze transactie bekijken. Alleen een admin kan wijzigingen opslaan.');
+ for(const field of form.querySelectorAll('input,select,textarea'))field.disabled=!admin||Boolean(field.closest('[hidden]'))||(transfer&&field.id!=='transaction-quantity');
+ accounts.disabled=!admin||transfer||Boolean(entry.linked_transaction?.kind);
+ $('transaction-save').hidden=!admin;$('transaction-edit-feedback').textContent=admin?ui('Pas de gegevens aan en kies Wijzigingen opslaan.'):ui('Je kunt deze transactie bekijken. Alleen een admin kan wijzigingen opslaan.');
  if(admin&&entry.linked_transaction?.kind)$('transaction-edit-feedback').textContent+=' '+ui('Wijzig het brokeraccount via de bijbehorende transactie.');
  $('transaction-changes').replaceChildren();
  try{const response=await apiFetch('api/transactions/changes?kind='+entry.kind+'&id='+entry.id);const result=await response.json();if(!response.ok)throw Error(result.error);if(editingTransaction!==entry)return;

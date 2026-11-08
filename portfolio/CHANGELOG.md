@@ -1,3 +1,7 @@
+## 0.70.20
+
+- Corrigeer het ontvangen aantal van een omboeking vanuit Transacties, met veiligheidsback-up en controle op latere verkopen.
+
 ## 0.70.19
 
 - Toon de meegenomen kostprijs van bestaande omboekingen in Transacties en op de aandeeldetailpagina.

@@ -42,13 +42,25 @@ def edit(store,data,actor):
     kind=str(data.get('kind',''));table=TABLES.get(kind)
     if not table:raise ValueError('Onbekend transactietype.')
     record_id=int(data['id'])
+    if kind=='trade':
+        with store.connect() as db:
+            transfer=db.execute("SELECT 1 FROM purchases WHERE id=? AND transfer_id<>'' AND side='BUY'",(record_id,)).fetchone()
+        if transfer:store.backup()
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         source=db.execute('SELECT * FROM '+table+' WHERE id=?',(record_id,)).fetchone()
         if not source:raise ValueError('Transactie niet gevonden. Vernieuw het overzicht.')
         before=snapshot(db,kind,source)
-        if before.get('transfer_id'):raise ValueError('Een omboeking kan niet als losse aankoop of verkoop worden gewijzigd. Gebruik de herstelback-up om de omboeking terug te draaien.')
         if not hmac.compare_digest(str(data.get('revision','')),revision(before)):raise ValueError('Deze transactie is intussen gewijzigd. Vernieuw het overzicht en open de transactie opnieuw.')
+        if before.get('transfer_id'):
+            if before['side']!='BUY' or not transfer:raise ValueError('Een omboeking kan niet als losse aankoop of verkoop worden gewijzigd. Gebruik de herstelback-up om de omboeking terug te draaien.')
+            quantity=positive(data.get('quantity',''))
+            db.execute('UPDATE purchases SET quantity=? WHERE id=?',(quantity,record_id))
+            lots=[dict(r) for r in db.execute('SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',(before['account_id'],before['symbol'],before['exchange'],before['currency']))]
+            daily_values(lots,[],[])
+            after=snapshot(db,kind,db.execute('SELECT * FROM purchases WHERE id=?',(record_id,)).fetchone())
+            audit(db,kind,before,after,actor)
+            return dict(ok=True)
         # Source import records stay on their original account for deduplication.
         for field in ('symbol','exchange','ticker','split_before')+(() if kind=='charge' else ('currency',)):
             if field in data and str(data[field])!=str(before.get(field,'')):raise ValueError('Aandeel, handelsvaluta en splitsingscontrole kunnen hier niet worden gewijzigd.')
