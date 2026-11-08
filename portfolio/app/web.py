@@ -9,7 +9,7 @@ from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import quote,urlsplit,parse_qs
 from pathlib import Path
-from provider import search_stocks,listing as resolve_listing
+from provider import search_stocks,listing as resolve_listing,quote_symbol
 from restore import restore_backup
 from security import verify_password,SESSION_TTL
 import passkeys
@@ -413,24 +413,39 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 try:return self.respond(resolve_listing(symbol,store=store))
                 except Exception:return self.respond({'error':'De notering of koersvaluta kon niet worden gecontroleerd. Probeer later opnieuw.'},502)
             if path=='/api/search':
-                query=parse_qs(urlsplit(self.path).query).get('q',[''])[0]
-                if not 2<=len(query.strip())<=80:return self.respond({'error':'Typ minimaal twee en maximaal 80 tekens.'},400)
+                query=parse_qs(urlsplit(self.path).query).get('q',[''])[0].strip()
+                if not 2<=len(query)<=80:return self.respond({'error':'Typ minimaal twee en maximaal 80 tekens.'},400)
+                ticker=query.upper()
                 with store.connect() as db:
                     rows = db.execute(
                         """SELECT symbol, exchange, currency, MAX(name) AS name
                            FROM purchases WHERE symbol = ? COLLATE NOCASE
+                           OR substr(symbol, 1, length(?) + 1) = (? || '.') COLLATE NOCASE
                            GROUP BY symbol, exchange, currency ORDER BY exchange, currency""",
-                        (query.strip(),),
+                        (ticker,ticker,ticker),
                     ).fetchall()
-                results = [dict(row) for row in rows]
-                try:
-                    remote = search_stocks(query, store=store)
-                except Exception:
-                    if not results:
-                        return self.respond({'error':'Zoeken bij Yahoo lukt nu niet. Probeer het opnieuw.'},502)
-                else:
-                    local_listings = {(row['symbol'].upper(), row['exchange']) for row in results}
-                    results.extend(row for row in remote if (row['symbol'].upper(), row['exchange']) not in local_listings)
+                results = [dict(row) for row in rows if row['symbol'].upper() in
+                           (ticker, quote_symbol(ticker,row['exchange']))]
+                # Yahoo can interpret NN as a US ticker. Search the Amsterdam
+                # listing explicitly as well when it is not already saved.
+                queries=[query]
+                if ticker=='NN' and not any(row['exchange']=='AMSTERDAM' for row in results):
+                    queries.insert(0,'NN.AS')
+                failed=False
+                seen={(row['symbol'].upper(),row['exchange']) for row in results}
+                for term in queries:
+                    try:
+                        remote=search_stocks(term,store=store)
+                    except Exception:
+                        failed=True
+                        continue
+                    for row in remote:
+                        key=(row['symbol'].upper(),row['exchange'])
+                        if key not in seen:
+                            seen.add(key)
+                            results.append(row)
+                if failed and not results:
+                    return self.respond({'error':'Zoeken bij Yahoo lukt nu niet. Probeer het opnieuw.'},502)
                 return self.respond({'results':results})
             self.respond({'error':'Niet gevonden'},404)
         def do_POST(self):

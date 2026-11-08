@@ -1,3 +1,7 @@
+## 0.70.16
+
+- Zoek NN Group met NN of NN.AS. Opgeslagen noteringen zijn ook vindbaar zonder beursachtervoegsel.
+
 ## 0.70.15
 
 - Ondersteun noteringen op Euronext Dublin in euro met Yahoo-tickers die eindigen op .IR.
