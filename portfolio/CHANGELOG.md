@@ -1,3 +1,7 @@
+## 0.70.11
+
+- Open aandeeldetails direct vanuit Resultaten in beeld op Home.
+
 ## 0.70.10
 
 - Home, Stijgers en dalers en Aandeeldetails gebruiken dezelfde lokale bedrijfslogo-opslag als Dividend. De bronvermelding staat in de voettekst.
