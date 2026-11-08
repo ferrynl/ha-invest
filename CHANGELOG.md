@@ -1,3 +1,7 @@
+## 0.70.17
+
+- Behoud brokeraccount en transactiedatum na het opslaan van een transactie.
+
 ## 0.70.16
 
 - Zoek NN Group met NN of NN.AS. Opgeslagen noteringen zijn ook vindbaar zonder beursachtervoegsel.
