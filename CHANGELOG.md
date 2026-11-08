@@ -1,3 +1,7 @@
+## 0.70.21
+
+- Vernieuw de portefeuille en transactielijst op de achtergrond na het opslaan van een correctie. Begrens de wachttijd op het opslagantwoord.
+
 ## 0.70.20
 
 - Corrigeer het ontvangen aantal van een omboeking vanuit Transacties, met veiligheidsback-up en controle op latere verkopen.
