@@ -6,6 +6,8 @@ import sqlite3
 from storage import now
 from diagnostics import record,ActionError
 from forex import prepare_rates,convert
+from provider import EXCHANGES,quote_symbol
+from .listings import CATALOGUE,HISTORICAL_LISTINGS
 from .registry import discover,lookup,remember
 from .service import book_row,prepare_rows
 from .trading212 import parse_csv,unclassified_identity
@@ -102,6 +104,21 @@ def commit_partial(store,batch_id):
         record(store,'WARNING' if pending else 'INFO',batch['provider'],'import_summary','Import afgerond met regels ter beoordeling.' if pending else 'Import afgerond.',{'account_id':batch['account_id'],'source_rows':len(rows),'skipped':sum(r.get('kind')=='SKIP' for r in rows),**result})
         return result
 
+def issue_exchanges(row):
+    raw=row.get('raw',{})
+    source=next((str(value).strip() for key,value in raw.items()
+                 if key.strip().casefold() in ('exchange','exchange name','mic','execution venue','trading venue') and value), '')
+    if source:return [source[:100]]
+    isin=str(raw.get('ISIN') or '').strip().upper()
+    historical=HISTORICAL_LISTINGS.get(isin)
+    if historical:return [historical['exchange']]
+    exchanges={market for market,_ in EXCHANGES.values()}
+    symbols=CATALOGUE.get(isin,[]) or [str(row.get('ticker') or '').upper()]
+    return sorted({market for market in exchanges for symbol in symbols
+                   if '.' in symbol and quote_symbol(symbol.rsplit('.',1)[0],market)==symbol
+                   and quote_symbol('',market)})
+
+
 def list_issues(store):
     with store.connect() as db:
         entries=db.execute('SELECT i.*,b.account_id,b.filename,a.name AS account_name FROM import_issues i JOIN import_batches b ON b.id=i.batch_id JOIN broker_accounts a ON a.id=b.account_id ORDER BY (i.state=?) DESC,i.id DESC LIMIT 2000',('pending',)).fetchall()
@@ -109,6 +126,8 @@ def list_issues(store):
     result=[]
     for item in entries:
         item=dict(item);row=json.loads(item.pop('payload'));raw=row.get('raw',{});item.update(ticker=row.get('ticker',''),action=raw.get('Action') or raw.get('Type') or raw.get('type',''),day=row.get('day') or raw.get('Date') or raw.get('date') or raw.get('Time (UTC)',raw.get('Time','')),currency=row.get('currency') or raw.get('currency') or raw.get('Currency (Total)',''),amount=row.get('amount') or raw.get('amount') or raw.get('Net Amt.') or raw.get('Total Amount') or raw.get('Total',''))
+        if item['reason'].startswith('Beurskoppeling ontbreekt.'):
+            item['exchange_candidates']=issue_exchanges(row)
         result.append(item)
     return dict(issues=result,capital_returns=returns)
 

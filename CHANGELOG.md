@@ -1,3 +1,7 @@
+## 0.70.23
+
+- Toon mogelijke beurzen bij ontbrekende importkoppelingen, met een expliciete melding als de beurs onbekend is.
+
 ## 0.70.22
 
 - Laat transactiewijzigingen opslaan tijdens een lopende koersverversing. Databasewijzigingen blijven geserialiseerd.

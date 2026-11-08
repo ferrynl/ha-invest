@@ -3063,6 +3063,8 @@ const UI_TRANSLATIONS = {
   "en": "Destination:",
   "es": "Destino:"
  },
+ "Mogelijke beurs: {exchange}": {"nl":"Mogelijke beurs: {exchange}","en":"Possible exchange: {exchange}","es":"Bolsa posible: {exchange}"},
+ "Beurs onbekend op basis van de importregel.": {"nl":"Beurs onbekend op basis van de importregel.","en":"Exchange unknown from the import row.","es":"La fila de importación no identifica la bolsa."},
  "Beurskoppeling ontbreekt. Gebruik Automatisch opnieuw koppelen.": {
   "nl": "Beurskoppeling ontbreekt. Gebruik Automatisch opnieuw koppelen.",
   "en": "Listing mapping missing. Use Match automatically again.",
