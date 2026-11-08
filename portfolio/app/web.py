@@ -415,8 +415,23 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if path=='/api/search':
                 query=parse_qs(urlsplit(self.path).query).get('q',[''])[0]
                 if not 2<=len(query.strip())<=80:return self.respond({'error':'Typ minimaal twee en maximaal 80 tekens.'},400)
-                try:return self.respond({'results':search_stocks(query,store=store)})
-                except Exception:return self.respond({'error':'Zoeken bij Yahoo lukt nu niet. Probeer het opnieuw.'},502)
+                with store.connect() as db:
+                    rows = db.execute(
+                        """SELECT symbol, exchange, currency, MAX(name) AS name
+                           FROM purchases WHERE symbol = ? COLLATE NOCASE
+                           GROUP BY symbol, exchange, currency ORDER BY exchange, currency""",
+                        (query.strip(),),
+                    ).fetchall()
+                results = [dict(row) for row in rows]
+                try:
+                    remote = search_stocks(query, store=store)
+                except Exception:
+                    if not results:
+                        return self.respond({'error':'Zoeken bij Yahoo lukt nu niet. Probeer het opnieuw.'},502)
+                else:
+                    local_listings = {(row['symbol'].upper(), row['exchange']) for row in results}
+                    results.extend(row for row in remote if (row['symbol'].upper(), row['exchange']) not in local_listings)
+                return self.respond({'results':results})
             self.respond({'error':'Niet gevonden'},404)
         def do_POST(self):
             path=urlsplit(self.path).path

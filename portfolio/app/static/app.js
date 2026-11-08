@@ -77,7 +77,7 @@ $('stock-search').addEventListener('input',()=>{
    if(version!==searchVersion)return;if(!response.ok)throw Error(data.error);
    for(const stock of data.results){const button=document.createElement('button');button.type='button';button.setAttribute('role','option');button.setAttribute('aria-selected','false');button.textContent=stock.name+' · '+stock.symbol+' · '+stock.exchange+' · '+stock.currency;button.addEventListener('click',()=>chooseStock(stock));$('search-results').append(button);}
    $('search-results').hidden=!data.results.length;$('stock-search').setAttribute('aria-expanded',String(Boolean(data.results.length)));
-   $('search-status').textContent=data.results.length?data.results.length+ui(' resultaten van Yahoo. Kies de juiste notering; typ verder om te verfijnen.'):ui('Geen passende aandelen, ETF’s of fondsen gevonden. Probeer meer letters of het symbool.');
+   $('search-status').textContent=data.results.length?data.results.length+ui(' resultaten gevonden. Kies de juiste notering; typ verder om te verfijnen.'):ui('Geen passende aandelen, ETF’s of fondsen gevonden. Probeer meer letters of het symbool.');
   }catch(error){if(error.name!=='AbortError'&&version===searchVersion)$('search-status').textContent=error.message||ui('Zoeken mislukt. Probeer opnieuw.');}
  },350);
 });
