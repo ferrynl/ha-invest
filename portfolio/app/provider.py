@@ -31,7 +31,7 @@ def _payload(request,timeout,store,namespace,key,ttl):
         return result
     return cached_json(store,namespace,key,ttl,load)
 
-EXCHANGES = {'AMS': ('AMSTERDAM', 'EUR'), 'BRU': ('BRUSSELS', 'EUR'), 'MCE': ('MADRID','EUR'), 'PNK': ('OTC','USD'), 'NMS': ('NASDAQ', 'USD'),
+EXCHANGES = {'AMS': ('AMSTERDAM', 'EUR'), 'BRU': ('BRUSSELS', 'EUR'), 'ISE': ('DUBLIN', 'EUR'), 'MCE': ('MADRID','EUR'), 'PNK': ('OTC','USD'), 'NMS': ('NASDAQ', 'USD'),
              'NGM': ('NASDAQ', 'USD'), 'NCM': ('NASDAQ', 'USD'),
              'NASDAQ': ('NASDAQ', 'USD'), 'NYQ': ('NYSE', 'USD'), 'NYSE': ('NYSE', 'USD'),
              'PCX': ('NYSEARCA','USD'), 'ASE': ('AMEX','USD'),
@@ -73,7 +73,7 @@ def listing(symbol,store=None):
 
 # Resolve internal listing identifiers without changing booked transactions.
 def quote_symbol(symbol,exchange):
-    suffix={'AMSTERDAM':'.AS','BRUSSELS':'.BR','MADRID':'.MC','XETRA':'.DE','PARIS':'.PA','MILAN':'.MI','LONDON':'.L','SWISS':'.SW','TOKYO':'.T','TORONTO':'.TO','ASX':'.AX','HONG KONG':'.HK','COPENHAGEN':'.CO','STOCKHOLM':'.ST'}.get(exchange,'')
+    suffix={'AMSTERDAM':'.AS','BRUSSELS':'.BR','DUBLIN':'.IR','MADRID':'.MC','XETRA':'.DE','PARIS':'.PA','MILAN':'.MI','LONDON':'.L','SWISS':'.SW','TOKYO':'.T','TORONTO':'.TO','ASX':'.AX','HONG KONG':'.HK','COPENHAGEN':'.CO','STOCKHOLM':'.ST'}.get(exchange,'')
     if suffix and symbol.endswith(suffix):return symbol
     if exchange=='HONG KONG':symbol=symbol.lstrip('0').zfill(4)
     if exchange in ('COPENHAGEN','STOCKHOLM'):symbol=symbol.replace('.','-')

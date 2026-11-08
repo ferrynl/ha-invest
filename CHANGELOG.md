@@ -1,3 +1,7 @@
+## 0.70.15
+
+- Ondersteun noteringen op Euronext Dublin in euro met Yahoo-tickers die eindigen op .IR.
+
 ## 0.70.14
 
 - Toon opgeslagen noteringen bovenaan bij zoeken op exacte ticker, ook als Yahoo niet bereikbaar is.
