@@ -23,7 +23,7 @@ function bindImportMappings(){
  $('mapping-cancel').addEventListener('click',()=>{closePopup('mapping-edit');});
  $('mapping-check').addEventListener('click',async()=>{
   const button=$('mapping-check'),form=$('mapping-edit-form');button.disabled=true;
-  try{const symbol=form.elements.namedItem('symbol').value.trim().toUpperCase();const response=await apiFetch('api/listing?symbol='+encodeURIComponent(symbol));const result=await response.json();if(!response.ok)throw Error(result.error);for(const key of ['symbol','exchange','currency'])form.elements.namedItem(key).value=result[key];$('mapping-edit-feedback').textContent=ui('Gecontroleerd: ')+result.name+' · '+result.exchange+' · '+result.currency+ui('. Controleer of dit het juiste aandeel is en sla op.');}
+  try{const symbol=form.elements.namedItem('symbol').value.trim().toUpperCase();const response=await apiFetch('api/listing?symbol='+encodeURIComponent(symbol));if(!response.headers.get('Content-Type')?.includes('application/json'))throw Error(ui('De notering of koersvaluta kon niet worden gecontroleerd. Probeer later opnieuw.'));const result=await response.json();if(!response.ok)throw Error(result.error);for(const key of ['symbol','exchange','currency'])form.elements.namedItem(key).value=result[key];$('mapping-edit-feedback').textContent=ui('Gecontroleerd: ')+result.name+' · '+result.exchange+' · '+result.currency+ui('. Controleer of dit het juiste aandeel is en sla op.');}
   catch(error){$('mapping-edit-feedback').textContent=error.message;}finally{button.disabled=false;}
  });
  $('mapping-edit-form').addEventListener('submit',async event=>{

@@ -1,3 +1,7 @@
+## 0.70.24
+
+- Voeg de geverifieerde CIBEY-notering toe voor Trading 212 en toon een begrijpelijke melding bij een onverwacht antwoord tijdens noteringcontrole.
+
 ## 0.70.23
 
 - Toon mogelijke beurzen bij ontbrekende importkoppelingen, met een expliciete melding als de beurs onbekend is.

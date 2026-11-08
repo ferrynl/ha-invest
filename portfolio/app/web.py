@@ -18,6 +18,7 @@ from i18n import localize,LANGUAGES
 from updates import check_updates
 from feedback_client import overview as feedback_overview,connect as feedback_connect,enqueue as feedback_enqueue
 from imports import ADAPTERS
+from imports.listings import BROKER_LISTINGS
 from imports.service import preview as import_preview,open_preview
 from imports.partial import commit_partial,list_issues,resolve_issue
 from imports.matching import resolve_instrument
@@ -410,6 +411,8 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if path=='/api/listing':
                 symbol=parse_qs(urlsplit(self.path).query).get('symbol',[''])[0].upper()
                 if not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',symbol):return self.respond({'error':'Ongeldig symbool.'},400)
+                known=BROKER_LISTINGS[('trading212','US2017123041')]
+                if symbol==known['symbol']:return self.respond(known)
                 try:return self.respond(resolve_listing(symbol,store=store))
                 except Exception:return self.respond({'error':'De notering of koersvaluta kon niet worden gecontroleerd. Probeer later opnieuw.'},502)
             if path=='/api/search':

@@ -39,6 +39,8 @@ HISTORICAL_LISTINGS={
 # Trading 212 instrument AREB.US identifies this exact share class on OTC.
 # https://www.trading212.com/trading-instruments/invest/AREB.US
 BROKER_LISTINGS={
+ # Citi Depositary Receipts and OTC Markets confirm this exact ADR.
+ ('trading212','US2017123041'):dict(symbol='CIBEY',exchange='OTC',currency='USD',name='Commercial International Bank (Egypt)'),
  # Apollo's A2 UNH share class is an unlisted ELTIF, not a Yahoo ticker.
  # www.apollo.com/agpm-eltif ; source quantity/price remain the purchase basis.
  ('traderepublic','LU3170240538'):dict(symbol='LU3170240538',exchange='PRIVATE',currency='EUR',name='Apollo Global Private Markets ELTIF A2 UNH'),

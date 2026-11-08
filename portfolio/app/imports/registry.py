@@ -47,13 +47,16 @@ def discover(store):
     with store.connect() as db:
         return [dict(r) for r in db.execute('SELECT m.*,a.name AS account_name FROM instrument_mappings m JOIN broker_accounts a ON a.id=m.account_id ORDER BY m.ticker,m.source_currency,m.account_id')]
 
+from .listings import BROKER_LISTINGS
+
 def edit(store,data):
     record_id=int(data['id']);symbol=str(data.get('symbol','')).strip().upper()
     if not re.fullmatch(r'[A-Z0-9.^:/_-]{1,30}',symbol):raise ValueError('Vul een geldig koersticker in, bijvoorbeeld SOF.BR of MO.')
     with store.connect() as db:entry=db.execute('SELECT * FROM instrument_mappings WHERE id=?',(record_id,)).fetchone()
     if not entry:raise ValueError('Koppeling niet gevonden.')
     if entry['exchange']=='PRIVATE':raise ValueError('Dit fonds heeft geen beursnotering. Stel de actuele fondskoers handmatig in bij Aandelen; de ISIN-koppeling blijft behouden.')
-    actual=listing(symbol,store=store)
+    known=BROKER_LISTINGS.get((entry['provider'],entry['isin']))
+    actual=known if known and known['symbol']==symbol else listing(symbol,store=store)
     if actual['exchange']!=str(data.get('exchange','')).upper() or actual['currency']!=str(data.get('currency','')).upper():
         raise ValueError('Beurs of valuta wijkt af van de gecontroleerde notering: '+actual['exchange']+' / '+actual['currency']+'. Pas de velden aan; er is niets gewijzigd.')
     with store.lock,store.connect() as db:
