@@ -426,11 +426,13 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     ).fetchall()
                 results = [dict(row) for row in rows if row['symbol'].upper() in
                            (ticker, quote_symbol(ticker,row['exchange']))]
-                # Yahoo can interpret NN as a US ticker. Search the Amsterdam
-                # listing explicitly as well when it is not already saved.
+                # A bare ticker can resolve to a different exchange on Yahoo.
                 queries=[query]
-                if ticker=='NN' and not any(row['exchange']=='AMSTERDAM' for row in results):
-                    queries.insert(0,'NN.AS')
+                amsterdam=quote_symbol(ticker,'AMSTERDAM')
+                if re.fullmatch(r'[A-Z0-9-]{2,12}',ticker) and not any(
+                    row['exchange']=='AMSTERDAM' for row in results
+                ):
+                    queries.insert(0,amsterdam)
                 failed=False
                 seen={(row['symbol'].upper(),row['exchange']) for row in results}
                 for term in queries:
@@ -440,6 +442,8 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                         failed=True
                         continue
                     for row in remote:
+                        if term!=query and (row['symbol'].upper()!=amsterdam or row['exchange']!='AMSTERDAM'):
+                            continue
                         key=(row['symbol'].upper(),row['exchange'])
                         if key not in seen:
                             seen.add(key)

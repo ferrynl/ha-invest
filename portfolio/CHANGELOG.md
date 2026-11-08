@@ -1,3 +1,7 @@
+## 0.70.18
+
+- Zoek alle Amsterdamse noteringen op ticker zonder .AS, ook als ze nog niet in de portefeuille staan.
+
 ## 0.70.17
 
 - Behoud brokeraccount en transactiedatum na het opslaan van een transactie.
