@@ -33,11 +33,11 @@ bevat.
 
 ## Installatie via GitHub
 
-1. De app-repository is [ferrynl/ha-invest](https://github.com/ferrynl/ha-invest).
-2. De repository bevat `repository.yaml` direct in de root, met `portfolio/` ernaast.
+1. De app-repository is [ferrynl/ha-apps](https://github.com/ferrynl/ha-apps).
+2. De repository bevat `repository.yaml` direct in de root, met `portfolio/` en de andere appmappen ernaast.
 3. Open in Home Assistant **Instellingen → Apps → App store → ⋮ → Repositories**
    (oudere versies noemen dit Add-ons).
-4. Voeg `https://github.com/ferrynl/ha-invest` toe.
+4. Voeg `https://github.com/ferrynl/ha-apps` toe.
 5. Zoek **Home Invest**, installeer en start de app. Het bouwen kan even duren.
 6. Schakel **Weergeven in zijbalk** in en open het dashboard.
 
