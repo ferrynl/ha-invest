@@ -3063,6 +3063,7 @@ const UI_TRANSLATIONS = {
   "en": "Destination:",
   "es": "Destino:"
  },
+ "Kies een mogelijke notering en controleer of die bij je brokertransactie hoort.": {"nl":"Kies een mogelijke notering en controleer of die bij je brokertransactie hoort.","en":"Choose a possible listing and check that it matches your broker transaction.","es":"Elige una posible cotización y comprueba que coincida con tu transacción del bróker."},
  "Mogelijke beurs: {exchange}": {"nl":"Mogelijke beurs: {exchange}","en":"Possible exchange: {exchange}","es":"Bolsa posible: {exchange}"},
  "Beurs onbekend op basis van de importregel.": {"nl":"Beurs onbekend op basis van de importregel.","en":"Exchange unknown from the import row.","es":"La fila de importación no identifica la bolsa."},
  "Beurskoppeling ontbreekt. Gebruik Automatisch opnieuw koppelen.": {

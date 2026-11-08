@@ -1,3 +1,7 @@
+## 0.70.25
+
+- Zoek automatisch naar mogelijke noteringen als de exacte controle van een importkoppeling mislukt.
+
 ## 0.70.24
 
 - Voeg de geverifieerde CIBEY-notering toe voor Trading 212 en toon een begrijpelijke melding bij een onverwacht antwoord tijdens noteringcontrole.
