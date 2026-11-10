@@ -70,6 +70,8 @@ def configuration(currencies):
 
 def make_export_handler(store,cache,token):
     class ExportHandler(BaseHTTPRequestHandler):
+        timeout = 15
+
         def log_message(self,*_):pass
         def respond(self,body,code):
             raw=json.dumps(body,separators=(',',':')).encode()

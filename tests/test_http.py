@@ -8,7 +8,7 @@ import http.client
 import importlib
 from datetime import date,timedelta
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'portfolio' / 'app'))
 
@@ -18,7 +18,7 @@ class HttpTests(unittest.TestCase):
         cls.tmp = tempfile.TemporaryDirectory()
         with patch.dict(os.environ, {'DATA_DIR': cls.tmp.name}):
             cls.module = importlib.reload(sys.modules['server']) if 'server' in sys.modules else importlib.import_module('server')
-        cls.http = cls.module.ThreadingHTTPServer(('127.0.0.1', 0), cls.module.Handler)
+        cls.http = cls.module.BoundedHTTPServer(('127.0.0.1', 0), cls.module.Handler)
         cls.worker = threading.Thread(target=cls.http.serve_forever, daemon=True)
         cls.worker.start()
 
@@ -134,6 +134,6 @@ class HttpTests(unittest.TestCase):
             status, body, _ = self.request('GET', '/api/search?q=ap')
             self.assertEqual(status, 200)
             self.assertEqual(json.loads(body)['results'][0]['symbol'], 'AAPL')
-            search.assert_called_once_with('ap',store=self.module.store)
+            self.assertEqual(search.call_args_list, [call('AP.AS',store=self.module.store), call('ap',store=self.module.store)])
         with patch('web.search_stocks', side_effect=TimeoutError):
             self.assertEqual(self.request('GET', '/api/search?q=ap')[0], 502)

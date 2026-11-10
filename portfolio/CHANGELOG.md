@@ -1,3 +1,8 @@
+## 0.70.26
+
+- Beperk sessies tot 30 minuten inactiviteit en maximaal 12 uur. Meld na de upgrade opnieuw aan.
+- Controleer toegangsrechten voor het inlezen van uploads en begrens de uploadduur en gelijktijdige verbindingen.
+
 ## 0.70.25
 
 - Zoek automatisch naar mogelijke noteringen als de exacte controle van een importkoppeling mislukt.

@@ -68,6 +68,28 @@ class MigrationTests(unittest.TestCase):
             self.assertEqual(db.execute('SELECT COUNT(*) FROM instrument_quote_pauses').fetchone()[0],0)
         self.assertTrue(list((self.path.parent/'backups/migrations').glob(f'before-v23-to-v{SCHEMA_VERSION}-*.sqlite3')))
 
+    def test_session_upgrade_preserves_accounts_and_ledger(self):
+        self.create_old(24)
+        with closing(sqlite3.connect(self.path)) as db:
+            db.execute("INSERT INTO users(username,password_hash,role,created_at) VALUES('owner','existing-hash','admin','2026-10-01')")
+            db.execute("INSERT INTO auth_sessions VALUES('hash',1,0,'csrf',9999999999)")
+            db.commit()
+        broken={**MIGRATIONS,25:MIGRATIONS[25]+('INVALID SQL',)}
+        with patch.dict('migrations.MIGRATIONS',broken,clear=True),self.assertRaises(sqlite3.Error):
+            migrate(self.path)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],24)
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM auth_sessions').fetchone()[0],1)
+        migrate(self.path)
+        migrate(self.path)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],SCHEMA_VERSION)
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM auth_sessions').fetchone()[0],0)
+            self.assertEqual(db.execute('SELECT username FROM users').fetchone()[0],'owner')
+            self.assertEqual(db.execute('SELECT price FROM purchases').fetchone()[0],'999')
+            self.assertEqual(db.execute('SELECT amount FROM dividends').fetchone()[0],'5.25')
+            self.assertEqual(db.execute('SELECT price FROM daily_prices').fetchone()[0],'1000')
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

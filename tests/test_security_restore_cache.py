@@ -167,9 +167,21 @@ class AccessTests(unittest.TestCase):
   token=self.auth.login('owner',self.password,'test')
   code,_,headers=self.request('GET','/api/session',token=token,extra={'X-Ingress-Path':'/api/hassio_ingress/test','X-Forwarded-Proto':'https'})
   self.assertEqual(code,200)
-  for part in ['Max-Age=172800','HttpOnly','SameSite=Strict','Secure','Path=/api/hassio_ingress/test/']:self.assertIn(part,headers['Set-Cookie'])
+  for part in [f'Max-Age={SESSION_TTL}','HttpOnly','SameSite=Strict','Secure','Path=/api/hassio_ingress/test/']:self.assertIn(part,headers['Set-Cookie'])
   restarted.logout(token)
   self.assertIsNone(self.auth.user(token))
+
+ def test_active_session_still_expires_at_absolute_deadline(self):
+  from security import SESSION_TTL,SESSION_MAX_AGE
+  self.activate()
+  start=100000
+  with patch('security.time.time',return_value=start):
+   token=self.auth.login('owner',self.password,'test')
+  for elapsed in range(SESSION_TTL-1,SESSION_MAX_AGE,SESSION_TTL-1):
+   with patch('security.time.time',return_value=start+elapsed):
+    self.assertIsNotNone(self.auth.user(token))
+  with patch('security.time.time',return_value=start+SESSION_MAX_AGE):
+   self.assertIsNone(self.auth.user(token))
 
  def test_password_hash_rate_limit_expiry_and_revocation(self):
   token,csrf=self.activate()

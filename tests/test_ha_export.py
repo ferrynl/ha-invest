@@ -126,9 +126,9 @@ class ExportTests(unittest.TestCase):
     def test_server_starts_export_only_with_valid_key_and_survives_port_conflict(self):
         with patch.dict(os.environ,{'DATA_DIR':str(self.store.root)}):
             module=importlib.import_module('server')
-        with patch.object(module,'options',{'home_assistant_token':''}),patch.object(module,'ThreadingHTTPServer') as create:
+        with patch.object(module,'options',{'home_assistant_token':''}),patch.object(module,'BoundedHTTPServer') as create:
             self.assertIsNone(module.start_export());create.assert_not_called()
-        with patch.object(module,'options',{'home_assistant_token':'x'*32}),patch.object(module,'ThreadingHTTPServer',side_effect=OSError('busy')):
+        with patch.object(module,'options',{'home_assistant_token':'x'*32}),patch.object(module,'BoundedHTTPServer',side_effect=OSError('busy')):
             with self.assertLogs(level='ERROR'):self.assertIsNone(module.start_export())
         with patch.object(module,'options',{'home_assistant_token':'x'*32}),patch.object(module,'store',self.store),patch.object(module,'state_cache',self.cache),patch.dict(os.environ,{'BIND':'127.0.0.1','HA_EXPORT_PORT':'0'}):
             http=module.start_export()

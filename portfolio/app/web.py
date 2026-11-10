@@ -5,6 +5,7 @@ import hmac
 import json
 import re
 import sqlite3
+import time
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import quote,urlsplit,parse_qs
@@ -73,6 +74,8 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
         assets['/'+name+'.js']=(name+'.js','text/javascript; charset=utf-8')
     assets['/country-map.js']=('country-map.js','text/javascript; charset=utf-8')
     class Handler(BaseHTTPRequestHandler):
+        timeout = 15
+
         def log_message(self,*_):pass
         def token(self):
             try:
@@ -457,15 +460,10 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             self.respond({'error':'Niet gevonden'},404)
         def do_POST(self):
             path=urlsplit(self.path).path
-            # Consume bounded request bodies before replying, including on denied
-            # requests. Closing with unread bytes can reset browser connections.
             try:
                 length=int(self.headers.get('Content-Length','0'))
                 limit=25*1024*1024 if path=='/api/restore' else 12*1024*1024 if path=='/api/instrument/holdings' else 8*1024*1024 if path=='/api/imports/preview' else 65536
                 if not 0<length<=limit:raise ValueError('Bestand of aanvraag is te groot of leeg.')
-                self.connection.settimeout(30)
-                body=self.rfile.read(length)
-                if len(body)!=length:raise ValueError('Upload niet volledig ontvangen.')
             except (ValueError,TimeoutError):
                 return self.respond({'error':'Bestand of aanvraag is te groot, leeg of onvolledig.'},400)
             expected='application/octet-stream' if path=='/api/restore' else 'application/json'
@@ -478,10 +476,25 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 if auth.enabled() and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),user['csrf'] or ''):
                     return self.respond({'error':'Ongeldige sessiebeveiliging. Meld je opnieuw aan.'},403)
             try:
+                deadline=time.monotonic()+30
+                body=bytearray()
+                while len(body)<length:
+                    remaining=deadline-time.monotonic()
+                    if remaining<=0:raise TimeoutError
+                    self.connection.settimeout(min(remaining,self.timeout))
+                    chunk=self.rfile.read1(min(65536,length-len(body)))
+                    if not chunk:raise ValueError('Upload niet volledig ontvangen.')
+                    body.extend(chunk)
+                if time.monotonic()>deadline:raise TimeoutError
+            except (ValueError,TimeoutError):
+                return self.respond({'error':'Bestand of aanvraag is te groot, leeg of onvolledig.'},400)
+            finally:
+                self.connection.settimeout(self.timeout)
+            try:
                 if path=='/api/restore':
                     if self.headers.get('X-Confirm-Restore')!='yes':raise ValueError('Bevestig het terugzetten van de portefeuille.')
                     with refresh_lock:
-                        result=restore_backup(store,body);cache.invalidate()
+                        result=restore_backup(store,bytes(body));cache.invalidate()
                         auth.clear_sessions()
                     refresh_requested.set()
                     return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))

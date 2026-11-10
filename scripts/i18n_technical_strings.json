@@ -34,6 +34,7 @@
     "secrets.yaml"
   ],
   "js": [
+    "fulfilled",
     "#stijgers-dalers",
     "[data-route=aandelen]",
     "stijgers-dalers",

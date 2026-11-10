@@ -7,7 +7,8 @@ import time
 from threading import RLock
 from datetime import datetime, timezone
 
-SESSION_TTL = 48 * 60 * 60
+SESSION_TTL = 30 * 60
+SESSION_MAX_AGE = 12 * 60 * 60
 ITERATIONS = 600_000
 def password_hash(password):
     if not isinstance(password,str) or not 12 <= len(password) <= 128:
@@ -49,9 +50,9 @@ class Auth:
             entry=db.execute('SELECT * FROM auth_sessions WHERE token_hash=?',(key,)).fetchone()
             if not entry:return None
             row=db.execute('SELECT id,username,role,active,revision,language FROM users WHERE id=?',(entry['user_id'],)).fetchone()
-            if entry['expires_at']<=now or not row or not row['active'] or row['revision']!=entry['revision']:
+            if min(entry['expires_at'],entry['absolute_expiry'])<=now or not row or not row['active'] or row['revision']!=entry['revision']:
                 db.execute('DELETE FROM auth_sessions WHERE token_hash=?',(key,));return None
-            db.execute('UPDATE auth_sessions SET expires_at=? WHERE token_hash=?',(now+SESSION_TTL,key))
+            db.execute('UPDATE auth_sessions SET expires_at=? WHERE token_hash=?',(min(now+SESSION_TTL,entry['absolute_expiry']),key))
             return dict(id=row['id'],username=row['username'],role=row['role'],csrf=entry['csrf'],language=row['language'])
 
     def set_language(self,user,language):
@@ -81,7 +82,7 @@ class Auth:
             with self.store.connect() as db:
                 db.execute('DELETE FROM auth_sessions WHERE expires_at<=?',(time.time(),))
                 if db.execute('SELECT COUNT(*) FROM auth_sessions').fetchone()[0]>=1000:raise PermissionError('Te veel actieve sessies.')
-                db.execute('INSERT INTO auth_sessions VALUES(?,?,?,?,?)',(hashlib.sha256(token.encode()).hexdigest(),row['id'],row['revision'],secrets.token_urlsafe(32),time.time()+SESSION_TTL))
+                db.execute('INSERT INTO auth_sessions (token_hash,user_id,revision,csrf,expires_at,absolute_expiry) VALUES(?,?,?,?,?,?)',(hashlib.sha256(token.encode()).hexdigest(),row['id'],row['revision'],secrets.token_urlsafe(32),time.time()+SESSION_TTL,time.time()+SESSION_MAX_AGE))
             return token
 
     def login_by_id(self,user_id):
@@ -95,9 +96,9 @@ class Auth:
                 if db.execute('SELECT COUNT(*) FROM auth_sessions').fetchone()[0]>=1000:
                     raise PermissionError('Te veel actieve sessies.')
                 token=secrets.token_urlsafe(32)
-                db.execute('INSERT INTO auth_sessions VALUES(?,?,?,?,?)',
+                db.execute('INSERT INTO auth_sessions (token_hash,user_id,revision,csrf,expires_at,absolute_expiry) VALUES(?,?,?,?,?,?)',
                     (hashlib.sha256(token.encode()).hexdigest(),user['id'],user['revision'],
-                     secrets.token_urlsafe(32),time.time()+SESSION_TTL))
+                     secrets.token_urlsafe(32),time.time()+SESSION_TTL,time.time()+SESSION_MAX_AGE))
                 return token
 
     def logout(self,token):

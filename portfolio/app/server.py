@@ -127,6 +127,28 @@ def background():
 
 Handler = make_handler(store, auth, state_cache, status, interval, refresh_lock, refresh_requested, options)
 
+class BoundedHTTPServer(ThreadingHTTPServer):
+    def __init__(self, *args):
+        self.request_slots = threading.BoundedSemaphore(32)
+        super().__init__(*args)
+
+    def process_request(self, request, address):
+        if not self.request_slots.acquire(blocking=False):
+            self.shutdown_request(request)
+            return
+        try:
+            super().process_request(request, address)
+        except BaseException:
+            self.request_slots.release()
+            raise
+
+    def process_request_thread(self, request, address):
+        try:
+            super().process_request_thread(request, address)
+        finally:
+            self.request_slots.release()
+
+
 def start_export():
     from ha_export import valid_token,make_export_handler
     token=options.get('home_assistant_token','')
@@ -134,7 +156,7 @@ def start_export():
         if token:logging.warning('Home Assistant-sensoren uitgeschakeld: gebruik een toegangssleutel van 32–128 letters, cijfers, streepjes of underscores.')
         return None
     try:
-        http=ThreadingHTTPServer((os.environ.get('BIND','0.0.0.0'),int(os.environ.get('HA_EXPORT_PORT',8100))),make_export_handler(store,state_cache,token))
+        http=BoundedHTTPServer((os.environ.get('BIND','0.0.0.0'),int(os.environ.get('HA_EXPORT_PORT',8100))),make_export_handler(store,state_cache,token))
     except OSError:
         logging.error('Home Assistant-sensorpoort kon niet worden geopend. Het dashboard blijft beschikbaar.')
         return None
@@ -148,4 +170,4 @@ if __name__ == '__main__':
     from feedback_client import background as feedback_background
     threading.Thread(target=feedback_background,args=(store,options),daemon=True).start()
     # The dashboard stays ingress-only; optional sensors use a separate read-only port.
-    ThreadingHTTPServer((os.environ.get('BIND', '0.0.0.0'), int(os.environ.get('PORT', 8099))), Handler).serve_forever()
+    BoundedHTTPServer((os.environ.get('BIND', '0.0.0.0'), int(os.environ.get('PORT', 8099))), Handler).serve_forever()
