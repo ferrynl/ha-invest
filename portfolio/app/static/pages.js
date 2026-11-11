@@ -149,7 +149,7 @@ setInterval(()=>{if(!document.hidden&&accessSession?.user)load();},120000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&accessSession?.user)load();});
 
 let healthRequest=0;
-function clearHealthCenter(){healthRequest++;$('health-checks').replaceChildren();$('health-status').textContent='';}
+function clearHealthCenter(){$('health-action-status').textContent='';healthRequest++;$('health-checks').replaceChildren();$('health-status').textContent='';}
 async function loadHealthCenter(){
  const request=++healthRequest;
  $('health-status').textContent='…';
@@ -173,3 +173,18 @@ async function loadHealthCenter(){
  }catch(error){if(request===healthRequest)$('health-status').textContent=error.message;}
 }
 $('health-refresh').addEventListener('click',loadHealthCenter);
+
+async function healthAction(action){
+ const request=healthRequest;
+ const button=$(action==='refresh'?'health-quotes':'health-cache');
+ button.disabled=true;
+ try{
+  const response=await apiFetch('api/health-action',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify({action})});
+  if(!response.ok)throw Error('HTTP '+response.status);
+  if(request!==healthRequest||accessSession?.user?.role!=='admin')return;
+  $('health-action-status').textContent=action==='refresh'?ui('Koersverversing aangevraagd.'):ui('Dashboardcache vernieuwd.');
+ }catch(error){if(request===healthRequest)$('health-action-status').textContent=error.message;}
+ finally{button.disabled=false;}
+}
+$('health-quotes').addEventListener('click',()=>healthAction('refresh'));
+$('health-cache').addEventListener('click',()=>healthAction('cache'));
