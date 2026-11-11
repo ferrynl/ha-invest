@@ -28,6 +28,8 @@ jobs:
           ruff check portfolio/app feedback_service scripts tests
       - name: Lint JavaScript
         run: npx --yes eslint@9.39.1 "portfolio/app/static/**/*.{js,mjs,cjs}" "tests/**/*.{js,mjs,cjs}"
+      - name: Verify add-on changelog mirrors canonical release notes
+        run: python scripts/sync_changelog.py --check
       - name: Validate release metadata
         env:
           PYTHONPATH: scripts
