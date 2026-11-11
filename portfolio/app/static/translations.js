@@ -10229,5 +10229,45 @@ const UI_TRANSLATIONS = {
     "nl": "OK",
     "en": "OK",
     "es": "OK"
+  },
+  "Ontbrekende koersen": {
+    "nl": "Ontbrekende koersen",
+    "en": "Missing prices",
+    "es": "Cotizaciones ausentes"
+  },
+  "Verouderde koersen": {
+    "nl": "Verouderde koersen",
+    "en": "Stale prices",
+    "es": "Cotizaciones desactualizadas"
+  },
+  "Mogelijke dubbele transacties": {
+    "nl": "Mogelijke dubbele transacties",
+    "en": "Possible duplicate trades",
+    "es": "Posibles transacciones duplicadas"
+  },
+  "Ongeldige posities": {
+    "nl": "Ongeldige posities",
+    "en": "Invalid positions",
+    "es": "Posiciones inválidas"
+  },
+  "Afwijkende rendementen": {
+    "nl": "Afwijkende rendementen",
+    "en": "Unusual returns",
+    "es": "Rentabilidades atípicas"
+  },
+  "Ontbrekende wisselkoersen": {
+    "nl": "Ontbrekende wisselkoersen",
+    "en": "Missing exchange rates",
+    "es": "Tipos de cambio ausentes"
+  },
+  "Openstaande beurskoppelingen": {
+    "nl": "Openstaande beurskoppelingen",
+    "en": "Pending listing mappings",
+    "es": "Vinculaciones pendientes"
+  },
+  "Afwijkende dividenden": {
+    "nl": "Afwijkende dividenden",
+    "en": "Unusual dividends",
+    "es": "Dividendos atípicos"
   }
 };
