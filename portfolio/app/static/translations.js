@@ -10289,5 +10289,120 @@ const UI_TRANSLATIONS = {
     "nl": "Dashboardcache vernieuwd.",
     "en": "Dashboard cache refreshed.",
     "es": "Caché del panel actualizada."
+  },
+  "Systeemcontrole": {
+    "nl": "Systeemcontrole",
+    "en": "System health",
+    "es": "Salud del sistema"
+  },
+  "Technische en financiële controles voor je portefeuille.": {
+    "nl": "Technische en financiële controles voor je portefeuille.",
+    "en": "Technical and financial checks for your portfolio.",
+    "es": "Controles técnicos y financieros de tu cartera."
+  },
+  "Controles vernieuwen": {
+    "nl": "Controles vernieuwen",
+    "en": "Refresh checks",
+    "es": "Actualizar controles"
+  },
+  "Controles laden…": {
+    "nl": "Controles laden…",
+    "en": "Loading checks…",
+    "es": "Cargando controles…"
+  },
+  "Herstelacties": {
+    "nl": "Herstelacties",
+    "en": "Recovery actions",
+    "es": "Acciones de recuperación"
+  },
+  "Koersen verversen": {
+    "nl": "Koersen verversen",
+    "en": "Refresh prices",
+    "es": "Actualizar cotizaciones"
+  },
+  "Cache vernieuwen": {
+    "nl": "Cache vernieuwen",
+    "en": "Refresh cache",
+    "es": "Actualizar caché"
+  },
+  "Technische gezondheid": {
+    "nl": "Technische gezondheid",
+    "en": "Technical health",
+    "es": "Estado técnico"
+  },
+  "Financiële gezondheid": {
+    "nl": "Financiële gezondheid",
+    "en": "Financial health",
+    "es": "Salud financiera"
+  },
+  "Schema": {
+    "nl": "Schema",
+    "en": "Schema",
+    "es": "Esquema"
+  },
+  "Vrije ruimte": {
+    "nl": "Vrije ruimte",
+    "en": "Free space",
+    "es": "Espacio libre"
+  },
+  "Laatste back-up": {
+    "nl": "Laatste back-up",
+    "en": "Latest backup",
+    "es": "Última copia de seguridad"
+  },
+  "Geen back-up gevonden": {
+    "nl": "Geen back-up gevonden",
+    "en": "No backup found",
+    "es": "No se encontró una copia de seguridad"
+  },
+  "Ingeschakeld": {
+    "nl": "Ingeschakeld",
+    "en": "Enabled",
+    "es": "Activado"
+  },
+  "Controle nodig": {
+    "nl": "Controle nodig",
+    "en": "Check required",
+    "es": "Requiere revisión"
+  },
+  "Meldingen": {
+    "nl": "Meldingen",
+    "en": "Findings",
+    "es": "Avisos"
+  },
+  "Details bekijken": {
+    "nl": "Details bekijken",
+    "en": "View details",
+    "es": "Ver detalles"
+  },
+  "Alles in orde": {
+    "nl": "Alles in orde",
+    "en": "All checks passed",
+    "es": "Todo en orden"
+  },
+  "aandachtspunten": {
+    "nl": "aandachtspunten",
+    "en": "items need attention",
+    "es": "puntos que requieren atención"
+  },
+  "Controle onvolledig": {
+    "nl": "Controle onvolledig",
+    "en": "Checks incomplete",
+    "es": "Controles incompletos"
+  },
+  "Laatst gecontroleerd": {
+    "nl": "Laatst gecontroleerd",
+    "en": "Last checked",
+    "es": "Última comprobación"
+  },
+  "controles": {
+    "nl": "controles",
+    "en": "checks",
+    "es": "controles"
+  },
+  "Controle mislukt": {
+    "nl": "Controle mislukt",
+    "en": "Check failed",
+    "es": "Error en la comprobación"
   }
 };
