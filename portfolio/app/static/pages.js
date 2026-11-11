@@ -38,7 +38,7 @@ document.querySelector('[data-route="transacties"]').after(transactionNav);
 for(const [route,title] of [['transacties-dividend',ui('Dividend')],['transacties-omzettingen',ui('Splitsingen en omzettingen')]]){
  const link=document.createElement('a');link.href='#'+route;link.dataset.route=route;link.textContent=title;transactionNav.append(link);
 }
-const pageNames={'over-ons':ui('Over ons'),'import-voorbeeld':ui('Importvoorbeeld'),feedback:ui('Wensen & bugs'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),sector:ui('Sectoroverzicht'),'stijgers-dalers':ui('Stijgers en dalers'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
+const pageNames={'health-center':ui('Health Center'),'over-ons':ui('Over ons'),'import-voorbeeld':ui('Importvoorbeeld'),feedback:ui('Wensen & bugs'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),sector:ui('Sectoroverzicht'),'stijgers-dalers':ui('Stijgers en dalers'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
 for(const a of [...settingsNav.querySelectorAll('a'),...importNav.querySelectorAll('a'),...transactionNav.querySelectorAll('a')])pageNames[a.dataset.route]=a.textContent;
 for(const [key,title] of reportDefinitions)pageNames['rapporten-'+key]=title;
 function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches&&!document.body.classList.contains('locked');$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label',ui('Menu openen'));}
@@ -46,6 +46,8 @@ function showPage(){
  closeAllPopups();
  let requested=location.hash.slice(1).split('?')[0];if(requested==='tmx-omboeken')requested='instellingen-koersbeheer';if(requested==='instellingen-export')requested='import-export';if(requested==='instellingen')requested='instellingen-dashboard';let page=Object.hasOwn(pageNames,requested)?requested:'home';
  if((page.startsWith('instellingen-')||page.startsWith('import-')||page==='instellingen'||page==='imports'||page==='import-koppelingen'||page==='import-beoordeling'||page==='import-api')&&accessSession?.user?.role!=='admin')page='home';
+ if(page==='health-center'&&accessSession?.user?.role!=='admin')page='home';
+ document.querySelector('[data-route=health-center]').hidden=accessSession?.user?.role!=='admin';
  if(page==='logs'&&(accessSession?.user?.role!=='admin'||!accessSession?.enabled))page='home';
  const isSettings=page.startsWith('instellingen-')||page==='logs'||page==='valuta';settingsNav.hidden=!isSettings;document.querySelector('[data-route=instellingen]').setAttribute('aria-expanded',String(isSettings));
  const isTransactions=page==='transacties'||page.startsWith('transacties-');transactionNav.hidden=!isTransactions;document.querySelector('[data-route=transacties]').setAttribute('aria-expanded',String(isTransactions));
@@ -81,7 +83,7 @@ function showPage(){
    delete image.dataset.logoSrc;
   }
  }
- $('broker-filter-control').hidden=page==='account'||page==='over-ons'||page==='instellingen-taken'||page==='instellingen-statistieken'||page==='instellingen-opschonen';
+ $('broker-filter-control').hidden=page==='health-center'||page==='account'||page==='over-ons'||page==='instellingen-taken'||page==='instellingen-statistieken'||page==='instellingen-opschonen';
  updateExportLinks();
  $('page-title').textContent=pageNames[page];document.title=pageNames[page]+' · Home Invest';closeMenu();
  if(isTransactions){configureTransactionPage(page);if(state)loadTransactions();}
@@ -93,6 +95,7 @@ function showPage(){
  if(page==='home'&&state){renderHomeDashboard();requestAnimationFrame(draw);}
  if(isReport&&state)renderReports();
  if((page==='import-geschiedenis'||brokerPage)&&state&&accessSession?.user?.role==='admin')loadImportHistory().catch(error=>{$('import-feedback').textContent=error.message;});
+ if(page==='health-center')loadHealthCenter();
  if(page==='feedback')loadFeedback();
  if(page==='logs')loadLogs().catch(error=>{$('logs-feedback').textContent=error.message;});
  if(page==='import-koppelingen')loadImportMappings();
@@ -144,3 +147,27 @@ bindPopups();bindDividendMonth();bindFeedback();showPage();
 bindTransactions();bindHomeDashboard();bindImportIssues();bindImportMappings();bindImports();bindBrokerManagement();bindAccess();bindLogs();bindCurrencies();startSession().catch(()=>{$('status').textContent=ui('Verbinding mislukt. Herlaad de pagina.');document.body.classList.remove('booting');refreshPageLoading();});
 setInterval(()=>{if(!document.hidden&&accessSession?.user)load();},120000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&accessSession?.user)load();});
+
+let healthRequest=0;
+function clearHealthCenter(){healthRequest++;$('health-checks').replaceChildren();$('health-status').textContent='';}
+async function loadHealthCenter(){
+ const request=++healthRequest;
+ $('health-status').textContent='…';
+ const labels={database:ui('Database'),storage:ui('Opslagruimte'),authentication:ui('Gebruikersbeveiliging'),passkeys:ui('Passkeys'),backup:ui('Back-ups')};
+ try{
+  const response=await apiFetch('api/health-center');
+  if(!response.ok)throw Error('HTTP '+response.status);
+  const data=await response.json();
+  if(request!==healthRequest||accessSession?.user?.role!=='admin')return;
+  $('health-checks').replaceChildren();
+  for(const item of data.checks){
+   const card=document.createElement('article');card.className='source-card';
+   const title=document.createElement('h3');title.textContent=labels[item.key]||item.key;
+   const detail=document.createElement('p');detail.textContent=({ok:'🟢 '+ui('OK'),warning:'🟠 '+ui('Waarschuwing'),error:'🔴 '+ui('Fout'),unknown:'⚪ '+ui('Onbekend')})[item.status]||'—';
+   const value=document.createElement('p');value.textContent=item.detail;
+   card.append(title,detail,value);$('health-checks').append(card);
+  }
+  $('health-status').textContent=new Date(data.checked_at).toLocaleString();
+ }catch(error){if(request===healthRequest)$('health-status').textContent=error.message;}
+}
+$('health-refresh').addEventListener('click',loadHealthCenter);

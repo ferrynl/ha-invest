@@ -112,6 +112,7 @@ function bindPasskeys(){
  });
 }
 function lockApp(){
+ if(typeof clearHealthCenter==='function')clearHealthCenter();
  closeAllPopups();
  if(typeof clearDashboardLayout==='function')clearDashboardLayout();
  $('profile-control').hidden=true;$('demo-banner').hidden=true;

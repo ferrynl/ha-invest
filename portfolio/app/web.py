@@ -140,7 +140,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if path=='/api/passkeys':
                 try:return self.respond(passkeys.list_keys(store,user)) if self.allowed(user) else None
                 except ValueError as error:return self.respond({'error':str(error)},400)
-            if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path=='/api/charges/export' or path in ('/api/home-assistant','/api/users','/api/backup','/api/export','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs','/api/resource-stats')):return
+            if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path=='/api/charges/export' or path in ('/api/home-assistant','/api/users','/api/backup','/api/export','/api/imports','/api/imports/mappings','/api/imports/issues','/api/logs','/api/resource-stats','/api/health-center')):return
             if path=='/api/company-logo':
                 query=parse_qs(urlsplit(self.path).query)
                 image=logos.get(query.get('group',[''])[0],query.get('domain',[''])[0])
@@ -379,6 +379,9 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     key='home-selected-history:'+json.dumps([account,combined,selections],separators=(',',':'))
                     return self.respond(cache.derived(key,selected_histories),etag=True)
                 except (ValueError,TypeError,KeyError):return self.respond({'error':'Kies één tot zes bestaande posities in dit brokeraccount.'},400)
+            if path=='/api/health-center':
+                from health_center import snapshot
+                return self.respond(snapshot(store,auth))
             if path=='/api/resource-stats':return self.respond(resources.snapshot())
             if path=='/api/state':
                 query=parse_qs(urlsplit(self.path).query);account=query.get('account_id',['all'])[0]
