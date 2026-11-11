@@ -487,7 +487,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             user=auth.user(self.token())
             self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path not in ('/api/auth/login','/api/passkey/login/begin','/api/passkey/login/finish'):
-                if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path in ('/api/feedback/connect','/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation','/api/instrument/holdings','/api/tasks/etf') or path in ('/api/purchases','/api/dividends','/api/settings','/api/backup-download','/api/restore','/api/restore-preview','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/') or path.startswith('/api/charges/')):return
+                if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path in ('/api/health-action','/api/feedback/connect','/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation','/api/instrument/holdings','/api/tasks/etf') or path in ('/api/purchases','/api/dividends','/api/settings','/api/backup-download','/api/restore','/api/restore-preview','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/') or path.startswith('/api/charges/')):return
                 if auth.enabled() and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),user['csrf'] or ''):
                     return self.respond({'error':'Ongeldige sessiebeveiliging. Meld je opnieuw aan.'},403)
             try:
@@ -523,6 +523,14 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond({'ok':True,'restored':result},cookie=self.cookie(''))
                 data=json.loads(body)
                 if not isinstance(data,dict):raise ValueError('Ongeldige aanvraag.')
+                if path=='/api/health-action':
+                    if data.get('action')=='refresh':
+                        refresh_requested.set()
+                        return self.respond({'ok':True},202)
+                    if data.get('action')=='cache':
+                        cache.invalidate()
+                        return self.respond({'ok':True})
+                    return self.respond({'error':'Ongeldige aanvraag.'},400)
                 if path=='/api/backup-download':
                     self.confirm_sensitive(user)
                     from backup_files import file_path
