@@ -32,6 +32,11 @@ jobs:
         env:
           PYTHONPATH: scripts
         run: python -c "from pathlib import Path; from release_notes import prepare; prepare(Path.cwd())"
+      - name: Browser smoke test
+        run: |
+          python -m pip install playwright
+          python -m playwright install --with-deps chromium
+          python tests/browser_smoke.py
       - run: docker build portfolio -t aandelen-dashboard:test
       - name: Check bundled Defeat Beta reader without network
         run: >-
@@ -39,6 +44,20 @@ jobs:
           "import fundamentals, duckdb; db=duckdb.connect(); db.execute('LOAD httpfs'); assert fundamentals.supported(('AAPL','NASDAQ','USD'))"
       - run: docker build -f feedback_service/Dockerfile -t home-invest-feedback:test .
       - run: docker run --rm --network none -v "$PWD/tests/smoke_feedback_container.py:/smoke.py:ro" home-invest-feedback:test python /smoke.py
+      - name: Scan portfolio container
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: aandelen-dashboard:test
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+      - name: Scan feedback container
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: home-invest-feedback:test
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
   release:
     needs: tests
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
