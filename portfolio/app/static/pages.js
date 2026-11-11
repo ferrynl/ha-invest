@@ -38,7 +38,7 @@ document.querySelector('[data-route="transacties"]').after(transactionNav);
 for(const [route,title] of [['transacties-dividend',ui('Dividend')],['transacties-omzettingen',ui('Splitsingen en omzettingen')]]){
  const link=document.createElement('a');link.href='#'+route;link.dataset.route=route;link.textContent=title;transactionNav.append(link);
 }
-const pageNames={'health-center':'Health Center','over-ons':ui('Over ons'),'import-voorbeeld':ui('Importvoorbeeld'),feedback:ui('Wensen & bugs'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),sector:ui('Sectoroverzicht'),'stijgers-dalers':ui('Stijgers en dalers'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
+const pageNames={'health-center':ui('Health Center'),'over-ons':ui('Over ons'),'import-voorbeeld':ui('Importvoorbeeld'),feedback:ui('Wensen & bugs'),account:ui('Mijn account'),'import-api':ui('API-instellingen'),aandeel:ui('Aandeel'),sector:ui('Sectoroverzicht'),'stijgers-dalers':ui('Stijgers en dalers'),transacties:ui('Transacties'),'import-beoordeling':ui('Te beoordelen'),'import-koppelingen':ui('Aandelenkoppelingen'),home:ui('Home'),aandelen:ui('Aandelen'),dividend:ui('Dividend'),rapporten:ui('Rapporten'),instellingen:ui('Instellingen'),imports:ui('Imports'),logs:ui('Logs'),valuta:ui('Valuta')};
 for(const a of [...settingsNav.querySelectorAll('a'),...importNav.querySelectorAll('a'),...transactionNav.querySelectorAll('a')])pageNames[a.dataset.route]=a.textContent;
 for(const [key,title] of reportDefinitions)pageNames['rapporten-'+key]=title;
 function closeMenu(){document.body.removeAttribute('data-menu-open');$('sidebar').inert=window.matchMedia('(max-width:850px)').matches&&!document.body.classList.contains('locked');$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');$('menu-toggle').setAttribute('aria-label',ui('Menu openen'));}
@@ -153,7 +153,7 @@ function clearHealthCenter(){healthRequest++;$('health-checks').replaceChildren(
 async function loadHealthCenter(){
  const request=++healthRequest;
  $('health-status').textContent='…';
- const labels={database:ui('Database'),storage:ui('Opslagruimte'),authentication:ui('Gebruikersbeveiliging'),passkeys:'Passkeys',backup:ui('Back-ups')};
+ const labels={database:ui('Database'),storage:ui('Opslagruimte'),authentication:ui('Gebruikersbeveiliging'),passkeys:ui('Passkeys'),backup:ui('Back-ups')};
  try{
   const response=await apiFetch('api/health-center');
   if(!response.ok)throw Error('HTTP '+response.status);
@@ -163,7 +163,7 @@ async function loadHealthCenter(){
   for(const item of data.checks){
    const card=document.createElement('article');card.className='source-card';
    const title=document.createElement('h3');title.textContent=labels[item.key]||item.key;
-   const detail=document.createElement('p');detail.textContent=({ok:'🟢 OK',warning:'🟠 '+ui('Waarschuwing'),error:'🔴 '+ui('Fout'),unknown:'⚪ '+ui('Onbekend')})[item.status]||'—';
+   const detail=document.createElement('p');detail.textContent=({ok:'🟢 '+ui('OK'),warning:'🟠 '+ui('Waarschuwing'),error:'🔴 '+ui('Fout'),unknown:'⚪ '+ui('Onbekend')})[item.status]||'—';
    const value=document.createElement('p');value.textContent=item.detail;
    card.append(title,detail,value);$('health-checks').append(card);
   }
