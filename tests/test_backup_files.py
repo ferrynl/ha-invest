@@ -50,7 +50,7 @@ class BackupFileTests(unittest.TestCase):
   self.store.add({**trade,'quantity':'3'})
   data=dict(name=backup.relative_to(self.store.root).as_posix(),revision=revision(backup),confirmation='RESTORE')
   with patch.object(Path,'read_bytes',side_effect=AssertionError('Large backups must not be read into memory')):
-   code,body,headers=self.request('POST','/api/portfolio/file-restore',data,token=token,csrf=csrf)
+   code,body,headers=self.request('POST','/api/portfolio/file-restore',data,token=token,csrf=csrf,extra={'X-Confirm-Password':self.password})
   self.assertEqual(code,200,body);self.assertIsNone(self.auth.user(token))
   with self.store.read() as db:
    self.assertEqual(db.execute('SELECT COUNT(*) FROM purchases').fetchone()[0],1)

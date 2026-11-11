@@ -1,4 +1,13 @@
 /* Local backup inventory and explicit file actions in the shared modal. */
+function restoreSummary(summary){
+ const counts=new Intl.NumberFormat(appLocale());
+ return [
+  ui('Brokeraccounts')+': '+summary.accounts.join(', '),
+  ui('Transacties')+': '+counts.format(summary.trades),
+  ui('Dividenden')+': '+counts.format(summary.dividends),
+  ui('Bevestig het terugzetten.')
+ ].join('\n');
+}
 let backupFilesGeneration=0,backupFileSelection=null,backupFileBusy=false;
 function clearBackupFiles(){backupFilesGeneration++;backupFileSelection=null;$('backup-files').replaceChildren();$('backup-files-summary').textContent='';$('backup-files-feedback').textContent='';}
 async function loadBackupFiles(){
@@ -31,9 +40,44 @@ $('backup-file-form').addEventListener('submit',async event=>{
  event.preventDefault();if(backupFileBusy||!backupFileSelection||!$('backup-file-confirm').checked)return;
  const file=backupFileSelection;backupFileBusy=true;$('backup-file-submit').disabled=true;
  try{
-  await jsonAction(file.restoring?'api/portfolio/file-restore':'api/portfolio/file-delete',{name:file.name,revision:file.revision,confirmation:file.restoring?'RESTORE':'DELETE'});
+  if(file.restoring){
+   const summary=await jsonAction('api/portfolio/file-restore-preview',{name:file.name,revision:file.revision});
+   if(!window.confirm(restoreSummary(summary)))return;
+  }
+  await jsonAction(file.restoring?'api/portfolio/file-restore':'api/portfolio/file-delete',{name:file.name,revision:file.revision,confirmation:file.restoring?'RESTORE':'DELETE'},{headers:file.restoring?await sensitiveHeaders():{}});
   closePopup('backup-file-editor');
   if(file.restoring){stateETag=null;await startSession();if(accessSession)$('backup-files-feedback').textContent=ui('Portefeuille hersteld. Gebruikers en rollen zijn behouden.');else $('login-feedback').textContent=ui('Portefeuille hersteld. Meld je opnieuw aan.');}
   else {await loadBackupFiles();$('backup-files-feedback').textContent=ui('Bestand verwijderd.');}
  }catch(error){$('backup-file-feedback').textContent=error.message;}finally{backupFileBusy=false;$('backup-file-submit').disabled=!$('backup-file-confirm').checked;}
+});
+
+async function downloadPortfolioBackup(kind,name,password){
+ const response=await apiFetch('api/backup-download',{
+  method:'POST',
+  headers:{'Content-Type':'application/json','X-Portfolio-Request':'1',...await sensitiveHeaders()},
+  body:JSON.stringify({kind,name,password})
+ });
+ if(!response.ok)throw Error((await response.json()).error);
+ const url=URL.createObjectURL(await response.blob()),link=document.createElement('a');
+ const disposition=response.headers.get('Content-Disposition')||'';
+ const encoded=disposition.split("filename*=UTF-8''")[1];
+ const filename=encoded?decodeURIComponent(encoded):disposition.split('filename=')[1]?.slice(1,-1);
+ link.href=url;link.download=filename||'portfolio.sqlite3';
+ link.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+$('encrypted-backup').addEventListener('click',async()=>{
+ try{
+  const password=await requestPassword(ui('Kies een back-upwachtwoord van minimaal 12 tekens'));
+  if(password!==null)await downloadPortfolioBackup('backup','',password);
+ }catch(error){$('backup-files-feedback').textContent=error.message;}
+});
+document.addEventListener('click',async event=>{
+ const link=event.target.closest('a[href^="api/"]');
+ if(!link||!accessSession?.user?.csrf)return;
+ const url=new URL(link.href),endpoint=url.pathname.split('/api/').at(-1);
+ const kinds={'backup':'backup','portfolio/file':'file','portfolio/conversion-backup':'conversion','portfolio/deletion-backup':'deletion'};
+ if(!Object.hasOwn(kinds,endpoint))return;
+ event.preventDefault();
+ try{await downloadPortfolioBackup(kinds[endpoint],url.searchParams.get('name')||'');}
+ catch(error){window.alert(error.message);}
 });

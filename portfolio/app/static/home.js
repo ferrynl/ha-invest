@@ -85,6 +85,23 @@ function renderHomeDashboard(){
  else $('home-health').textContent=homeIsCombined()?ui('Alle bekende bedragen omgerekend naar euro. Aankopen, verkopen en dividend tegen de koers op de transactiedatum.'):ui('Bedragen blijven per valuta gescheiden. Koersen kunnen vertraagd zijn; de laatste koerstijd staat bij een geselecteerde positie.');
  if(state.history_date_issues?.length){$('home-health').append(homeNode('p',ui('Er zijn transactiedatums vóór 1900. De grafiek toont deze periode niet. Controleer de oorspronkelijke boekingen.')));const link=homeNode('a',ui('Betrokken transacties controleren'));link.href='#transacties?datum='+encodeURIComponent(state.history_date_issues[0]);$('home-health').append(link);}
  if(homeCurrency==='ALL'&&homeEuro?.excluded.length){$('home-health').append(document.createTextNode(ui(' Niet omgerekend: ')));for(const [i,p] of homeEuro.excluded.entries()){if(i)$('home-health').append(document.createTextNode(' · '));const link=homeNode('a',p.name+' ('+p.currency+' · '+p.account_name+')');link.href=stockDetailLink(p);$('home-health').append(link,document.createTextNode(ui(' · wisselkoers ontbreekt op ')+p.dates.slice(0,3).map(dayLabel).join(', ')));}}
+ const cutoff=new Date();
+ cutoff.setUTCDate(cutoff.getUTCDate()-5);
+ const staleBefore=cutoff.toISOString().slice(0,10);
+ for(const p of scope){
+  if(Number(p.quantity)<=0||p.value==null)continue;
+  const quoteDay=p.quote?.quoted_at?.slice(0,10);
+  const oldQuote=quoteDay&&quoteDay<staleBefore&&!p.quote.manual&&!p.quote_paused&&p.exchange!=='PRIVATE';
+  const oldFx=p.native_currency&&p.native_currency!=='EUR'&&p.fx_day&&p.fx_day<staleBefore;
+  if(!oldQuote&&!oldFx)continue;
+  const line=homeNode('p'),link=homeNode('a',p.name+' ('+p.symbol+')');
+  link.href=stockDetailLink({...p,currency:p.native_currency||p.currency});
+  line.append(link);
+  if(oldQuote)line.append(' · '+ui('Verouderde koers')+' ('+dayLabel(quoteDay)+')');
+  if(oldFx)line.append(' · '+ui('Verouderde wisselkoers')+' ('+dayLabel(p.fx_day)+')');
+  line.append(' · '+ui('Meegerekend in het totaal'));
+  $('home-health').append(line);
+ }
  if(homeCurrency!=='ALL')$('home-euro-status').textContent='';
  else if(homeEuro&&!homeEuroPending)showHomeEuroStatus(homeEuro);
  if(homeCurrency==='ALL'&&homeEuroError&&!homeEuroPending){

@@ -65,7 +65,7 @@ class Auth:
                 db.execute('UPDATE users SET language=? WHERE id=?',(language,user['id']))
         return language
 
-    def login(self,username,password,peer):
+    def verify_credentials(self,username,password,peer):
         username=str(username).strip().lower()
         now=time.monotonic()
         with self.lock:
@@ -78,6 +78,11 @@ class Auth:
                 for k in keys:self.failures.setdefault(k,[]).append(now)
                 raise ValueError('Gebruikersnaam of wachtwoord onjuist.')
             self.failures.pop(('name',username),None)
+            return row
+
+    def login(self,username,password,peer):
+        with self.lock:
+            row=self.verify_credentials(username,password,peer)
             token=secrets.token_urlsafe(32)
             with self.store.connect() as db:
                 db.execute('DELETE FROM auth_sessions WHERE expires_at<=?',(time.time(),))

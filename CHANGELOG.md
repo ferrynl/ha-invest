@@ -1,3 +1,9 @@
+## 0.70.27
+
+- Controleer back-ups vooraf en bied versleutelde back-updownloads.
+- Vraag het Home Invest-wachtwoord opnieuw bij gevoelige acties.
+- Toon verouderde koersen en wisselkoersen en geef na import toegang tot controles.
+
 ## 0.70.26
 
 - Beperk sessies tot 30 minuten inactiviteit en maximaal 12 uur. Meld na de upgrade opnieuw aan.

@@ -176,8 +176,27 @@ async function startSession(){
  if(admin&&accessSession?.enabled)await loadUsers();
  }finally{finish();}
 }
+function requestPassword(label){
+ return new Promise(resolve=>{
+  const dialog=document.createElement('dialog'),form=document.createElement('form');
+  const field=document.createElement('label'),input=document.createElement('input');
+  const submit=document.createElement('button'),cancel=document.createElement('button');
+  form.method='dialog';input.type='password';input.required=true;input.maxLength=128;
+  field.append(label,input);submit.textContent=ui('Bevestigen');submit.value='confirm';
+  cancel.type='button';cancel.textContent=ui('Annuleren');cancel.onclick=()=>dialog.close();
+  form.append(field,submit,cancel);dialog.append(form);document.body.append(dialog);
+  dialog.addEventListener('close',()=>{const value=dialog.returnValue==='confirm'?input.value:null;input.value='';dialog.remove();resolve(value);},{once:true});
+  dialog.showModal();input.focus();
+ });
+}
+async function sensitiveHeaders(){
+ if(!accessSession?.user?.csrf)return {};
+ const password=await requestPassword(ui('Bevestig met je Home Invest-wachtwoord'));
+ if(password===null)throw Error(ui('Actie geannuleerd.'));
+ return {'X-Confirm-Password':encodeURIComponent(password)};
+}
 async function jsonAction(path,data,options={}){
- const response=await apiFetch(path,{...options,method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify(data)});
+ const response=await apiFetch(path,{...options,method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1',...options.headers},body:JSON.stringify(data)});
  const result=await response.json();if(!response.ok)throw Error(result.error);return result;
 }
 async function loadUsers(){
@@ -207,9 +226,15 @@ function bindAccess(){
  $('password-cancel').addEventListener('click',()=>$('password-dialog').close());
  formAction('password-form',async form=>{await jsonAction('api/auth/password',Object.fromEntries(new FormData(form)));form.reset();$('password-dialog').close();lockApp();$('login-feedback').textContent=ui('Account aangepast. Meld je opnieuw aan.');},'password-feedback');
  formAction('restore-form',async form=>{
-  const file=$('restore-file').files[0];if(!file||file.size>25*1024*1024)throw Error(ui('Kies een SQLite-back-up van maximaal 25 MB.'));
+  const file=$('restore-file').files[0];if(!file||file.size>25*1024*1024+64)throw Error(ui('Kies een SQLite-back-up van maximaal 25 MB.'));
   if(!$('restore-confirm').checked)throw Error(ui('Bevestig het terugzetten.'));
-  const response=await apiFetch('api/restore',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Portfolio-Request':'1','X-Confirm-Restore':'yes'},body:file});
+  const password=file.name.toLowerCase().endsWith('.hib')?await requestPassword(ui('Wachtwoord van de back-up')):'';
+  if(password===null)return;
+  const headers={'Content-Type':'application/octet-stream','X-Portfolio-Request':'1','X-Backup-Password':encodeURIComponent(password)};
+  const preview=await apiFetch('api/restore-preview',{method:'POST',headers,body:file});
+  const summary=await preview.json();if(!preview.ok)throw Error(summary.error);
+  if(!window.confirm(restoreSummary(summary)))return;
+  const response=await apiFetch('api/restore',{method:'POST',headers:{...headers,...await sensitiveHeaders(),'X-Confirm-Restore':'yes'},body:file});
   const result=await response.json();if(!response.ok)throw Error(result.error);form.reset();stateETag=null;await startSession();$('restore-feedback').textContent=ui('Portefeuille hersteld. Gebruikers en rollen zijn behouden.');if(!accessSession)$('login-feedback').textContent=ui('Portefeuille hersteld. Meld je opnieuw aan.');
  },'restore-feedback');
 }

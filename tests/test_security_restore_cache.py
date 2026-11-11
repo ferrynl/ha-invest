@@ -127,11 +127,11 @@ class AccessTests(unittest.TestCase):
   self.assertEqual(self.request('POST','/api/imports/trading212/save',data)[0],400)
   token,csrf=self.activate()
   self.assertEqual(self.request('POST','/api/imports/trading212/save',data,token)[0],403)
-  code,body,_=self.request('POST','/api/imports/trading212/save',data,token,csrf)
+  code,body,_=self.request('POST','/api/imports/trading212/save',data,token,csrf,{'X-Confirm-Password':self.password})
   self.assertEqual(code,200);self.assertNotIn(b'private',body)
   code,body,_=self.request('POST','/api/imports/trading212/status',{'account_id':2},token,csrf)
   self.assertEqual(code,200);self.assertTrue(json.loads(body)['saved']);self.assertNotIn(b'private',body)
-  self.assertEqual(self.request('POST','/api/imports/trading212/forget',{'account_id':2},token,csrf)[0],200)
+  self.assertEqual(self.request('POST','/api/imports/trading212/forget',{'account_id':2},token,csrf,{'X-Confirm-Password':self.password})[0],200)
  def test_roles_csrf_direct_access_and_last_admin(self):
   admin,csrf=self.activate()
   self.assertEqual(self.request('GET','/api/state')[0],401)
@@ -237,7 +237,7 @@ class AccessTests(unittest.TestCase):
   before=self.store.state()['positions'][0]['quantity']
   with self.assertRaises(ValueError):restore_backup(self.store,b'invalid')
   self.assertEqual(self.store.state()['positions'][0]['quantity'],before)
-  code,_,_=self.request('POST','/api/restore',content,token,csrf,{'Content-Type':'application/octet-stream','X-Confirm-Restore':'yes'})
+  code,_,_=self.request('POST','/api/restore',content,token,csrf,{'Content-Type':'application/octet-stream','X-Confirm-Restore':'yes','X-Confirm-Password':self.password})
   self.assertEqual(code,200)
   self.assertEqual(self.store.state()['positions'][0]['quantity'],'2')
   self.assertEqual(self.store.state()['positions'][0]['dividend'],'3')

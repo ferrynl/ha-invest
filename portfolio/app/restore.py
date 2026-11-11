@@ -36,7 +36,7 @@ TABLES={
  'import_fx':(8,('id','batch_id','external_id','kind','source_currency','target_currency','original_amount','converted_amount','rate','requested_on','rate_on','source')),
 }
 
-def restore_backup(store,content=None,source_path=None):
+def restore_backup(store,content=None,source_path=None, preview=False):
     if source_path is None and (not content.startswith(b'SQLite format 3\x00') or len(content)>25*1024*1024):raise ValueError('Kies een geldige SQLite-back-up van maximaal 25 MB.')
     with tempfile.TemporaryDirectory(prefix='.restore-',dir=store.root) as folder:
         uploaded=Path(source_path) if source_path is not None else Path(folder)/'input.sqlite3'
@@ -133,22 +133,37 @@ def restore_backup(store,content=None,source_path=None):
                 if setting and setting[0] in ('1W','1M','3M','6M','YTD','1Y','ALL'):default_range=setting[0]
         # Live schema, users and authentication stay intact, including when restoring old backups.
         with store.lock:
+            if preview:
+                with store.read() as current, closing(sqlite3.connect(Path(folder)/"preview.sqlite3")) as target:
+                    current.backup(target)
+                    target.row_factory=sqlite3.Row
+                    _apply(target,rows,default_range,version)
+                return {
+                    "schema_version":version,
+                    "accounts":[row[1] for row in rows["broker_accounts"]],
+                    "trades":len(rows["purchases"]),
+                    "dividends":len(rows["dividends"]),
+                }
             safety=store.backup(retain=False);safety_folder=store.root/'backups'/'restores';safety_folder.mkdir(exist_ok=True)
             safety.rename(safety_folder/('before-restore-'+safety.name))
             with store.connect() as target:
-                for table in reversed(TABLES):target.execute(f'DELETE FROM {table}')
-                for table,(_,columns) in TABLES.items():
-                    target.executemany(f'INSERT INTO {table} ({",".join(columns)}) VALUES({",".join("?" for _ in columns)})',rows[table])
-                target.execute("UPDATE app_settings SET value=? WHERE key='default_range'",(default_range,))
-                if target.execute('PRAGMA foreign_key_check').fetchone():raise ValueError('De back-up verwijst naar ontbrekende accounts of importbatches.')
-                if target.execute('SELECT 1 FROM charges c JOIN import_batches b ON b.id=c.batch_id WHERE c.account_id!=b.account_id OR c.provider!=b.provider LIMIT 1').fetchone():raise ValueError('Ongeldige kostenreferentie.')
-                for kind,table in (('trade','purchases'),('dividend','dividends'),('capital','capital_returns')):
-                    if target.execute('SELECT 1 FROM transaction_charge_links l JOIN charges c ON c.id=l.charge_id LEFT JOIN '+table+' t ON t.id=l.record_id WHERE l.kind=? AND (t.id IS NULL OR t.account_id!=c.account_id) LIMIT 1',(kind,)).fetchone():raise ValueError('Ongeldige kostenreferentie.')
-                if version<21:
-                    target.execute("INSERT INTO transaction_charge_links SELECT c.id,'trade',p.id FROM charges c JOIN purchases p ON c.external_id='manual-trade:'||p.id AND c.account_id=p.account_id AND c.provider='charges' JOIN import_batches b ON b.id=c.batch_id AND b.filename='manual-trade-'||p.id AND json_extract(CASE WHEN json_valid(b.payload) THEN b.payload ELSE '[]' END,'$[0].trade_id')=p.id")
-                from history import daily_values
-                for key in target.execute('SELECT DISTINCT account_id,symbol,exchange,currency FROM purchases').fetchall():
-                    lots=[dict(row) for row in target.execute('SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',tuple(key))]
-                    daily_values(lots,[],[])
+                _apply(target,rows,default_range,version)
         store._mapping_discovered=False
         return {table:len(data) for table,data in rows.items()}
+
+
+def _apply(target,rows,default_range,version):
+    for table in reversed(TABLES):target.execute(f'DELETE FROM {table}')
+    for table,(_,columns) in TABLES.items():
+        target.executemany(f'INSERT INTO {table} ({",".join(columns)}) VALUES({",".join("?" for _ in columns)})',rows[table])
+    target.execute("UPDATE app_settings SET value=? WHERE key='default_range'",(default_range,))
+    if target.execute('PRAGMA foreign_key_check').fetchone():raise ValueError('De back-up verwijst naar ontbrekende accounts of importbatches.')
+    if target.execute('SELECT 1 FROM charges c JOIN import_batches b ON b.id=c.batch_id WHERE c.account_id!=b.account_id OR c.provider!=b.provider LIMIT 1').fetchone():raise ValueError('Ongeldige kostenreferentie.')
+    for kind,table in (('trade','purchases'),('dividend','dividends'),('capital','capital_returns')):
+        if target.execute('SELECT 1 FROM transaction_charge_links l JOIN charges c ON c.id=l.charge_id LEFT JOIN '+table+' t ON t.id=l.record_id WHERE l.kind=? AND (t.id IS NULL OR t.account_id!=c.account_id) LIMIT 1',(kind,)).fetchone():raise ValueError('Ongeldige kostenreferentie.')
+    if version<21:
+        target.execute("INSERT INTO transaction_charge_links SELECT c.id,'trade',p.id FROM charges c JOIN purchases p ON c.external_id='manual-trade:'||p.id AND c.account_id=p.account_id AND c.provider='charges' JOIN import_batches b ON b.id=c.batch_id AND b.filename='manual-trade-'||p.id AND json_extract(CASE WHEN json_valid(b.payload) THEN b.payload ELSE '[]' END,'$[0].trade_id')=p.id")
+    from history import daily_values
+    for key in target.execute('SELECT DISTINCT account_id,symbol,exchange,currency FROM purchases').fetchall():
+        lots=[dict(row) for row in target.execute('SELECT * FROM purchases WHERE account_id=? AND symbol=? AND exchange=? AND currency=?',tuple(key))]
+        daily_values(lots,[],[])
