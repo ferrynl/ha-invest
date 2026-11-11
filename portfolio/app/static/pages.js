@@ -149,11 +149,11 @@ setInterval(()=>{if(!document.hidden&&accessSession?.user)load();},120000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&accessSession?.user)load();});
 
 let healthRequest=0;
-function clearHealthCenter(){healthRequest++;$('health-checks').replaceChildren();$('health-status').textContent='';}
+function clearHealthCenter(){$('health-action-status').textContent='';healthRequest++;$('health-checks').replaceChildren();$('health-status').textContent='';}
 async function loadHealthCenter(){
  const request=++healthRequest;
  $('health-status').textContent='…';
- const labels={database:ui('Database'),storage:ui('Opslagruimte'),authentication:ui('Gebruikersbeveiliging'),passkeys:ui('Passkeys'),backup:ui('Back-ups')};
+ const labels={database:ui('Database'),storage:ui('Opslagruimte'),authentication:ui('Gebruikersbeveiliging'),passkeys:ui('Passkeys'),backup:ui('Back-ups'),missing_quotes:ui("Ontbrekende koersen"),stale_quotes:ui("Verouderde koersen"),duplicate_trades:ui("Mogelijke dubbele transacties"),invalid_positions:ui("Ongeldige posities"),unusual_returns:ui("Afwijkende rendementen"),missing_fx:ui("Ontbrekende wisselkoersen"),pending_mappings:ui("Openstaande beurskoppelingen"),invalid_dividends:ui("Afwijkende dividenden")};
  try{
   const response=await apiFetch('api/health-center');
   if(!response.ok)throw Error('HTTP '+response.status);
@@ -165,9 +165,26 @@ async function loadHealthCenter(){
    const title=document.createElement('h3');title.textContent=labels[item.key]||item.key;
    const detail=document.createElement('p');detail.textContent=({ok:'🟢 '+ui('OK'),warning:'🟠 '+ui('Waarschuwing'),error:'🔴 '+ui('Fout'),unknown:'⚪ '+ui('Onbekend')})[item.status]||'—';
    const value=document.createElement('p');value.textContent=item.detail;
-   card.append(title,detail,value);$('health-checks').append(card);
+   card.append(title,detail,value);
+   for(const example of item.examples||[]){const line=document.createElement('p');line.textContent=example;card.append(line);}
+   $('health-checks').append(card);
   }
   $('health-status').textContent=new Date(data.checked_at).toLocaleString();
  }catch(error){if(request===healthRequest)$('health-status').textContent=error.message;}
 }
 $('health-refresh').addEventListener('click',loadHealthCenter);
+
+async function healthAction(action){
+ const request=healthRequest;
+ const button=$(action==='refresh'?'health-quotes':'health-cache');
+ button.disabled=true;
+ try{
+  const response=await apiFetch('api/health-action',{method:'POST',headers:{'Content-Type':'application/json','X-Portfolio-Request':'1'},body:JSON.stringify({action})});
+  if(!response.ok)throw Error('HTTP '+response.status);
+  if(request!==healthRequest||accessSession?.user?.role!=='admin')return;
+  $('health-action-status').textContent=action==='refresh'?ui('Koersverversing aangevraagd.'):ui('Dashboardcache vernieuwd.');
+ }catch(error){if(request===healthRequest)$('health-action-status').textContent=error.message;}
+ finally{button.disabled=false;}
+}
+$('health-quotes').addEventListener('click',()=>healthAction('refresh'));
+$('health-cache').addEventListener('click',()=>healthAction('cache'));

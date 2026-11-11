@@ -1697,6 +1697,12 @@
     "⚪ ",
     "health-refresh",
     "health-center",
-    "[data-route=health-center]"
+    "[data-route=health-center]",
+    "health-action-status",
+    "health-quotes",
+    "health-cache",
+    "api/health-action",
+    "refresh",
+    "cache"
   ]
 }
