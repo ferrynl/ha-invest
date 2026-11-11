@@ -261,3 +261,67 @@ a.stock-sector-card:hover,a.stock-sector-card:focus-visible{border-color:var(--s
 .source-logo-tile .source-logo { width: 100%; max-width: 8rem; height: 3.5rem; padding: 0; background: transparent; }
 
 a.home-mover{color:inherit;text-decoration:none}a.home-mover:is(:hover,:focus-visible,:active)>div>span{color:#57e3bc}
+
+
+/* Health Center: compact, accessible status presentation across screen sizes. */
+.health-center{min-width:0;max-width:1150px;margin:0 auto}
+.health-center .health-shell{min-width:0;padding:clamp(16px,2.6vw,28px);margin:12px 0 24px}
+.health-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.health-heading>div{min-width:0}
+.health-heading h2{font-size:clamp(22px,2.4vw,28px);margin:2px 0 5px;color:#edf7ff;letter-spacing:-.5px}
+.health-eyebrow{display:block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:#75dabd;font-weight:700}
+.health-description{margin:0 0 16px;font-size:13px;color:#b4c7d9}
+.health-center button.health-refresh{display:inline-flex;gap:8px;align-items:center;justify-content:center;padding:9px 12px;min-height:42px;flex-shrink:0;font-size:12px}
+.health-refresh svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.health-overview{display:flex;align-items:center;gap:12px;border:1px solid #3a5667;background:#172c38;border-radius:13px;padding:13px 16px;min-width:0;margin:3px 0 14px}
+.health-overview-text{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.health-overview-text strong{font-size:15px;line-height:1.25}
+.health-overview-text small{font-size:12px;line-height:1.4;letter-spacing:normal;color:#b6c9d9}
+.health-indicator{display:block;flex:0 0 11px;width:11px;height:11px;border-radius:50%;background:#a8b5c7}
+.health-ok{background:#58ddad}.health-warning{background:#f0bc64}.health-error{background:#ff7b82}.health-unknown{background:#a8b5c7}
+.health-count{white-space:nowrap;font-size:12px;color:#e8f0fa;padding:6px 9px;border-radius:20px;background:#273d4c}
+.health-toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+.health-toolbar .health-action{display:inline-flex;gap:8px;align-items:center;justify-content:center;font-size:12px;line-height:1.35;font-weight:650;padding:9px 12px;min-height:40px;border-radius:9px;flex:0 1 auto;text-align:center}
+.health-toolbar .health-action-link{background:#1b293d;border:1px solid #35455d;color:#dce8f5;text-decoration:none}
+.health-toolbar .health-action:focus-visible,.health-refresh:focus-visible{outline:2px solid #7cffe0;outline-offset:3px}
+.health-action-status{min-height:0;margin:0!important;font-size:12px}
+.health-action-status:empty{display:none}
+.health-section-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:21px 0 9px}
+.health-section-heading h3{margin:0;font-size:16px;color:#e9f3fc}
+.health-section-heading small{font-size:12px;color:#a6b9ca;white-space:nowrap}
+.health-check-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.health-check-item{min-width:0;border:1px solid #34475d;background:#162438;border-radius:11px;padding:12px 14px}
+.health-check-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.health-check-title{display:flex;align-items:center;gap:9px;min-width:0;font-size:13px;font-weight:650;color:#edf4fc}
+.health-check-title span{min-width:0;overflow-wrap:anywhere}
+.health-check-title .health-indicator{flex-shrink:0}
+.health-check-state{font-size:11px;white-space:nowrap;font-weight:650;color:#bad0df}
+.health-check-item[data-status="ok"] .health-check-state{color:#8ee8c9}
+.health-check-item[data-status="warning"] .health-check-state{color:#f3cb7f}
+.health-check-item[data-status="error"] .health-check-state{color:#ff9b9f}
+.health-check-description{font-size:12px;color:#a7bbcd;margin:5px 0 0 20px;line-height:1.35;overflow-wrap:anywhere}
+.health-check-details{font-size:12px;margin:8px 0 0 20px;overflow-wrap:anywhere;color:#d2e1ee}
+.health-check-details summary{cursor:pointer;color:#8fe4d2;font-size:12px}
+.health-check-details ul{margin:8px 0 0;padding-left:17px}
+.health-check-details li{margin:5px 0}
+@media(max-width:680px){
+ .health-center .health-shell{padding:15px 13px;margin:8px 0 18px;border-radius:14px}
+ .health-heading{align-items:center}
+ .health-heading h2{font-size:23px}
+ .health-description{font-size:12px;margin-bottom:12px}
+ .health-center button.health-refresh{padding:10px;min-width:42px}
+ .health-refresh-label{display:none}
+ .health-overview{padding:11px 12px;gap:10px;margin-bottom:11px}
+ .health-overview-text strong{font-size:13px}
+ .health-overview-text small{font-size:11px}
+ .health-toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .health-toolbar .health-action{width:100%;min-width:0;min-height:40px;padding:8px 9px;font-size:11px}
+ .health-toolbar .health-action-link{grid-column:1/-1}
+ .health-check-list{grid-template-columns:minmax(0,1fr);gap:7px}
+ .health-check-item{padding:11px 12px}
+ .health-section-heading{margin-top:18px;margin-bottom:8px}
+ .health-section-heading h3{font-size:14px}
+ .health-check-title{font-size:12px}
+ .health-check-description{font-size:11px}
+}
+@media(max-width:360px){.health-toolbar{grid-template-columns:minmax(0,1fr)}.health-toolbar .health-action-link{grid-column:auto}.health-count{display:none}}

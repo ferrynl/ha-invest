@@ -1,3 +1,10 @@
+## 0.70.29
+
+- Geef Health Center een herkenbaar hartslagicoon in het hoofdmenu.
+- Toon op mobiel een compact controleoverzicht met één duidelijke samenvatting en status per controle.
+- Maak herstelknoppen kleiner en groepeer technische en financiële controles met uitklapbare details.
+- Voeg browsercontroles toe voor de mobiele Health Center-weergave.
+
 ## 0.70.28
 
 - Voeg het Health Center toe met database-, opslag-, back-up- en beveiligingscontroles.

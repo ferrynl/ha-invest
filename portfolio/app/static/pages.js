@@ -149,28 +149,86 @@ setInterval(()=>{if(!document.hidden&&accessSession?.user)load();},120000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&accessSession?.user)load();});
 
 let healthRequest=0;
-function clearHealthCenter(){$('health-action-status').textContent='';healthRequest++;$('health-checks').replaceChildren();$('health-status').textContent='';}
+const healthTechnicalKeys=new Set(['database','storage','authentication','passkeys','backup']);
+const healthLabels={
+ database:ui('Database'),storage:ui('Opslagruimte'),authentication:ui('Gebruikersbeveiliging'),
+ passkeys:ui('Passkeys'),backup:ui('Back-ups'),missing_quotes:ui('Ontbrekende koersen'),
+ stale_quotes:ui('Verouderde koersen'),duplicate_trades:ui('Mogelijke dubbele transacties'),
+ invalid_positions:ui('Ongeldige posities'),unusual_returns:ui('Afwijkende rendementen'),
+ missing_fx:ui('Ontbrekende wisselkoersen'),pending_mappings:ui('Openstaande beurskoppelingen'),
+ invalid_dividends:ui('Afwijkende dividenden')
+};
+function clearHealthCenter(){
+ healthRequest++;
+ $('health-technical').replaceChildren();$('health-financial').replaceChildren();
+ $('health-status').textContent='';$('health-summary').textContent='';
+ $('health-count').hidden=true;$('health-technical-count').textContent='';
+ $('health-financial-count').textContent='';$('health-action-status').textContent='';
+ $('health-indicator').className='health-indicator health-unknown';
+}
+function healthStatusText(status){return ({ok:ui('OK'),warning:ui('Waarschuwing'),error:ui('Fout'),unknown:ui('Onbekend')})[status]||ui('Onbekend');}
+function healthCheckDescription(item){
+ if(item.key==='database')return ui('Schema')+': '+item.detail;
+ if(item.key==='storage')return ui('Vrije ruimte')+': '+item.detail;
+ if(item.key==='backup')return item.detail?ui('Laatste back-up')+': '+item.detail:ui('Geen back-up gevonden');
+ if(item.key==='passkeys')return ui('Aantal')+': '+item.detail;
+ if(item.key==='authentication')return item.status==='ok'?ui('Ingeschakeld'):ui('Controle nodig');
+ return ui('Meldingen')+': '+(item.detail||'0');
+}
+function healthCheckElement(item){
+ const card=document.createElement('article');card.className='health-check-item';card.dataset.status=item.status;
+ const top=document.createElement('div');top.className='health-check-top';
+ const title=document.createElement('div');title.className='health-check-title';
+ const dot=document.createElement('i');dot.className='health-indicator health-'+(item.status in {ok:1,warning:1,error:1,unknown:1}?item.status:'unknown');dot.setAttribute('aria-hidden','true');
+ const label=document.createElement('span');label.textContent=healthLabels[item.key]||item.key;
+ title.append(dot,label);
+ const status=document.createElement('span');status.className='health-check-state';status.textContent=healthStatusText(item.status);
+ top.append(title,status);
+ const description=document.createElement('p');description.className='health-check-description';description.textContent=healthCheckDescription(item);
+ card.append(top,description);
+ if(item.examples?.length){
+  const details=document.createElement('details');details.className='health-check-details';
+  const summary=document.createElement('summary');summary.textContent=ui('Details bekijken')+' ('+item.examples.length+')';
+  const list=document.createElement('ul');
+  for(const example of item.examples){const li=document.createElement('li');li.textContent=example;list.append(li);}
+  details.append(summary,list);card.append(details);
+ }
+ return card;
+}
 async function loadHealthCenter(){
  const request=++healthRequest;
- $('health-status').textContent='…';
- const labels={database:ui('Database'),storage:ui('Opslagruimte'),authentication:ui('Gebruikersbeveiliging'),passkeys:ui('Passkeys'),backup:ui('Back-ups'),missing_quotes:ui("Ontbrekende koersen"),stale_quotes:ui("Verouderde koersen"),duplicate_trades:ui("Mogelijke dubbele transacties"),invalid_positions:ui("Ongeldige posities"),unusual_returns:ui("Afwijkende rendementen"),missing_fx:ui("Ontbrekende wisselkoersen"),pending_mappings:ui("Openstaande beurskoppelingen"),invalid_dividends:ui("Afwijkende dividenden")};
+ $('health-summary').textContent=ui('Controles laden…');
+ $('health-status').textContent='';
+ $('health-refresh').disabled=true;
  try{
   const response=await apiFetch('api/health-center');
   if(!response.ok)throw Error('HTTP '+response.status);
   const data=await response.json();
   if(request!==healthRequest||accessSession?.user?.role!=='admin')return;
-  $('health-checks').replaceChildren();
+  $('health-technical').replaceChildren();$('health-financial').replaceChildren();
+  const issues=data.checks.filter(item=>item.status==='warning'||item.status==='error').length;
+  const unknown=data.checks.filter(item=>item.status!=='ok'&&item.status!=='warning'&&item.status!=='error').length;
+  const overall=data.checks.some(item=>item.status==='error')?'error':issues?'warning':unknown?'unknown':'ok';
+  $('health-indicator').className='health-indicator health-'+overall;
+  $('health-summary').textContent=overall==='ok'?ui('Alles in orde'):issues?String(issues)+' '+ui('aandachtspunten'):ui('Controle onvolledig');
+  $('health-status').textContent=ui('Laatst gecontroleerd')+': '+new Date(data.checked_at).toLocaleString();
+  $('health-count').hidden=false;
+  $('health-count').textContent=String(data.checks.length)+' '+ui('controles');
+  let technical=0,financial=0;
   for(const item of data.checks){
-   const card=document.createElement('article');card.className='source-card';
-   const title=document.createElement('h3');title.textContent=labels[item.key]||item.key;
-   const detail=document.createElement('p');detail.textContent=({ok:'🟢 '+ui('OK'),warning:'🟠 '+ui('Waarschuwing'),error:'🔴 '+ui('Fout'),unknown:'⚪ '+ui('Onbekend')})[item.status]||'—';
-   const value=document.createElement('p');value.textContent=item.detail;
-   card.append(title,detail,value);
-   for(const example of item.examples||[]){const line=document.createElement('p');line.textContent=example;card.append(line);}
-   $('health-checks').append(card);
+   const isTechnical=healthTechnicalKeys.has(item.key);
+   $(isTechnical?'health-technical':'health-financial').append(healthCheckElement(item));
+   if(isTechnical)technical++;else financial++;
   }
-  $('health-status').textContent=new Date(data.checked_at).toLocaleString();
- }catch(error){if(request===healthRequest)$('health-status').textContent=error.message;}
+  $('health-technical-count').textContent=String(technical)+' '+ui('controles');
+  $('health-financial-count').textContent=String(financial)+' '+ui('controles');
+ }catch(error){
+  if(request===healthRequest){
+   $('health-indicator').className='health-indicator health-error';
+   $('health-summary').textContent=ui('Controle mislukt');
+   $('health-status').textContent=error.message;
+  }
+ }finally{if(request===healthRequest)$('health-refresh').disabled=false;}
 }
 $('health-refresh').addEventListener('click',loadHealthCenter);
 
