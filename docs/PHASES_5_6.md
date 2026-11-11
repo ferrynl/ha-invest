@@ -9,7 +9,7 @@
 De optimalisatie hoort geen boekingen, koersberekeningen of gebruikersgegevens te veranderen.
 
 ## Fase 6: releasebeveiliging zonder dubbele CI
-De bestaande GitHub Actions workflow `Checks` is de centrale controle. Deze doet al:
+De bestaande GitHub Actions workflow `Checks` is de centrale controle. Deze draait op pull requests naar `main` en pushes op `main`, niet daarnaast op iedere push naar een featurebranch. Oudere pull-request-runs worden bij een nieuwe commit automatisch afgebroken. De workflow doet:
 - Python- en JavaScript-tests, lint en vertaalcontroles
 - Releaseversie- en release-notitievalidatie via `scripts/release_notes.py`
 - Browser smoke tests en Docker-builds van de app en feedbackservice
