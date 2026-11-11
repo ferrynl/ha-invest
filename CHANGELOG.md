@@ -1,3 +1,10 @@
+## 0.70.28
+
+- Voeg het Health Center toe met database-, opslag-, back-up- en beveiligingscontroles.
+- Signaleer ontbrekende koersen, mogelijke dubbele transacties en andere financiële afwijkingen.
+- Voeg veilige acties toe voor koersverversing en dashboardcache.
+- Versterk containerbeveiliging en automatische upgrade- en browsertests.
+
 ## 0.70.27
 
 - Controleer back-ups vooraf en bied versleutelde back-updownloads.
