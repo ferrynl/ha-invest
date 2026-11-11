@@ -2,7 +2,7 @@ cryptography==50.0.2
 
 reportlab==4.4.3
 duckdb==2.0.0
-webauthn==2.7.0
+webauthn==3.0.1
 
 # Security constraints for transitive and bundled Python dependencies.
 msgpack==1.2.3
