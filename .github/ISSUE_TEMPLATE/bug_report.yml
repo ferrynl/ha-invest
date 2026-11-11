@@ -1,0 +1,22 @@
+name: Bug report
+description: Report a reproducible Home Invest problem
+title: "[Bug]: "
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Home Invest version
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Describe the problem, expected behavior and actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted logs
+      description: Remove passwords, tokens, portfolio data and personal information. Report security vulnerabilities privately as described in SECURITY.md.

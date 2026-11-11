@@ -20,59 +20,18 @@ jobs:
         with:
           node-version: '22'
       - run: python scripts/check_translations.py
-      - run: node --check portfolio/app/static/i18n.js
-      - run: node --check portfolio/app/static/translations.js
-      - run: node --check portfolio/app/static/app.js
-      - run: node --check portfolio/app/static/purchase-fx.js
-      - run: node tests/test_purchase_fx.cjs
-      - run: node --check portfolio/app/static/chart.js
-      - run: node --check portfolio/app/static/chart-view.js
-      - run: node --check portfolio/app/static/pages.js
-      - run: node --check portfolio/app/static/access.js
-      - run: node --check portfolio/app/static/backup-files.js
-      - run: node --check portfolio/app/static/imports.js
-      - run: node --check portfolio/app/static/charges.js
-      - run: node tests/test_charges.cjs
-      - run: node --check portfolio/app/static/feedback.js
-      - run: node --check portfolio/app/static/logs.js
-      - run: node --check portfolio/app/static/currencies.js
-      - run: node --check portfolio/app/static/import-mappings.js
-      - run: node --check portfolio/app/static/import-issues.js
-      - run: node --check portfolio/app/static/home.js
-      - run: node --check portfolio/app/static/table-filters.js
-      - run: node --check portfolio/app/static/stock-detail.js
-      - run: node --check portfolio/app/static/transactions.js
-      - run: node tests/test_transaction_costs.cjs
-      - run: node --check portfolio/app/static/conversions.js
-      - run: node --check portfolio/app/static/performance.js
-      - run: node --check portfolio/app/static/category-status.js
-      - run: node --check portfolio/app/static/dividends.js
-      - run: node tests/test_dividend_growth.cjs
-      - run: node --check portfolio/app/static/stocks.js
-      - run: node tests/test_i18n.cjs
-      - run: node tests/test_broker_scope.cjs
-      - run: node --check portfolio/app/static/report-charts.js
-      - run: node --check portfolio/app/static/reports.js
-      - run: node tests/test_reports.cjs
-      - run: node tests/test_performance.cjs
-      - run: node tests/test_country_map.cjs
-      - run: node --check portfolio/app/static/country-map.js
-      - run: node --check portfolio/app/static/funds.js
-      - run: node tests/test_funds.cjs
-      - run: node --check portfolio/app/static/resource-stats.js
-      - run: node --check portfolio/app/static/maintenance.js
-      - run: node --check portfolio/app/static/tasks.js
-      - run: node tests/test_tasks.cjs
-      - run: node tests/test_stocks.cjs
-      - run: node tests/test_categories.cjs
-      - run: node tests/test_tables.cjs
-      - run: node --check portfolio/app/static/loading.js
-      - run: node tests/test_loading.cjs
-      - run: node --check portfolio/app/static/dashboard-layout.js
-      - run: node tests/test_dashboard_layout.cjs
-      - run: node tests/test_home.cjs
-      - run: node tests/test_home_loading.cjs
-      - run: node tests/test_chart.cjs
+      - name: Discover and check JavaScript sources and tests
+        run: python scripts/check_javascript.py
+      - name: Lint Python
+        run: |
+          python -m pip install ruff
+          ruff check portfolio/app feedback_service scripts tests
+      - name: Lint JavaScript
+        run: npx --yes eslint@9.39.1 "portfolio/app/static/**/*.{js,mjs,cjs}" "tests/**/*.{js,mjs,cjs}"
+      - name: Validate release metadata
+        env:
+          PYTHONPATH: scripts
+        run: python -c "from pathlib import Path; from release_notes import prepare; prepare(Path.cwd())"
       - run: docker build portfolio -t aandelen-dashboard:test
       - name: Check bundled Defeat Beta reader without network
         run: >-
