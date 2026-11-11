@@ -10,6 +10,7 @@ from storage import Store
 from provider import fetch_quote, search_stocks, fetch_history
 from security import Auth
 from cache import StateCache
+from refresh_index import purchase_index
 from web import make_handler
 from datetime import datetime, timezone
 from diagnostics import record
@@ -35,11 +36,12 @@ def refresh():
         errors = 0
         snapshot = state_cache.derived('state-compact:all',lambda:store.state(compact_view=True))
         history_errors = 0
+        earliest_dates, transferred_sells = purchase_index(snapshot['purchases'])
         seen=set()
         for p in snapshot['positions']:
             instrument=(p['symbol'],p['exchange'],p['currency'])
             if p.get('invalid_position') or p.get('quote_paused'):continue
-            if Decimal(p['quantity'])==0 and any(row.get('transfer_id') and row['side']=='SELL' and (row['symbol'],row['exchange'],row['currency'])==instrument for row in snapshot['purchases']):continue
+            if Decimal(p['quantity'])==0 and instrument in transferred_sells:continue
             if instrument in seen:continue
             seen.add(instrument)
             if p['exchange']=='PRIVATE':
@@ -65,7 +67,10 @@ def refresh():
             except Exception as error:
                 record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],'error_type':type(error).__name__,'code':getattr(error,'code','provider_failed')})
                 errors += 1
-            start = min(l['purchased_on'] for l in snapshot['purchases'] if all(l[k] == p[k] for k in ('symbol', 'exchange', 'currency')))
+            start = earliest_dates.get(instrument)
+            if not start:
+                record(store,'WARNING','market','history_missing_purchase','Geen aankoopdatum voor koershistorie.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency']})
+                continue
             try:
                 if store.history_needed(p['symbol'], p['exchange'], p['currency'], start):
                     requested=store.history_start(p['symbol'],p['exchange'],p['currency'],start)
