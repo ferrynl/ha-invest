@@ -1,7 +1,9 @@
 """Read-only health checks; no portfolio repairs or external requests."""
 import shutil
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
+from decimal import Decimal
+from collections import Counter
 from contextlib import closing
 from migrations import SCHEMA_VERSION
 
@@ -44,4 +46,69 @@ def snapshot(store, auth):
                 f"{age:.1f} d")
     except (OSError, sqlite3.Error):
         add("backup", "error", "")
+    try:
+        with store.read() as db:
+            state = store._state(db, True, 'all')
+            fx = {r[0] for r in db.execute("SELECT DISTINCT quote FROM fx_rates WHERE base='EUR'")}
+            pending = db.execute("SELECT COUNT(*) FROM instrument_mappings WHERE origin='pending' OR symbol='' OR exchange=''").fetchone()[0]
+        findings = financial_checks(state, fx, pending)
+        checks.extend(findings)
+    except (sqlite3.Error, ArithmeticError, ValueError, KeyError, TypeError):
+        for key in FINANCIAL_KEYS:
+            add(key, "unknown", "")
     return dict(checked_at=datetime.now(timezone.utc).isoformat(), checks=checks)
+
+
+FINANCIAL_KEYS = ("missing_quotes", "stale_quotes", "duplicate_trades", "invalid_positions", "unusual_returns", "missing_fx", "pending_mappings", "invalid_dividends")
+
+
+def financial_checks(state, fx, pending, today=None):
+    today = today or date.today()
+    issues = {key: [] for key in FINANCIAL_KEYS}
+    def label(row):
+        return f"{row['symbol']} · {row['exchange']} · {row['currency']} · #{row['account_id']}"
+    def number(value):
+        result = Decimal(str(value))
+        if not result.is_finite():
+            raise ValueError()
+        return result
+    for row in state["positions"]:
+        name = label(row)
+        if row.get("invalid_position"):
+            issues["invalid_positions"].append(name)
+            continue
+        if number(row["quantity"]) <= 0:
+            continue
+        quote = row.get("quote")
+        if not quote:
+            issues["missing_quotes"].append(name)
+        elif not row.get("quote_paused"):
+            try:
+                if (today - date.fromisoformat(quote["quoted_at"][:10])).days > 7:
+                    issues["stale_quotes"].append(name)
+            except (ValueError, KeyError, TypeError):
+                issues["stale_quotes"].append(name)
+        if row["currency"] != "EUR" and row["currency"] not in fx:
+            issues["missing_fx"].append(name)
+        cost = number(row["cost"])
+        if cost > 0 and row.get("value") is not None:
+            change = (number(row["value"]) - cost) / cost
+            if change > 5 or change < Decimal("-0.9"):
+                issues["unusual_returns"].append(name)
+    fields = ("account_id", "symbol", "exchange", "currency", "purchased_on", "trade_time", "side", "quantity", "price", "split_before")
+    trades = Counter(tuple(row.get(k) for k in fields) for row in state["purchases"])
+    for identity, count in trades.items():
+        if count > 1:
+            issues["duplicate_trades"].append(f"{identity[1]} · {identity[2]} · {identity[3]} · #{identity[0]} · {identity[4]} × {count}")
+    for row in state["dividends"]:
+        try:
+            day = date.fromisoformat(row["paid_on"])
+            if day > today or day.year < 1900 or number(row["amount"]) <= 0:
+                raise ValueError()
+        except (ValueError, ArithmeticError, TypeError):
+            issues["invalid_dividends"].append(label(row))
+    result = []
+    for key, values in issues.items():
+        count = pending if key == "pending_mappings" else len(values)
+        result.append(dict(key=key, status="warning" if count else "ok", detail=str(count), examples=values[:10]))
+    return result
