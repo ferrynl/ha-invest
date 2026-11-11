@@ -1703,6 +1703,24 @@
     "health-cache",
     "api/health-action",
     "refresh",
-    "cache"
+    "cache",
+    "health-technical",
+    "health-financial",
+    "health-summary",
+    "health-count",
+    "health-technical-count",
+    "health-financial-count",
+    "health-indicator",
+    "health-indicator health-unknown",
+    "health-check-item",
+    "health-check-top",
+    "health-check-title",
+    "health-indicator health-",
+    "unknown",
+    "health-check-state",
+    "health-check-description",
+    "health-check-details",
+    "warning",
+    "health-indicator health-error"
   ]
 }
