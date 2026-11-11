@@ -1,4 +1,6 @@
 import sys
+import http.client
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -101,8 +103,22 @@ class ConversionHttpTests(unittest.TestCase):
   self.assertEqual(self.request('/api/portfolio/conversion-preview',dict(account_id=1,day='2025-10-02'))[0],401)
   token=self.auth.login('administrator','long-password-123','test');csrf=self.auth.user(token)['csrf']
   self.assertEqual(self.request('/api/portfolio/conversion',{},token)[0],403)
-  code,body=self.request('/api/portfolio/conversion-backup?name='+result['backup_name'],token=token)
+  self.assertEqual(self.request('/api/portfolio/conversion-backup?name='+result['backup_name'],token=token)[0],403)
+  payload=dict(kind='conversion',name=result['backup_name'])
+  def download(password=None,csrf_token=csrf):
+   connection=http.client.HTTPConnection('127.0.0.1',self.http.server_port,timeout=10)
+   try:
+    headers={'Content-Type':'application/json','X-Portfolio-Request':'1','Cookie':'homeinvest_session='+token,'X-CSRF-Token':csrf_token}
+    if password is not None:headers['X-Confirm-Password']=password
+    connection.request('POST','/api/backup-download',json.dumps(payload),headers)
+    response=connection.getresponse();return response.status,response.read()
+   finally:connection.close()
+  self.assertEqual(download('long-password-123','')[0],403)
+  self.assertNotEqual(download()[0],200)
+  self.assertNotEqual(download('incorrect-password')[0],200)
+  code,body=download('long-password-123')
   self.assertEqual(code,200);self.assertTrue(body.startswith(b'SQLite format 3'))
   with self.store.connect() as db:db.execute("UPDATE users SET role='basic'")
+  self.assertEqual(download('long-password-123')[0],403)
   for path in ('/api/portfolio/conversions','/api/portfolio/conversion-backup?name='+result['backup_name']):self.assertEqual(self.request(path,token=token)[0],403)
   for path in ('/api/portfolio/conversion','/api/portfolio/conversion-preview'):self.assertEqual(self.request(path,{},token,csrf)[0],403)
