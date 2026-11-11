@@ -57,7 +57,6 @@ def main():
                 expect(page.locator('a[data-route="health-center"] svg.nav-icon')).to_have_count(1)
                 expect(page.locator("#health-summary")).not_to_have_text("Controles laden…")
                 page.set_viewport_size({"width": 390, "height": 844})
-                page.goto(origin + "/#health-center")
                 expect(page.locator("#health-technical .health-check-item")).to_have_count(5)
                 shell = page.locator(".health-shell").bounding_box()
                 assert shell and shell["x"] >= 0 and shell["x"] + shell["width"] <= 391, shell
