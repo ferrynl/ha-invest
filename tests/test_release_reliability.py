@@ -96,3 +96,20 @@ class ReleaseReliabilityTests(unittest.TestCase):
                     self.assertEqual(db.execute("SELECT COUNT(*) FROM purchases").fetchone()[0], 1)
                 Store(folder)
                 self.assertEqual(len(list((Path(folder) / "backups/migrations").glob("*.sqlite3"))), 1)
+
+    def test_ten_thousand_trades_compact_totals(self):
+        with tempfile.TemporaryDirectory() as folder:
+            store = Store(folder)
+            # Bulk fixture keeps CI setup fast; calculations use production code.
+            with store.connect() as db:
+                db.executemany(
+                    "INSERT INTO purchases(symbol,exchange,name,quantity,price,currency,purchased_on,created_at) VALUES(?,?,?,?,?,?,?,?)",
+                    [("ASML.AS", "AMSTERDAM", "ASML", "1", "100", "EUR", "2025-01-10", "2025-01-10")] * 10000)
+            started = time.monotonic()
+            state = store.state(compact_view=True)
+            elapsed = time.monotonic() - started
+            self.assertEqual(len(state["purchases"]), 10000)
+            self.assertEqual(sum(Decimal(p["quantity"]) for p in state["positions"]), 10000)
+            self.assertEqual(sum(Decimal(p["cost"]) for p in state["positions"]), 1000000)
+            print(f"Compact state, 10000 trades: {elapsed:.3f}s")
+            self.assertLess(elapsed, 30)
