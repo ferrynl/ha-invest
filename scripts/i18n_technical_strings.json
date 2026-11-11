@@ -1685,6 +1685,18 @@
     "◎",
     "◫",
     "⚙",
-    "⠿"
+    "⠿",
+    "health-checks",
+    "health-status",
+    "api/health-center",
+    "HTTP ",
+    "source-card",
+    "🟢 ",
+    "🟠 ",
+    "🔴 ",
+    "⚪ ",
+    "health-refresh",
+    "health-center",
+    "[data-route=health-center]"
   ]
 }
