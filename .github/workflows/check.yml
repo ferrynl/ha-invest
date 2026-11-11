@@ -38,6 +38,12 @@ jobs:
           python -m playwright install --with-deps chromium
           python tests/browser_smoke.py
       - run: docker build portfolio -t aandelen-dashboard:test
+      - name: Verify installed portfolio container and database upgrades offline
+        run: >-
+          docker run --rm --network none
+          -e PYTHONPATH=/app
+          -v "$PWD/tests/test_release_reliability.py:/tests/test_release_reliability.py:ro"
+          aandelen-dashboard:test python -m unittest discover -s /tests -p test_release_reliability.py -v
       - name: Check bundled Defeat Beta reader without network
         run: >-
           docker run --rm --network none aandelen-dashboard:test python -c
