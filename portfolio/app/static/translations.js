@@ -10269,5 +10269,25 @@ const UI_TRANSLATIONS = {
     "nl": "Afwijkende dividenden",
     "en": "Unusual dividends",
     "es": "Dividendos atípicos"
+  },
+  "Koersen opnieuw ophalen": {
+    "nl": "Koersen opnieuw ophalen",
+    "en": "Refresh prices",
+    "es": "Actualizar cotizaciones"
+  },
+  "Dashboardcache vernieuwen": {
+    "nl": "Dashboardcache vernieuwen",
+    "en": "Refresh dashboard cache",
+    "es": "Actualizar caché del panel"
+  },
+  "Koersverversing aangevraagd.": {
+    "nl": "Koersverversing aangevraagd.",
+    "en": "Price refresh requested.",
+    "es": "Actualización de cotizaciones solicitada."
+  },
+  "Dashboardcache vernieuwd.": {
+    "nl": "Dashboardcache vernieuwd.",
+    "en": "Dashboard cache refreshed.",
+    "es": "Caché del panel actualizada."
   }
 };
