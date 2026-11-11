@@ -31,6 +31,10 @@ def main():
                 page.route("**/*", lambda route: route.continue_() if
                            route.request.url.startswith(origin + "/") else route.abort())
                 page.goto(origin)
+                onboarding = page.get_by_role('dialog', name='Kies je taal / Choose your language / Elige tu idioma')
+                expect(onboarding).to_be_visible(timeout=15000)
+                onboarding.get_by_role('button', name='Opslaan / Save / Guardar').click()
+                expect(onboarding).to_be_hidden(timeout=15000)
                 expect(page.locator("#login-panel")).to_be_visible(timeout=15000)
                 page.locator("#login-form [name=username]").fill("browseradmin")
                 page.locator("#login-form [name=password]").fill("Browser-test-password-2026")
