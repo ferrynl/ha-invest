@@ -48,6 +48,24 @@ def main():
                 page.locator('a[data-route="transacties"]').click()
                 expect(page).to_have_url(origin + "/#transacties")
                 expect(page.locator('[data-page="transacties"]').first).to_be_visible()
+                # Health Center: admin access, real health response and mobile layout.
+                page.locator('a[data-route="health-center"]').click()
+                expect(page).to_have_url(origin + "/#health-center")
+                expect(page.locator('[data-page="health-center"]')).to_be_visible()
+                expect(page.locator("#health-technical .health-check-item")).to_have_count(5)
+                expect(page.locator("#health-financial .health-check-item")).to_have_count(8)
+                expect(page.locator('a[data-route="health-center"] svg.nav-icon')).to_have_count(1)
+                expect(page.locator("#health-summary")).not_to_have_text("Controles laden…")
+                page.set_viewport_size({"width": 390, "height": 844})
+                page.goto(origin + "/#health-center")
+                expect(page.locator("#health-technical .health-check-item")).to_have_count(5)
+                shell = page.locator(".health-shell").bounding_box()
+                assert shell and shell["x"] >= 0 and shell["x"] + shell["width"] <= 391, shell
+                refresh = page.locator("#health-refresh").bounding_box()
+                assert refresh and 38 <= refresh["height"] <= 52, refresh
+                action = page.locator("#health-quotes").bounding_box()
+                assert action and action["height"] <= 55, action
+                page.set_viewport_size({"width": 1280, "height": 900})
                 page.locator('a[data-route="account"]').click()
                 expect(page.locator("#logout")).to_be_visible()
                 page.locator("#logout").click()
