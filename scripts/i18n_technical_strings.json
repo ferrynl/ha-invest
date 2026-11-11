@@ -1721,6 +1721,10 @@
     "health-check-description",
     "health-check-details",
     "warning",
-    "health-indicator health-error"
+    "health-indicator health-error",
+    "database",
+    "storage",
+    "authentication",
+    "passkeys"
   ]
 }
