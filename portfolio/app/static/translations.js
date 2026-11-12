@@ -1,5 +1,15 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+  "Database is tijdelijk bezet. Controleer eerst of de transactie is opgeslagen voordat je opnieuw probeert.": {
+    "nl": "Database is tijdelijk bezet. Controleer eerst of de transactie is opgeslagen voordat je opnieuw probeert.",
+    "en": "The database is temporarily busy. Check whether the transaction was saved before trying again.",
+    "es": "La base de datos está ocupada temporalmente. Comprueba si se guardó la transacción antes de volver a intentarlo."
+  },
+  "Aanvraag mislukt. Controleer de gegevens en probeer opnieuw.": {
+    "nl": "Aanvraag mislukt. Controleer de gegevens en probeer opnieuw.",
+    "en": "Request failed. Check the information and try again.",
+    "es": "No se pudo completar la solicitud. Comprueba los datos e inténtalo de nuevo."
+  },
   "Opslaan duurde te lang. Controleer eerst het transactieoverzicht voordat je opnieuw opslaat.": {
     "nl": "Opslaan duurde te lang. Controleer eerst het transactieoverzicht voordat je opnieuw opslaat.",
     "en": "Saving took too long. Check the transaction history before trying to save again.",
