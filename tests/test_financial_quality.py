@@ -1,7 +1,10 @@
 """Regression tests for read-only financial checks (phase 7 and 8)."""
 import unittest
 from decimal import Decimal
-from portfolio.financial_quality import inspect_transactions, reconcile_quantities
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'portfolio/app'))
+from financial_quality import inspect_transactions, reconcile_quantities
 
 
 def tx(id, broker="A", symbol="NN", day="2026-11-01", side="buy", quantity="2", price="10", source_id=None):
