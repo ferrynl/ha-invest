@@ -62,14 +62,14 @@ jobs:
       - run: docker build -f feedback_service/Dockerfile -t home-invest-feedback:test .
       - run: docker run --rm --network none -v "$PWD/tests/smoke_feedback_container.py:/smoke.py:ro" home-invest-feedback:test python /smoke.py
       - name: Scan portfolio container
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: aandelen-dashboard:test
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: '1'
       - name: Scan feedback container
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: home-invest-feedback:test
           severity: HIGH,CRITICAL
