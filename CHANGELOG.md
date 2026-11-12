@@ -1,3 +1,10 @@
+## 0.70.33
+
+- Voeg regressiecontroles toe voor de veilige Home Assistant-ingressconfiguratie en standaard niet-gepubliceerde sensorpoort.
+- Documenteer veilige remote toegang via Home Assistant, VPN en reverse proxy.
+- Verminder SQLite-schrijflocks bij sessiecontroles: valide sessies worden meestal gelezen en pas vlak voor verloop verlengd.
+- Test dat sessiecontroles onder databasebelasting blijven werken en dat sessieverloop en accountintrekking geldig blijven.
+
 ## 0.70.32
 
 - Handel tijdelijke SQLite-databaselocks bij transactieverzoeken veilig af met HTTP 503 en een duidelijke melding om eerst de transactiestatus te controleren.
