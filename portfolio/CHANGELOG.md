@@ -1,3 +1,11 @@
+## 0.70.31
+
+- Voeg financiële datakwaliteitscontrole toe aan Health Center met signalering van ongeldige transacties, zonder transacties automatisch te wijzigen.
+- Controleer mogelijke dubbele transacties, brokerisolatie en nauwkeurigheid van aantallen met aanvullende regressietests.
+- Voorkom dat een opslag-time-out ten onrechte uitnodigt tot opnieuw boeken: adviseer eerst de transactiegeschiedenis te controleren.
+- Werk browsertests, vertalingen (Nederlands, Engels en Spaans) en testdekking bij.
+- Verminder onnodige dubbele testuitvoeringen in de Revolut-exporttest.
+
 ## 0.70.30
 
 - Versnel de koersverversing door aankoopdatums en omboekingsverkopen eenmalig te indexeren in plaats van voor elke positie opnieuw transacties te doorlopen.
