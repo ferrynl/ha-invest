@@ -26,6 +26,22 @@ class HealthCenterTests(unittest.TestCase):
             backup.write_bytes(b"not sqlite")
             self.assertEqual(checks()["backup"]["status"], "error")
 
+    def test_invalid_trade_warning_is_read_only(self):
+        from health_center import financial_checks
+        state = {"positions": [], "dividends": [], "purchases": [
+            {"id": 23, "account_id": 1, "symbol": "NN.AS", "exchange": "AMSTERDAM",
+             "currency": "EUR", "purchased_on": "2025-03-01", "side": "BUY",
+             "quantity": "NaN", "price": "10"},
+            {"id": 24, "account_id": 1, "symbol": "NN.AS", "exchange": "AMSTERDAM",
+             "currency": "EUR", "purchased_on": "2025-03-01", "side": "SPLIT",
+             "quantity": "NaN", "price": "10"},
+        ]}
+        before = [dict(row) for row in state["purchases"]]
+        findings = {row["key"]: row for row in financial_checks(state, set(), 0)}
+        self.assertEqual(findings["invalid_trades"]["detail"], "1")
+        self.assertIn("#23", findings["invalid_trades"]["examples"][0])
+        self.assertEqual(state["purchases"], before)
+
     def test_financial_findings_do_not_modify_ledger(self):
         with tempfile.TemporaryDirectory() as folder:
             store = Store(folder)
