@@ -56,7 +56,7 @@ def main():
                 expect(page).to_have_url(origin + "/#health-center")
                 expect(page.locator('[data-page="health-center"]')).to_be_visible()
                 expect(page.locator("#health-technical .health-check-item")).to_have_count(5)
-                expect(page.locator("#health-financial .health-check-item")).to_have_count(8)
+                expect(page.locator("#health-financial .health-check-item")).to_have_count(9)
                 expect(page.locator('a[data-route="health-center"] svg.nav-icon')).to_have_count(1)
                 expect(page.locator("#health-summary")).not_to_have_text("Controles laden…")
                 print('Health Center browser: desktop checks passed; resize mobile', flush=True)
