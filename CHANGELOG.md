@@ -1,3 +1,9 @@
+## 0.70.32
+
+- Handel tijdelijke SQLite-databaselocks bij transactieverzoeken veilig af met HTTP 503 en een duidelijke melding om eerst de transactiestatus te controleren.
+- Voorkom automatisch opnieuw uitvoeren van financiële boekingen bij een bezette database.
+- Voeg regressietest toe voor de verwerking van een vergrendelde database en vertaal de foutmeldingen naar Nederlands, Engels en Spaans.
+
 ## 0.70.31
 
 - Voeg financiële datakwaliteitscontrole toe aan Health Center met signalering van ongeldige transacties, zonder transacties automatisch te wijzigen.
