@@ -79,6 +79,13 @@ function renderDeleteAccounts(){
  if([...select.options].some(o=>o.value===previous))select.value=previous;
 }
 function clearDeleteReview(){deletePreview=null;$('delete-review').hidden=true;$('delete-confirmation').value='';$('delete-submit').disabled=true;$('delete-feedback').textContent='';}
+// On a timed-out POST, the server might still commit. Never suggest a blind retry.
+function transactionSaveFailure(error){
+ if(error?.name==='TimeoutError'||error?.name==='AbortError'){
+  return ui('Opslaan duurde te lang. Controleer eerst het transactieoverzicht voordat je opnieuw opslaat.');
+ }
+ return error?.message||ui('Opslaan mislukt. Probeer opnieuw.');
+}
 function bindTransactions(){
  $('transaction-cost-add').addEventListener('click',()=>addTransactionCost());
  $('transaction-cost-existing').addEventListener('change',event=>{const charge=transactionRows.find(r=>r.kind==='charge'&&String(r.id)===event.target.value);if(charge&&![...$('transaction-cost-rows').children].some(row=>row.dataset.id===String(charge.id)))addTransactionCost(charge);event.target.value='';});
@@ -86,7 +93,7 @@ function bindTransactions(){
  $('transaction-refresh').addEventListener('click',loadTransactions);$('transaction-prev').addEventListener('click',()=>{transactionPage--;renderTransactions();});$('transaction-next').addEventListener('click',()=>{transactionPage++;renderTransactions();});
  $('transaction-close').addEventListener('click',()=>{editingTransaction=null;closePopup('transaction-editor');});
  $('transaction-form').addEventListener('submit',async event=>{event.preventDefault();const entry=editingTransaction;if(!entry)return;const button=$('transaction-save');button.disabled=true;
-  try{const data={...Object.fromEntries(new FormData(event.target)),id:entry.id,kind:entry.kind,revision:entry.revision};if(entry.kind==='charge')Object.assign(data,transactionCostInputs()[0]);else if(!entry.transfer_id&&entry.type!=='SPLIT')data.charges=transactionCostInputs();await jsonAction('api/transactions/edit',data,{signal:AbortSignal.timeout(30000)});editingTransaction=null;closePopup('transaction-editor');stateETag=null;if(typeof clearChargeReport==='function')clearChargeReport();void load({background:true,refreshTransactions:false});await loadTransactions({background:true});$('transaction-edit-feedback').textContent='';$('transaction-feedback').textContent+=ui(' · Wijzigingen opgeslagen; portefeuille opnieuw berekend.');$('transaction-feedback').scrollIntoView({behavior:'smooth',block:'center'});}catch(error){$('transaction-edit-feedback').textContent=error.message;}finally{button.disabled=false;}
+  try{const data={...Object.fromEntries(new FormData(event.target)),id:entry.id,kind:entry.kind,revision:entry.revision};if(entry.kind==='charge')Object.assign(data,transactionCostInputs()[0]);else if(!entry.transfer_id&&entry.type!=='SPLIT')data.charges=transactionCostInputs();await jsonAction('api/transactions/edit',data,{signal:AbortSignal.timeout(30000)});editingTransaction=null;closePopup('transaction-editor');stateETag=null;if(typeof clearChargeReport==='function')clearChargeReport();void load({background:true,refreshTransactions:false});await loadTransactions({background:true});$('transaction-edit-feedback').textContent='';$('transaction-feedback').textContent+=ui(' · Wijzigingen opgeslagen; portefeuille opnieuw berekend.');$('transaction-feedback').scrollIntoView({behavior:'smooth',block:'center'});}catch(error){$('transaction-edit-feedback').textContent=transactionSaveFailure(error);}finally{button.disabled=false;}
  });
  $('delete-account').addEventListener('change',clearDeleteReview);
  $('delete-confirmation').addEventListener('input',()=>{$('delete-submit').disabled=!deletePreview||$('delete-confirmation').value!=='VERWIJDEREN';});
