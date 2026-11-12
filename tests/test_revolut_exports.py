@@ -27,8 +27,14 @@ class RevolutTests(unittest.TestCase):
    content,kind=export(None,'all','csv');self.assertIn("'=HYPERLINK",content.decode('utf-8-sig'))
    content,kind=export(None,'all','pdf');self.assertTrue(content.startswith(b'%PDF'))
 
-from test_transactions import TransactionHttpTests
-class ExportHttpTests(TransactionHttpTests):
+from test_transactions import TransactionHttpTests as _TransactionHttpTests
+
+class ExportHttpTests(unittest.TestCase):
+ # Reuse the HTTP fixture without inheriting and rerunning unrelated transaction
+ # endpoint tests. unittest discovery also ignores the underscore-prefixed import.
+ setUp = _TransactionHttpTests.setUp
+ tearDown = _TransactionHttpTests.tearDown
+ request = _TransactionHttpTests.request
  def test_exports_require_signed_in_admin_and_validate_scope(self):
   self.assertEqual(self.request('/api/export?format=csv')[0],403)
   self.auth.enable('owner','Long-test-password-2026')

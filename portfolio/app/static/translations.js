@@ -1,5 +1,10 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+  "Ongeldige transacties": {
+    "nl": "Ongeldige transacties",
+    "en": "Invalid transactions",
+    "es": "Transacciones no válidas"
+  },
   "Back-upbestand (.sqlite3 of .hib, maximaal 25 MB)": {
     "nl": "Back-upbestand (.sqlite3 of .hib, maximaal 25 MB)",
     "en": "Backup file (.sqlite3 or .hib, up to 25 MB)",

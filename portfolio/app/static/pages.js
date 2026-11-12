@@ -156,7 +156,7 @@ const healthLabels={
  stale_quotes:ui('Verouderde koersen'),duplicate_trades:ui('Mogelijke dubbele transacties'),
  invalid_positions:ui('Ongeldige posities'),unusual_returns:ui('Afwijkende rendementen'),
  missing_fx:ui('Ontbrekende wisselkoersen'),pending_mappings:ui('Openstaande beurskoppelingen'),
- invalid_dividends:ui('Afwijkende dividenden')
+ invalid_dividends:ui('Afwijkende dividenden'),invalid_trades:ui('Ongeldige transacties')
 };
 function clearHealthCenter(){
  healthRequest++;
