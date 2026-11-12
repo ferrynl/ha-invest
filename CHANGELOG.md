@@ -1,3 +1,12 @@
+## 0.70.30
+
+- Versnel de koersverversing door aankoopdatums en omboekingsverkopen eenmalig te indexeren in plaats van voor elke positie opnieuw transacties te doorlopen.
+- Sla posities zonder bruikbare aankoopdatum veilig over zonder de volledige koersverversing te onderbreken.
+- Voeg regressietests toe voor omboekingen, meerdere valuta's en grote aantallen transacties.
+- Voorkom dubbele GitHub Actions-controles bij branch-pushes en pull requests en annuleer achterhaalde checks automatisch.
+- Gebruik één hoofdchangelog met een gecontroleerde, gesynchroniseerde kopie voor de Home Assistant-add-on.
+- Behoud de afzonderlijke CodeQL-beveiligingsscan en de bestaande release-, browser-, Docker- en beveiligingscontroles.
+
 ## 0.70.29
 
 - Geef Health Center een herkenbaar hartslagicoon in het hoofdmenu.
