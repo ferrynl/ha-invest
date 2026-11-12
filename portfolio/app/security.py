@@ -41,18 +41,21 @@ class Auth:
 
     def user(self,token):
         if not self.enabled():return {'id':None,'username':'Home Assistant','role':'admin','csrf':None,'language':self.store.settings().get('language','')}
+        if not token:return None
         key=hashlib.sha256(token.encode()).hexdigest()
-        # Validate and renew atomically in SQLite without waiting for an unrelated
-        # provider operation holding the portfolio's application writer lock.
+        # Most page/API requests only need to read the session. Avoid acquiring
+        # SQLite's write lock on every request: renew it only near expiry.
+        # Keep the absolute session age and immediate revision checks intact.
         with self.lock, self.store._connect() as db:
-            db.execute('BEGIN IMMEDIATE')
             now=time.time()
             entry=db.execute('SELECT * FROM auth_sessions WHERE token_hash=?',(key,)).fetchone()
             if not entry:return None
             row=db.execute('SELECT id,username,role,active,revision,language FROM users WHERE id=?',(entry['user_id'],)).fetchone()
             if min(entry['expires_at'],entry['absolute_expiry'])<=now or not row or not row['active'] or row['revision']!=entry['revision']:
                 db.execute('DELETE FROM auth_sessions WHERE token_hash=?',(key,));return None
-            db.execute('UPDATE auth_sessions SET expires_at=? WHERE token_hash=?',(min(now+SESSION_TTL,entry['absolute_expiry']),key))
+            if entry['expires_at']-now < 300 and entry['absolute_expiry']>entry['expires_at']:
+                db.execute('UPDATE auth_sessions SET expires_at=? WHERE token_hash=?',
+                           (min(now+SESSION_TTL,entry['absolute_expiry']),key))
             return dict(id=row['id'],username=row['username'],role=row['role'],csrf=entry['csrf'],language=row['language'])
 
     def set_language(self,user,language):
