@@ -759,6 +759,15 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             except ValueError as error:
                 if not isinstance(error,DiagnosticError):record(store,'WARNING','fx' if path.startswith('/api/fx') else 'web','request_rejected',str(error) if isinstance(error,ActionError) else 'Aanvraag afgewezen.',{'endpoint':path,'error_type':type(error).__name__,'code':error.code if isinstance(error,ActionError) else None})
                 self.respond({'error':str(error)},400)
+            except sqlite3.OperationalError as error:
+                # A busy database may have accepted an earlier write. Do not
+                # automatically retry a financial POST or record into the locked DB.
+                busy = getattr(error, 'sqlite_errorcode', None) in (sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED)
+                busy = busy or 'locked' in str(error).lower() or 'busy' in str(error).lower()
+                if busy:
+                    return self.respond({'error':'Database is tijdelijk bezet. Controleer eerst of de transactie is opgeslagen voordat je opnieuw probeert.'},503)
+                record(store,'ERROR','web','request_failed','Aanvraag kon niet worden verwerkt.',{'endpoint':path})
+                return self.respond({'error':'Aanvraag mislukt. Controleer de gegevens en probeer opnieuw.'},400)
             except (KeyError,TypeError,sqlite3.Error):
                 record(store,'ERROR','web','request_failed','Aanvraag kon niet worden verwerkt.',{'endpoint':path})
                 self.respond({'error':'Aanvraag mislukt. Controleer velden, wachtwoord (12–128 tekens), rollen of het back-upbestand.'},400)
