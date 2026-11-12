@@ -74,7 +74,7 @@
 - Release 0.70.31 bevat expliciete bescherming tegen onduidelijke opslag-time-outs; 0.70.32 behandelt SQLite-locks veilig zonder financiële POST automatisch opnieuw uit te voeren.
 - PR #33 is gemerged: configuratieregressietests voor HA-ingress en opt-in sensorpoort, plus docs/SECURE_REMOTE_ACCESS.md.
 - PR #38 is gemerged, Checks/CodeQL/passkey-tests groen: sessiecontrole schrijft niet langer bij vrijwel iedere aanvraag naar SQLite.
-- Releasevoorstel 0.70.33 staat in PR #39. Alleen als checks groen zijn samenvoegen en releasepublicatie controleren.
+- Release 0.70.33 is via PR #39 met groene Checks en CodeQL naar main gemerged; appstore-repository ferrynl/ha-apps is via PR #1 naar dezelfde versie bijgewerkt. Werkelijke installatie op de HA-host is niet bevestigd.
 - **Nog niet afgevinkt:** echte Home Assistant-installatietest, back-up plus restore, login/logout en duurtest bij netwerk/domein, inclusief route-/autorisatieaudit van publieke deployments (#23, #32).
 - Voor de fase mag 'compleet' pas worden gebruikt nadat deze acceptatiecontroles zijn geverifieerd. GitHub groen bewijst niet dat HA live is.
 - Herinnering: maandag rond 08:00 (Europe/Amsterdam), 16 nov t/m 28 dec.
