@@ -6,6 +6,7 @@ from decimal import Decimal
 from collections import Counter
 from contextlib import closing
 from migrations import SCHEMA_VERSION
+from financial_quality import inspect_transactions
 
 
 def snapshot(store, auth):
@@ -59,7 +60,7 @@ def snapshot(store, auth):
     return dict(checked_at=datetime.now(timezone.utc).isoformat(), checks=checks)
 
 
-FINANCIAL_KEYS = ("missing_quotes", "stale_quotes", "duplicate_trades", "invalid_positions", "unusual_returns", "missing_fx", "pending_mappings", "invalid_dividends")
+FINANCIAL_KEYS = ("missing_quotes", "stale_quotes", "duplicate_trades", "invalid_positions", "unusual_returns", "missing_fx", "pending_mappings", "invalid_dividends", "invalid_trades")
 
 
 def financial_checks(state, fx, pending, today=None):
@@ -100,6 +101,23 @@ def financial_checks(state, fx, pending, today=None):
     for identity, count in trades.items():
         if count > 1:
             issues["duplicate_trades"].append(f"{identity[1]} · {identity[2]} · {identity[3]} · #{identity[0]} · {identity[4]} × {count}")
+    # Transactions may include corporate actions (splits/transfers). Validate
+    # only plain buys and sells; never report unsupported actions as errors.
+    # Existing duplicate_trades already covers same-field duplicates, so
+    # the new validator contributes only data-invalidity findings here.
+    ordinary_trades = (
+        dict(id=row.get("id"), broker=str(row.get("account_id") or ""),
+             symbol=row.get("symbol"), date=row.get("purchased_on"),
+             side=str(row.get("side") or "").lower(),
+             quantity=row.get("quantity"), price=row.get("price"))
+        for row in state["purchases"]
+        if str(row.get("side") or "").upper() in {"BUY", "SELL"}
+    )
+    for finding in inspect_transactions(ordinary_trades):
+        if finding["code"] in {"missing_identity", "invalid_date", "invalid_quantity", "invalid_price"}:
+            issues["invalid_trades"].append(
+                f'#{finding["transaction_id"]} · {finding["code"]}'
+            )
     for row in state["dividends"]:
         try:
             day = date.fromisoformat(row["paid_on"])
