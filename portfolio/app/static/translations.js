@@ -1,5 +1,15 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+  "Opslaan duurde te lang. Controleer eerst het transactieoverzicht voordat je opnieuw opslaat.": {
+    "nl": "Opslaan duurde te lang. Controleer eerst het transactieoverzicht voordat je opnieuw opslaat.",
+    "en": "Saving took too long. Check the transaction history before trying to save again.",
+    "es": "El guardado tardó demasiado. Revisa el historial de transacciones antes de volver a guardar."
+  },
+  "Opslaan mislukt. Probeer opnieuw.": {
+    "nl": "Opslaan mislukt. Probeer opnieuw.",
+    "en": "Saving failed. Please try again.",
+    "es": "No se pudo guardar. Inténtalo de nuevo."
+  },
   "Back-upbestand (.sqlite3 of .hib, maximaal 25 MB)": {
     "nl": "Back-upbestand (.sqlite3 of .hib, maximaal 25 MB)",
     "en": "Backup file (.sqlite3 or .hib, up to 25 MB)",
