@@ -68,10 +68,15 @@
 3. Merge naar main, bevestigen dat release en ha-apps updates daadwerkelijk beschikbaar zijn.
 4. HA-installatie apart controleren; niet automatisch 'live' aannemen.
 
-## Beginstand 12 november
-- Fase 5/6 en v0.70.30 merge bekend; HA installatie niet bevestigd.
-- PR #21 fase 7/8 moet nog gecontroleerd worden op integratie, review en checks.
-- Eerste veilige PR: automatisering van securityconfiguratiecontrole.
+## Voortgang fase 9 (12 november)
+
+- Fase 7/8 geïntegreerd in Health Center met regressietests (PR #21).
+- Release 0.70.31 bevat expliciete bescherming tegen onduidelijke opslag-time-outs; 0.70.32 behandelt SQLite-locks veilig zonder financiële POST automatisch opnieuw uit te voeren.
+- PR #33 is gemerged: configuratieregressietests voor HA-ingress en opt-in sensorpoort, plus docs/SECURE_REMOTE_ACCESS.md.
+- PR #38 is gemerged, Checks/CodeQL/passkey-tests groen: sessiecontrole schrijft niet langer bij vrijwel iedere aanvraag naar SQLite.
+- Releasevoorstel 0.70.33 staat in PR #39. Alleen als checks groen zijn samenvoegen en releasepublicatie controleren.
+- **Nog niet afgevinkt:** echte Home Assistant-installatietest, back-up plus restore, login/logout en duurtest bij netwerk/domein, inclusief route-/autorisatieaudit van publieke deployments (#23, #32).
+- Voor de fase mag 'compleet' pas worden gebruikt nadat deze acceptatiecontroles zijn geverifieerd. GitHub groen bewijst niet dat HA live is.
 - Herinnering: maandag rond 08:00 (Europe/Amsterdam), 16 nov t/m 28 dec.
 
 ## Bij iedere nieuwe projectsessie
