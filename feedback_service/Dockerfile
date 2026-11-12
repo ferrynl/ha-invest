@@ -1,4 +1,4 @@
-FROM python:3.13-slim-trixie
+FROM python:3.15-slim-trixie
 # Apply Debian security updates before installing application dependencies.
 RUN apt-get update && apt-get upgrade -y && \
     dpkg --compare-versions "$(dpkg-query -W -f='${Version}' zlib1g)" ge '1:1.3.dfsg+really1.3.1-1+deb13u1' && \
