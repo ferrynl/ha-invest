@@ -1,3 +1,7 @@
+## 0.70.36
+
+- Vermeld op Over ons dat Home Invest is ontwikkeld voor alle inwoners van de EU en voeg het Made in Europe-logo toe.
+
 ## 0.70.35
 
 - Maak het Home Invest-logo beter leesbaar in lichte en donkere thema’s.
