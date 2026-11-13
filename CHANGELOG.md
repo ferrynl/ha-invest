@@ -1,3 +1,7 @@
+## 0.70.37
+
+- Vertel op Over ons het verhaal achter Home Invest in het Nederlands, Engels en Spaans.
+
 ## 0.70.36
 
 - Vermeld op Over ons dat Home Invest is ontwikkeld voor alle inwoners van de EU en voeg het Made in Europe-logo toe.
