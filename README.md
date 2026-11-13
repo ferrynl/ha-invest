@@ -1,5 +1,9 @@
 # Home Invest voor Home Assistant
 
+<img src="portfolio/app/static/branding/home-invest-logo.png" alt="Home Invest" width="440">
+
+[Logo en iconen downloaden](portfolio/app/static/branding/)
+
 Experimentele versie (0.41.2). Draait volledig als Home Assistant-app
 (voorheen add-on), met een dashboard via de Home Assistant-zijbalk en eigen
 SQLite-database. Geen externe hosting, CDN of browserbibliotheken nodig.
