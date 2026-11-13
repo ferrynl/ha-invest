@@ -1,3 +1,7 @@
+## 0.70.34
+
+- Nieuw 3D-logo voor Home Invest op het welkomstscherm, in de app en in de appwinkel van Home Assistant.
+
 ## 0.70.33
 
 - Voeg regressiecontroles toe voor de veilige Home Assistant-ingressconfiguratie en standaard niet-gepubliceerde sensorpoort.
