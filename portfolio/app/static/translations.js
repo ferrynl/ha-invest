@@ -1,5 +1,15 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+  "Home Invest is speciaal ontwikkeld voor alle inwoners van de Europese Unie. Volg je beleggingen, transacties en dividenden op één plek in Home Assistant.": {
+    "nl": "Home Invest is speciaal ontwikkeld voor alle inwoners van de Europese Unie. Volg je beleggingen, transacties en dividenden op één plek in Home Assistant.",
+    "en": "Home Invest is designed especially for everyone living in the European Union. Track your investments, transactions and dividends in one place in Home Assistant.",
+    "es": "Home Invest está diseñado especialmente para todas las personas que viven en la Unión Europea. Sigue tus inversiones, operaciones y dividendos en un solo lugar en Home Assistant."
+  },
+  "Made in Europe": {
+    "nl": "Made in Europe",
+    "en": "Made in Europe",
+    "es": "Made in Europe"
+  },
   "Database is tijdelijk bezet. Controleer eerst of de transactie is opgeslagen voordat je opnieuw probeert.": {
     "nl": "Database is tijdelijk bezet. Controleer eerst of de transactie is opgeslagen voordat je opnieuw probeert.",
     "en": "The database is temporarily busy. Check whether the transaction was saved before trying again.",
