@@ -5,3 +5,5 @@
 - `home-invest-logo.jpg` — horizontaal woordmerk op een lichte achtergrond.
 - `favicon.ico` — 16, 32 en 48 pixels.
 - `app-icon.png` en `app-logo.png` — compacte PNG-versies voor de app en de Home Assistant-appwinkel.
+
+- `home-invest-wordmark.png` en `.webp` — contrastrijk woordmerk voor lichte en donkere thema’s.

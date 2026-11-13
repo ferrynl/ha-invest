@@ -1,3 +1,8 @@
+## 0.70.35
+
+- Maak het Home Invest-logo beter leesbaar in lichte en donkere thema’s.
+- Breid de appbeschrijving uit en voeg uitleg toe in het Nederlands, Engels en Spaans.
+
 ## 0.70.34
 
 - Nieuw 3D-logo voor Home Invest op het welkomstscherm, in de app en in de appwinkel van Home Assistant.
