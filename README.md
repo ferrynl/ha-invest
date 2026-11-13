@@ -1,6 +1,6 @@
 # Home Invest voor Home Assistant
 
-<img src="portfolio/app/static/branding/home-invest-logo.png" alt="Home Invest" width="440">
+<img src="portfolio/app/static/branding/home-invest-wordmark.png" alt="Home Invest" width="440">
 
 [Logo en iconen downloaden](portfolio/app/static/branding/)
 

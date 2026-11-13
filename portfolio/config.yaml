@@ -1,8 +1,11 @@
 name: Home Invest
 url: https://github.com/ferrynl/ha-invest
-version: "0.70.34"
+version: "0.70.35"
 slug: aandelen_dashboard
-description: Persoonlijke aandelenportefeuille met SQLite en koershistorie
+description: >-
+  Volg je beleggingen, rendement en dividend op één plek. Importeer transacties
+  van meerdere brokers en bekijk je posities, koershistorie en dividendkalender.
+  Je portefeuille wordt lokaal opgeslagen in Home Assistant.
 arch: [amd64, aarch64]
 startup: application
 boot: auto
