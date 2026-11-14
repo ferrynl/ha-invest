@@ -4,7 +4,7 @@ import re
 from provider import search_stocks,fetch_quote,listing,ProviderBusy
 from persistent_cache import cached_json
 from diagnostics import record
-from .listings import CATALOGUE, HISTORICAL_LISTINGS, BROKER_LISTINGS
+from .listings import CATALOGUE, HISTORICAL_LISTINGS, BROKER_LISTINGS, known_listing
 from .registry import remember,lookup,discover
 
 def ticker_base(value):
@@ -18,6 +18,11 @@ def resolve(store,rows,provider,preferred=None):
     isin=next(iter(isins),'');base=ticker_base(ticker)
     # Historical eligibility changes with the latest source transaction date.
     identity='|'.join((provider,isin or ticker,currency,preferred or '',max(r.get('day','9999') for r in rows)))
+    known=[known_listing(provider,row) for row in rows]
+    if known[0] and all(item==known[0] for item in known):
+        return {'mapping':known[0],'via':'Gecontroleerde instrumentidentiteit'}
+    if provider=='revolut' and ticker.upper()=='WOLF.OLD':
+        return {'error':'Historische Wolfspeed-regel valt buiten de ondersteunde instrumentidentiteit of periode.'}
     def find():
         # Prefer mappings proven by prior committed imports with the same ISIN/ticker.
         with store.connect() as db:
