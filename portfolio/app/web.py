@@ -18,7 +18,7 @@ from backup_crypto import LIMIT as BACKUP_LIMIT, OVERHEAD, decrypt, encrypt
 from security import verify_password,SESSION_TTL
 import passkeys
 from version import APP_VERSION
-from i18n import localize,LANGUAGES
+from i18n import localize,LANGUAGES,EXTRA_LANGUAGES,browser_catalog
 from updates import check_updates
 from feedback_client import overview as feedback_overview,connect as feedback_connect,enqueue as feedback_enqueue
 from imports import ADAPTERS
@@ -135,6 +135,17 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             path=urlsplit(self.path).path
             if path in assets:
                 name,kind=assets[path];content=(static/name).read_bytes()
+                if path=='/translations.js':
+                    language=(auth.user(self.token()) or {}).get('language','')
+                    if not language:
+                        try:
+                            preference=SimpleCookie(self.headers.get('Cookie','')).get('homeinvest_language')
+                            language=preference.value if preference else ''
+                        except ValueError:
+                            language=''
+                    if language in EXTRA_LANGUAGES:
+                        content=browser_catalog(language)
+                    return self.respond(content,kind=kind)
                 if path=='/style.css':content+=b'\n'+(static/'reports.css').read_bytes()
                 if path=='/':
                     language=(auth.user(self.token()) or {}).get('language','')
