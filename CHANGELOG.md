@@ -1,3 +1,7 @@
+## 0.70.40
+
+- Uitgebreide importdiagnoses voor openstaande regels en ondersteuning voor Trade Republic-stortingen met nulwaarden bij aantal of prijs.
+
 ## 0.70.39
 
 - Verwerk de openstaande importregels opnieuw met één knop onder Te beoordelen. Geldige regels worden verwerkt met de beschikbare koppelingen.
