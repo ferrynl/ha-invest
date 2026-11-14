@@ -97,11 +97,11 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             path=path.rstrip('/')+'/'
             secure=self.headers.get('X-Forwarded-Proto','').split(',')[0].strip()=='https' or self.headers.get('Origin','').startswith('https://')
             return f'homeinvest_session={token}; Path={path}; HttpOnly; SameSite=Strict; Max-Age={SESSION_TTL if token else 0}'+('; Secure' if secure else '')
-        def respond(self,content,code=200,kind='application/json',filename=None,cookie=None,etag=False,public=False):
+        def respond(self,content,code=200,kind='application/json',filename=None,cookie=None,etag=False,public=False,vary_cookie=False):
             if kind=='application/json':
                 language=self.headers.get('X-HomeInvest-Language','nl')
                 content=json.dumps(localize(content,language),separators=(',',':')).encode()
-            compressible=public or (self.command=='GET' and kind=='application/json' and urlsplit(self.path).path not in ('/api/session','/api/users'))
+            compressible=public or vary_cookie or (self.command=='GET' and kind=='application/json' and urlsplit(self.path).path not in ('/api/session','/api/users'))
             compressed=compressible and 'gzip' in [part.strip().lower() for part in self.headers.get('Accept-Encoding','').split(',')]
             if compressed:content=gzip.compress(content,mtime=0)
             digest='"'+hashlib.sha256(content).hexdigest()+'"' if etag else None
@@ -109,7 +109,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             self.send_response(code)
             self.send_header('Content-Type',kind);self.send_header('Content-Length',str(len(content)))
             self.send_header('Cache-Control','private, max-age=86400, immutable' if public else 'no-store')
-            if compressible:self.send_header('Vary','Accept-Encoding')
+            if compressible:self.send_header('Vary','Accept-Encoding, Cookie' if vary_cookie else 'Accept-Encoding')
             if compressed:self.send_header('Content-Encoding','gzip')
             self.send_header('X-Content-Type-Options','nosniff')
             self.send_header('Referrer-Policy','same-origin')
@@ -145,7 +145,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                             language=''
                     if language in EXTRA_LANGUAGES:
                         content=browser_catalog(language)
-                    return self.respond(content,kind=kind)
+                    return self.respond(content,kind=kind,etag=True,vary_cookie=True)
                 if path=='/style.css':content+=b'\n'+(static/'reports.css').read_bytes()
                 if path=='/':
                     language=(auth.user(self.token()) or {}).get('language','')
