@@ -1,0 +1,53 @@
+{
+  "BG": {
+    "Versleep module {name}": "Модул Versleep {name}"
+  },
+  "CS": {
+    "Versleep module {name}": "Modul Versleep {name}"
+  },
+  "DA": {
+    "Versleep module {name}": "Versleep-modul {name}"
+  },
+  "ET": {
+    "Versleep module {name}": "Versleepi moodul {name}"
+  },
+  "FR": {
+    "Versleep module {name}": "Module Versleep {name}"
+  },
+  "EL": {
+    "Versleep module {name}": "Μονάδα Versleep {name}"
+  },
+  "GA": {
+    "Handelsdag {date}": "Lá trádála {date}",
+    "Mogelijke beurs: {exchange}": "Cód stoic féideartha: {exchange}",
+    "{trades} boekingen, {dividends} dividendontvangsten, {capital} kapitaalterugbetalingen, {imports} imports en {issues} beoordelingen.": "{trades} áirithintí, {dividends} ioncam díbhinne, {capital} aisíocaíochtaí caipitil, {imports} allmhairí agus {issues} athbhreithnithe.",
+    "{trades} boekingen, {dividends} dividendontvangsten, {capital} kapitaalterugbetalingen, {charges} kosten- en belastingboekingen, {imports} imports en {issues} beoordelingen.": "{trades} iontrálacha, {dividends} admhálacha díbhinne, {capital} aisíocaíochtaí caipitil, {charges} iontrálacha caiteachais agus cánach, {imports} allmhairí agus {issues} measúnuithe."
+  },
+  "IT": {
+    "Versleep module {name}": "Modulo Versleep {name}"
+  },
+  "LV": {
+    "Versleep module {name}": "Versleep modulis {name}"
+  },
+  "LT": {
+    "Handelsdag {date}": "Prekybos diena {date}"
+  },
+  "MT": {
+    "Handelsdag {date}": "Jum kummerċjali {date}"
+  },
+  "PL": {
+    "Versleep module {name}": "Moduł Versleep {name}"
+  },
+  "PT-PT": {
+    "Versleep module {name}": "Módulo Versleep {name}"
+  },
+  "RO": {
+    "Versleep module {name}": "Modulul Versleep {name}"
+  },
+  "SL": {
+    "Versleep module {name}": "Modul Versleep {name}"
+  },
+  "SV": {
+    "Versleep module {name}": "Versleep-modul {name}"
+  }
+}
