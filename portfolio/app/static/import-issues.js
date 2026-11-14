@@ -5,6 +5,14 @@ function clearImportIssues(){reviewIssues=[];$('issue-list').replaceChildren();$
 async function loadImportIssues(){
  try{const response=await apiFetch('api/imports/issues');const result=await response.json();if(!response.ok)throw Error(result.error);reviewIssues=result.issues;renderImportIssues();const selectedId=Number($('issue-form').elements.namedItem('id').value);if(selectedId&&!reviewIssues.some(i=>i.id===selectedId&&i.state==='pending')){closePopup('issue-editor');$('issue-form').reset();}
  $('capital-list').replaceChildren();for(const item of result.capital_returns){const row=document.createElement('tr');for(const value of [item.account_name,item.ticker,item.paid_on,money(item.amount,item.currency)])cell(row,value);$('capital-list').append(row);}
+ const rights=result.corporate_action_rights||[];
+ $('corporate-rights').hidden=!rights.length;
+ $('corporate-rights-list').replaceChildren();
+ for(const item of rights){
+  const row=document.createElement('tr');
+  for(const value of [item.account_name,item.ticker,item.received_on,item.quantity,item.currency])cell(row,value);
+  $('corporate-rights-list').append(row);
+ }
  $('issue-feedback').textContent=reviewIssues.filter(i=>i.state==='pending').length+ui(' regels wachten op jouw keuze. De overige geldige regels zijn onafhankelijk verwerkt.');
  }catch(error){$('issue-feedback').textContent=error.message;}
 }
