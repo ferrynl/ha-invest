@@ -94,7 +94,7 @@ def read_logs(store,level='',source='',before=0,query=''):
         if value:clauses.append(column+'=?');values.append(value)
     if before:clauses.append('id<?');values.append(before)
     if query:
-        clauses.append('(instr(reference,?)>0 OR instr(lower(message),lower(?))>0 OR instr(lower(event),lower(?))>0)');values.extend([query]*3)
+        clauses.append('(instr(reference,?)>0 OR instr(lower(message),lower(?))>0 OR instr(lower(event),lower(?))>0 OR instr(lower(details),lower(?))>0)');values.extend([query]*4)
     with store.connect() as db:
         cutoff=(datetime.now(timezone.utc)-timedelta(days=7)).isoformat()
         db.execute('DELETE FROM app_logs WHERE created_at<?',(cutoff,))
