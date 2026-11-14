@@ -1,3 +1,8 @@
+## 0.70.41
+
+- Verbeterde beveiliging van logredactie, logodomeinen en sessiecookies.
+- Ondersteuning voor de OTCQX-koersnotering van CIBEY.
+
 ## 0.70.40
 
 - Uitgebreide importdiagnoses voor openstaande regels en ondersteuning voor Trade Republic-stortingen met nulwaarden bij aantal of prijs.
