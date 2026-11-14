@@ -21,6 +21,18 @@ function renderImportIssues(){
  }
 }
 function bindImportIssues(){
+ $('issue-process').addEventListener('click',async event=>{
+  const button=event.currentTarget;
+  button.disabled=true;
+  try{
+   const result=await jsonAction('api/imports/issues/retry',{});
+   stateETag=null;
+   await load();
+   await loadImportIssues();
+   $('issue-feedback').textContent=result.imported+ui(' regels verwerkt.')+' '+$('issue-feedback').textContent;
+  }catch(error){$('issue-feedback').textContent=error.message;}
+  finally{button.disabled=false;}
+ });
  $('issue-filter').addEventListener('change',renderImportIssues);$('issue-refresh').addEventListener('click',loadImportIssues);$('issue-close').addEventListener('click',()=>{closePopup('issue-editor');});
  $('issue-form').addEventListener('submit',async event=>{event.preventDefault();const button=event.target.querySelector('[type="submit"]');button.disabled=true;
  try{const result=await jsonAction('api/imports/issues/resolve',Object.fromEntries(new FormData(event.target)));stateETag=null;await load();await loadImportIssues();const message=result.imported+ui(' regels verwerkt; ')+result.pending+ui(' regels vragen nog aandacht in deze import. Bij een resterende fout blijft de regel bewaard.');$('issue-choice-feedback').textContent=message;$('issue-feedback').textContent+=' '+message;}
