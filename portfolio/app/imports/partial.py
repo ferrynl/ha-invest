@@ -7,9 +7,10 @@ from storage import now
 from diagnostics import record,ActionError
 from forex import prepare_rates,convert
 from provider import EXCHANGES,quote_symbol
-from .listings import CATALOGUE,HISTORICAL_LISTINGS
+from .listings import CATALOGUE,HISTORICAL_LISTINGS,known_listing
 from .registry import discover,lookup,remember
 from .service import book_row,prepare_rows
+from .corporate_actions import cvr_settlements,book_cvr
 from .trading212 import parse_csv,unclassified_identity
 
 def stable(row):
@@ -30,6 +31,7 @@ def commit_partial(store,batch_id):
         conflicts={}
         for row in rows:
             conflicts.setdefault(row['external_id'],set()).add(row['digest'])
+        settlements=cvr_settlements(rows,batch['provider'])
         failure_details={}
         prepared=[];failures={};duplicates=set();processed=set();standalone=0;imported=0;ignored=0;skipped=[]
         for row in sorted(rows,key=lambda r:(r.get('trade_time',''),0 if r.get('kind')=='BUY' else 1 if r.get('kind')=='SELL' else 2)):
@@ -43,16 +45,19 @@ def commit_partial(store,batch_id):
                 with store.connect() as db:existing=db.execute('SELECT digest FROM import_records WHERE account_id=? AND provider=? AND external_id=?',(batch['account_id'],batch['provider'],row['external_id'])).fetchone()
                 if existing:
                     if existing[0]!=row['digest']:raise ValueError('Deze bron-ID is eerder met andere gegevens verwerkt. Eerdere boeking blijft behouden.')
-                    if row.get('error'):raise ValueError(row['error'])
+                    if row.get('error') and row['line'] not in settlements:raise ValueError(row['error'])
                     with store.connect() as db:
                         ignored_before=db.execute("SELECT 1 FROM import_issues i JOIN import_batches b ON b.id=i.batch_id WHERE b.account_id=? AND b.provider=? AND i.state='ignored' AND i.resolution='IGNORE' AND json_valid(i.payload) AND json_extract(i.payload,'$.external_id')=? LIMIT 1",(batch['account_id'],batch['provider'],row['external_id'])).fetchone()
                     if row.get('charges') and not ignored_before:
                         prepared.append((row,None,None))
                     else:duplicates.add(row['line'])
                     continue
+                if row['line'] in settlements:
+                    prepared.append((row,None,None))
+                    continue
                 if row.get('error'):raise ValueError(row['error'])
                 if row.get('kind') in ('CAPITAL_RETURN','SPLIT_INFO','CHARGE'):prepared.append((row,None,None));continue
-                mapping=lookup(store,batch['account_id'],batch['provider'],row) or row.get('mapping')
+                mapping=lookup(store,batch['account_id'],batch['provider'],row) or row.get('mapping') or known_listing(batch['provider'],row)
                 if not mapping:raise ValueError('Beurskoppeling ontbreekt. Kies de juiste notering bij Aandelenkoppelingen en probeer deze regel opnieuw.')
                 row['mapping']=mapping;trace=None;booked=row
                 if row['kind']!='SPLIT' and row['currency']!=mapping['currency']:
@@ -66,7 +71,7 @@ def commit_partial(store,batch_id):
         with store.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             for line in skipped:db.execute("UPDATE import_issues SET state='ignored',resolution='supported_cash_movement',updated_at=? WHERE batch_id=? AND line=? AND state='pending'",(now(),batch_id,line))
-            for row,mapping,trace in prepared:
+            for row,mapping,trace in sorted(prepared,key=lambda entry:entry[0]['line'] in settlements):
                 db.execute('SAVEPOINT import_row')
                 try:
                     existing=db.execute('SELECT digest FROM import_records WHERE account_id=? AND provider=? AND external_id=?',(batch['account_id'],batch['provider'],row['external_id'])).fetchone()
@@ -80,12 +85,16 @@ def commit_partial(store,batch_id):
                         if recovered:imported+=1
                         else:duplicates.add(row['line'])
                     else:
-                        count=book_row(db,batch_id,batch['account_id'],batch['provider'],row,mapping,trace)
+                        if row['line'] in settlements:
+                            book_cvr(db,batch,row,settlements[row['line']])
+                            count=0
+                        else:
+                            count=book_row(db,batch_id,batch['account_id'],batch['provider'],row,mapping,trace)
                         standalone+=count;imported+=1
                     db.execute('RELEASE import_row')
                     processed.add(row['line'])
                     state='ignored' if row.get('decision')=='IGNORE' else 'resolved'
-                    db.execute('UPDATE import_issues SET state=?,resolution=?,updated_at=? WHERE batch_id=? AND line=?',(state,row.get('decision','retry'),now(),batch_id,row['line']))
+                    db.execute('UPDATE import_issues SET state=?,resolution=?,updated_at=? WHERE batch_id=? AND line=?',(state,'corporate_action' if row['line'] in settlements else row.get('decision','retry'),now(),batch_id,row['line']))
                 except (ValueError,KeyError,TypeError,sqlite3.IntegrityError) as error:
                     db.execute('ROLLBACK TO import_row');db.execute('RELEASE import_row')
                     if isinstance(error,ActionError):failure_details[row['line']]={'code':error.code,**error.details}
@@ -119,17 +128,25 @@ def issue_exchanges(row):
                    and quote_symbol('',market)})
 
 
+def retry_pending(store):
+    with store.lock:
+        with store.connect() as db:
+            batches=db.execute("SELECT DISTINCT batch_id FROM import_issues WHERE state='pending' ORDER BY batch_id").fetchall()
+        return {'imported':sum(commit_partial(store,batch['batch_id'])['imported'] for batch in batches)}
+
+
 def list_issues(store):
     with store.connect() as db:
         entries=db.execute('SELECT i.*,b.account_id,b.filename,a.name AS account_name FROM import_issues i JOIN import_batches b ON b.id=i.batch_id JOIN broker_accounts a ON a.id=b.account_id ORDER BY (i.state=?) DESC,i.id DESC LIMIT 2000',('pending',)).fetchall()
         returns=[dict(r) for r in db.execute('SELECT c.*,a.name AS account_name FROM capital_returns c JOIN broker_accounts a ON a.id=c.account_id ORDER BY c.id DESC LIMIT 500')]
+        rights=[dict(r) for r in db.execute('SELECT c.*,a.name AS account_name FROM corporate_action_rights c JOIN broker_accounts a ON a.id=c.account_id ORDER BY c.id DESC LIMIT 500')]
     result=[]
     for item in entries:
         item=dict(item);row=json.loads(item.pop('payload'));raw=row.get('raw',{});item.update(ticker=row.get('ticker',''),action=raw.get('Action') or raw.get('Type') or raw.get('type',''),day=row.get('day') or raw.get('Date') or raw.get('date') or raw.get('Time (UTC)',raw.get('Time','')),currency=row.get('currency') or raw.get('currency') or raw.get('Currency (Total)',''),amount=row.get('amount') or raw.get('amount') or raw.get('Net Amt.') or raw.get('Total Amount') or raw.get('Total',''))
         if item['reason'].startswith('Beurskoppeling ontbreekt.'):
             item['exchange_candidates']=issue_exchanges(row)
         result.append(item)
-    return dict(issues=result,capital_returns=returns)
+    return dict(issues=result,capital_returns=returns,corporate_action_rights=rights)
 
 def resolve_issue(store,data):
     issue_id=int(data['id']);decision=str(data.get('decision',''))

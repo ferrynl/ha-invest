@@ -23,6 +23,7 @@ TABLES={
  'dividends':(3,('id','symbol','exchange','currency','amount','paid_on','note','created_at','account_id')),
  'import_batches':(6,('id','account_id','provider','filename','digest','payload','status','created_at')),
  'import_issues':(10,('id','batch_id','line','state','reason','payload','resolution','updated_at')),
+ 'corporate_action_rights':(27,('id','batch_id','account_id','provider','external_id','source_external_id','ticker','quantity','currency','received_on','created_at')),
  'capital_returns':(10,('id','batch_id','account_id','provider','external_id','ticker','isin','amount','currency','paid_on','created_at')),
  'charges':(20,('id','batch_id','account_id','provider','external_id','component','category','ticker','amount','currency','paid_on','included_in_net','description','created_at')),
  'transaction_charge_links':(21,('charge_id','kind','record_id')),

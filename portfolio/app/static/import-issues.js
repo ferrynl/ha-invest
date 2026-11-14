@@ -5,6 +5,14 @@ function clearImportIssues(){reviewIssues=[];$('issue-list').replaceChildren();$
 async function loadImportIssues(){
  try{const response=await apiFetch('api/imports/issues');const result=await response.json();if(!response.ok)throw Error(result.error);reviewIssues=result.issues;renderImportIssues();const selectedId=Number($('issue-form').elements.namedItem('id').value);if(selectedId&&!reviewIssues.some(i=>i.id===selectedId&&i.state==='pending')){closePopup('issue-editor');$('issue-form').reset();}
  $('capital-list').replaceChildren();for(const item of result.capital_returns){const row=document.createElement('tr');for(const value of [item.account_name,item.ticker,item.paid_on,money(item.amount,item.currency)])cell(row,value);$('capital-list').append(row);}
+ const rights=result.corporate_action_rights||[];
+ $('corporate-rights').hidden=!rights.length;
+ $('corporate-rights-list').replaceChildren();
+ for(const item of rights){
+  const row=document.createElement('tr');
+  for(const value of [item.account_name,item.ticker,item.received_on,item.quantity,item.currency])cell(row,value);
+  $('corporate-rights-list').append(row);
+ }
  $('issue-feedback').textContent=reviewIssues.filter(i=>i.state==='pending').length+ui(' regels wachten op jouw keuze. De overige geldige regels zijn onafhankelijk verwerkt.');
  }catch(error){$('issue-feedback').textContent=error.message;}
 }
@@ -21,6 +29,18 @@ function renderImportIssues(){
  }
 }
 function bindImportIssues(){
+ $('issue-process').addEventListener('click',async event=>{
+  const button=event.currentTarget;
+  button.disabled=true;
+  try{
+   const result=await jsonAction('api/imports/issues/retry',{});
+   stateETag=null;
+   await load();
+   await loadImportIssues();
+   $('issue-feedback').textContent=result.imported+ui(' regels verwerkt; ')+' '+$('issue-feedback').textContent;
+  }catch(error){$('issue-feedback').textContent=error.message;}
+  finally{button.disabled=false;}
+ });
  $('issue-filter').addEventListener('change',renderImportIssues);$('issue-refresh').addEventListener('click',loadImportIssues);$('issue-close').addEventListener('click',()=>{closePopup('issue-editor');});
  $('issue-form').addEventListener('submit',async event=>{event.preventDefault();const button=event.target.querySelector('[type="submit"]');button.disabled=true;
  try{const result=await jsonAction('api/imports/issues/resolve',Object.fromEntries(new FormData(event.target)));stateETag=null;await load();await loadImportIssues();const message=result.imported+ui(' regels verwerkt; ')+result.pending+ui(' regels vragen nog aandacht in deze import. Bij een resterende fout blijft de regel bewaard.');$('issue-choice-feedback').textContent=message;$('issue-feedback').textContent+=' '+message;}

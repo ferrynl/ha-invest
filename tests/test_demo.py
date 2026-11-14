@@ -80,7 +80,7 @@ class ProfileResponseTests(unittest.TestCase):
     connection.request('GET',path,headers=headers);response=connection.getresponse();return response.status,dict(response.getheaders()),response.read()
    finally:connection.close()
   status,headers,body=fetch('/translations.js',{'Accept-Encoding':'gzip'})
-  self.assertEqual(status,200);self.assertEqual(headers.get('Content-Encoding'),'gzip');self.assertIn(b'const UI_TRANSLATIONS',gzip.decompress(body));self.assertEqual(headers.get('Vary'),'Accept-Encoding')
+  self.assertEqual(status,200);self.assertEqual(headers.get('Content-Encoding'),'gzip');self.assertIn(b'const UI_TRANSLATIONS',gzip.decompress(body));self.assertEqual(headers.get('Vary'),'Accept-Encoding, Cookie');self.assertEqual(headers.get('Cache-Control'),'no-store')
   self.assertEqual(fetch('/translations.js',{'Accept-Encoding':'gzip','If-None-Match':headers['ETag']})[0],304)
   status,headers,body=fetch('/api/state?compact=1',{'Accept-Encoding':'gzip'})
   self.assertEqual(status,200);self.assertEqual(headers.get('Cache-Control'),'no-store');self.assertTrue(json.loads(gzip.decompress(body))['compact'])

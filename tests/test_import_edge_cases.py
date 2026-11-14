@@ -44,3 +44,33 @@ class ImportEdgeCases(unittest.TestCase):
   batch=self.preview('Market buy,2026-01-01 10:00:00,CA29668H7085,EPIX,Name,new,2,100,USD,200,USD\n')
   with patch('imports.matching.listing',side_effect=ValueError('delisted')),patch('imports.matching.search_stocks',return_value=[]):
    self.assertIn('error',resolve_instrument(self.store,batch['batch_id'],'EPIX|USD'))
+
+ def test_known_epix_settlement_retries_existing_queue_without_duplicate_rights(self):
+  from imports.partial import list_issues,retry_pending
+  batch=self.preview(
+   'Market buy,2025-10-08 10:00:00,CA29668H7085,EPIX,ESSA,b,2,1,USD,2,USD\n'
+   'Market sell,2025-10-16 10:00:00,CA29668H7085,EPIX,ESSA,s,2,1.12,USD,2.24,USD\n'
+   'Custom stock distribution,2025-10-16 10:00:00,,EPIX.CVR,Right,c,2,0,USD,0,USD\n')
+  with patch('imports.partial.known_listing',return_value=None):
+   self.assertEqual(commit_partial(self.store,batch['batch_id'])['pending'],3)
+  self.assertEqual(retry_pending(self.store)['imported'],3)
+  self.assertEqual(retry_pending(self.store)['imported'],0)
+  review=list_issues(self.store)
+  self.assertEqual([r['ticker'] for r in review['corporate_action_rights']],['EPIX.CVR'])
+  self.assertEqual(len(self.store.state()['purchases']),2)
+  self.assertEqual(self.store.state()['dividends'],[])
+
+ def test_revolut_mappings_use_isin_and_keep_old_wolfspeed_separate(self):
+  from imports.listings import known_listing
+  row=dict(kind='DIVIDEND',ticker='AIR1',currency='EUR',day='2026-04-23',raw={'ISIN':'FR0000120073'})
+  self.assertEqual(known_listing('revolut',row)['symbol'],'AI.PA')
+  row['raw']={'ISIN':'NL0000235190'}
+  self.assertEqual(known_listing('revolut',row)['symbol'],'AIR.PA')
+  row.update(ticker='NEM1',raw={'ISIN':'DE0006452907'})
+  self.assertEqual(known_listing('revolut',row)['symbol'],'NEM.DE')
+  row['raw']={}
+  self.assertIsNone(known_listing('revolut',row))
+  row.update(kind='BUY',ticker='WOLF.OLD',currency='USD',day='2025-08-22')
+  self.assertEqual(known_listing('revolut',row)['symbol'],'WOLF.OLD')
+  row['day']='2025-09-29'
+  self.assertIsNone(known_listing('revolut',row))

@@ -4,6 +4,30 @@ Vanguard: fund-docs.vanguard.com factsheets 9679, 9503 and 9678.
 Invesco/LSE: IE00BYVTMV98, EQGB on London Stock Exchange.
 These are share-class identities, never fuzzy fund-name substitutions.
 """
+# Issuer-backed identities for Revolut exports with broker-specific tickers.
+REVOLUT_ISIN_LISTINGS={
+    'NL0000235190':dict(symbol='AIR.PA',exchange='PARIS',currency='EUR',name='Airbus SE'),
+    'FR0000120073':dict(symbol='AI.PA',exchange='PARIS',currency='EUR',name='Air Liquide SA'),
+    'DE0006452907':dict(symbol='NEM.DE',exchange='XETRA',currency='EUR',name='Nemetschek SE'),
+}
+
+def known_listing(provider,row):
+    if row.get('kind') not in ('BUY','SELL','DIVIDEND','SPLIT'):
+        return None
+    ticker=row['ticker'].upper()
+    isin=(row['raw'].get('ISIN') or '').strip().upper()
+    currency=row.get('currency')
+    day=row.get('day') or '9999'
+    if provider=='revolut' and currency=='EUR':
+        return REVOLUT_ISIN_LISTINGS.get(isin)
+    if (provider=='revolut' and ticker=='WOLF.OLD' and currency=='USD'
+            and isin in ('','US9778521024') and day<'2025-09-29'):
+        return dict(symbol='WOLF.OLD',exchange='NYSE',currency='USD',name='Wolfspeed Inc. (historical)')
+    if provider=='trading212' and ticker=='EPIX' and currency=='USD' and isin in ('','CA29668H7085'):
+        if day<='2025-10-09' or (row['kind']=='SELL' and day=='2025-10-16'):
+            return {k:v for k,v in HISTORICAL_LISTINGS['CA29668H7085'].items() if k!='last_day'}
+    return None
+
 CATALOGUE={
  # Exact share classes confirmed by Deutsche Börse; Yahoo metadata is validated.
  # live.deutsche-boerse.com/equity/{dividend-15-split-a-cd-15,byd-h,

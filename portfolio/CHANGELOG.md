@@ -1,3 +1,7 @@
+## 0.70.39
+
+- Verwerk de openstaande importregels opnieuw met één knop onder Te beoordelen. Geldige regels worden verwerkt met de beschikbare koppelingen.
+
 ## 0.70.38
 
 - Voeg alle 24 officiële EU-talen toe.
