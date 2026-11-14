@@ -113,7 +113,7 @@ def commit_partial(store,batch_id):
                 'action':row['raw'].get('Action') or row['raw'].get('Type') or row['raw'].get('type'),
                 'isin':row['raw'].get('ISIN'), 'currency':row.get('currency'),
                 'has_saved_mapping':bool(row.get('mapping')),
-                **corporate_diagnostics.get(line,{})
+                **corporate_diagnostics.get(line,{}), **failure_details.get(line,{})})
         result=dict(imported=imported,pending=pending,ignored=ignored,duplicates=len(duplicates),standalone_dividends=standalone,batch_id=batch_id)
         record(store,'WARNING' if pending else 'INFO',batch['provider'],'import_summary','Import afgerond met regels ter beoordeling.' if pending else 'Import afgerond.',{'account_id':batch['account_id'],'source_rows':len(rows),'skipped':sum(r.get('kind')=='SKIP' for r in rows),**result})
         return result
