@@ -1,3 +1,7 @@
+## 0.70.42
+
+- Hergebruik categoriegegevens uit het Yahoo-bedrijfsprofiel en probeer onvolledige profielen automatisch opnieuw.
+
 ## 0.70.41
 
 - Verbeterde beveiliging van logredactie, logodomeinen en sessiecookies.

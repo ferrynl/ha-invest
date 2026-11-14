@@ -30,6 +30,9 @@ class ProfileTests(unittest.TestCase):
   with self.store.connect() as db:db.execute('INSERT OR REPLACE INTO api_cache VALUES(?,?,?,?,?)',('yahoo-company-v1','|'.join(KEY),json.dumps(dict(description='',domain='')),time.time(),time.time()+86400))
   with patch('profiles._download_profile',return_value=payload(longBusinessSummary='Company information.',website='https://www.asml.com')) as fetch:
    self.assertEqual(profiles.fetch_company(self.store,KEY)['domain'],'www.asml.com');fetch.assert_called_once()
+   self.assertTrue(enrich_categories(self.store,KEY))
+   self.assertEqual(details(self.store,STOCK)['categories']['sector'],'Technologie')
+   fetch.assert_called_once()
 
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.store=Store(self.tmp.name)
