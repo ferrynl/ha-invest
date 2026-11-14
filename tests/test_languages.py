@@ -30,7 +30,7 @@ class LanguageTests(unittest.TestCase):
         self.assertEqual(result['positions'][0]['account_name'],'Instellingen')
         self.assertEqual(result['positions'][0]['reason'],'Sin tipo de cambio actual para la previsión')
         self.assertEqual(value['error'],'Ongeldige aanvraag.')
-        self.assertEqual(translate('Ongeldige aanvraag.','fr'),'Ongeldige aanvraag.')
+        self.assertEqual(translate('Ongeldige aanvraag.','fr'),'Demande non valide.')
 
     def test_language_is_persistent_and_account_scoped(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -46,7 +46,9 @@ class LanguageTests(unittest.TestCase):
             restarted=Auth(Store(folder))
             self.assertEqual(restarted.user(owner)['language'],'en')
             self.assertEqual(restarted.user(reader)['language'],'nl')
-            with self.assertRaises(ValueError):auth.set_language(auth.user(reader),'fr')
+            auth.set_language(auth.user(reader),'fr')
+            self.assertEqual(restarted.user(reader)['language'],'fr')
+            with self.assertRaises(ValueError):auth.set_language(auth.user(reader),'xx')
             self.assertEqual(restarted.user(owner)['language'],'en')
 
     def test_language_endpoint_requires_auth_and_csrf_but_allows_basic(self):
@@ -66,7 +68,8 @@ class LanguageTests(unittest.TestCase):
                 self.assertEqual(request('en')[0],401)
                 self.assertEqual(request('en',token)[0],403)
                 self.assertEqual(request('es',token,csrf),(200,{'language':'es'}))
-                self.assertEqual(request('fr',token,csrf)[0],400)
-                self.assertEqual(auth.user(token)['language'],'es')
+                self.assertEqual(request('fr',token,csrf),(200,{'language':'fr'}))
+                self.assertEqual(request('xx',token,csrf)[0],400)
+                self.assertEqual(auth.user(token)['language'],'fr')
                 with store.read() as db:self.assertEqual(db.execute("SELECT language FROM users WHERE username='owner'").fetchone()[0],'')
             finally:server.shutdown();server.server_close();worker.join()
