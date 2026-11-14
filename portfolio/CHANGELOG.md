@@ -1,3 +1,7 @@
+## 0.70.38
+
+- Voeg alle 24 officiële EU-talen toe.
+
 ## 0.70.37
 
 - Vertel op Over ons het verhaal achter Home Invest in het Nederlands, Engels en Spaans.
