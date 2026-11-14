@@ -31,7 +31,7 @@ def _payload(request,timeout,store,namespace,key,ttl):
         return result
     return cached_json(store,namespace,key,ttl,load)
 
-EXCHANGES = {'AMS': ('AMSTERDAM', 'EUR'), 'BRU': ('BRUSSELS', 'EUR'), 'ISE': ('DUBLIN', 'EUR'), 'MCE': ('MADRID','EUR'), 'PNK': ('OTC','USD'), 'NMS': ('NASDAQ', 'USD'),
+EXCHANGES = {'AMS': ('AMSTERDAM', 'EUR'), 'BRU': ('BRUSSELS', 'EUR'), 'ISE': ('DUBLIN', 'EUR'), 'MCE': ('MADRID','EUR'), 'PNK': ('OTC','USD'), 'OTCQX': ('OTC','USD'), 'OQX': ('OTC','USD'), 'NMS': ('NASDAQ', 'USD'),
              'NGM': ('NASDAQ', 'USD'), 'NCM': ('NASDAQ', 'USD'),
              'NASDAQ': ('NASDAQ', 'USD'), 'NYQ': ('NYSE', 'USD'), 'NYSE': ('NYSE', 'USD'),
              'PCX': ('NYSEARCA','USD'), 'ASE': ('AMEX','USD'),
