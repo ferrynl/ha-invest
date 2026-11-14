@@ -119,6 +119,13 @@ def issue_exchanges(row):
                    and quote_symbol('',market)})
 
 
+def retry_pending(store):
+    with store.lock:
+        with store.connect() as db:
+            batches=db.execute("SELECT DISTINCT batch_id FROM import_issues WHERE state='pending' ORDER BY batch_id").fetchall()
+        return {'imported':sum(commit_partial(store,batch['batch_id'])['imported'] for batch in batches)}
+
+
 def list_issues(store):
     with store.connect() as db:
         entries=db.execute('SELECT i.*,b.account_id,b.filename,a.name AS account_name FROM import_issues i JOIN import_batches b ON b.id=i.batch_id JOIN broker_accounts a ON a.id=b.account_id ORDER BY (i.state=?) DESC,i.id DESC LIMIT 2000',('pending',)).fetchall()
