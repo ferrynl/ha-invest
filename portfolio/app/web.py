@@ -24,7 +24,7 @@ from feedback_client import overview as feedback_overview,connect as feedback_co
 from imports import ADAPTERS
 from imports.listings import BROKER_LISTINGS
 from imports.service import preview as import_preview,open_preview
-from imports.partial import commit_partial,list_issues,resolve_issue
+from imports.partial import commit_partial,list_issues,resolve_issue,retry_pending
 from imports.matching import resolve_instrument
 from imports.registry import discover as mapping_list,edit as mapping_edit
 from imports import trading212_api
@@ -726,6 +726,8 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     return self.respond(result)
                 if path=='/api/imports/commit':
                     result=commit_partial(store,int(data['batch_id']));cache.invalidate();refresh_requested.set();return self.respond(result)
+                if path=='/api/imports/issues/retry':
+                    result=retry_pending(store);cache.invalidate();refresh_requested.set();return self.respond(result)
                 if path=='/api/imports/issues/resolve':
                     result=resolve_issue(store,data);cache.invalidate();refresh_requested.set();return self.respond(result)
                 if path=='/api/imports/resolve':return self.respond(resolve_instrument(store,int(data['batch_id']),str(data['key'])))
