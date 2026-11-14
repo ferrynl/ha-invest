@@ -20,7 +20,7 @@ _session=None
 _crumb=None
 _direct_retry_at=0
 SECTORS={'Technology':'Technologie','Financial Services':'Financiële diensten','Healthcare':'Gezondheidszorg','Energy':'Energie','Industrials':'Industrie','Real Estate':'Vastgoed','Consumer Defensive':'Defensieve consumentengoederen','Consumer Cyclical':'Cyclische consumentengoederen','Communication Services':'Communicatiediensten','Utilities':'Nutsbedrijven','Basic Materials':'Basismaterialen'}
-COUNTRIES={'Netherlands':'Nederland','United States':'Verenigde Staten','United Kingdom':'Verenigd Koninkrijk','Germany':'Duitsland','France':'Frankrijk','Belgium':'België','Switzerland':'Zwitserland','Canada':'Canada','Ireland':'Ierland','Luxembourg':'Luxemburg','Spain':'Spanje','Italy':'Italië','Sweden':'Zweden','Norway':'Noorwegen','Denmark':'Denemarken','Austria':'Oostenrijk','Finland':'Finland','Australia':'Australië','China':'China','Japan':'Japan'}
+COUNTRIES={'Netherlands':'Nederland','United States':'Verenigde Staten','United Kingdom':'Verenigd Koninkrijk','Germany':'Duitsland','France':'Frankrijk','Belgium':'België','Switzerland':'Zwitserland','Canada':'Canada','Ireland':'Ierland','Luxembourg':'Luxemburg','Spain':'Spanje','Italy':'Italië','Sweden':'Zweden','Norway':'Noorwegen','Denmark':'Denemarken','Austria':'Oostenrijk','Finland':'Finland','Australia':'Australië','China':'China','Japan':'Japan','Egypt':'Egypte'}
 TYPES={'EQUITY':'Aandeel','ETF':'ETF','MUTUALFUND':'Beleggingsfonds','BOND':'Obligatie'}
 
 class ProfileError(ActionError):
@@ -140,6 +140,7 @@ def fetch_profile(store,key,company=False):
                 payload=_download_profile(key[0]);values=normalize_profile(payload,key);info=company_data(payload)
                 if company:
                     if not info['description'] and not info['domain']:raise ProfileError('profile_unavailable')
+                    cached_json(store,'yahoo-profile-v1','|'.join(key),86400,lambda:values)
                     return info
                 if info['description'] or info['domain']:cached_json(store,'yahoo-company-v2','|'.join(key),7*86400,lambda:info)
                 return values
@@ -155,7 +156,7 @@ def fetch_profile(store,key,company=False):
             except (ValueError,TypeError) as error:
                 if isinstance(error,ProfileError):raise
                 raise ProfileError('invalid_profile') from None
-    cached=cached_json(store,'yahoo-company-v2' if company else 'yahoo-profile-v1','|'.join(key),(7 if company else 30)*86400,load)
+    cached=cached_json(store,'yahoo-company-v2' if company else 'yahoo-profile-v1','|'.join(key),(7 if company else 1)*86400,load)
     if company:return cached
     if not isinstance(cached,dict):raise ProfileError('invalid_profile')
     try:values=validate_categories(cached)
@@ -169,7 +170,7 @@ def enrich_categories(store,key,retry=False):
         db.execute('BEGIN IMMEDIATE')
         if not db.execute('SELECT 1 FROM purchases WHERE symbol=? AND exchange=? AND currency=? UNION ALL SELECT 1 FROM dividends WHERE symbol=? AND exchange=? AND currency=?',(*key,*key)).fetchone():return False
         sync=db.execute('SELECT * FROM instrument_category_sync WHERE symbol=? AND exchange=? AND currency=?',key).fetchone()
-        if sync and (sync['status']=='complete' or sync['status']=='partial' and not retry or datetime.fromisoformat(sync['retry_at'])>stamp):return False
+        if sync and (sync['status']=='complete' or datetime.fromisoformat(sync['retry_at'])>stamp):return False
         attempts=sync['attempts']+1 if sync else 1
         db.execute("INSERT INTO instrument_category_sync VALUES(?,?,?,'fetching',?,?,?,'') ON CONFLICT(symbol,exchange,currency) DO UPDATE SET status='fetching',attempted_at=excluded.attempted_at,retry_at=excluded.retry_at,attempts=excluded.attempts,error_code=''",(*key,stamp.isoformat(),(stamp+timedelta(minutes=10)).isoformat(),attempts))
     try:
