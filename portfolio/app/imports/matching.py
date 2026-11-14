@@ -22,7 +22,7 @@ def resolve(store,rows,provider,preferred=None):
     if known[0] and all(item==known[0] for item in known):
         return {'mapping':known[0],'via':'Gecontroleerde instrumentidentiteit'}
     if provider=='revolut' and ticker.upper()=='WOLF.OLD':
-        return {'error':'Historische Wolfspeed-regel valt buiten de ondersteunde instrumentidentiteit of periode.'}
+        return {'error':'Historische notering of valuta wijkt af.'}
     def find():
         # Prefer mappings proven by prior committed imports with the same ISIN/ticker.
         with store.connect() as db:
