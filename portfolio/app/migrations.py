@@ -139,7 +139,7 @@ MIGRATIONS = {
         'ALTER TABLE users DROP COLUMN previous_language',
     ),
     27: (
-        'CREATE TABLE corporate_action_rights (id INTEGER PRIMARY KEY, batch_id INTEGER NOT NULL REFERENCES import_batches(id), account_id INTEGER NOT NULL REFERENCES broker_accounts(id), provider TEXT NOT NULL, external_id TEXT NOT NULL, source_external_id TEXT NOT NULL, ticker TEXT NOT NULL, quantity TEXT NOT NULL, currency TEXT NOT NULL, received_on TEXT NOT NULL, created_at TEXT NOT NULL, UNIQUE(account_id,provider,external_id))',
+        'CREATE TABLE corporate_action_rights (id INTEGER PRIMARY KEY, batch_id INTEGER NOT NULL REFERENCES import_batches(id) ON DELETE CASCADE, account_id INTEGER NOT NULL REFERENCES broker_accounts(id) ON DELETE CASCADE, provider TEXT NOT NULL, external_id TEXT NOT NULL, source_external_id TEXT NOT NULL, ticker TEXT NOT NULL, quantity TEXT NOT NULL, currency TEXT NOT NULL, received_on TEXT NOT NULL, created_at TEXT NOT NULL, UNIQUE(account_id,provider,external_id))',
     ),
 }
 
