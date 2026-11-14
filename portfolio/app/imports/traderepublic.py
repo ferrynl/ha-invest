@@ -44,7 +44,7 @@ def parse_csv(text, decision=None):
             # Only accept the observed shape; a changed shape still needs review.
             if not decision and category=='CASH' and action=='PRIVATE_MARKET_BUY' and raw['asset_class']=='PRIVATE_FUND' and not raw['shares'] and not raw['price']:
                 kind='SKIP'
-            if not decision and category=='CASH' and action=='CUSTOMER_INPAYMENT' and not raw['symbol'] and not raw['shares'] and not raw['price']:
+            if not decision and category=='CASH' and action=='CUSTOMER_INPAYMENT' and not raw['symbol'] and all(re.fullmatch(r'(?:0+(?:[.,]0+)?)?', raw[field]) for field in ('shares','price')):
                 kind='SKIP'
             if not decision and category=='CASH' and action=='BONUS' and not raw['symbol'] and not raw['shares'] and not raw['price']:
                 kind='SKIP'

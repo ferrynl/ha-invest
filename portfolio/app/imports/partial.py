@@ -31,7 +31,8 @@ def commit_partial(store,batch_id):
         conflicts={}
         for row in rows:
             conflicts.setdefault(row['external_id'],set()).add(row['digest'])
-        settlements=cvr_settlements(rows,batch['provider'])
+        corporate_diagnostics={}
+        settlements=cvr_settlements(rows,batch['provider'],corporate_diagnostics)
         failure_details={}
         prepared=[];failures={};duplicates=set();processed=set();standalone=0;imported=0;ignored=0;skipped=[]
         for row in sorted(rows,key=lambda r:(r.get('trade_time',''),0 if r.get('kind')=='BUY' else 1 if r.get('kind')=='SELL' else 2)):
@@ -108,7 +109,11 @@ def commit_partial(store,batch_id):
             pending=db.execute("SELECT COUNT(*) FROM import_issues WHERE batch_id=? AND state='pending'",(batch_id,)).fetchone()[0]
             db.execute('UPDATE import_batches SET status=?,payload=? WHERE id=?',('partial' if pending else 'imported',json.dumps(rows),batch_id))
         for line,(row,reason) in failures.items():
-            record(store,'WARNING',batch['provider'],'import_row_rejected','Importregel apart gehouden; bekijk Te beoordelen.',{'batch_id':batch_id,'account_id':batch['account_id'],'line':line,'kind':row.get('kind'),'ticker':row.get('ticker'),'day':row.get('day'),'quantity':row.get('quantity'),'code':'row_requires_review',**failure_details.get(line,{})})
+            record(store,'WARNING',batch['provider'],'import_row_rejected','Importregel apart gehouden; bekijk Te beoordelen.',{'batch_id':batch_id,'account_id':batch['account_id'],'line':line,'kind':row.get('kind'),'ticker':row.get('ticker'),'day':row.get('day'),'quantity':row.get('quantity'),'code':'row_requires_review', 'has_source_quantity':bool(row['raw'].get('No. of shares') or row['raw'].get('Quantity') or row['raw'].get('shares')),
+                'action':row['raw'].get('Action') or row['raw'].get('Type') or row['raw'].get('type'),
+                'isin':row['raw'].get('ISIN'), 'currency':row.get('currency'),
+                'has_saved_mapping':bool(row.get('mapping')),
+                **corporate_diagnostics.get(line,{}), **failure_details.get(line,{})})
         result=dict(imported=imported,pending=pending,ignored=ignored,duplicates=len(duplicates),standalone_dividends=standalone,batch_id=batch_id)
         record(store,'WARNING' if pending else 'INFO',batch['provider'],'import_summary','Import afgerond met regels ter beoordeling.' if pending else 'Import afgerond.',{'account_id':batch['account_id'],'source_rows':len(rows),'skipped':sum(r.get('kind')=='SKIP' for r in rows),**result})
         return result

@@ -2,10 +2,11 @@
 import json
 from decimal import Decimal, InvalidOperation
 
+from diagnostics import ActionError
 from storage import now, positive
 
 
-def cvr_settlements(rows, provider):
+def cvr_settlements(rows, provider, diagnostics=None):
     if provider != 'trading212':
         return {}
     # OCC memo 57447: each ESSA share became cash plus one non-transferable CVR.
@@ -17,9 +18,21 @@ def cvr_settlements(rows, provider):
              and row['raw'].get('ISIN', '').upper() in ('', 'CA29668H7085')]
     rights = [row for row in candidates if row.get('kind') == 'DISTRIBUTION'
               and row['ticker'].upper() == 'EPIX.CVR']
+    for right in rights:
+        if diagnostics is not None:
+            diagnostics[right['line']] = dict(
+                code='cvr_pair_not_unique', cash_candidates=len(sales), rights_candidates=len(rights),
+                right_quantity=right.get('quantity'),
+            )
     if len(sales) != 1 or len(rights) != 1:
         return {}
     sale, right = sales[0], rights[0]
+    if diagnostics is not None:
+        diagnostics[right['line']].update(
+            code='cvr_pair_fields_invalid', cash_line=sale['line'], cash_quantity=sale.get('quantity'),
+            cash_amount=sale['raw'].get('Total'), cash_currency=sale['raw'].get('Currency (Total)'),
+            rights_amount=right['raw'].get('Total'), rights_currency=right['raw'].get('Currency (Total)'),
+        )
     try:
         quantity = Decimal(right['quantity'])
         cash = Decimal(sale['raw']['Total'])
