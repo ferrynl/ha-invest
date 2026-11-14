@@ -1,4 +1,5 @@
 """Password hashing, expiring server-side sessions and account administration."""
+from i18n import LANGUAGES
 import hashlib
 import hmac
 import secrets
@@ -59,7 +60,7 @@ class Auth:
             return dict(id=row['id'],username=row['username'],role=row['role'],csrf=entry['csrf'],language=row['language'])
 
     def set_language(self,user,language):
-        if language not in ('nl','en','es'):
+        if language not in LANGUAGES:
             raise ValueError('Kies Nederlands, Engels of Spaans.')
         with self.lock, self.store.connect() as db:
             if user['id'] is None:

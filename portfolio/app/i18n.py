@@ -4,7 +4,15 @@ import re
 from pathlib import Path
 
 CATALOG = json.loads((Path(__file__).parent/'static'/'translations.js').read_text(encoding='utf-8').split('const UI_TRANSLATIONS = ',1)[1].rstrip(';\n'))
-LANGUAGES = ('nl','en','es')
+EXTRA_LANGUAGES = ["bg","hr","cs","da","et","fi","fr","de","el","hu","ga","it","lv","lt","mt","pl","pt","ro","sk","sl","sv"]
+LANGUAGES = ('nl','en','es', *EXTRA_LANGUAGES)
+for path in sorted((Path(__file__).parent/'static'/'locales').glob('eu-*.json')):
+    for language, messages in json.loads(path.read_text(encoding='utf-8')).items():
+        for key, value in messages.items():
+            CATALOG[key][language] = value
+
+def browser_catalog(language):
+    return ('const UI_TRANSLATIONS = ' + json.dumps({key: {language: values[language]} for key, values in CATALOG.items()}) + ';\n').encode()
 MESSAGE_FIELDS = frozenset(('error','message','reason','warnings','warning','match_reason','hint','help','status_label','type_label'))
 # Legacy composed messages contain counts, tickers and diagnostic references.
 # Replace known message fragments in one pass; do not run translation on names/notes.
@@ -18,7 +26,7 @@ def translate(text,language):
     return FRAGMENTS.sub(lambda match:CATALOG[match[0]][language],text)
 
 def localize(value,language,field=None):
-    if language not in ('en','es'):return value
+    if language not in LANGUAGES or language=='nl':return value
     if isinstance(value,dict):
         return {key:localize(item,language,key) for key,item in value.items()}
     if isinstance(value,list):return [localize(item,language,field) for item in value]

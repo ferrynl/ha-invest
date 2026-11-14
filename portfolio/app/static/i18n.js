@@ -1,16 +1,17 @@
 /* Language is the only browser preference stored here; portfolio and session data stay off browser storage. */
+const availableLanguages=['nl','en','es',...["bg","hr","cs","da","et","fi","fr","de","el","hu","ga","it","lv","lt","mt","pl","pt","ro","sk","sl","sv"]];
 let currentLanguage=document.documentElement.dataset.accountLanguage||'nl';
 function browserLanguage(){
- try{const saved=localStorage.getItem('homeinvest.language');if(['nl','en','es'].includes(saved))return saved;}catch{}
+ try{const saved=localStorage.getItem('homeinvest.language');if(availableLanguages.includes(saved))return saved;}catch{}
  const saved=document.cookie.split('; ').find(value=>value.startsWith('homeinvest_language='))?.split('=')[1];
- return ['nl','en','es'].includes(saved)?saved:null;
+ return availableLanguages.includes(saved)?saved:null;
 }
 if(!document.documentElement.dataset.accountLanguage)currentLanguage=browserLanguage()||'nl';
-function appLocale(){return {nl:'nl-NL',en:'en-GB',es:'es-ES'}[currentLanguage];}
+function appLocale(){return {nl:'nl-NL',en:'en-GB',es:'es-ES'}[currentLanguage] || currentLanguage;}
 function ui(source,parameters={}){
  if(typeof source!=='string')return source;
  const key=source.trim(),entry=UI_TRANSLATIONS[key];
- const translated=entry?source.replace(key,()=>entry[currentLanguage]):source;
+ const translated=entry?source.replace(key,()=>entry[currentLanguage]??entry.nl??key):source;
  return translated.replace(/\{(\w+)\}/g,(match,name)=>Object.hasOwn(parameters,name)?String(parameters[name]):match);
 }
 globalThis.HomeInvestTranslate=ui;
@@ -45,7 +46,7 @@ async function initializeLanguage(user){
  if(saved&&saved!==currentLanguage){rememberLanguage(saved);location.reload();return new Promise(()=>{});}
  if(saved)return;
  const browserChoice=browserLanguage();
- if(['nl','en','es'].includes(browserChoice)){
+ if(availableLanguages.includes(browserChoice)){
   if(user)await jsonAction('api/account/language',{language:browserChoice});
   return;
  }
