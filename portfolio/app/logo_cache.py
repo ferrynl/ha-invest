@@ -9,7 +9,16 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 ABOUT_DOMAINS=frozenset(('yahoo.com','divvydiary.com','huggingface.co','trading212.com',
                          'traderepublic.com','revolut.com','deutsche-boerse.com',
                          'rheinmetall.com','apollo.com','vaneck.com','allinvestview.com'))
-DOMAIN=re.compile(r'(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}')
+DOMAIN_LABEL=re.compile(r'[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?')
+DOMAIN_SUFFIX=re.compile(r'[a-z]{2,63}')
+
+
+def valid_domain(domain):
+    if not 4 <= len(domain) <= 253:
+        return False
+    labels=domain.split('.')
+    return (len(labels)>1 and DOMAIN_SUFFIX.fullmatch(labels[-1]) is not None
+            and all(DOMAIN_LABEL.fullmatch(label) for label in labels[:-1]))
 PNG=b'\x89PNG\r\n\x1a\n'
 MAX_SIZE=512*1024
 
@@ -30,7 +39,7 @@ class LogoCache:
         self.failed={}
 
     def get(self,group,domain):
-        if group not in ('about','dividend') or not DOMAIN.fullmatch(domain):
+        if group not in ('about','dividend') or not valid_domain(domain):
             return None
         if group=='about' and domain not in ABOUT_DOMAINS:
             return None
