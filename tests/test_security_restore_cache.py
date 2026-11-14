@@ -149,7 +149,7 @@ class AccessTests(unittest.TestCase):
   self.assertEqual(self.request('GET','/api/state',token=basic)[0],401)
  def test_persistent_sliding_session_and_cookie(self):
   token,csrf=self.activate()
-  from security import SESSION_TTL
+  from security import SESSION_TTL,SESSION_MAX_AGE
   import time
   now=time.time()
   with self.store.connect() as db:
@@ -167,7 +167,10 @@ class AccessTests(unittest.TestCase):
   token=self.auth.login('owner',self.password,'test')
   code,_,headers=self.request('GET','/api/session',token=token,extra={'X-Ingress-Path':'/api/hassio_ingress/test','X-Forwarded-Proto':'https'})
   self.assertEqual(code,200)
-  for part in [f'Max-Age={SESSION_TTL}','HttpOnly','SameSite=Strict','Secure','Path=/api/hassio_ingress/test/']:self.assertIn(part,headers['Set-Cookie'])
+  self.assertNotIn('Set-Cookie',headers)
+  code,_,headers=self.request('POST','/api/auth/login',{'username':'owner','password':self.password},extra={'X-Ingress-Path':'/api/hassio_ingress/test','X-Forwarded-Proto':'https'})
+  self.assertEqual(code,200)
+  for part in [f'Max-Age={SESSION_MAX_AGE}','HttpOnly','SameSite=Strict','Secure','Path=/api/hassio_ingress/test/']:self.assertIn(part,headers['Set-Cookie'])
   restarted.logout(token)
   self.assertIsNone(self.auth.user(token))
 
