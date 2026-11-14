@@ -37,7 +37,7 @@ function bindImportIssues(){
    stateETag=null;
    await load();
    await loadImportIssues();
-   $('issue-feedback').textContent=result.imported+ui(' regels verwerkt.')+' '+$('issue-feedback').textContent;
+   $('issue-feedback').textContent=result.imported+ui(' regels verwerkt; ')+' '+$('issue-feedback').textContent;
   }catch(error){$('issue-feedback').textContent=error.message;}
   finally{button.disabled=false;}
  });
