@@ -1,6 +1,6 @@
 name: Home Invest
 url: https://github.com/ferrynl/ha-invest
-version: "0.70.37"
+version: "0.70.38"
 slug: aandelen_dashboard
 description: >-
   Volg je beleggingen, rendement en dividend op één plek. Importeer transacties
