@@ -40,14 +40,27 @@ def literals(source):
 
 class Markup(HTMLParser):
     def __init__(self):super().__init__();self.strings=set()
+    native=False
+    def handle_endtag(self,tag):
+        if tag=='option':self.native=False
     def handle_data(self,value):
+        if self.native:return
         if re.search('[A-Za-z]',value):self.strings.add(value.strip())
     def handle_starttag(self,tag,attrs):
+        if tag=='option' and 'lang' in dict(attrs):self.native=True
         for key,value in attrs:
             if key in ('title','placeholder','aria-label') and value:self.strings.add(value.strip())
 
 def check():
     entries=catalog();errors=[]
+    locales={}
+    for path in (STATIC/'locales').glob('eu-*.json'):
+        locales.update(json.loads(path.read_text(encoding='utf-8')))
+    if set(locales)!=set('bg hr cs da et fi fr de el hu ga it lv lt mt pl pt ro sk sl sv'.split()):errors.append('Incomplete EU locale set')
+    for language,messages in locales.items():
+        if set(messages)!=set(entries):errors.append('Incomplete locale: '+language)
+        for key,value in messages.items():
+            if not value.strip() or sorted(re.findall(r'\{\w+\}',key))!=sorted(re.findall(r'\{\w+\}',value)):errors.append('Invalid locale entry: '+language+' '+key)
     for key,translations in entries.items():
         if set(translations)!=set(('nl','en','es')) or any(not isinstance(v,str) or not v.strip() for v in translations.values()):errors.append('Incomplete translation: '+key)
         if translations.get('nl')!=key:errors.append('Dutch source differs from key: '+key)
@@ -60,7 +73,7 @@ def check():
         if path.stem=='translations':continue
         source=path.read_text(encoding='utf-8')
         for start,end,value in literals(source):
-            if value.strip() not in entries and value not in technical['js']:errors.append(path.name+': unregistered string '+repr(value))
+            if value.strip() not in entries and value not in technical['js'] and not (path.stem=='i18n' and value in locales):errors.append(path.name+': unregistered string '+repr(value))
             elif value.strip() in entries and path.stem!='i18n' and source[max(0,start-3):start]!='ui(':errors.append(path.name+': call ui() for '+repr(value))
     for path in (ROOT/'portfolio/app').rglob('*.py'):
         for node in ast.walk(ast.parse(path.read_text(encoding='utf-8-sig'))):
