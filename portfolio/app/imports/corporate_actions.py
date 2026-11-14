@@ -46,7 +46,7 @@ def book_cvr(db, batch, right, sale):
         (batch['account_id'], sale['trade_time'], positive(sale['quantity']), positive(sale['price'])),
     ).fetchone()
     if not prior or prior[0] != sale['digest'] or not booked:
-        raise ValueError('De gekoppelde EPIX-afwikkeling is nog niet geboekt.')
+        raise ValueError('Automatische beurskoppeling ontbreekt.')
     db.execute(
         'INSERT INTO corporate_action_rights(batch_id,account_id,provider,external_id,'
         'source_external_id,ticker,quantity,currency,received_on,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
