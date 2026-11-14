@@ -15,7 +15,7 @@ from pathlib import Path
 from provider import search_stocks,listing as resolve_listing,quote_symbol
 from restore import restore_backup
 from backup_crypto import LIMIT as BACKUP_LIMIT, OVERHEAD, decrypt, encrypt
-from security import verify_password,SESSION_TTL
+from security import verify_password,SESSION_MAX_AGE
 import passkeys
 from version import APP_VERSION
 from i18n import localize,LANGUAGES,EXTRA_LANGUAGES,browser_catalog
@@ -96,7 +96,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if not re.fullmatch(r'/[a-zA-Z0-9_./-]*',path):path='/'
             path=path.rstrip('/')+'/'
             secure=self.headers.get('X-Forwarded-Proto','').split(',')[0].strip()=='https' or self.headers.get('Origin','').startswith('https://')
-            return f'homeinvest_session={token}; Path={path}; HttpOnly; SameSite=Strict; Max-Age={SESSION_TTL if token else 0}'+('; Secure' if secure else '')
+            return f'homeinvest_session={token}; Path={path}; HttpOnly; SameSite=Strict; Max-Age={SESSION_MAX_AGE if token else 0}'+('; Secure' if secure else '')
         def respond(self,content,code=200,kind='application/json',filename=None,cookie=None,etag=False,public=False,vary_cookie=False):
             if kind=='application/json':
                 language=self.headers.get('X-HomeInvest-Language','nl')
@@ -116,7 +116,6 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'")
             if digest:self.send_header('ETag',digest)
             if filename:self.send_header('Content-Disposition',f'attachment; filename="{filename}"')
-            if cookie is None:cookie=getattr(self,'renew_cookie',None)
             if cookie:self.send_header('Set-Cookie',cookie)
             self.end_headers()
             if content:self.wfile.write(content)
@@ -152,7 +151,6 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     content=content.replace(b'__ASSET_VERSION__',APP_VERSION.encode()).replace(b'__ACCOUNT_LANGUAGE__',(language if language in LANGUAGES else '').encode())
                 return self.respond(content,kind=kind,etag=path!='/',public=path!='/')
             user=auth.user(self.token())
-            self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path=='/api/session':return self.respond({'enabled':auth.enabled(),'user':user})
             if path=='/api/passkeys':
                 try:return self.respond(passkeys.list_keys(store,user)) if self.allowed(user) else None
@@ -502,7 +500,6 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if self.headers.get('X-Portfolio-Request')!='1' or self.headers.get('Content-Type')!=expected:
                 return self.respond({'error':'Ongeldige aanvraag.'},403)
             user=auth.user(self.token())
-            self.renew_cookie=self.cookie(self.token()) if user and user.get('csrf') else None
             if path not in ('/api/auth/login','/api/passkey/login/begin','/api/passkey/login/finish'):
                 if not self.allowed(user,admin=path.startswith('/api/accounts/') or path.startswith('/api/portfolio/') or path in ('/api/health-action','/api/feedback/connect','/api/transactions/edit','/api/instrument/categories','/api/instrument/valuation','/api/instrument/holdings','/api/tasks/etf') or path in ('/api/purchases','/api/dividends','/api/settings','/api/backup-download','/api/restore','/api/restore-preview','/api/users','/api/auth/enable','/api/auth/disable','/api/accounts','/api/updates') or path.startswith('/api/imports/') or path.startswith('/api/charges/')):return
                 if auth.enabled() and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),user['csrf'] or ''):
@@ -579,7 +576,6 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                         self.send_header('Cache-Control','no-store')
                         self.send_header('Content-Disposition',"attachment; filename*=UTF-8''"+quote(backup.name,safe=''))
                         self.send_header('X-Content-Type-Options','nosniff')
-                        if self.renew_cookie:self.send_header('Set-Cookie',self.renew_cookie)
                         self.end_headers()
                         shutil.copyfileobj(stream,self.wfile,65536)
                     return
