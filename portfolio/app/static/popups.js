@@ -32,6 +32,7 @@ function bindPopups(){
  registerPopup('cleanup-editor',ui('Gegevens opschonen'));
  registerPopup('broker-editor',ui('Brokeraccount aanpassen'));
  registerPopup('broker-delete',ui('Brokeraccount verwijderen'));
+ registerPopup('broker-api-editor',ui('Brokerhistorie via API ophalen'));
  registerPopup('import-api-report',ui('Trading 212-rapport ophalen'));
  registerPopup('conversion-editor',ui('TMX omboeken naar TDT'));
  registerPopup('etf-task-editor',ui('ETF-taak starten'));

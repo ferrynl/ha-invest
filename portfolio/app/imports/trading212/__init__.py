@@ -106,5 +106,11 @@ def parse_csv(text):
             continue
         opens[0]['split_before']=closes[0]['quantity'] if closes else '0'
         if closes:closes[0]['kind']='SPLIT_INFO'
-    from .charge_fields import attach
+    from ..charge_fields import attach
     return attach(rows,'trading212')
+
+
+ADAPTER = dict(name='Trading 212',
+    formats=['api', 'csv'],
+    parse=parse_csv,
+    guide='Download de Engelstalige History CSV uit Invest of Stocks ISA.')

@@ -163,6 +163,7 @@ def resolve_issue(store,data):
             batch=db.execute('SELECT * FROM import_batches WHERE id=?',(issue['batch_id'],)).fetchone()
         rows=[stable(r) for r in json.loads(batch['payload'])];row=next(r for r in rows if r['line']==issue['line'])
         if decision not in ('retry','IGNORE'):
+            if batch['provider'] not in ('trading212','revolut','traderepublic'):raise ValueError('Deze bronregel kan niet veilig opnieuw worden ingedeeld. Controleer de bron of markeer de regel als genegeerd.')
             raw=row['raw'];edited={**raw,'Action':{'DIVIDEND':'Dividend (Ordinary)','BUY':'Market buy','SELL':'Market sell','CAPITAL_RETURN':'Dividend (Ordinary)'}[decision]}
             stream=io.StringIO();writer=csv.DictWriter(stream,fieldnames=list(edited));writer.writeheader();writer.writerow(edited)
             if batch['provider']=='revolut':
@@ -187,6 +188,7 @@ def resolve_issue(store,data):
         return commit_partial(store,batch['id'])
 
 def refresh_supported(rows,provider='trading212'):
+    if provider not in ('trading212','traderepublic','revolut'):return
     if not any((r.get('error') or (provider=='revolut' and r.get('kind')=='SKIP')) and r.get('decision') in (None,'retry') for r in rows):return
     stream=io.StringIO()
     fields=list(dict.fromkeys(k for r in rows for k in r['raw']))

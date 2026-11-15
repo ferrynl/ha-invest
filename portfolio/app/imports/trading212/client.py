@@ -14,8 +14,8 @@ from urllib.request import Request,build_opener,HTTPRedirectHandler,ProxyHandler
 from urllib.error import HTTPError,URLError
 from cryptography.fernet import Fernet,InvalidToken
 from persistent_cache import cached_json
-from .service import preview
-from .trading212 import history_reader
+from ..service import preview
+from . import history_reader
 from diagnostics import operation,current_record,auth_secrets,DiagnosticError,ActionError,action_context
 
 _lock=threading.RLock()

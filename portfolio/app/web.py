@@ -271,7 +271,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
             if path=='/api/imports/mappings':return self.respond({'mappings':mapping_list(store)})
             if path=='/api/imports':
                 with store.connect() as db:batches=[dict(r) for r in db.execute('SELECT id,account_id,provider,filename,status,created_at FROM import_batches ORDER BY id DESC LIMIT 50')]
-                return self.respond({'providers':[{'id':key,'name':value['name'],'formats':value['formats']} for key,value in ADAPTERS.items() if not value.get('any_broker')],'batches':batches})
+                return self.respond({'providers':[{'id':key,'name':value['name'],**{field:value[field] for field in ('formats','guide','source') if field in value}} for key,value in ADAPTERS.items() if not value.get('any_broker')],'batches':batches})
             if path=='/api/dividends/overview':
                 from dividend_dashboard import overview,euro_overview
                 query=parse_qs(urlsplit(self.path).query)
@@ -717,6 +717,9 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                     if parsed[0].get('error'):raise ValueError(parsed[0]['error'])
                     batch=import_preview(store,int(data['account_id']),'charges','manual-charge.csv',stream.getvalue())
                     result=commit_partial(store,batch['batch_id']);cache.invalidate();refresh_requested.set();return self.respond(result)
+                if path in ('/api/imports/interactivebrokers/start','/api/imports/interactivebrokers/poll','/api/imports/saxo/fetch'):
+                    from imports.http_import import from_broker
+                    return self.respond(from_broker(store,path.removeprefix('/api/imports/'),data))
                 if path=='/api/imports/preview':
                     result=import_preview(store,int(data['account_id']),str(data['provider']),str(data['filename']),str(data['csv']))
                     return self.respond(result)

@@ -1,3 +1,8 @@
+## 0.70.43
+
+- Kies uit tien brokers op de vernieuwde importpagina, met zoeken en filters voor API, CSV en XML.
+- Haal rapporten op via Interactive Brokers Flex en Saxo OpenAPI. Controleer de transacties in het importvoorbeeld voordat je boekt.
+
 ## 0.70.42
 
 - Hergebruik categoriegegevens uit het Yahoo-bedrijfsprofiel en probeer onvolledige profielen automatisch opnieuw.
