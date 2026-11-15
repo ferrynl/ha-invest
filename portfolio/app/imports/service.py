@@ -12,14 +12,19 @@ def prepare_rows(store,account_id,provider,rows):
     prepare=ADAPTERS[provider].get('prepare')
     if prepare:prepare(store,account_id,rows)
 
-def preview(store,account_id,provider,filename,text):
-    adapter=ADAPTERS.get(provider)
-    if not adapter:raise ValueError('Onbekende importaanbieder.')
+def import_account(store,account_id,adapter):
     with store.connect() as db:
         store.require_account(db,account_id)
         account=dict(db.execute('SELECT * FROM broker_accounts WHERE id=?',(account_id,)).fetchone())
     if not adapter.get('any_broker') and account['broker']!=adapter['name']:raise ValueError('Kies een brokeraccount van '+adapter['name']+'.')
-    rows=adapter['parse'](text)
+    return account
+
+
+def preview(store,account_id,provider,filename,text,*,parse=None):
+    adapter=ADAPTERS.get(provider)
+    if not adapter:raise ValueError('Onbekende importaanbieder.')
+    account=import_account(store,account_id,adapter)
+    rows=(parse or adapter['parse'])(text)
     prepare_rows(store,account_id,provider,rows)
     with store.connect() as db:
         seen={}

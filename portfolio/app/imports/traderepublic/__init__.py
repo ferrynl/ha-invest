@@ -10,7 +10,7 @@ import json
 import re
 from datetime import datetime, date, timezone, timedelta
 from decimal import Decimal
-from .trading212 import number
+from ..trading212 import number
 from forex import code as currency_code
 
 REQUIRED={'date','datetime','category','type','name','symbol','shares','price','amount','currency','transaction_id','asset_class'}
@@ -102,12 +102,12 @@ def parse_csv(text, decision=None):
         if len(currencies)==1:
             row['currency']=next(iter(currencies));row['currency_origin']='source_trades'
         else:row.update(needs_split_currency=True,error=SPLIT_CURRENCY_ERROR)
-    from .charge_fields import attach
+    from ..charge_fields import attach
     return attach(rows,'traderepublic')
 
 def prepare_rows(store,account_id,rows):
     """A split moves units, not money; reuse a unique saved listing if needed."""
-    from .registry import lookup
+    from ..registry import lookup
     for row in rows:
         if not row.get('needs_split_currency') or row.get('error')!=SPLIT_CURRENCY_ERROR:continue
         mapping=lookup(store,account_id,'traderepublic',row)
@@ -134,3 +134,10 @@ def neutralize_migrations(rows):
         for row in group:
             if neutral:row.update(kind='SKIP',notice='Interne migratie: gelijke uit- en inboeking overgeslagen; bezit en kostprijs blijven gelijk.')
             else:row['error']='Migratie zonder eenduidige gelijke tegenboeking binnen één seconde in dit bestand. Er wordt geen aankoop, verkoop of kostprijs geschat.'
+
+
+ADAPTER = dict(name='Trade Republic',
+    formats=['csv'],
+    parse=parse_csv,
+    prepare=prepare_rows,
+    guide='Ga naar Profiel → Afschriften → Transactie-export en upload de oorspronkelijke CSV.')

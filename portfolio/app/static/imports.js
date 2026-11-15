@@ -2,8 +2,12 @@
 var ui=globalThis.HomeInvestTranslate||((value)=>value);
 function updateImportSource(){
  $('import-upload-feedback').textContent='';
- const tradeRepublic=$('import-provider').value==='traderepublic';
- $('import-source-help').textContent=$('import-provider').value==='revolut'?ui('Revolut: upload de Engelstalige CSV van je beleggingsrekening. Onbekende acties blijven ter beoordeling.'):tradeRepublic?ui('Trade Republic: profiel → afschriften → transactie-export. Upload de oorspronkelijke CSV. Alleen aandelen en fondsen; onbekende acties en dividendcorrecties blijven ter beoordeling.'):ui('Trading 212: upload de Engelstalige History CSV uit Invest of Stocks ISA. Een API-rapport kun je via de knop hierboven ophalen.');
+ const provider=$('import-provider').value;
+ const details=typeof importDirectoryProviders==='undefined'?null:importDirectoryProviders.find(item=>item.id===provider);
+ const formats=details?.formats.filter(format=>format!=='api')||['csv'];
+ const file=$('import-file');
+ if(file)file.accept=formats.map(format=>'.'+format).join(',');
+ $('import-source-help').textContent=details?.guide?ui(details.guide):'';
  const available=!!$('import-account').value;
  $('import-account-help').hidden=available;
  $('import-account').disabled=!available;
@@ -28,11 +32,16 @@ function renderBrokerAccounts(){
  accountOptions($('t212-account'),state.accounts.filter(a=>a.broker==='Trading 212'),currentBroker);
  accountOptions($('t212-report-account'),state.accounts.filter(a=>a.broker==='Trading 212'),currentBroker);
  $('broker-list').replaceChildren();for(const account of state.accounts){const row=document.createElement('tr');cell(row,account.name);cell(row,account.broker);const actions=cell(row,'');for(const [label,handler] of [[ui('Aanpassen'),()=>openBrokerEditor(account.id)],[ui('Verwijderen'),()=>openBrokerDeletion(account.id)]]){const button=document.createElement('button');button.type='button';button.className='secondary';button.textContent=label;button.addEventListener('click',handler);actions.append(button);}$('broker-list').append(row);}
- if((location.hash==='#import-geschiedenis'||/^#import-(trading212|traderepublic|revolut)$/.test(location.hash))&&accessSession?.user?.role==='admin')loadImportHistory().catch(error=>{$('import-feedback').textContent=error.message;});
+ if((location.hash==='#imports'||location.hash==='#import-geschiedenis'||/^#import-(trading212|traderepublic|revolut)$/.test(location.hash))&&accessSession?.user?.role==='admin')loadImportHistory().catch(showImportHistoryError);
+}
+function showImportHistoryError(error){
+ const target=location.hash==='#imports'?'import-directory-status':'import-feedback';
+ $(target).textContent=error.message;
 }
 async function loadImportHistory(){
  const response=await apiFetch('api/imports');const result=await response.json();if(!response.ok)throw Error(result.error);
  const chosen=location.hash.match(/^#import-(trading212|traderepublic|revolut)$/)?.[1]||$('import-provider').value;$('import-provider').replaceChildren();for(const provider of result.providers){importProviders[provider.id]=provider.name;const option=document.createElement('option');option.value=provider.id;option.textContent=provider.name+' · '+provider.formats.join(', ').toUpperCase();$('import-provider').append(option);}if(result.providers.some(p=>p.id===chosen))$('import-provider').value=chosen;refreshImportAccounts();
+ if(typeof renderImportDirectory==='function'){importDirectoryProviders=result.providers;renderImportDirectory();}
  $('import-history').replaceChildren();if(!result.batches.length){const row=document.createElement('tr');const empty=cell(row,ui('Nog geen imports. Begin bij het brokeroverzicht.'));empty.colSpan=5;$('import-history').append(row);}for(const batch of result.batches){if(location.hash.match(/^#import-(trading212|traderepublic|revolut)$/)&&batch.provider!==chosen)continue;const row=document.createElement('tr');for(const value of [new Date(batch.created_at).toLocaleString((typeof appLocale==='function'?appLocale():'nl-NL')),batch.filename,state?.accounts.find(a=>a.id===batch.account_id)?.name??batch.account_id,batch.status==='imported'?ui('Geïmporteerd'):batch.status==='partial'?ui('Deels verwerkt - beoordeling nodig'):ui('Voorbeeld')])cell(row,value);const action=cell(row,'');if(batch.status==='preview'||batch.status==='partial'){const button=document.createElement('button');button.type='button';button.textContent=ui('Voorbeeld openen');button.addEventListener('click',async()=>{button.disabled=true;try{showImportPreview(await jsonAction('api/imports/open',{batch_id:batch.id}));$('import-feedback').textContent=ui('Opgeslagen voorbeeld geopend; noteringen worden automatisch gekoppeld.');}catch(error){$('import-feedback').textContent=error.message;}finally{button.disabled=false;}});action.append(button);}$('import-history').append(row);}
 }
 function importRowStatus(entry){
@@ -75,6 +84,13 @@ function showImportPreview(result){
  }
  $('import-rematch').onclick=matchAll;matchAll();
 }
+async function readBrokerExport(file){
+ const bytes=new Uint8Array(await file.arrayBuffer());
+ if(bytes[0]===255&&bytes[1]===254)return new TextDecoder('utf-16le').decode(bytes);
+ if(bytes[0]===254&&bytes[1]===255)return new TextDecoder('utf-16be').decode(bytes);
+ try{return new TextDecoder('utf-8',{fatal:true}).decode(bytes);}
+ catch(error){if(!(error instanceof TypeError))throw error;return new TextDecoder('windows-1252').decode(bytes);}
+}
 function bindImports(){
  bindTrading212();
  let returnToImport=null;
@@ -100,7 +116,7 @@ function bindImports(){
  });
  $('broker-form').addEventListener('submit',async event=>{event.preventDefault();const button=event.target.querySelector('button');button.disabled=true;try{await jsonAction('api/accounts',Object.fromEntries(new FormData(event.target)));event.target.reset();stateETag=null;await load();$('broker-feedback').textContent=ui('Brokeraccount aangemaakt.');if(returnToImport){const created=state.accounts.find(account=>!returnToImport.ids.has(account.id)&&account.broker===importProviders[$('import-provider').value]);if(created){$('import-account').value=created.id;updateImportSource();closePopup('broker-form-editor');}}}catch(error){$('broker-feedback').textContent=error.message;}finally{button.disabled=false;}});
  $('check-updates').addEventListener('click',async()=>{const button=$('check-updates');button.disabled=true;$('update-feedback').textContent=ui('Versie controleren…');try{const result=await jsonAction('api/updates',{});$('update-feedback').textContent=(result.available?ui('Nieuwe versie beschikbaar: ')+result.latest:ui('Je hebt de nieuwste versie: ')+result.installed)+ui(' · Laatst gecontroleerd ')+new Date(result.checked_at).toLocaleString((typeof appLocale==='function'?appLocale():'nl-NL'))+(result.available?ui('. Werk bij via de Home Assistant app store.'):'');}catch(error){$('update-feedback').textContent=error.message;}finally{button.disabled=false;}});
- $('import-form').addEventListener('submit',async event=>{event.preventDefault();const file=$('import-file').files[0];if(!file||file.size>5*1024*1024){$('import-upload-feedback').textContent=ui('Kies een CSV van maximaal 5 MB.');return;}if(!$('import-account').value){$('import-upload-feedback').textContent=ui('Maak eerst bij Instellingen een brokeraccount met bedrijf ')+importProviders[$('import-provider').value]+ui(' aan.');return;}const button=event.target.querySelector('button');button.disabled=true;try{const result=await jsonAction('api/imports/preview',{provider:$('import-provider').value,account_id:Number($('import-account').value),filename:file.name,csv:await file.text()});closePopup('import-form-editor');showImportPreview(result);await loadImportHistory();$('import-feedback').textContent=ui('Voorbeeld opgeslagen. Controleer de regels en koppel de beursnoteringen vóór bevestigen.');}catch(error){$('import-upload-feedback').textContent=error.message;}finally{button.disabled=false;}});
+ $('import-form').addEventListener('submit',async event=>{event.preventDefault();const file=$('import-file').files[0];if(!file||file.size>5*1024*1024){$('import-upload-feedback').textContent=ui('Kies een exportbestand van maximaal 5 MB.');return;}if(!$('import-account').value){$('import-upload-feedback').textContent=ui('Maak eerst bij Instellingen een brokeraccount met bedrijf ')+importProviders[$('import-provider').value]+ui(' aan.');return;}const button=event.target.querySelector('button[type=submit]');button.disabled=true;try{const result=await jsonAction('api/imports/preview',{provider:$('import-provider').value,account_id:Number($('import-account').value),filename:file.name,csv:await readBrokerExport(file)});closePopup('import-form-editor');showImportPreview(result);await loadImportHistory();$('import-feedback').textContent=ui('Voorbeeld opgeslagen. Controleer de regels en koppel de beursnoteringen vóór bevestigen.');}catch(error){$('import-upload-feedback').textContent=error.message;}finally{button.disabled=false;}});
  $('import-commit').addEventListener('click',async()=>{if(!importPreview)return;const problems=importProblems(importPreview);if(problems.length)showImportProblems(problems);if(!$('import-confirm').checked){$('import-commit-feedback').textContent=ui('Vink eerst aan dat je het voorbeeld en de beursnoteringen hebt gecontroleerd.');return;}const mappings={};const button=$('import-commit');button.disabled=true;button.textContent=ui('Dagkoersen controleren en importeren…');try{const result=await jsonAction('api/imports/commit',{batch_id:importPreview.batch_id,mappings});stateETag=null;await load();await loadImportHistory();$('import-preview').hidden=true;importPreview=null;$('import-feedback').textContent=result.imported+ui(' transacties geïmporteerd. ')+(result.pending??0)+ui(' regels apart gehouden: open Imports > Te beoordelen. Bestaande transacties zijn niet dubbel toegevoegd.')+(result.standalone_dividends?' '+result.standalone_dividends+ui(' dividendontvangsten apart opgeslagen zonder voorafgaande aankoop. Zie Dividend voor de melding over ontbrekende aankoophistorie.'):'');const feedback=$('import-feedback');
   feedback.append(document.createTextNode(' '+ui('Overgeslagen duplicaten')+': '+(result.duplicates??0)+'. '));
   for(const [hash,label] of [['#import-beoordeling',ui('Importregels controleren')],['#import-koppelingen',ui('Beurskoppelingen controleren')],['#transacties',ui('Portefeuilletransacties bekijken')]]){

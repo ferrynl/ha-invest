@@ -328,3 +328,14 @@ a.home-mover{color:inherit;text-decoration:none}a.home-mover:is(:hover,:focus-vi
 
 .made-in-europe{width:fit-content;margin:1.5rem auto;padding:.65rem 1rem;border-radius:999px;background:#173778;color:#fff;box-shadow:0 3px 10px #101e4933;text-align:center}
 .made-in-europe span{color:#ffdc66;margin-inline-end:.5rem}
+
+.import-directory-controls{display:grid;grid-template-columns:minmax(0,2fr) minmax(160px,1fr);gap:14px;max-width:690px;margin:0 0 20px}
+.import-directory-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,225px),1fr));gap:12px;margin-bottom:20px}
+.import-broker-choice{text-align:left;display:flex;align-items:flex-start;flex-direction:column;gap:8px;width:100%;padding:16px;background:var(--surface,#172333);border:1px solid var(--border,#33455d);border-radius:12px;color:var(--text,#eff5ff);min-height:92px}
+.import-broker-choice:hover,.import-broker-choice[aria-pressed="true"]{border-color:#4de0b3;background:#17362f;color:#effaf6}
+.import-broker-choice strong{font-size:1rem}.import-broker-choice small{font-size:.8rem;color:#bbcde1}
+.import-formats{font-size:.78rem;font-weight:700;letter-spacing:.04em;color:#70e8c0}
+.import-broker-detail{margin-bottom:20px}.import-broker-detail .import-actions{align-items:center;justify-content:flex-start}
+#import-directory-status:empty{display:none}#import-broker-api-form fieldset{display:grid;gap:10px;min-width:0;border:1px solid #33455d;border-radius:10px;padding:14px}
+#import-broker-api-form fieldset[hidden]{display:none}
+@media(max-width:540px){.import-directory-controls{grid-template-columns:minmax(0,1fr)}.import-broker-detail .import-actions{align-items:stretch}.import-broker-choice{min-height:76px}}

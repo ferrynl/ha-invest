@@ -39,7 +39,7 @@ def parse_csv(text, decision=None):
             action={'BUY - MARKET':'BUY','BUY - LIMIT':'BUY','SELL - MARKET':'SELL','SELL - LIMIT':'SELL'}.get(action,action)
             kind=decision or {'BUY':'BUY','SELL':'SELL','DIVIDEND':'DIVIDEND','CASH TOP-UP':'SKIP','CASH WITHDRAWAL':'SKIP','CUSTODY FEE':'CHARGE','RETURN OF CAPITAL':'CAPITAL_RETURN','STOCK SPLIT':'SPLIT'}.get(action)
             if not decision:
-                from .charge_fields import REVOLUT_ACTIONS
+                from ..charge_fields import REVOLUT_ACTIONS
                 if action in REVOLUT_ACTIONS:kind='CHARGE'
             row=dict(line=index,kind=kind,ticker=raw.get('Ticker') or raw.get('Symbol',''),name=raw.get('Ticker') or raw.get('Symbol',''),raw=raw,digest=digest,external_id='id:'+raw['Reference'] if raw.get('Reference') else 'raw:'+digest,error=None)
             try:
@@ -76,5 +76,11 @@ def parse_csv(text, decision=None):
             rows.append(row)
     except csv.Error as error:raise ValueError('Revolut CSV is ongeldig.') from error
     if not rows:raise ValueError('CSV bevat geen gegevens.')
-    from .charge_fields import attach
+    from ..charge_fields import attach
     return attach(rows,'revolut')
+
+
+ADAPTER = dict(name='Revolut',
+    formats=['csv'],
+    parse=parse_csv,
+    guide='Upload de Engelstalige CSV van je Revolut-beleggingsrekening.')
