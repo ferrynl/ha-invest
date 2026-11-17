@@ -79,5 +79,17 @@
 - Voor de fase mag 'compleet' pas worden gebruikt nadat deze acceptatiecontroles zijn geverifieerd. GitHub groen bewijst niet dat HA live is.
 - Herinnering: maandag rond 08:00 (Europe/Amsterdam), 16 nov t/m 28 dec.
 
+## Acceptatie fase 10 (17 november)
+
+De [GitHub Checks voor PR #57](https://github.com/ferrynl/ha-invest/actions/runs/44017818767) draaiden de volledige Python-suite op de gewijzigde code. De regressies controleren:
+
+- **Omboekingen en splitsingen:** kostprijs en historie blijven behouden. Ongeldige combinaties boeken geen halve transactie (`test_conversions.py`, `test_corporate_actions.py`).
+- **Kosten en dividend:** kosten, btw en bronbelasting worden één keer verwerkt. Ontvangen dividend en prognoses blijven gescheiden (`test_charges.py`, `test_dividend_dashboard.py`).
+- **Valuta:** de oorspronkelijke bedragen blijven bewaard. Een ontbrekende dagkoers houdt de boeking tegen; een toekomstige koers of 1:1 dient niet als fallback (`test_forex.py`).
+- **Brokerreconciliatie:** de fictieve Trading 212-export met 100 aankopen en 9.900 dividendregels sluit aan op 25 aandelen, €3.000 kostprijs en €693 dividend. De 10.000 bron-ID’s worden per brokeraccount opgeslagen. Herimport boekt nul transacties. De IBKR-test controleert dezelfde bronidentiteit in CSV en XML (`test_broker_reconciliation.py`, `test_european_broker_imports.py`).
+- **Verklaarde afwijkingen:** bron-ID’s met afwijkende inhoud, onbekende corporate actions en ontbrekende koersen of beurskoppelingen worden afgewezen of apart gehouden voor beoordeling. De geverifieerde EPIX.CVR-afwikkeling heeft een eigen regressietest. De mogelijke TMX → TDT-omzetting blijft ter beoordeling omdat de koppeling en over te dragen kostprijs niet zijn bevestigd (`test_partial_import.py`, `test_import_edge_cases.py`, PR #52).
+
+De acceptatie gebruikt fictieve gegevens en geeft geen uitsluitsel over openstaande regels in een echte portefeuille. Home Invest 0.70.43 bevat de geteste appcode. PR #57 voegt de schaaltest toe aan GitHub Actions.
+
 ## Bij iedere nieuwe projectsessie
 Lees dit document; bekijk actuele GitHub-issues, PRs, checks en release-status; pak hoogste open P0 op; update roadmap zodra afgerond en geverifieerd.
