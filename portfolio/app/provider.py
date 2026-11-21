@@ -9,7 +9,7 @@ from functools import lru_cache
 import time
 from urllib.error import HTTPError, URLError
 from persistent_cache import cached_json
-from diagnostics import ActionError
+from diagnostics import ActionError, record
 from forex import code as currency_code
 
 class ProviderBusy(ActionError):
@@ -40,6 +40,28 @@ def error_details(error):
                        reason='Koersdienst retourneerde een fout.')
     details.update(getattr(error, 'provider_details', {}))
     return details
+
+
+def failure_key(event, instrument):
+    symbol, exchange, currency = instrument
+    return '|'.join((event, quote_symbol(symbol, exchange), exchange, currency_code(currency)))
+
+
+def record_failure(store, event, message, instrument, error):
+    details = error_details(error)
+    shared_outage = details['code'] in (
+        'provider_rate_limited', 'provider_unavailable', 'provider_cooldown',
+        'provider_connection_failed', 'provider_http_error',
+    ) and details.get('endpoint_host') in ('query1.finance.yahoo.com', 'query2.finance.yahoo.com')
+    once = 'yahoo-availability' if shared_outage else failure_key(event, instrument)
+    return record(store, 'WARNING', 'market', event, message,
+                  dict(zip(('symbol', 'exchange', 'currency'), instrument)) | details, once=once)
+
+
+def clear_failure(store, key):
+    if store is not None:
+        with store.connect() as db:
+            db.execute("DELETE FROM api_cache WHERE namespace='market-log-once' AND cache_key=?", (key,))
 
 
 def _busy_message(http_status):
@@ -110,6 +132,7 @@ def _payload(request,timeout,store,namespace,key,ttl):
             if store and pause:
                 with store.connect() as db:
                     db.execute("DELETE FROM api_cache WHERE namespace='provider-cooldown' AND cache_key='yahoo' AND expires_at<=?", (time.time(),))
+            clear_failure(store, 'yahoo-availability')
             return result
         except Exception as error:
             error.provider_details = {'endpoint_host': urlsplit(request.full_url).hostname,
@@ -168,7 +191,7 @@ def quote_symbol(symbol,exchange):
 
 def fetch_quote(key, symbol, exchange, currency,store=None,ttl=900):
     request = Request('https://query1.finance.yahoo.com/v8/finance/chart/' + quote(quote_symbol(symbol,exchange), safe='') + '?interval=1d&range=1d', headers={'User-Agent': 'Mozilla/5.0'})
-    result=_payload(request,20,store,'yahoo-quote','|'.join((symbol,exchange,currency)),ttl)['chart']['result'][0]['meta']
+    result=_payload(request,20,store,'yahoo-quote-v2','|'.join((quote_symbol(symbol,exchange),exchange)),ttl)['chart']['result'][0]['meta']
     from decimal import Decimal
     source_currency=currency_code(result.get('currency',''))
     pence_to_pounds=source_currency=='GBX' and currency_code(currency)=='GBP'
@@ -178,7 +201,9 @@ def fetch_quote(key, symbol, exchange, currency,store=None,ttl=900):
     if result.get('symbol', '').upper() != quote_symbol(symbol,exchange).upper() or not market or market[0]!=exchange:
         raise ActionError('Koersdienst retourneerde een ander symbool of andere beurs.', 'quote_listing_mismatch')
     timestamp = datetime.fromtimestamp(int(result['regularMarketTime']), timezone.utc).isoformat()
-    return str(Decimal(str(result['regularMarketPrice']))*Decimal('.01')) if pence_to_pounds else result['regularMarketPrice'], timestamp
+    price = str(Decimal(str(result['regularMarketPrice']))*Decimal('.01')) if pence_to_pounds else result['regularMarketPrice']
+    clear_failure(store, failure_key('quote_failed', (symbol,exchange,currency)))
+    return price, timestamp
 
 def fetch_history(symbol, exchange, currency, start,store=None):
     # Include a preceding trading day so a weekend purchase has a reference price.
@@ -199,4 +224,5 @@ def fetch_history(symbol, exchange, currency, start,store=None):
             rows.append({'day': datetime.fromtimestamp(stamp, timezone.utc).date().isoformat(), 'price': str(close)})
     if not rows:
         raise ActionError('Geen historische dagkoersen beschikbaar.', 'history_empty')
+    clear_failure(store, failure_key('history_failed', (symbol,exchange,currency)))
     return rows

@@ -7,7 +7,7 @@ from decimal import Decimal
 from pathlib import Path
 from http.server import ThreadingHTTPServer
 from storage import Store
-from provider import fetch_quote, search_stocks, fetch_history, error_details, ProviderBusy
+from provider import fetch_quote, search_stocks, fetch_history, error_details, ProviderBusy, record_failure, clear_failure, failure_key
 from security import Auth
 from cache import StateCache
 from refresh_index import purchase_index
@@ -59,10 +59,11 @@ def refresh(automatic=False):
                 if instrument in active_instruments and supported(*instrument) and not (p.get('quote') or {}).get('manual'):
                     try:
                         quote=fetch_fund_quote(store)
+                        clear_failure(store,failure_key('quote_failed',instrument))
                         if not p.get('quote') or p['quote']['quoted_at']!=quote['observed_at']:
                             store.quote(*instrument,quote['price'],quote['observed_at'],quote['source']);state_cache.invalidate()
                     except Exception as error:
-                        record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],**error_details(error)})
+                        record_failure(store,'quote_failed','Actuele koers ophalen mislukt.',instrument,error)
                         errors+=1
                 if enrich_categories(store,instrument):state_cache.invalidate()
                 continue
@@ -75,7 +76,7 @@ def refresh(automatic=False):
                     price, stamp = fetch_quote('', p['symbol'], p['exchange'], p['currency'],store=store,ttl=interval)
                     store.quote(p['symbol'], p['exchange'], p['currency'], price, stamp, 'Yahoo Finance (mogelijk vertraagd)')
             except Exception as error:
-                record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],**error_details(error)})
+                record_failure(store,'quote_failed','Actuele koers ophalen mislukt.',instrument,error)
                 errors += 1
                 if isinstance(error, ProviderBusy):yahoo_paused = True
             if automatic and not automatic_window():break
@@ -89,7 +90,7 @@ def refresh(automatic=False):
                     rows = fetch_history(p['symbol'], p['exchange'], p['currency'], requested,store=store)
                     store.save_history(p['symbol'], p['exchange'], p['currency'], start, rows)
             except Exception as error:
-                record(store,'WARNING','market','history_failed','Koershistorie ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],**error_details(error)})
+                record_failure(store,'history_failed','Koershistorie ophalen mislukt.',instrument,error)
                 history_errors += 1
                 if isinstance(error, ProviderBusy):yahoo_paused = True
             if automatic and not automatic_window():break

@@ -159,8 +159,13 @@ def refresh_demo_quotes(store,ttl=300,fetch=None,automatic=False,provider_store=
         try:
             price,stamp=fetch('',listing_symbol,listing_exchange,currency,store=provider_store if provider_store is not None else store,ttl=ttl)
             store.quote(symbol,exchange,currency,price,stamp,'Yahoo Finance (mogelijk vertraagd)')
-        except ProviderBusy:break
+        except ProviderBusy as error:
+            from provider import record_failure
+            record_failure(provider_store if provider_store is not None else store,'quote_failed','Demokoers ophalen mislukt.',
+                           (listing_symbol,listing_exchange,currency),error)
+            break
         except Exception as error:
-            from diagnostics import record
-            record(store,'WARNING','market','demo_quote_failed','Demokoers ophalen mislukt.',{'symbol':symbol,'error_type':type(error).__name__})
+            from provider import record_failure
+            record_failure(provider_store if provider_store is not None else store,'quote_failed','Demokoers ophalen mislukt.',
+                           (listing_symbol,listing_exchange,currency),error)
         if fetch is fetch_quote:time.sleep(1)
