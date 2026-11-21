@@ -3,7 +3,7 @@ from datetime import date,timedelta
 from decimal import Decimal
 from math import sin
 import time
-from market_schedule import market_weekend
+from market_schedule import market_weekend, claim_refresh, automatic_window
 from threading import RLock
 from urllib.parse import urlsplit,parse_qs
 from storage import Store
@@ -127,17 +127,20 @@ def profile_handler(primary,store,auth,factory):
     return ProfileHandler
 
 
-def refresh_active_demo(root, ttl=900):
+def refresh_active_demo(root, ttl=900, provider_store=None):
     """Only a recently viewed demo may spend background network requests."""
     with _demo_lock:
         active = _demo_active_until.get(str(root.resolve()), 0) > time.monotonic()
     if not active:
         return False
-    refresh_demo_quotes(ensure_demo(root), ttl=ttl)
+    store = ensure_demo(root)
+    if not claim_refresh(store, ttl, key='demo'):
+        return False
+    refresh_demo_quotes(store, ttl=max(900, ttl), automatic=True, provider_store=provider_store)
     return True
 
 
-def refresh_demo_quotes(store,ttl=300,fetch=None):
+def refresh_demo_quotes(store,ttl=300,fetch=None,automatic=False,provider_store=None):
     """Update only the isolated demo, preserving seed history and last good quotes."""
     import time
     from datetime import datetime,timezone
@@ -146,6 +149,7 @@ def refresh_demo_quotes(store,ttl=300,fetch=None):
     with store.read() as db:
         rows=[dict(row) for row in db.execute('SELECT symbol,exchange,currency,source,fetched_at FROM quotes WHERE id IN (SELECT MAX(id) FROM quotes GROUP BY symbol,exchange,currency)')]
     for row in rows:
+        if automatic and not automatic_window():break
         if market_weekend(row['exchange']):continue
         if row['source']!='DEMO' and (datetime.now(timezone.utc)-datetime.fromisoformat(row['fetched_at'])).total_seconds()<ttl:continue
         symbol,exchange,currency=(row[k] for k in ('symbol','exchange','currency'))
@@ -153,10 +157,15 @@ def refresh_demo_quotes(store,ttl=300,fetch=None):
         listing_exchange={'AIR':'PARIS','SAP':'XETRA','SIE':'XETRA','MC':'PARIS','OR':'PARIS'}.get(symbol,exchange) if currency=='EUR' else exchange
         listing_symbol={'SHELL':'SHELL','DSM':'DSFIR'}.get(symbol,symbol) if currency=='EUR' else symbol
         try:
-            price,stamp=fetch('',listing_symbol,listing_exchange,currency,store=store,ttl=ttl)
+            price,stamp=fetch('',listing_symbol,listing_exchange,currency,store=provider_store if provider_store is not None else store,ttl=ttl)
             store.quote(symbol,exchange,currency,price,stamp,'Yahoo Finance (mogelijk vertraagd)')
-        except ProviderBusy:break
+        except ProviderBusy as error:
+            from provider import record_failure
+            record_failure(provider_store if provider_store is not None else store,'quote_failed','Demokoers ophalen mislukt.',
+                           (listing_symbol,listing_exchange,currency),error)
+            break
         except Exception as error:
-            from diagnostics import record
-            record(store,'WARNING','market','demo_quote_failed','Demokoers ophalen mislukt.',{'symbol':symbol,'error_type':type(error).__name__})
+            from provider import record_failure
+            record_failure(provider_store if provider_store is not None else store,'quote_failed','Demokoers ophalen mislukt.',
+                           (listing_symbol,listing_exchange,currency),error)
         if fetch is fetch_quote:time.sleep(1)

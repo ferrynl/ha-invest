@@ -32,12 +32,23 @@ def auth_secrets(authorization):
         except (ValueError,UnicodeError):pass
     return values
 
-def record(store,level,source,event,message,details=None,secrets=(),reference=None):
+def record(store,level,source,event,message,details=None,secrets=(),reference=None,once=None):
     reference=reference or uuid4().hex[:12]
     try:
         stamp=datetime.now(timezone.utc)
         with store.connect() as db:
+            if once is not None:
+                db.execute('BEGIN IMMEDIATE')
+                previous = db.execute(
+                    "SELECT l.reference FROM api_cache c JOIN app_logs l ON c.payload=json_quote(l.reference) "
+                    "WHERE c.namespace='market-log-once' AND c.cache_key=? AND c.expires_at>?",
+                    (once, stamp.timestamp()),
+                ).fetchone()
+                if previous:return previous[0]
             db.execute('INSERT INTO app_logs(created_at,level,source,event,message,details,reference) VALUES(?,?,?,?,?,?,?)',(stamp.isoformat(),level if level in ('INFO','WARNING','ERROR') else 'INFO',scrub(source,secrets),scrub(event,secrets),scrub(message,secrets),json.dumps(scrub(details or {},secrets),ensure_ascii=False),reference))
+            if once is not None:
+                db.execute('INSERT OR REPLACE INTO api_cache VALUES(?,?,?,?,?)',
+                           ('market-log-once',once,json.dumps(reference),stamp.timestamp(),stamp.timestamp()+7*86400))
             db.execute('DELETE FROM app_logs WHERE created_at<?',((stamp-timedelta(days=7)).isoformat(),))
             db.execute('DELETE FROM app_logs WHERE id NOT IN (SELECT id FROM app_logs ORDER BY id DESC LIMIT 5000)')
     except (sqlite3.Error,OSError):pass  # Diagnostics must never break the financial operation.

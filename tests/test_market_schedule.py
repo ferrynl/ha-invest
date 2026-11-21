@@ -100,10 +100,11 @@ class DemoActivityTests(unittest.TestCase):
             with patch.dict(demo._demo_active_until, {str(root.resolve()): 1000}, clear=True), \
                  patch('demo.time.monotonic', return_value=100), \
                  patch('demo.ensure_demo', return_value=self) as seed, \
-                 patch('demo.refresh_demo_quotes') as quotes:
+                 patch('demo.refresh_demo_quotes') as quotes, \
+                 patch('demo.claim_refresh', return_value=True):
                 self.assertTrue(demo.refresh_active_demo(root, ttl=1800))
                 seed.assert_called_once_with(root)
-                quotes.assert_called_once_with(self, ttl=1800)
+                quotes.assert_called_once_with(self, ttl=1800, automatic=True, provider_store=None)
 
     def test_demo_skips_weekend_quotes(self):
         from demo import refresh_demo_quotes

@@ -37,7 +37,7 @@ class ProviderDiagnosticsTests(unittest.TestCase):
                         details = error_details(caught.exception)
                         self.assertEqual(details['http_status'], status)
                         self.assertGreater(details['retry_seconds'], 0)
-                        self.assertLessEqual(details['retry_seconds'], 180)
+                        self.assertLessEqual(details['retry_seconds'], 900 if status == 429 else 180)
                         self.assertEqual(details['endpoint_host'], 'query1.finance.yahoo.com')
                         self.assertIn('duration_ms', details)
                         self.assertEqual(details['stage'], 'yahoo-quote')
@@ -100,7 +100,7 @@ class MarketRefreshDiagnosticsTests(unittest.TestCase):
             entries = [row for row in read_logs(store)['entries'] if row['event'] == 'quote_failed']
             self.assertEqual(len(entries), 1)
             self.assertEqual(entries[0]['details']['http_status'], 429)
-            self.assertEqual(entries[0]['details']['retry_seconds'], 180)
+            self.assertEqual(entries[0]['details']['retry_seconds'], 900)
             self.assertIn('Yahoo', entries[0]['details']['reason'])
 
 

@@ -1,3 +1,11 @@
+## 0.70.46
+
+- Beperk automatische marktrondes tot werkdagen tussen 08.00 en 22.00 uur Nederlandse tijd, inclusief bedrijfsprofielen, ETF-samenstellingen en achtergrond-FX.
+- Bewaar minimaal vijftien minuten tussen automatische rondes, ook bij tussentijdse verzoeken en herstarts. Een langer ingesteld interval blijft gelden.
+- Laat de Yahoo-pauze bij herhaalde HTTP 429-antwoorden oplopen vanaf vijftien minuten. Respecteer langere Retry-After-wachttijden.
+- Deel de Yahoo-koerscache en bronwachttijd tussen alle brokeraccounts en een actieve demo, met één sleutel per beursnotering.
+- Log dezelfde aanhoudende Yahoo-storing één keer, ook bij gelijktijdige meldingen en herstarts.
+
 ## 0.70.45
 
 - Sla automatische Yahoo-koers- en historieaanvragen over op zaterdag en zondag volgens de lokale tijdzone van de beurs.

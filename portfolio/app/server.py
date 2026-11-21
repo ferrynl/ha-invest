@@ -7,11 +7,11 @@ from decimal import Decimal
 from pathlib import Path
 from http.server import ThreadingHTTPServer
 from storage import Store
-from provider import fetch_quote, search_stocks, fetch_history, error_details, ProviderBusy
+from provider import fetch_quote, search_stocks, fetch_history, error_details, ProviderBusy, record_failure, clear_failure, failure_key
 from security import Auth
 from cache import StateCache
 from refresh_index import purchase_index
-from market_schedule import market_weekend
+from market_schedule import market_weekend, automatic_window, claim_refresh
 from web import make_handler
 from datetime import datetime, timezone
 from diagnostics import record
@@ -24,15 +24,17 @@ auth = Auth(store)
 state_cache = StateCache(30,store=store)
 options_path = store.root / 'options.json'
 options = json.loads(options_path.read_text()) if options_path.exists() else {}
-interval = max(5, int(options.get('refresh_minutes', 15))) * 60
+interval = max(15, int(options.get('refresh_minutes', 15))) * 60
 refresh_requested = threading.Event()
 status = {'message': 'Yahoo-koersen worden opgehaald; mogelijk vertraagd.', 'last_attempt': None}
 refresh_lock = threading.Lock()
 
-def refresh():
+def refresh(automatic=False):
     if not refresh_lock.acquire(blocking=False):
         return
     try:
+        if automatic and not claim_refresh(store, interval):
+            return False
         state_cache.bind(store)
         errors = 0
         snapshot = state_cache.derived('state-compact:all',lambda:store.state(compact_view=True))
@@ -46,6 +48,7 @@ def refresh():
         }
         seen=set()
         for p in snapshot['positions']:
+            if automatic and not automatic_window():break
             instrument=(p['symbol'],p['exchange'],p['currency'])
             if p.get('invalid_position') or p.get('quote_paused') or p['symbol'].endswith('.OLD'):continue
             if Decimal(p['quantity'])==0 and instrument in transferred_sells:continue
@@ -56,10 +59,11 @@ def refresh():
                 if instrument in active_instruments and supported(*instrument) and not (p.get('quote') or {}).get('manual'):
                     try:
                         quote=fetch_fund_quote(store)
+                        clear_failure(store,failure_key('quote_failed',instrument))
                         if not p.get('quote') or p['quote']['quoted_at']!=quote['observed_at']:
                             store.quote(*instrument,quote['price'],quote['observed_at'],quote['source']);state_cache.invalidate()
                     except Exception as error:
-                        record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],**error_details(error)})
+                        record_failure(store,'quote_failed','Actuele koers ophalen mislukt.',instrument,error)
                         errors+=1
                 if enrich_categories(store,instrument):state_cache.invalidate()
                 continue
@@ -72,9 +76,10 @@ def refresh():
                     price, stamp = fetch_quote('', p['symbol'], p['exchange'], p['currency'],store=store,ttl=interval)
                     store.quote(p['symbol'], p['exchange'], p['currency'], price, stamp, 'Yahoo Finance (mogelijk vertraagd)')
             except Exception as error:
-                record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],**error_details(error)})
+                record_failure(store,'quote_failed','Actuele koers ophalen mislukt.',instrument,error)
                 errors += 1
                 if isinstance(error, ProviderBusy):yahoo_paused = True
+            if automatic and not automatic_window():break
             start = earliest_dates.get(instrument)
             if not start:
                 record(store,'WARNING','market','history_missing_purchase','Geen aankoopdatum voor koershistorie.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency']})
@@ -85,11 +90,13 @@ def refresh():
                     rows = fetch_history(p['symbol'], p['exchange'], p['currency'], requested,store=store)
                     store.save_history(p['symbol'], p['exchange'], p['currency'], start, rows)
             except Exception as error:
-                record(store,'WARNING','market','history_failed','Koershistorie ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],**error_details(error)})
+                record_failure(store,'history_failed','Koershistorie ophalen mislukt.',instrument,error)
                 history_errors += 1
                 if isinstance(error, ProviderBusy):yahoo_paused = True
+            if automatic and not automatic_window():break
             # Profile lookup runs once per listing, including existing holdings.
             if enrich_categories(store,instrument):state_cache.invalidate()
+            if automatic and not automatic_window():break
             from fund_holdings import background_refresh
             if background_refresh(store,instrument,p.get('categories',{}).get('asset_type')=='ETF'):state_cache.invalidate()
             # Space requests to avoid bursts; plan limits still apply.
@@ -99,6 +106,7 @@ def refresh():
         if history_errors:
             status['message'] += f' Historie van {history_errors} aandeel/aandelen kon niet worden opgehaald; volgt bij de volgende controle.'
         state_cache.invalidate()
+        return True
     finally:
         refresh_lock.release()
 
@@ -110,13 +118,6 @@ def warm_dashboard():
     snapshot=state_cache.derived('state-compact:all',lambda:store.state(compact_view=True))
     state_cache.derived('home-euro-compact:all',lambda:compact_overview(store,snapshot))
 
-def demo_background():
-    from demo import refresh_active_demo
-    while True:
-        try:refresh_active_demo(store.root/'demo',ttl=interval)
-        except Exception as error:record(store,'WARNING','market','demo_refresh_failed','Demokoersen bijwerken mislukt.',{'error_type':type(error).__name__})
-        time.sleep(300)
-
 def background():
     last_backup = 0
     last_fx=0
@@ -125,14 +126,16 @@ def background():
             if time.time() - last_backup >= 86400:
                 store.backup()
                 last_backup = time.time()
-            if time.time()-last_fx>=21600:
-                try:
-                    fx_currencies(store);fx_snapshot(store,datetime.now(timezone.utc).date().isoformat())
-                    record(store,'INFO','fx','daily_rates','Dagreferentiekoersen opgeslagen.')
-                except ValueError as error:record(store,'WARNING','fx','daily_rates_failed',str(error))
-                last_fx=time.time()
-            refresh()
-            warm_dashboard()
+            if automatic_window() and refresh(automatic=True):
+                if time.time()-last_fx>=21600:
+                    try:
+                        fx_currencies(store);fx_snapshot(store,datetime.now(timezone.utc).date().isoformat())
+                        record(store,'INFO','fx','daily_rates','Dagreferentiekoersen opgeslagen.')
+                    except ValueError as error:record(store,'WARNING','fx','daily_rates_failed',str(error))
+                    last_fx=time.time()
+                warm_dashboard()
+                from demo import refresh_active_demo
+                refresh_active_demo(store.root/'demo',ttl=interval,provider_store=store)
         except Exception as error:
             record(store,'ERROR','system','background_failed','Achtergrondtaak mislukt.',error_details(error))
             logging.exception('Achtergrondtaak mislukt')
@@ -180,7 +183,6 @@ def start_export():
 if __name__ == '__main__':
     start_export()
     threading.Thread(target=background, daemon=True).start()
-    threading.Thread(target=demo_background, daemon=True).start()
     from feedback_client import background as feedback_background
     threading.Thread(target=feedback_background,args=(store,options),daemon=True).start()
     # The dashboard stays ingress-only; optional sensors use a separate read-only port.
