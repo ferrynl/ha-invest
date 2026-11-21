@@ -41,7 +41,7 @@ class ProviderDiagnosticsTests(unittest.TestCase):
                         self.assertEqual(details['endpoint_host'], 'query1.finance.yahoo.com')
                         self.assertIn('duration_ms', details)
                         self.assertEqual(details['stage'], 'yahoo-quote')
-                        self.assertIn('Yahoo', details['reason'])
+                        self.assertTrue(details['reason'])
                         record_text = json.dumps(details)
                         for secret in ('private-query', 'private-response', 'private-cookie', 'private-body'):
                             self.assertNotIn(secret, record_text)

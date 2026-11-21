@@ -23,28 +23,28 @@ class ProviderBusy(ActionError):
 def error_details(error):
     """Only application-authored reasons and fixed request metadata enter logs."""
     details = {'error_type': type(error).__name__, 'code': 'provider_failed',
-               'reason': 'Koersaanvraag is mislukt; bekijk het fouttype.'}
+               'reason': 'Actuele koers ophalen mislukt.'}
     if isinstance(error, ActionError):
         details.update(error.details, code=error.code, reason=str(error))
     elif isinstance(error, HTTPError):
         details.update(code='provider_http_error', http_status=error.code,
-                       reason='Databron heeft de aanvraag met een HTTP-fout geweigerd.')
+                       reason='Aanvraag kon niet worden verwerkt.')
     elif isinstance(error, (TimeoutError, URLError, OSError)):
         details.update(code='provider_connection_failed',
-                       reason='Verbinding met de databron is mislukt of verlopen.')
+                       reason='Verbinding mislukt.')
         if isinstance(error, URLError):
             details['connection_error_type'] = type(error.reason).__name__
     elif isinstance(error, (json.JSONDecodeError, KeyError, IndexError, TypeError, AttributeError)):
         details.update(code='provider_invalid_response',
-                       reason='Koersantwoord mist geldige of verplichte gegevens.')
+                       reason='Koersdienst retourneerde een fout.')
     details.update(getattr(error, 'provider_details', {}))
     return details
 
 
 def _busy_message(http_status):
-    return ('Yahoo is tijdelijk niet beschikbaar. De aanvraag wordt na de wachttijd opnieuw geprobeerd.'
+    return ('Bron tijdelijk niet beschikbaar. Probeer later opnieuw.'
             if http_status == 503 else
-            'Yahoo heeft tijdelijk een aanvraaglimiet. De aanvraag wordt na de wachttijd opnieuw geprobeerd.')
+            'Yahoo heeft tijdelijk een aanvraaglimiet. Automatisch koppelen is gepauzeerd; probeer over enkele minuten opnieuw. Opgeslagen koppelingen blijven bruikbaar.')
 
 
 def _payload(request,timeout,store,namespace,key,ttl):
@@ -78,7 +78,7 @@ def _payload(request,timeout,store,namespace,key,ttl):
                                    ('provider-cooldown','yahoo',json.dumps({'http_status':http_status}),stamp,stamp+delay))
                 raise ProviderBusy(_busy_message(http_status), delay, http_status) from error
             if not isinstance(result, dict):
-                raise ActionError('Koersdienst retourneerde geen geldig gegevensobject.', 'provider_invalid_response')
+                raise ActionError('Koersdienst retourneerde een fout.', 'provider_invalid_response')
             if result.get('status')=='error' or (isinstance(result.get('chart'),dict) and result['chart'].get('error')):
                 raise ActionError('Koersdienst retourneerde een fout.', 'provider_response_error')
             return result
