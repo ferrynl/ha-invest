@@ -275,10 +275,23 @@ def background_refresh(store, key, is_etf=False):
         return False
     if not previous and tuple(key) not in KNOWN:
         return False
-    try:
-        result=refresh(store, key)
-        return not previous or result['fetched_at']!=previous['fetched_at']
-    except Exception as error:
-        from diagnostics import record
-        record(store, 'WARNING', 'market', 'fund_holdings_failed', 'ETF-samenstelling ophalen mislukt.', {'symbol': key[0], 'error_type': type(error).__name__})
-        return False
+    # Background discovery runs every market pass. Failed large issuer downloads
+    # need the same daily budget as successful snapshots, including after restart.
+    cache_key = json.dumps(list(key))
+    with _lock:
+        with store.connect() as db:
+            pause = db.execute("SELECT expires_at FROM api_cache WHERE namespace='fund-background' AND cache_key=?", (cache_key,)).fetchone()
+            if pause and pause[0] > time.time():
+                return False
+            stamp = time.time()
+            db.execute('INSERT OR REPLACE INTO api_cache VALUES(?,?,?,?,?)',
+                       ('fund-background', cache_key, '{}', stamp, stamp + 86400))
+        try:
+            result=refresh(store, key)
+            return not previous or result['fetched_at']!=previous['fetched_at']
+        except Exception as error:
+            from diagnostics import record
+            from provider import error_details
+            record(store, 'WARNING', 'market', 'fund_holdings_failed', 'ETF-samenstelling ophalen mislukt.',
+                   {'symbol': key[0], **error_details(error), 'background_retry_seconds': 86400})
+            return False

@@ -1,34 +1,91 @@
 """Best-effort Yahoo public endpoint, not an official supported API."""
 import json
+import math
 from urllib.request import urlopen, Request
-from urllib.parse import quote, urlencode
+from urllib.parse import quote, urlencode, urlsplit
 from datetime import datetime, timezone, date, timedelta
 from functools import lru_cache
 import time
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from persistent_cache import cached_json
+from diagnostics import ActionError
 from forex import code as currency_code
 
-class ProviderBusy(ValueError):
-    pass
+class ProviderBusy(ActionError):
+    def __init__(self, message, retry_seconds=None, http_status=None):
+        code = 'provider_rate_limited' if http_status == 429 else 'provider_unavailable' if http_status == 503 else 'provider_cooldown'
+        details = {}
+        if retry_seconds is not None:details['retry_seconds'] = retry_seconds
+        if http_status is not None:details['http_status'] = http_status
+        super().__init__(message, code, details)
+
+
+def error_details(error):
+    """Only application-authored reasons and fixed request metadata enter logs."""
+    details = {'error_type': type(error).__name__, 'code': 'provider_failed',
+               'reason': 'Actuele koers ophalen mislukt.'}
+    if isinstance(error, ActionError):
+        details.update(error.details, code=error.code, reason=str(error))
+    elif isinstance(error, HTTPError):
+        details.update(code='provider_http_error', http_status=error.code,
+                       reason='Aanvraag kon niet worden verwerkt.')
+    elif isinstance(error, (TimeoutError, URLError, OSError)):
+        details.update(code='provider_connection_failed',
+                       reason='Verbinding mislukt.')
+        if isinstance(error, URLError):
+            details['connection_error_type'] = type(error.reason).__name__
+    elif isinstance(error, (json.JSONDecodeError, KeyError, IndexError, TypeError, AttributeError)):
+        details.update(code='provider_invalid_response',
+                       reason='Koersdienst retourneerde een fout.')
+    details.update(getattr(error, 'provider_details', {}))
+    return details
+
+
+def _busy_message(http_status):
+    return ('Bron tijdelijk niet beschikbaar. Probeer later opnieuw.'
+            if http_status == 503 else
+            'Yahoo heeft tijdelijk een aanvraaglimiet. Automatisch koppelen is gepauzeerd; probeer over enkele minuten opnieuw. Opgeslagen koppelingen blijven bruikbaar.')
+
 
 def _payload(request,timeout,store,namespace,key,ttl):
     def load():
-        if store:
-            with store.connect() as db:pause=db.execute("SELECT expires_at FROM api_cache WHERE namespace='provider-cooldown' AND cache_key='yahoo'").fetchone()
-            if pause and pause[0]>time.time():raise ProviderBusy('Yahoo heeft tijdelijk een aanvraaglimiet. Automatisch koppelen is gepauzeerd; probeer over enkele minuten opnieuw. Opgeslagen koppelingen blijven bruikbaar.')
+        started = time.monotonic()
         try:
-            with urlopen(request,timeout=timeout) as response:result=json.load(response)
-        except HTTPError as error:
-            if error.code not in (429,503):raise
-            try:delay=min(3600,max(60,int(error.headers.get('Retry-After','120'))))
-            except (ValueError,TypeError):delay=120
             if store:
-                stamp=time.time()
-                with store.connect() as db:db.execute('INSERT OR REPLACE INTO api_cache VALUES(?,?,?,?,?)',('provider-cooldown','yahoo','{}',stamp,stamp+delay))
-            raise ProviderBusy('Yahoo heeft tijdelijk een aanvraaglimiet. Automatisch koppelen is gepauzeerd; probeer over enkele minuten opnieuw. Opgeslagen koppelingen blijven bruikbaar.') from error
-        if result.get('status')=='error' or (isinstance(result.get('chart'),dict) and result['chart'].get('error')):raise ValueError('Koersdienst retourneerde een fout.')
-        return result
+                with store.connect() as db:
+                    pause = db.execute("SELECT payload,expires_at FROM api_cache WHERE namespace='provider-cooldown' AND cache_key='yahoo'").fetchone()
+                if pause and pause['expires_at'] > time.time():
+                    try:
+                        saved = json.loads(pause['payload'])
+                        http_status = saved.get('http_status') if isinstance(saved, dict) else None
+                    except (ValueError, TypeError):
+                        http_status = None
+                    if http_status not in (429, 503):http_status = None
+                    delay = max(1, math.ceil(pause['expires_at'] - time.time()))
+                    raise ProviderBusy(_busy_message(http_status), delay, http_status)
+            try:
+                with urlopen(request,timeout=timeout) as response:result=json.load(response)
+            except HTTPError as error:
+                if error.code not in (429,503):raise
+                http_status = error.code
+                try:delay=min(3600,max(60,int((error.headers or {}).get('Retry-After','120'))))
+                except (ValueError,TypeError):delay=120
+                error.close()
+                if store:
+                    stamp=time.time()
+                    with store.connect() as db:
+                        db.execute('INSERT OR REPLACE INTO api_cache VALUES(?,?,?,?,?)',
+                                   ('provider-cooldown','yahoo',json.dumps({'http_status':http_status}),stamp,stamp+delay))
+                raise ProviderBusy(_busy_message(http_status), delay, http_status) from error
+            if not isinstance(result, dict):
+                raise ActionError('Koersdienst retourneerde een fout.', 'provider_invalid_response')
+            if result.get('status')=='error' or (isinstance(result.get('chart'),dict) and result['chart'].get('error')):
+                raise ActionError('Koersdienst retourneerde een fout.', 'provider_response_error')
+            return result
+        except Exception as error:
+            error.provider_details = {'endpoint_host': urlsplit(request.full_url).hostname,
+                                      'stage': namespace, 'duration_ms': round((time.monotonic()-started)*1000)}
+            raise
     return cached_json(store,namespace,key,ttl,load)
 
 EXCHANGES = {'AMS': ('AMSTERDAM', 'EUR'), 'BRU': ('BRUSSELS', 'EUR'), 'ISE': ('DUBLIN', 'EUR'), 'MCE': ('MADRID','EUR'), 'PNK': ('OTC','USD'), 'OTCQX': ('OTC','USD'), 'OQX': ('OTC','USD'), 'NMS': ('NASDAQ', 'USD'),
@@ -87,10 +144,10 @@ def fetch_quote(key, symbol, exchange, currency,store=None,ttl=900):
     source_currency=currency_code(result.get('currency',''))
     pence_to_pounds=source_currency=='GBX' and currency_code(currency)=='GBP'
     if source_currency != currency_code(currency) and not pence_to_pounds:
-        raise ValueError('Koersvaluta wijkt af van de aankoop; koers niet opgeslagen.')
+        raise ActionError('Koersvaluta wijkt af van de aankoop; koers niet opgeslagen.', 'quote_currency_mismatch', {'source_currency':source_currency,'expected_currency':currency_code(currency)})
     market=EXCHANGES.get(result.get('exchangeName','').upper())
     if result.get('symbol', '').upper() != quote_symbol(symbol,exchange).upper() or not market or market[0]!=exchange:
-        raise ValueError('Koersdienst retourneerde een ander symbool of andere beurs.')
+        raise ActionError('Koersdienst retourneerde een ander symbool of andere beurs.', 'quote_listing_mismatch')
     timestamp = datetime.fromtimestamp(int(result['regularMarketTime']), timezone.utc).isoformat()
     return str(Decimal(str(result['regularMarketPrice']))*Decimal('.01')) if pence_to_pounds else result['regularMarketPrice'], timestamp
 
@@ -105,12 +162,12 @@ def fetch_history(symbol, exchange, currency, start,store=None):
     meta = result['meta']
     market = EXCHANGES.get(meta.get('exchangeName', '').upper())
     if meta.get('symbol', '').upper() != symbol or currency_code(meta.get('currency','')) != currency_code(currency) or not market or market[0] != exchange:
-        raise ValueError('Historische notering of valuta wijkt af.')
+        raise ActionError('Historische notering of valuta wijkt af.', 'history_listing_mismatch')
     closes = result['indicators']['quote'][0]['close']
     rows = []
     for stamp, close in zip(result.get('timestamp', []), closes):
         if close is not None and close > 0:
             rows.append({'day': datetime.fromtimestamp(stamp, timezone.utc).date().isoformat(), 'price': str(close)})
     if not rows:
-        raise ValueError('Geen historische dagkoersen beschikbaar.')
+        raise ActionError('Geen historische dagkoersen beschikbaar.', 'history_empty')
     return rows

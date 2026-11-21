@@ -7,7 +7,7 @@ from decimal import Decimal
 from pathlib import Path
 from http.server import ThreadingHTTPServer
 from storage import Store
-from provider import fetch_quote, search_stocks, fetch_history
+from provider import fetch_quote, search_stocks, fetch_history, error_details, ProviderBusy
 from security import Auth
 from cache import StateCache
 from refresh_index import purchase_index
@@ -36,6 +36,7 @@ def refresh():
         errors = 0
         snapshot = state_cache.derived('state-compact:all',lambda:store.state(compact_view=True))
         history_errors = 0
+        yahoo_paused = False
         earliest_dates, transferred_sells = purchase_index(snapshot['purchases'])
         seen=set()
         for p in snapshot['positions']:
@@ -52,7 +53,7 @@ def refresh():
                         if not p.get('quote') or p['quote']['quoted_at']!=quote['observed_at']:
                             store.quote(*instrument,quote['price'],quote['observed_at'],quote['source']);state_cache.invalidate()
                     except Exception as error:
-                        record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],'error_type':type(error).__name__,'code':'fund_provider_failed'})
+                        record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],**error_details(error)})
                         errors+=1
                 if enrich_categories(store,instrument):state_cache.invalidate()
                 continue
@@ -61,24 +62,26 @@ def refresh():
                 continue
             try:
                 fresh = p['quote'] and (datetime.now(timezone.utc)-datetime.fromisoformat(p['quote']['fetched_at'])).total_seconds()<interval
-                if not fresh:
+                if not fresh and not yahoo_paused:
                     price, stamp = fetch_quote('', p['symbol'], p['exchange'], p['currency'],store=store,ttl=interval)
                     store.quote(p['symbol'], p['exchange'], p['currency'], price, stamp, 'Yahoo Finance (mogelijk vertraagd)')
             except Exception as error:
-                record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],'error_type':type(error).__name__,'code':getattr(error,'code','provider_failed')})
+                record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],**error_details(error)})
                 errors += 1
+                if isinstance(error, ProviderBusy):yahoo_paused = True
             start = earliest_dates.get(instrument)
             if not start:
                 record(store,'WARNING','market','history_missing_purchase','Geen aankoopdatum voor koershistorie.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency']})
                 continue
             try:
-                if store.history_needed(p['symbol'], p['exchange'], p['currency'], start):
+                if not yahoo_paused and store.history_needed(p['symbol'], p['exchange'], p['currency'], start):
                     requested=store.history_start(p['symbol'],p['exchange'],p['currency'],start)
                     rows = fetch_history(p['symbol'], p['exchange'], p['currency'], requested,store=store)
                     store.save_history(p['symbol'], p['exchange'], p['currency'], start, rows)
             except Exception as error:
-                record(store,'WARNING','market','history_failed','Koershistorie ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],'error_type':type(error).__name__,'code':getattr(error,'code','provider_failed')})
+                record(store,'WARNING','market','history_failed','Koershistorie ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],**error_details(error)})
                 history_errors += 1
+                if isinstance(error, ProviderBusy):yahoo_paused = True
             # Profile lookup runs once per listing, including existing holdings.
             if enrich_categories(store,instrument):state_cache.invalidate()
             from fund_holdings import background_refresh
@@ -125,7 +128,7 @@ def background():
             refresh()
             warm_dashboard()
         except Exception as error:
-            record(store,'ERROR','system','background_failed','Achtergrondtaak mislukt.',{'error_type':type(error).__name__})
+            record(store,'ERROR','system','background_failed','Achtergrondtaak mislukt.',error_details(error))
             logging.exception('Achtergrondtaak mislukt')
         refresh_requested.wait(interval)
         refresh_requested.clear()
