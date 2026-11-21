@@ -24,3 +24,31 @@ def market_weekend(exchange, moment=None):
     except ZoneInfoNotFoundError:
         zone = timezone.utc
     return moment.astimezone(zone).weekday() >= 5
+
+
+def automatic_window(moment=None):
+    """The installation owner requested Dutch weekdays, 08:00 up to 22:00."""
+    moment = moment or datetime.now(timezone.utc)
+    local = moment.astimezone(ZoneInfo('Europe/Amsterdam'))
+    return local.weekday() < 5 and 8 <= local.hour < 22
+
+
+def claim_refresh(store, interval, key='personal'):
+    """Persist the automatic round budget before I/O, also across restarts."""
+    import time
+    if not automatic_window():
+        return False
+    stamp = time.time()
+    with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE')
+        previous = db.execute(
+            "SELECT expires_at FROM api_cache WHERE namespace='automatic-market' AND cache_key=?",
+            (key,),
+        ).fetchone()
+        if previous and previous[0] > stamp:
+            return False
+        db.execute(
+            'INSERT OR REPLACE INTO api_cache VALUES(?,?,?,?,?)',
+            ('automatic-market', key, '{}', stamp, stamp + max(900, interval)),
+        )
+    return True

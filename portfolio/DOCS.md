@@ -81,8 +81,14 @@ de huidige koers: die kan afwijken van wat je hebt betaald.
 Voorbeelden: `ASML.AS` / AMSTERDAM / EUR; `AAPL` / NASDAQ / USD;
 `IBM` / NYSE / USD. Gebruik het symbool van de juiste beursnotering.
 Elke invoer is een afzonderlijke aankoop. Meerdere aankopen worden samengevoegd
-in posities met hun totale inleg. Koersen worden standaard elke 15 minuten
-opgehaald; `refresh_minutes` kan in de app-configuratie worden gewijzigd (5–1440).
+in posities met hun totale inleg. Automatische marktrondes draaien op werkdagen
+van 08.00 tot 22.00 uur Nederlandse tijd, met minimaal 15 minuten tussen de starttijden.
+`refresh_minutes` kan een langer interval instellen (tot 1440 minuten). Bestaande
+instellingen onder 15 minuten worden automatisch als 15 minuten behandeld.
+Het tijdvak geldt ook voor bedrijfsprofielen, ETF-samenstellingen, achtergrond-FX en de demo.
+Bij herhaalde HTTP 429-antwoorden loopt de Yahoo-wachttijd op vanaf 15 minuten,
+met een maximum van zes uur voor de lokale terugvalpauze. Een langere wachttijd
+uit Yahoo's Retry-After-header wordt gerespecteerd.
 Herstart de app na het wijzigen van deze optie.
 
 Yahoo werkt zonder API-sleutel. Deze koppeling gebruikt een publiek, onofficieel

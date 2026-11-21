@@ -11,7 +11,7 @@ from provider import fetch_quote, search_stocks, fetch_history, error_details, P
 from security import Auth
 from cache import StateCache
 from refresh_index import purchase_index
-from market_schedule import market_weekend
+from market_schedule import market_weekend, automatic_window, claim_refresh
 from web import make_handler
 from datetime import datetime, timezone
 from diagnostics import record
@@ -24,15 +24,17 @@ auth = Auth(store)
 state_cache = StateCache(30,store=store)
 options_path = store.root / 'options.json'
 options = json.loads(options_path.read_text()) if options_path.exists() else {}
-interval = max(5, int(options.get('refresh_minutes', 15))) * 60
+interval = max(15, int(options.get('refresh_minutes', 15))) * 60
 refresh_requested = threading.Event()
 status = {'message': 'Yahoo-koersen worden opgehaald; mogelijk vertraagd.', 'last_attempt': None}
 refresh_lock = threading.Lock()
 
-def refresh():
+def refresh(automatic=False):
     if not refresh_lock.acquire(blocking=False):
         return
     try:
+        if automatic and not claim_refresh(store, interval):
+            return False
         state_cache.bind(store)
         errors = 0
         snapshot = state_cache.derived('state-compact:all',lambda:store.state(compact_view=True))
@@ -46,6 +48,7 @@ def refresh():
         }
         seen=set()
         for p in snapshot['positions']:
+            if automatic and not automatic_window():break
             instrument=(p['symbol'],p['exchange'],p['currency'])
             if p.get('invalid_position') or p.get('quote_paused') or p['symbol'].endswith('.OLD'):continue
             if Decimal(p['quantity'])==0 and instrument in transferred_sells:continue
@@ -75,6 +78,7 @@ def refresh():
                 record(store,'WARNING','market','quote_failed','Actuele koers ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],**error_details(error)})
                 errors += 1
                 if isinstance(error, ProviderBusy):yahoo_paused = True
+            if automatic and not automatic_window():break
             start = earliest_dates.get(instrument)
             if not start:
                 record(store,'WARNING','market','history_missing_purchase','Geen aankoopdatum voor koershistorie.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency']})
@@ -88,8 +92,10 @@ def refresh():
                 record(store,'WARNING','market','history_failed','Koershistorie ophalen mislukt.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency'],**error_details(error)})
                 history_errors += 1
                 if isinstance(error, ProviderBusy):yahoo_paused = True
+            if automatic and not automatic_window():break
             # Profile lookup runs once per listing, including existing holdings.
             if enrich_categories(store,instrument):state_cache.invalidate()
+            if automatic and not automatic_window():break
             from fund_holdings import background_refresh
             if background_refresh(store,instrument,p.get('categories',{}).get('asset_type')=='ETF'):state_cache.invalidate()
             # Space requests to avoid bursts; plan limits still apply.
@@ -99,6 +105,7 @@ def refresh():
         if history_errors:
             status['message'] += f' Historie van {history_errors} aandeel/aandelen kon niet worden opgehaald; volgt bij de volgende controle.'
         state_cache.invalidate()
+        return True
     finally:
         refresh_lock.release()
 
@@ -113,7 +120,7 @@ def warm_dashboard():
 def demo_background():
     from demo import refresh_active_demo
     while True:
-        try:refresh_active_demo(store.root/'demo',ttl=interval)
+        try:refresh_active_demo(store.root/'demo',ttl=interval,provider_store=store)
         except Exception as error:record(store,'WARNING','market','demo_refresh_failed','Demokoersen bijwerken mislukt.',{'error_type':type(error).__name__})
         time.sleep(300)
 
@@ -125,14 +132,14 @@ def background():
             if time.time() - last_backup >= 86400:
                 store.backup()
                 last_backup = time.time()
-            if time.time()-last_fx>=21600:
-                try:
-                    fx_currencies(store);fx_snapshot(store,datetime.now(timezone.utc).date().isoformat())
-                    record(store,'INFO','fx','daily_rates','Dagreferentiekoersen opgeslagen.')
-                except ValueError as error:record(store,'WARNING','fx','daily_rates_failed',str(error))
-                last_fx=time.time()
-            refresh()
-            warm_dashboard()
+            if automatic_window() and refresh(automatic=True):
+                if time.time()-last_fx>=21600:
+                    try:
+                        fx_currencies(store);fx_snapshot(store,datetime.now(timezone.utc).date().isoformat())
+                        record(store,'INFO','fx','daily_rates','Dagreferentiekoersen opgeslagen.')
+                    except ValueError as error:record(store,'WARNING','fx','daily_rates_failed',str(error))
+                    last_fx=time.time()
+                warm_dashboard()
         except Exception as error:
             record(store,'ERROR','system','background_failed','Achtergrondtaak mislukt.',error_details(error))
             logging.exception('Achtergrondtaak mislukt')

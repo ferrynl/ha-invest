@@ -18,6 +18,12 @@ STOCK = dict(symbol="ASML.AS", exchange="AMSTERDAM", currency="EUR", name="ASML"
 
 
 class ReleaseReliabilityTests(unittest.TestCase):
+    def test_installed_image_has_dutch_timezone_for_automatic_window(self):
+        from market_schedule import automatic_window
+        from datetime import datetime
+        self.assertTrue(automatic_window(datetime.fromisoformat('2026-07-20T06:00:00+00:00')))
+        self.assertFalse(automatic_window(datetime.fromisoformat('2026-11-23T21:00:00+00:00')))
+
     def test_restart_and_restore_preserve_portfolio_and_live_login(self):
         with tempfile.TemporaryDirectory() as folder:
             store = Store(folder)

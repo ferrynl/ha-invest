@@ -1,6 +1,7 @@
 """Best-effort Yahoo public endpoint, not an official supported API."""
 import json
 import math
+from email.utils import parsedate_to_datetime
 from urllib.request import urlopen, Request
 from urllib.parse import quote, urlencode, urlsplit
 from datetime import datetime, timezone, date, timedelta
@@ -47,40 +48,68 @@ def _busy_message(http_status):
             'Yahoo heeft tijdelijk een aanvraaglimiet. Automatisch koppelen is gepauzeerd; probeer over enkele minuten opnieuw. Opgeslagen koppelingen blijven bruikbaar.')
 
 
+def _retry_seconds(headers):
+    raw = (headers or {}).get('Retry-After', '120')
+    try:
+        delay = int(raw)
+    except (ValueError, TypeError):
+        try:
+            stamp = parsedate_to_datetime(raw)
+            if stamp.tzinfo is None:stamp = stamp.replace(tzinfo=timezone.utc)
+            delay = math.ceil(stamp.timestamp() - time.time())
+        except (ValueError, TypeError, IndexError, OverflowError):
+            delay = 120
+    return max(60, delay)
+
+
 def _payload(request,timeout,store,namespace,key,ttl):
     def load():
         started = time.monotonic()
+        pause = None
+        saved = {}
         try:
             if store:
                 with store.connect() as db:
-                    pause = db.execute("SELECT payload,expires_at FROM api_cache WHERE namespace='provider-cooldown' AND cache_key='yahoo'").fetchone()
-                if pause and pause['expires_at'] > time.time():
+                    pause = db.execute("SELECT payload,fetched_at,expires_at FROM api_cache WHERE namespace='provider-cooldown' AND cache_key='yahoo'").fetchone()
+                if pause:
                     try:
                         saved = json.loads(pause['payload'])
-                        http_status = saved.get('http_status') if isinstance(saved, dict) else None
+                        if not isinstance(saved, dict):saved = {}
                     except (ValueError, TypeError):
-                        http_status = None
-                    if http_status not in (429, 503):http_status = None
-                    delay = max(1, math.ceil(pause['expires_at'] - time.time()))
-                    raise ProviderBusy(_busy_message(http_status), delay, http_status)
+                        saved = {}
+                    if pause['expires_at'] > time.time():
+                        http_status = saved.get('http_status')
+                        if http_status not in (429, 503):http_status = None
+                        delay = max(1, math.ceil(pause['expires_at'] - time.time()))
+                        raise ProviderBusy(_busy_message(http_status), delay, http_status)
             try:
                 with urlopen(request,timeout=timeout) as response:result=json.load(response)
             except HTTPError as error:
                 if error.code not in (429,503):raise
                 http_status = error.code
-                try:delay=min(3600,max(60,int((error.headers or {}).get('Retry-After','120'))))
-                except (ValueError,TypeError):delay=120
+                delay = _retry_seconds(error.headers)
                 error.close()
+                attempts = 0
+                if http_status == 429:
+                    previous_attempts = saved.get('attempts', 0)
+                    if (not pause or pause['fetched_at'] < time.time() - 86400
+                            or saved.get('http_status') != 429 or type(previous_attempts) is not int):
+                        previous_attempts = 0
+                    attempts = min(6, max(0, previous_attempts) + 1)
+                    delay = max(delay, min(21600, 900 * 2 ** (attempts - 1)))
                 if store:
                     stamp=time.time()
                     with store.connect() as db:
                         db.execute('INSERT OR REPLACE INTO api_cache VALUES(?,?,?,?,?)',
-                                   ('provider-cooldown','yahoo',json.dumps({'http_status':http_status}),stamp,stamp+delay))
+                                   ('provider-cooldown','yahoo',json.dumps({'http_status':http_status,'attempts':attempts}),stamp,stamp+delay))
                 raise ProviderBusy(_busy_message(http_status), delay, http_status) from error
             if not isinstance(result, dict):
                 raise ActionError('Koersdienst retourneerde een fout.', 'provider_invalid_response')
             if result.get('status')=='error' or (isinstance(result.get('chart'),dict) and result['chart'].get('error')):
                 raise ActionError('Koersdienst retourneerde een fout.', 'provider_response_error')
+            if store and pause:
+                with store.connect() as db:
+                    db.execute("DELETE FROM api_cache WHERE namespace='provider-cooldown' AND cache_key='yahoo' AND expires_at<=?", (time.time(),))
             return result
         except Exception as error:
             error.provider_details = {'endpoint_host': urlsplit(request.full_url).hostname,
