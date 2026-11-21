@@ -1,3 +1,9 @@
+## 0.70.44
+
+- Koersfouten tonen in Logs de reden, HTTP-status, bron en resterende Yahoo-wachttijd wanneer die beschikbaar zijn.
+- Pauzeer verdere Yahoo-koers- en historieaanvragen in dezelfde verversingsronde zodra de bron een wachttijd aangeeft.
+- Beperk automatische ETF-samenstellingspogingen tot één per dag per fonds, ook na mislukte downloads en herstarts. Handmatig vernieuwen behoudt de bestaande wachttijd.
+
 ## 0.70.43
 
 - Kies uit tien brokers op de vernieuwde importpagina, met zoeken en filters voor API, CSV en XML.
