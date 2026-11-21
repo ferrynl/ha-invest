@@ -11,6 +11,7 @@ from provider import fetch_quote, search_stocks, fetch_history, error_details, P
 from security import Auth
 from cache import StateCache
 from refresh_index import purchase_index
+from market_schedule import market_weekend
 from web import make_handler
 from datetime import datetime, timezone
 from diagnostics import record
@@ -38,16 +39,21 @@ def refresh():
         history_errors = 0
         yahoo_paused = False
         earliest_dates, transferred_sells = purchase_index(snapshot['purchases'])
+        active_instruments = {
+            (p['symbol'], p['exchange'], p['currency'])
+            for p in snapshot['positions']
+            if not p.get('invalid_position') and Decimal(p['quantity']) != 0
+        }
         seen=set()
         for p in snapshot['positions']:
             instrument=(p['symbol'],p['exchange'],p['currency'])
-            if p.get('invalid_position') or p.get('quote_paused'):continue
+            if p.get('invalid_position') or p.get('quote_paused') or p['symbol'].endswith('.OLD'):continue
             if Decimal(p['quantity'])==0 and instrument in transferred_sells:continue
             if instrument in seen:continue
             seen.add(instrument)
             if p['exchange']=='PRIVATE':
                 from fund_quotes import supported,fetch_quote as fetch_fund_quote
-                if supported(*instrument) and not (p.get('quote') or {}).get('manual'):
+                if instrument in active_instruments and supported(*instrument) and not (p.get('quote') or {}).get('manual'):
                     try:
                         quote=fetch_fund_quote(store)
                         if not p.get('quote') or p['quote']['quoted_at']!=quote['observed_at']:
@@ -62,7 +68,7 @@ def refresh():
                 continue
             try:
                 fresh = p['quote'] and (datetime.now(timezone.utc)-datetime.fromisoformat(p['quote']['fetched_at'])).total_seconds()<interval
-                if not fresh and not yahoo_paused:
+                if instrument in active_instruments and not market_weekend(p['exchange']) and not fresh and not yahoo_paused:
                     price, stamp = fetch_quote('', p['symbol'], p['exchange'], p['currency'],store=store,ttl=interval)
                     store.quote(p['symbol'], p['exchange'], p['currency'], price, stamp, 'Yahoo Finance (mogelijk vertraagd)')
             except Exception as error:
@@ -74,7 +80,7 @@ def refresh():
                 record(store,'WARNING','market','history_missing_purchase','Geen aankoopdatum voor koershistorie.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency']})
                 continue
             try:
-                if not yahoo_paused and store.history_needed(p['symbol'], p['exchange'], p['currency'], start):
+                if not market_weekend(p['exchange']) and not yahoo_paused and store.history_needed(p['symbol'], p['exchange'], p['currency'], start):
                     requested=store.history_start(p['symbol'],p['exchange'],p['currency'],start)
                     rows = fetch_history(p['symbol'], p['exchange'], p['currency'], requested,store=store)
                     store.save_history(p['symbol'], p['exchange'], p['currency'], start, rows)
@@ -105,9 +111,9 @@ def warm_dashboard():
     state_cache.derived('home-euro-compact:all',lambda:compact_overview(store,snapshot))
 
 def demo_background():
-    from demo import ensure_demo,refresh_demo_quotes
+    from demo import refresh_active_demo
     while True:
-        try:refresh_demo_quotes(ensure_demo(store.root/'demo'),ttl=300)
+        try:refresh_active_demo(store.root/'demo',ttl=interval)
         except Exception as error:record(store,'WARNING','market','demo_refresh_failed','Demokoersen bijwerken mislukt.',{'error_type':type(error).__name__})
         time.sleep(300)
 

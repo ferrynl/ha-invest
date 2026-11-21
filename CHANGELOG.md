@@ -1,3 +1,10 @@
+## 0.70.45
+
+- Sla automatische Yahoo-koers- en historieaanvragen over op zaterdag en zondag volgens de lokale tijdzone van de beurs.
+- Haal geen actuele koers op voor volledig gesloten posities. Posities die bij een andere broker nog openstaan blijven bijgewerkt.
+- Vraag interne historische codes zoals WOLF.OLD niet als actuele Yahoo-notering op.
+- Ververs demokoersen alleen zolang de demo recent bekeken is, met het ingestelde verversingsinterval en dezelfde weekendpauze.
+
 ## 0.70.44
 
 - Koersfouten tonen in Logs de reden, HTTP-status, bron en resterende Yahoo-wachttijd wanneer die beschikbaar zijn.
