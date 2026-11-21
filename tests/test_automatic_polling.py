@@ -109,6 +109,23 @@ class AutomaticBackgroundTests(unittest.TestCase):
                 profile.assert_not_called()
 
 
+    def test_active_demo_runs_inside_the_same_budgeted_background_round(self):
+        import server
+        class StopLoop(BaseException):
+            pass
+        with patch.object(server, 'automatic_window', return_value=True), \
+             patch.object(server.store, 'backup'), patch.object(server, 'record'), \
+             patch.object(server, 'refresh', return_value=True) as refresh, \
+             patch.object(server, 'warm_dashboard'), \
+             patch.object(server, 'fx_currencies'), patch.object(server, 'fx_snapshot'), \
+             patch('demo.refresh_active_demo') as demo, \
+             patch.object(server.refresh_requested, 'wait', side_effect=StopLoop):
+            with self.assertRaises(StopLoop):
+                server.background()
+            refresh.assert_called_once_with(automatic=True)
+            demo.assert_called_once_with(server.store.root / 'demo', ttl=server.interval, provider_store=server.store)
+
+
 class ProgressiveBackoffTests(unittest.TestCase):
     def test_repeated_rate_limits_back_off_across_restarts_and_success_resets_them(self):
         request = Request('https://query1.finance.yahoo.com/test')

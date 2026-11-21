@@ -117,13 +117,6 @@ def warm_dashboard():
     snapshot=state_cache.derived('state-compact:all',lambda:store.state(compact_view=True))
     state_cache.derived('home-euro-compact:all',lambda:compact_overview(store,snapshot))
 
-def demo_background():
-    from demo import refresh_active_demo
-    while True:
-        try:refresh_active_demo(store.root/'demo',ttl=interval,provider_store=store)
-        except Exception as error:record(store,'WARNING','market','demo_refresh_failed','Demokoersen bijwerken mislukt.',{'error_type':type(error).__name__})
-        time.sleep(300)
-
 def background():
     last_backup = 0
     last_fx=0
@@ -140,6 +133,8 @@ def background():
                     except ValueError as error:record(store,'WARNING','fx','daily_rates_failed',str(error))
                     last_fx=time.time()
                 warm_dashboard()
+                from demo import refresh_active_demo
+                refresh_active_demo(store.root/'demo',ttl=interval,provider_store=store)
         except Exception as error:
             record(store,'ERROR','system','background_failed','Achtergrondtaak mislukt.',error_details(error))
             logging.exception('Achtergrondtaak mislukt')
@@ -187,7 +182,6 @@ def start_export():
 if __name__ == '__main__':
     start_export()
     threading.Thread(target=background, daemon=True).start()
-    threading.Thread(target=demo_background, daemon=True).start()
     from feedback_client import background as feedback_background
     threading.Thread(target=feedback_background,args=(store,options),daemon=True).start()
     # The dashboard stays ingress-only; optional sensors use a separate read-only port.
