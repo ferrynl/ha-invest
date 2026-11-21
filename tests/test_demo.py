@@ -92,7 +92,7 @@ class LiveDemoTests(unittest.TestCase):
  def test_updates_latest_once_and_reuses_on_next_day(self):
   from demo import refresh_demo_quotes
   from provider import ProviderBusy,quote_symbol
-  with tempfile.TemporaryDirectory() as folder:
+  with patch('demo.market_weekend',return_value=False),tempfile.TemporaryDirectory() as folder:
    store=ensure_demo(Path(folder)/'demo');before=len(store.state()['purchases'])
    stamp='2026-10-29T12:00:00+00:00'
    calls=[]

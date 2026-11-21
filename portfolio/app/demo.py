@@ -2,12 +2,15 @@
 from datetime import date,timedelta
 from decimal import Decimal
 from math import sin
+import time
+from market_schedule import market_weekend
 from threading import RLock
 from urllib.parse import urlsplit,parse_qs
 from storage import Store
 
 SEED_VERSION='1'
 _demo_lock=RLock()
+_demo_active_until={}
 BROKERS=['DEGIRO','Interactive Brokers','Saxo','Trading 212','Trade Republic','Revolut','BUX','Scalable Capital','LYNX','Swissquote']
 MARKETS=[
  ('EUR','AMSTERDAM','Netherlands','1','ASML|ASML;SHELL|Shell;UNA|Unilever;INGA|ING;AD|Ahold Delhaize;HEIA|Heineken;PHIA|Philips;WKL|Wolters Kluwer;NN|NN Group;DSM|DSM Firmenich;AIR|Airbus;SAP|SAP;SIE|Siemens;MC|LVMH;OR|L’Oreal'),
@@ -78,6 +81,8 @@ DEMO_READS={'/api/state','/api/home/euro','/api/home/history','/api/stocks','/ap
 def profile_handler(primary,store,auth,factory):
     lock=RLock();active={}
     def demo_handler():
+        with _demo_lock:
+            _demo_active_until[str((store.root/'demo').resolve())] = time.monotonic() + 900
         with lock:
             today=date.today().isoformat()
             if 'handler' not in active:
@@ -122,6 +127,16 @@ def profile_handler(primary,store,auth,factory):
     return ProfileHandler
 
 
+def refresh_active_demo(root, ttl=900):
+    """Only a recently viewed demo may spend background network requests."""
+    with _demo_lock:
+        active = _demo_active_until.get(str(root.resolve()), 0) > time.monotonic()
+    if not active:
+        return False
+    refresh_demo_quotes(ensure_demo(root), ttl=ttl)
+    return True
+
+
 def refresh_demo_quotes(store,ttl=300,fetch=None):
     """Update only the isolated demo, preserving seed history and last good quotes."""
     import time
@@ -131,6 +146,7 @@ def refresh_demo_quotes(store,ttl=300,fetch=None):
     with store.read() as db:
         rows=[dict(row) for row in db.execute('SELECT symbol,exchange,currency,source,fetched_at FROM quotes WHERE id IN (SELECT MAX(id) FROM quotes GROUP BY symbol,exchange,currency)')]
     for row in rows:
+        if market_weekend(row['exchange']):continue
         if row['source']!='DEMO' and (datetime.now(timezone.utc)-datetime.fromisoformat(row['fetched_at'])).total_seconds()<ttl:continue
         symbol,exchange,currency=(row[k] for k in ('symbol','exchange','currency'))
         # Older seeds used Amsterdam for every EUR listing. Route only verified listings.

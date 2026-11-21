@@ -83,7 +83,7 @@ class MarketRefreshDiagnosticsTests(unittest.TestCase):
     def test_busy_quote_logs_reason_and_pauses_remaining_yahoo_calls(self):
         import server
         from cache import StateCache
-        with tempfile.TemporaryDirectory() as folder:
+        with patch.object(server, 'market_weekend', return_value=False), tempfile.TemporaryDirectory() as folder:
             store = Store(folder)
             for symbol in ('IBM', 'KO'):
                 store.add(dict(symbol=symbol, exchange='NYSE', currency='USD', name=symbol,
