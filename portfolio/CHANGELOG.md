@@ -1,3 +1,7 @@
+## 0.70.49
+
+- Toon zes kalenderjaren aan maandrendementen als rood-groene heatmap op iedere aandeelpagina met een eigen notering. Markeer de lopende maand en laat ontbrekende maanden leeg.
+
 ## 0.70.48
 
 - Verwerk ondersteunde wisselkoersen ook als Frankfurter extra assets met langere codes terugstuurt. Behoud strikte valutacontroles bij transacties en hergebruik de bestaande cache.

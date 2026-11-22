@@ -1,5 +1,7 @@
 /* Central UI catalogue: source Dutch, English, Spanish. */
 const UI_TRANSLATIONS = {
+ "Maandrendementen": {"nl":"Maandrendementen","en":"Monthly returns","es":"Rentabilidades mensuales"},
+ "Koersverandering per maand in de noteringsvaluta, exclusief dividend. De lopende maand is gemarkeerd.": {"nl":"Koersverandering per maand in de noteringsvaluta, exclusief dividend. De lopende maand is gemarkeerd.","en":"Monthly price change in the listing currency, excluding dividends. The current month is highlighted.","es":"Variación mensual del precio en la moneda de cotización, sin dividendos. El mes en curso está resaltado."},
  "API-token": {"nl":"API-token","en":"API token","es":"Token de API"},
  "Alle methodes": {"nl":"Alle methodes","en":"All methods","es":"Todos los métodos"},
  "Beschikbare brokers": {"nl":"Beschikbare brokers","en":"Available brokers","es":"Brókeres disponibles"},
