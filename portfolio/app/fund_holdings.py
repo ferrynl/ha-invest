@@ -170,13 +170,20 @@ class IssuerRedirect(HTTPRedirectHandler):
 
 def download(url):
     source_url(url)
-    with build_opener(IssuerRedirect()).open(Request(url, headers={'User-Agent': 'Mozilla/5.0',
-            'Accept': 'text/csv,text/html;q=0.8', 'Accept-Language': 'en-GB,en;q=0.9'}), timeout=20) as response:
-        source_url(response.url)
-        data = response.read(MAX_BYTES + 1)
-        if len(data) > MAX_BYTES:
-            raise ValueError('Bronbestand te groot.')
-        return data.decode('utf-8-sig')
+    started=time.monotonic()
+    try:
+        with build_opener(IssuerRedirect()).open(Request(url, headers={'User-Agent': 'Mozilla/5.0',
+                'Accept': 'text/csv,text/html;q=0.8', 'Accept-Language': 'en-GB,en;q=0.9'}), timeout=20) as response:
+            source_url(response.url)
+            data = response.read(MAX_BYTES + 1)
+            if len(data) > MAX_BYTES:
+                raise ValueError('Bronbestand te groot.')
+            return data.decode('utf-8-sig')
+    except Exception as error:
+        # Public endpoint metadata only; never copy URLs, headers or response text.
+        error.fund_details={'endpoint_host':urlsplit(url).hostname,'stage':'fund-download',
+                            'duration_ms':max(0,round((time.monotonic()-started)*1000))}
+        raise
 
 
 class HoldingsLink(HTMLParser):
@@ -198,14 +205,22 @@ def retrieve(url, as_of=''):
     if urlsplit(url).hostname=='dng-api.invesco.com':return retrieve_invesco(url)
     if '/Main/HoldingsBlock/' in url:return retrieve_vaneck(url)
     if urlsplit(url).hostname=='www.vanguard.co.uk' and '/product/etf/' in url:return retrieve_vanguard(url)
-    content = download(url)
+    try:
+        content = download(url)
+    except Exception as error:
+        if hasattr(error,'fund_details'):error.fund_details['stage']='fund-source'
+        raise
     if '<html' in content[:10000].lower() or '<!doctype' in content[:1000].lower():
         parser = HoldingsLink()
         parser.feed(content)
         links = {urljoin(url, link) for link in parser.links}
         if len(links) != 1:
             raise ValueError('Geen eenduidige volledige CSV-bron gevonden. Importeer het bronbestand.')
-        content = download(links.pop())
+        try:
+            content = download(links.pop())
+        except Exception as error:
+            if hasattr(error,'fund_details'):error.fund_details['stage']='fund-holdings-csv'
+            raise
     return parse_csv(content, as_of)
 
 
@@ -293,5 +308,6 @@ def background_refresh(store, key, is_etf=False):
             from diagnostics import record
             from provider import error_details
             record(store, 'WARNING', 'market', 'fund_holdings_failed', 'ETF-samenstelling ophalen mislukt.',
-                   {'symbol': key[0], **error_details(error), 'background_retry_seconds': 86400})
+                   {'symbol': key[0], 'exchange':key[1], 'currency':key[2], **error_details(error),
+                    **getattr(error,'fund_details',{}), 'background_retry_seconds': 86400})
             return False

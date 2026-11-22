@@ -157,7 +157,7 @@ def background():
                     try:
                         fx_currencies(store);fx_snapshot(store,datetime.now(timezone.utc).date().isoformat())
                         record(store,'INFO','fx','daily_rates','Dagreferentiekoersen opgeslagen.')
-                    except ValueError as error:record(store,'WARNING','fx','daily_rates_failed',str(error))
+                    except ValueError as error:record(store,'WARNING','fx','daily_rates_failed',str(error),{**error_details(error),'stage':'fx-daily'})
                     last_fx=time.time()
                 warm_dashboard()
                 if not manual:

@@ -188,7 +188,7 @@ def enrich_categories(store,key,retry=False):
             db.execute('INSERT INTO instrument_categories VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(symbol,exchange,currency) DO UPDATE SET sector=excluded.sector,country=excluded.country,asset_type=excluded.asset_type,updated_at=excluded.updated_at',(*key,*(values[field] for field in ('sector','country','asset_type','category')),stamp.isoformat(),*(manual[field] for field in ('sector','country','asset_type'))))
             status='complete' if all(result.get(field) for field in manual) else 'partial'
             db.execute("UPDATE instrument_category_sync SET status=?,retry_at=?,error_code='' WHERE symbol=? AND exchange=? AND currency=?",(status,(stamp+timedelta(days=1)).isoformat(),*key))
-        record(store,'INFO','market','categories_filled','Aandelencategorieën eenmalig uit de API aangevuld.',{'symbol':key[0],'exchange':key[1],'currency':key[2],'provider':'Yahoo Finance','status':status,'filled_fields':filled,'missing_fields':[field for field in manual if not result.get(field)]})
+        if filled:record(store,'INFO','market','categories_filled','Aandelencategorieën eenmalig uit de API aangevuld.',{'symbol':key[0],'exchange':key[1],'currency':key[2],'provider':'Yahoo Finance','status':status,'filled_fields':filled,'missing_fields':[field for field in manual if not result.get(field)]})
         return True
     except Exception as error:
         code=error.code if isinstance(error,ProfileError) else 'profile_failed'
