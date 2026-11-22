@@ -1,3 +1,9 @@
+## 0.70.47
+
+- Laat Health Center → Koersen verversen ook buiten 08.00–22.00 uur en in het weekend één handmatige ronde starten.
+- Houd gewone wijzigingsverzoeken binnen het automatische tijdvak. Yahoo-wachttijden en de gedeelde koerscache blijven gelden.
+- Toon in Logs wanneer een handmatige sync start en eindigt, met aantallen en de eventuele Yahoo-wachttijd. Een geblokkeerde handmatige ronde stopt direct.
+
 ## 0.70.46
 
 - Beperk automatische marktrondes tot werkdagen tussen 08.00 en 22.00 uur Nederlandse tijd, inclusief bedrijfsprofielen, ETF-samenstellingen en achtergrond-FX.
