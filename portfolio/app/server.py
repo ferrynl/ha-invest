@@ -150,7 +150,7 @@ def background():
                 store.backup()
                 last_backup = time.time()
             manual = manual_refresh_requested.is_set()
-            manual_refresh_requested.clear()
+            if manual:manual_refresh_requested.clear()
             refreshed = refresh(manual=True) if manual else automatic_window() and refresh(automatic=True)
             if refreshed:
                 if time.time()-last_fx>=21600:
