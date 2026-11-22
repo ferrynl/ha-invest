@@ -96,7 +96,7 @@ def refresh(automatic=False, manual=False):
                 record(store,'WARNING','market','history_missing_purchase','Geen aankoopdatum voor koershistorie.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency']})
                 continue
             try:
-                if not market_weekend(p['exchange']) and not yahoo_paused and store.history_needed(p['symbol'], p['exchange'], p['currency'], start):
+                if (manual or not market_weekend(p['exchange'])) and not yahoo_paused and store.history_needed(p['symbol'], p['exchange'], p['currency'], start):
                     requested=store.history_start(p['symbol'],p['exchange'],p['currency'],start)
                     rows = fetch_history(p['symbol'], p['exchange'], p['currency'], requested,store=store)
                     store.save_history(p['symbol'], p['exchange'], p['currency'], start, rows)
