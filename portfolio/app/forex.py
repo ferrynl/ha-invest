@@ -43,15 +43,26 @@ def decimal_json(value):
     if isinstance(value,dict):return {k:decimal_json(v) for k,v in value.items()}
     return value
 
+def currency_catalog(items):
+    if not isinstance(items,list) or not items:raise ActionError('Geen valutaoverzicht beschikbaar.')
+    if any(not isinstance(item,dict) or 'iso_code' not in item or not isinstance(item.get('name'),str) for item in items):raise ActionError('Ongeldig valutaoverzicht ontvangen.')
+    # The provider also lists assets such as USDT/USDC. They must not prevent
+    # supported currencies from loading, or widen transaction currency validation.
+    supported=[item for item in items if isinstance(item['iso_code'],str) and re.fullmatch('[A-Z]{3}',item['iso_code'])]
+    if not supported:raise ActionError('Geen valutaoverzicht beschikbaar.')
+    return supported
+
+def daily_rates(items):
+    if not isinstance(items,list) or not items:raise ActionError('Geen geldige wisselkoersen beschikbaar voor deze periode.')
+    if any(not isinstance(item,dict) or not {'base','quote','date','rate'}.issubset(item) or not isinstance(item['date'],str) for item in items):raise ActionError('Ongeldige wisselkoersgegevens ontvangen.')
+    supported=[item for item in items if isinstance(item['quote'],str) and re.fullmatch('[A-Z]{3}',item['quote'])]
+    if not supported:raise ActionError('Geen geldige wisselkoersen beschikbaar voor deze periode.')
+    return supported
+
 def currencies(store):
     def load():
-        items=decimal_json(load_json('currencies'))
-        if not isinstance(items,list) or not items:raise ActionError('Geen valutaoverzicht beschikbaar.')
-        if any(not isinstance(item,dict) or 'iso_code' not in item or not isinstance(item.get('name'),str) for item in items):raise ActionError('Ongeldig valutaoverzicht ontvangen.')
-        for item in items:code(item['iso_code']);str(item['name'])
-        return items
-    result=cached_json(store,'fx','currencies',7*86400,load)
-    if not isinstance(result,list):raise ActionError('Ongeldig valutaoverzicht van koersdienst.')
+        return currency_catalog(decimal_json(load_json('currencies')))
+    result=currency_catalog(cached_json(store,'fx','currencies',7*86400,load))
     stamp=datetime.now(timezone.utc).isoformat()
     with store.connect() as db:
         for item in result:
@@ -75,10 +86,10 @@ def save_rates(store,items,last_day):
 def snapshot(store,day):
     target=day_value(day)
     def load():
-        items=decimal_json(load_json('rates?'+urlencode({'base':'EUR','date':day})))
+        items=daily_rates(decimal_json(load_json('rates?'+urlencode({'base':'EUR','date':day}))))
         save_rates(store,items,target)
         return items
-    result=cached_json(store,'fx','day:'+day,21600 if target>=date.today()-timedelta(days=7) else 10*365*86400,load)
+    result=daily_rates(cached_json(store,'fx','day:'+day,21600 if target>=date.today()-timedelta(days=7) else 10*365*86400,load))
     save_rates(store,result,target)
     remember_coverage(store,[r['quote'] for r in result],day,day)
 

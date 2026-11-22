@@ -142,3 +142,33 @@ class FundDownloadBudgetTests(unittest.TestCase):
                 background_refresh(store, key)
                 self.assertEqual(network.call_count, 1)
             self.assertEqual(saved(store, key)['holdings'][0]['name'], 'Example')
+
+    def test_fund_http_error_identifies_csv_stage_without_exposing_url_or_body(self):
+        from fund_holdings import background_refresh, save
+        key = ('SEC0.DE', 'XETRA', 'EUR')
+        url = 'https://www.ishares.com/example?token=private-source'
+        csv_url = 'https://www.ishares.com/latest-holdings.csv?token=private-download'
+        error = HTTPError(csv_url, 400, 'private-message',
+                          {'Set-Cookie':'private-cookie'}, io.BytesIO(b'private-body'))
+        with tempfile.TemporaryDirectory() as folder:
+            store = Store(folder)
+            save(store,key,dict(as_of='2026-01-01',holdings=[dict(name='Example',weight='100')]),url)
+            with store.connect() as db:
+                db.execute("UPDATE fund_compositions SET fetched_at='2026-01-01T00:00:00+00:00'")
+            page=io.BytesIO(('<html><a href="'+csv_url+'">CSV</a></html>').encode())
+            page.url=url
+            opener=__import__('unittest.mock',fromlist=['Mock']).Mock()
+            opener.open.side_effect=[page,error]
+            with patch('fund_holdings.build_opener',return_value=opener):
+                self.assertFalse(background_refresh(store,key,is_etf=True))
+                self.assertFalse(background_refresh(Store(folder),key,is_etf=True))
+                self.assertEqual(opener.open.call_count,2)
+            entry=next(row for row in read_logs(store)['entries'] if row['event']=='fund_holdings_failed')
+            self.assertEqual(entry['details']['http_status'],400)
+            self.assertEqual(entry['details']['endpoint_host'],'www.ishares.com')
+            self.assertEqual(entry['details']['stage'],'fund-holdings-csv')
+            self.assertGreaterEqual(entry['details']['duration_ms'],0)
+            self.assertEqual(entry['details']['background_retry_seconds'],86400)
+            for secret in ('private-source','private-download','private-message','private-cookie','private-body'):
+                self.assertNotIn(secret,json.dumps(entry))
+        error.close()

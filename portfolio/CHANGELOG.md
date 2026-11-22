@@ -1,3 +1,10 @@
+## 0.70.48
+
+- Verwerk ondersteunde wisselkoersen ook als Frankfurter extra assets met langere codes terugstuurt. Behoud strikte valutacontroles bij transacties en hergebruik de bestaande cache.
+- Log categorieën alleen als er daadwerkelijk nieuwe velden zijn aangevuld. Onvolledige profielen behouden hun dagelijkse hercontrole.
+- Voeg bij mislukte ETF-downloads de bronhost, downloadstap, duur en beursnotering toe. De dagelijkse achtergrondwachttijd blijft gelden.
+- Voeg foutdetails toe aan mislukte dagelijkse wisselkoersupdates.
+
 ## 0.70.47
 
 - Laat Health Center → Koersen verversen ook buiten 08.00–22.00 uur en in het weekend één handmatige ronde starten.

@@ -115,3 +115,48 @@ class ForexTests(unittest.TestCase):
   with patch('forex.load_json',return_value=[]),self.assertRaises(ValueError):convert(self.store,'10','EUR','USD',DAY)
   with self.store.connect() as db:self.assertEqual(db.execute("SELECT COUNT(*) FROM api_cache WHERE namespace='fx'").fetchone()[0],0)
   with patch('forex.load_json',return_value=rates()):self.assertEqual(convert(self.store,'10','EUR','USD',DAY)['converted'],'12.0')
+
+ def test_extended_provider_assets_do_not_block_fiat_catalog_or_daily_rates(self):
+  catalog=[{'iso_code':'EUR','name':'Euro'},{'iso_code':'USD','name':'Dollar'},
+           {'iso_code':'GBP','name':'Pound'},{'iso_code':'USDT','name':'Tether'},
+           {'iso_code':'USDC','name':'USD Coin'}]
+  mixed=rates()+[{'base':'EUR','quote':asset,'date':DAY,'rate':'1.2'} for asset in ('USDT','USDC')]
+  with patch('forex.load_json',side_effect=[catalog,mixed]) as network:
+   data=overview(self.store,DAY)
+   self.assertIsNone(data['error'])
+   self.assertEqual({row['code'] for row in data['currencies']},{'EUR','USD','GBP','GBX'})
+   self.assertEqual(convert(self.store,'10','EUR','USD',DAY)['converted'],'12.0')
+   self.assertEqual(len(data['history']),2)
+   overview(Store(self.tmp.name),DAY)
+   self.assertEqual(network.call_count,2)
+  for asset in ('USDT','USDC'):
+   with self.assertRaises(ValueError):code(asset)
+  from datetime import date
+  with self.assertRaises(ValueError):save_rates(self.store,mixed,date.fromisoformat(DAY))
+
+ def test_cached_extended_asset_replies_are_filtered_without_redownloading(self):
+  from forex import currencies,snapshot
+  from persistent_cache import cached_json
+  cached_json(self.store,'fx','currencies',86400,lambda:[
+   {'iso_code':'USD','name':'Dollar'},{'iso_code':'USDT','name':'Tether'}])
+  cached_json(self.store,'fx','day:'+DAY,86400,lambda:rates()+[
+   {'base':'EUR','quote':'USDC','date':DAY,'rate':'1.2'}])
+  with patch('forex.load_json') as network:
+   self.assertEqual({row['code'] for row in currencies(Store(self.tmp.name))},{'USD','GBX'})
+   snapshot(Store(self.tmp.name),DAY);network.assert_not_called()
+  with self.store.connect() as db:
+   self.assertEqual({row[0] for row in db.execute('SELECT quote FROM fx_rates')},{'USD','GBP'})
+   self.assertEqual({row[0] for row in db.execute('SELECT currency FROM fx_coverage')},{'USD','GBP'})
+
+ def test_unsupported_only_and_malformed_provider_replies_are_not_cached(self):
+  from forex import currencies,snapshot
+  for reply in ([{'iso_code':'USDT','name':'Tether'}],[{'iso_code':'USD'}]):
+   with patch('forex.load_json',return_value=reply),self.assertRaises(ValueError):currencies(self.store)
+  for reply in ([{'base':'EUR','quote':'USDT','date':DAY,'rate':'1'}],
+                rates()+[{'quote':'USDC'}],
+                [{'base':'EUR','quote':'USD','date':DAY,'rate':'NaN'}],
+                [{'base':'EUR','quote':'USD','date':'2999-01-01','rate':'1'}]):
+   with patch('forex.load_json',return_value=reply),self.assertRaises(ValueError):snapshot(self.store,DAY)
+  with self.store.connect() as db:
+   self.assertEqual(db.execute("SELECT COUNT(*) FROM api_cache WHERE namespace='fx'").fetchone()[0],0)
+   self.assertEqual(db.execute('SELECT COUNT(*) FROM fx_rates').fetchone()[0],0)

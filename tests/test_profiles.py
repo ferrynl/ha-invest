@@ -158,3 +158,17 @@ class ProfileTests(unittest.TestCase):
   other=('OTHER','NASDAQ','USD')
   with patch('profiles._download_profile',side_effect=ProfileError('http_429')) as api:
    self.assertTrue(profiles.fetch_company(self.store,other)['unavailable']);profiles.fetch_company(self.store,other);api.assert_called_once()
+
+ def test_partial_recheck_logs_only_newly_filled_fields(self):
+  value=payload(sector='',country='');value['quoteSummary']['result'][0]['price']['quoteType']='ETF'
+  with patch('profiles.fetch_profile',return_value=normalize_profile(value,KEY)):
+   self.assertTrue(enrich_categories(self.store,KEY))
+   with self.store.connect() as db:
+    db.execute("UPDATE instrument_category_sync SET retry_at='2000-01-01T00:00:00+00:00'")
+   self.assertTrue(enrich_categories(Store(self.tmp.name),KEY))
+  entries=[row for row in read_logs(self.store)['entries'] if row['event']=='categories_filled']
+  self.assertEqual(len(entries),1)
+  self.assertEqual(entries[0]['details']['filled_fields'],['asset_type'])
+  self.assertEqual(details(self.store,STOCK)['category_sync']['status'],'partial')
+  with self.store.connect() as db:
+   self.assertEqual(db.execute('SELECT attempts FROM instrument_category_sync').fetchone()[0],2)
