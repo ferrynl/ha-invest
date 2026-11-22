@@ -36,7 +36,7 @@ from history import portfolio_values
 from diagnostics import read_logs,record,DiagnosticError,ActionError
 from forex import overview as fx_overview,convert as fx_convert,history as fx_history
 
-def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested,integration_options=None,enable_demo=True):
+def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested,integration_options=None,enable_demo=True,manual_refresh=None):
     from logo_cache import LogoCache
     def logo_error(group,stage,error_type,status):
         record(store,'WARNING','logos','logo_cache_failed','Logo ophalen of opslaan mislukt.',
@@ -539,6 +539,9 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 if not isinstance(data,dict):raise ValueError('Ongeldige aanvraag.')
                 if path=='/api/health-action':
                     if data.get('action')=='refresh':
+                        if refresh_lock.locked():
+                            return self.respond({'error':'Er loopt een achtergrondtaak. Probeer het later opnieuw.'},409)
+                        if manual_refresh is not None:manual_refresh.set()
                         refresh_requested.set()
                         return self.respond({'ok':True},202)
                     if data.get('action')=='cache':

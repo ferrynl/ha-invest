@@ -91,6 +91,13 @@ met een maximum van zes uur voor de lokale terugvalpauze. Een langere wachttijd
 uit Yahoo's Retry-After-header wordt gerespecteerd.
 Herstart de app na het wijzigen van deze optie.
 
+Handmatig starten kan via **Health Center → Koersen verversen**. Deze knop start ook
+buiten het automatische tijdvak en in het weekend één ronde voor de eigen portefeuille.
+Een actieve Yahoo-wachttijd blijft gelden en recente koersantwoorden worden hergebruikt.
+In **Logs** verschijnen `manual_sync_started` en `manual_sync_finished`. De eindmelding
+vermeldt het aantal opgeslagen koersen, bijgewerkte histories en eventuele bronwachttijd.
+Laat de ronde afronden en vernieuw daarna het portefeuilleoverzicht.
+
 Yahoo werkt zonder API-sleutel. Deze koppeling gebruikt een publiek, onofficieel
 chart-endpoint dat Yahoo kan wijzigen of blokkeren. Dit is polling, geen realtime
 stream. De vertraging verschilt per beurs. Het dashboard toont de werkelijke

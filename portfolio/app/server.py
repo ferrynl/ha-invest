@@ -26,10 +26,11 @@ options_path = store.root / 'options.json'
 options = json.loads(options_path.read_text()) if options_path.exists() else {}
 interval = max(15, int(options.get('refresh_minutes', 15))) * 60
 refresh_requested = threading.Event()
+manual_refresh_requested = threading.Event()
 status = {'message': 'Yahoo-koersen worden opgehaald; mogelijk vertraagd.', 'last_attempt': None}
 refresh_lock = threading.Lock()
 
-def refresh(automatic=False):
+def refresh(automatic=False, manual=False):
     if not refresh_lock.acquire(blocking=False):
         return
     try:
@@ -37,6 +38,11 @@ def refresh(automatic=False):
             return False
         state_cache.bind(store)
         errors = 0
+        quotes_updated = 0
+        histories_updated = 0
+        paused_details = {}
+        if manual:
+            record(store,'INFO','market','manual_sync_started','Koersen verversen',{'mode':'manual','phase':'started'})
         snapshot = state_cache.derived('state-compact:all',lambda:store.state(compact_view=True))
         history_errors = 0
         yahoo_paused = False
@@ -62,6 +68,7 @@ def refresh(automatic=False):
                         clear_failure(store,failure_key('quote_failed',instrument))
                         if not p.get('quote') or p['quote']['quoted_at']!=quote['observed_at']:
                             store.quote(*instrument,quote['price'],quote['observed_at'],quote['source']);state_cache.invalidate()
+                            quotes_updated += 1
                     except Exception as error:
                         record_failure(store,'quote_failed','Actuele koers ophalen mislukt.',instrument,error)
                         errors+=1
@@ -72,27 +79,35 @@ def refresh(automatic=False):
                 continue
             try:
                 fresh = p['quote'] and (datetime.now(timezone.utc)-datetime.fromisoformat(p['quote']['fetched_at'])).total_seconds()<interval
-                if instrument in active_instruments and not market_weekend(p['exchange']) and not fresh and not yahoo_paused:
+                if instrument in active_instruments and (manual or not market_weekend(p['exchange'])) and (manual or not fresh) and not yahoo_paused:
                     price, stamp = fetch_quote('', p['symbol'], p['exchange'], p['currency'],store=store,ttl=interval)
                     store.quote(p['symbol'], p['exchange'], p['currency'], price, stamp, 'Yahoo Finance (mogelijk vertraagd)')
+                    quotes_updated += 1
             except Exception as error:
                 record_failure(store,'quote_failed','Actuele koers ophalen mislukt.',instrument,error)
                 errors += 1
-                if isinstance(error, ProviderBusy):yahoo_paused = True
+                if isinstance(error, ProviderBusy):
+                    yahoo_paused = True
+                    paused_details = error_details(error)
+                    if manual:break
             if automatic and not automatic_window():break
             start = earliest_dates.get(instrument)
             if not start:
                 record(store,'WARNING','market','history_missing_purchase','Geen aankoopdatum voor koershistorie.',{'symbol':p['symbol'],'exchange':p['exchange'],'currency':p['currency']})
                 continue
             try:
-                if not market_weekend(p['exchange']) and not yahoo_paused and store.history_needed(p['symbol'], p['exchange'], p['currency'], start):
+                if (manual or not market_weekend(p['exchange'])) and not yahoo_paused and store.history_needed(p['symbol'], p['exchange'], p['currency'], start):
                     requested=store.history_start(p['symbol'],p['exchange'],p['currency'],start)
                     rows = fetch_history(p['symbol'], p['exchange'], p['currency'], requested,store=store)
                     store.save_history(p['symbol'], p['exchange'], p['currency'], start, rows)
+                    histories_updated += 1
             except Exception as error:
                 record_failure(store,'history_failed','Koershistorie ophalen mislukt.',instrument,error)
                 history_errors += 1
-                if isinstance(error, ProviderBusy):yahoo_paused = True
+                if isinstance(error, ProviderBusy):
+                    yahoo_paused = True
+                    paused_details = error_details(error)
+                    if manual:break
             if automatic and not automatic_window():break
             # Profile lookup runs once per listing, including existing holdings.
             if enrich_categories(store,instrument):state_cache.invalidate()
@@ -105,6 +120,14 @@ def refresh(automatic=False):
         status.update(message=f'{errors} koersaanvragen mislukt. Vorige koersen blijven zichtbaar met hun oorspronkelijke tijd.' if errors else 'Yahoo-koersen bijgewerkt; mogelijk vertraagd. Buiten beurstijden zie je de laatst beschikbare koers.', last_attempt=now())
         if history_errors:
             status['message'] += f' Historie van {history_errors} aandeel/aandelen kon niet worden opgehaald; volgt bij de volgende controle.'
+        if yahoo_paused:
+            status['message'] = paused_details['reason']
+        status.update(quotes_updated=quotes_updated, histories_updated=histories_updated,
+                      quote_errors=errors, history_errors=history_errors, provider_paused=yahoo_paused)
+        if manual:
+            record(store,'WARNING' if errors or history_errors else 'INFO','market','manual_sync_finished',status['message'],
+                   {'mode':'manual','phase':'finished','quotes_updated':quotes_updated,'histories_updated':histories_updated,
+                    'quote_errors':errors,'history_errors':history_errors,'provider_paused':yahoo_paused,**paused_details})
         state_cache.invalidate()
         return True
     finally:
@@ -126,7 +149,10 @@ def background():
             if time.time() - last_backup >= 86400:
                 store.backup()
                 last_backup = time.time()
-            if automatic_window() and refresh(automatic=True):
+            manual = manual_refresh_requested.is_set()
+            if manual:manual_refresh_requested.clear()
+            refreshed = refresh(manual=True) if manual else automatic_window() and refresh(automatic=True)
+            if refreshed:
                 if time.time()-last_fx>=21600:
                     try:
                         fx_currencies(store);fx_snapshot(store,datetime.now(timezone.utc).date().isoformat())
@@ -134,15 +160,17 @@ def background():
                     except ValueError as error:record(store,'WARNING','fx','daily_rates_failed',str(error))
                     last_fx=time.time()
                 warm_dashboard()
-                from demo import refresh_active_demo
-                refresh_active_demo(store.root/'demo',ttl=interval,provider_store=store)
+                if not manual:
+                    from demo import refresh_active_demo
+                    refresh_active_demo(store.root/'demo',ttl=interval,provider_store=store)
         except Exception as error:
+            status.update(message='Achtergrondtaak mislukt.')
             record(store,'ERROR','system','background_failed','Achtergrondtaak mislukt.',error_details(error))
             logging.exception('Achtergrondtaak mislukt')
         refresh_requested.wait(interval)
         refresh_requested.clear()
 
-Handler = make_handler(store, auth, state_cache, status, interval, refresh_lock, refresh_requested, options)
+Handler = make_handler(store, auth, state_cache, status, interval, refresh_lock, refresh_requested, options, manual_refresh=manual_refresh_requested)
 
 class BoundedHTTPServer(ThreadingHTTPServer):
     def __init__(self, *args):
