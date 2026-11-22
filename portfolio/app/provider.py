@@ -5,6 +5,7 @@ from email.utils import parsedate_to_datetime
 from urllib.request import urlopen, Request
 from urllib.parse import quote, urlencode, urlsplit
 from datetime import datetime, timezone, date, timedelta
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from functools import lru_cache
 import time
 from urllib.error import HTTPError, URLError
@@ -226,3 +227,30 @@ def fetch_history(symbol, exchange, currency, start,store=None):
         raise ActionError('Geen historische dagkoersen beschikbaar.', 'history_empty')
     clear_failure(store, failure_key('history_failed', (symbol,exchange,currency)))
     return rows
+
+
+def fetch_monthly_prices(symbol, exchange, currency, store):
+    now = datetime.now(timezone.utc)
+    start = datetime(now.year - 6, 12, 1, tzinfo=timezone.utc) - timedelta(days=7)
+    ticker = quote_symbol(symbol, exchange)
+    params = urlencode({'interval': '1mo', 'period1': int(start.timestamp()),
+                        'period2': int(now.timestamp())})
+    request = Request('https://query1.finance.yahoo.com/v8/finance/chart/' + quote(ticker, safe='') + '?' + params,
+                      headers={'User-Agent': 'Mozilla/5.0'})
+    key = '|'.join((ticker, exchange, currency, str(now.year)))
+    result = _payload(request, 8, store, 'yahoo-monthly-prices', key, 6 * 3600)['chart']['result'][0]
+    meta = result['meta']
+    market = EXCHANGES.get(meta.get('exchangeName', '').upper())
+    if meta.get('symbol', '').upper() != ticker.upper() or currency_code(meta.get('currency', '')) != currency_code(currency) or not market or market[0] != exchange:
+        raise ActionError('Historische notering of valuta wijkt af.', 'history_listing_mismatch')
+    closes = result['indicators']['quote'][0]['close']
+    try:
+        exchange_time = ZoneInfo(meta.get('exchangeTimezoneName') or 'UTC')
+    except (ZoneInfoNotFoundError, ValueError):
+        exchange_time = timezone(timedelta(seconds=int(meta.get('gmtoffset', 0))))
+    return [
+        {'day': datetime.fromtimestamp(stamp, exchange_time).date().replace(day=1).isoformat(),
+         'price': str(close)}
+        for stamp, close in zip(result.get('timestamp', []), closes)
+        if isinstance(close, (int, float)) and math.isfinite(close) and close > 0
+    ]

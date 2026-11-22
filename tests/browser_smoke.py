@@ -2,7 +2,9 @@
 import sys
 import tempfile
 import threading
+from datetime import date
 from pathlib import Path
+from unittest.mock import patch
 from http.server import ThreadingHTTPServer
 from playwright.sync_api import sync_playwright, expect
 
@@ -69,6 +71,34 @@ def main():
                 action = page.locator("#health-quotes").bounding_box()
                 assert action and action["height"] <= 55, action
                 print('Health Center browser: mobile measurements passed', flush=True)
+                page.set_viewport_size({"width": 1280, "height": 900})
+                year = date.today().year - 1
+                store.add({"symbol": "HEAT.AS", "exchange": "AMSTERDAM", "currency": "EUR",
+                           "name": "Heatmap fixture", "quantity": 1, "price": 110,
+                           "purchased_on": f"{year}-01-20"})
+                prices = [
+                    {"day": f"{year - 1}-12-01", "price": "100"},
+                    {"day": f"{year}-01-01", "price": "110"},
+                    {"day": f"{year}-02-01", "price": "99"},
+                    {"day": f"{year}-04-01", "price": "110"},
+                ]
+                page.route("**/api/instrument/company?*", lambda route: route.fulfill(json={}))
+                with patch("provider.fetch_monthly_prices", return_value=prices) as monthly:
+                    page.evaluate("location.hash = '#aandeel?symbol=HEAT.AS&exchange=AMSTERDAM&currency=EUR'")
+                    heatmap = page.locator("#stock-monthly-table")
+                    expect(heatmap).to_be_visible()
+                    expect(heatmap.locator("tbody tr")).to_have_count(6)
+                    row = heatmap.locator("tbody tr").nth(1)
+                    expect(row.locator("td").nth(0)).to_have_text("+10,0%")
+                    expect(row.locator("td").nth(1)).to_have_text("-10,0%")
+                    expect(row.locator("td").nth(3)).to_have_text("—")
+                    monthly.assert_called_once_with("HEAT.AS", "AMSTERDAM", "EUR", store)
+                scroll = page.locator("#stock-monthly-grid .scroll")
+                for width in (390, 768, 1280):
+                    page.set_viewport_size({"width": width, "height": 900})
+                    assert page.evaluate("document.documentElement.scrollWidth") <= width
+                page.set_viewport_size({"width": 390, "height": 844})
+                assert scroll.evaluate("(element) => element.scrollWidth > element.clientWidth")
                 page.set_viewport_size({"width": 1280, "height": 900})
                 print('Health Center browser: open account and logout', flush=True)
                 page.locator('a[data-route="account"]').click()

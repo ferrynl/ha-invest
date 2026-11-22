@@ -31,8 +31,88 @@ async function loadStockDetail(){
   $('stock-events-note').textContent=data.events.length+ui(' gebeurtenissen: aankopen, verkopen, dividend, splitsingen en gekoppelde kapitaalterugbetalingen.')+(accessSession.user.role==='admin'?ui(' Ook gekoppelde regels die nog te beoordelen zijn worden getoond. Bronregels zonder eenduidige aandelenkoppeling staan bij Imports → Te beoordelen.'):'');
   $('stock-price-range').value=params.has('day')?'1D':'ALL';
   drawStockPrice();
+  loadStockMonthlyReturns(data,params,request,route);
  }catch(error){if(request===stockDetailRequest){stockDetail=null;$('stock-detail-feedback').textContent=error.message||ui('Aandeel laden mislukt.');}}
 }
+function monthlyStockReturns(prices,today){
+ const closes=new Map();
+ for(const {day,price} of prices){
+  const value=Number(price),month=day.slice(0,7);
+  if(day>today||!Number.isFinite(value)||value<=0)continue;
+  if(!closes.has(month)||day>=closes.get(month).day)closes.set(month,{day,value});
+ }
+ const returns=new Map();
+ for(const [month,{value}] of closes){
+  const [year,number]=month.split('-').map(Number);
+  const previous=number===1?(year-1)+'-12':year+'-'+String(number-1).padStart(2,'0');
+  const base=closes.get(previous);
+  if(base)returns.set(month,value/base.value-1);
+ }
+ return returns;
+}
+function stockReturnColor(value){
+ const strength=Math.min(Math.abs(value)/.4,1);
+ const color=value<0?'#ad3345':'#177359';
+ return 'color-mix(in srgb, '+color+' '+(strength*100)+'%, #202d41)';
+}
+function renderStockMonthlyReturns(prices){
+ const now=new Date(),year=now.getFullYear(),currentMonth=now.getMonth();
+ const dateKey=year+'-'+String(currentMonth+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+ const returns=monthlyStockReturns(prices,dateKey),table=$('stock-monthly-table');
+ const body=table.tBodies[0],header=table.tHead.rows[0];
+ const monthShort=new Intl.DateTimeFormat(appLocale(),{month:'short',timeZone:'UTC'});
+ const monthLong=new Intl.DateTimeFormat(appLocale(),{month:'long',year:'numeric',timeZone:'UTC'});
+ const percent=new Intl.NumberFormat(appLocale(),{style:'percent',signDisplay:'exceptZero',minimumFractionDigits:1,maximumFractionDigits:1});
+ const precise=new Intl.NumberFormat(appLocale(),{style:'percent',signDisplay:'exceptZero',maximumFractionDigits:2});
+ header.replaceChildren();
+ const yearHead=document.createElement('th');
+ yearHead.scope='col';yearHead.textContent=ui('Jaar');header.append(yearHead);
+ for(let month=0;month<12;month++){
+  const th=document.createElement('th');
+  th.scope='col';th.textContent=monthShort.format(new Date(Date.UTC(year,month,1)));
+  header.append(th);
+ }
+ body.replaceChildren();
+ let hasReturns=false;
+ for(let rowYear=year;rowYear>year-6;rowYear--){
+  const row=body.insertRow(),label=document.createElement('th');
+  label.scope='row';label.textContent=rowYear;row.append(label);
+  for(let month=0;month<12;month++){
+   const cell=row.insertCell(),key=rowYear+'-'+String(month+1).padStart(2,'0');
+   const value=returns.get(key);
+   if(value===undefined){cell.textContent='—';continue;}
+   hasReturns=true;
+   cell.textContent=percent.format(value);
+   cell.title=monthLong.format(new Date(Date.UTC(rowYear,month,1)))+' · '+precise.format(value);
+   if(rowYear===year&&month===currentMonth){
+    cell.classList.add('stock-return-current');
+    cell.title+=' · '+ui('Deze maand');
+   }
+   cell.style.backgroundColor=value===0?'#202d41':stockReturnColor(value);
+  }
+ }
+ $('stock-monthly-grid').hidden=!hasReturns;
+ return hasReturns;
+}
+async function loadStockMonthlyReturns(data,params,request,route){
+ $('stock-monthly-returns').hidden=false;
+ const status=$('stock-monthly-status');
+ const local=renderStockMonthlyReturns(data.prices);
+ status.textContent=ui('Laden…');
+ const active=()=>request===stockDetailRequest&&route===location.hash&&accessSession?.user;
+ try{
+  const response=await apiFetch('api/instrument/monthly-prices?'+params,{background:true});
+  if(!response.ok)throw Error();
+  const {prices}=await response.json();
+  if(!active())return;
+  if(renderStockMonthlyReturns(prices)){status.textContent='';return;}
+  if(local)renderStockMonthlyReturns(data.prices);
+ }catch{
+  if(!active())return;
+ }
+ status.textContent=local?ui('Opgeslagen koershistorie'):ui('Geen opgeslagen koersen voor deze periode.');
+}
+
 function drawStockPrice(){
  const svg=$('stock-price-chart');svg.replaceChildren();svg.onpointermove=null;svg.onpointerleave=null;svg.onkeydown=null;$('stock-price-detail').textContent='';if(!stockDetail)return;
  const data=stockDetail,observations=data.prices.map(p=>({...p,source:ui('Slotkoers')})),quote=data.quote;
@@ -111,7 +191,7 @@ async function loadConstituentDetail(params){
  const request=++stockDetailRequest,route=location.hash;params.set('account_id',currentBroker);stockDetail=null;$('stock-detail-content').hidden=true;$('stock-detail-feedback').textContent=ui('Aandeel laden…');
  try{const response=await apiFetch('api/fund/constituent?'+params),data=await response.json();if(request!==stockDetailRequest||route!==location.hash||!accessSession?.user)return;if(!response.ok)throw Error(data.error);const h=data.holding;
  $('stock-detail-content').hidden=false;$('stock-detail-feedback').textContent='';$('stock-detail-name').textContent=h.name;document.title=h.name+' · Home Invest';$('stock-detail-identity').textContent=[h.symbol,h.isin,h.currency].filter(Boolean).join(' · ');
- $('stock-detail-metrics').hidden=true;$('stock-price-chart').closest('section').hidden=true;$('stock-events').closest('section').hidden=true;$('stock-fund-panel').hidden=true;$('stock-fundamentals-panel').hidden=true;for(const id of ['stock-category-open','stock-valuation-open','stock-conversion-link'])$(id).hidden=true;
+ $('stock-monthly-returns').hidden=true;$('stock-detail-metrics').hidden=true;$('stock-price-chart').closest('section').hidden=true;$('stock-events').closest('section').hidden=true;$('stock-fund-panel').hidden=true;$('stock-fundamentals-panel').hidden=true;for(const id of ['stock-category-open','stock-valuation-open','stock-conversion-link'])$(id).hidden=true;
  const note=$('stock-valuation-status');note.replaceChildren(homeNode('span',ui('Via ETF aangehouden: ')));const parent=homeNode('a',data.parent_name);parent.href=stockDetailLink(data.parent);note.append(parent,document.createTextNode(' · '+ui('Weging in ETF')+': '+new Intl.NumberFormat(appLocale(),{maximumFractionDigits:6}).format(Number(h.weight))+'% · '+dayLabel(data.as_of)));
  $('stock-company-description').textContent=ui('Bedrijfsinformatie laden…');const image=$('stock-company-logo');image.onload=null;image.onerror=null;image.removeAttribute('src');image.hidden=true;$('stock-company-initials').hidden=false;$('stock-company-initials').textContent=h.name.slice(0,2).toUpperCase();$('stock-detail-categories').replaceChildren();
  for(const [field,label] of Object.entries(categoryLabels)){const group=homeNode('div');group.append(homeNode('dt',label),homeNode('dd',h[field]||ui('Niet ingedeeld')));$('stock-detail-categories').append(group);}loadStockCompany(params,request,route);
