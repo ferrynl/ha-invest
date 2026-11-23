@@ -27,9 +27,10 @@ jobs:
         run: docker build -t home-invest-acceptance:ci ./portfolio
       - name: Financial regression tests in isolated container
         run: |
-          docker run --rm --network none -v "$PWD/tests:/tests:ro" \
-            -e PYTHONPATH=/app home-invest-acceptance:ci \
-            python -m unittest discover -s /tests -p 'test_*.py'
+          docker run --rm --network none -v "$PWD/tests:/workspace/tests:ro" \
+            -v "$PWD/portfolio/app:/workspace/portfolio/app:ro" \
+            -e PYTHONPATH=/workspace/portfolio/app home-invest-acceptance:ci \
+            python -m unittest discover -s /workspace/tests -p 'test_*.py'
       - name: Start isolated application with disposable database
         run: |
           docker volume create home-invest-ci-data
