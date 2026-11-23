@@ -1,0 +1,72 @@
+name: Docker financial and security acceptance
+on:
+  pull_request:
+    paths:
+      - 'portfolio/**'
+      - 'tests/**'
+      - '.github/workflows/docker-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: docker-acceptance-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  isolated-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production Docker image
+        run: docker build -t home-invest-acceptance:ci ./portfolio
+      - name: Financial regression tests in isolated container
+        run: |
+          docker run --rm --network none -v "$PWD/tests:/tests:ro" \
+            -e PYTHONPATH=/app home-invest-acceptance:ci \
+            python -m unittest discover -s /tests -p 'test_*.py'
+      - name: Start isolated application with disposable database
+        run: |
+          docker volume create home-invest-ci-data
+          docker run -d --name home-invest-ci \
+            --network bridge -p 127.0.0.1:18099:8099 \
+            -v home-invest-ci-data:/data \
+            -e DATA_DIR=/data -e PORT=8099 \
+            home-invest-acceptance:ci
+      - name: Startup and HTTP smoke tests
+        run: |
+          python - <<'PY'
+          import time, urllib.request, urllib.error
+          url='http://127.0.0.1:18099/'
+          for i in range(90):
+              try:
+                  with urllib.request.urlopen(url,timeout=3) as r:
+                      assert r.status in (200,301,302,303,307,308),r.status
+                  print('PASS: application HTTP startup')
+                  break
+              except (urllib.error.URLError,TimeoutError):
+                  time.sleep(2)
+          else:
+              raise SystemExit('FAIL: container not responding')
+          PY
+          if docker port home-invest-ci 8100/tcp 2>/dev/null | grep -q .; then
+            echo 'FAIL: optional sensor port published'; exit 1
+          fi
+          echo 'PASS: optional sensor port not published'
+      - name: Restart and verify database persistence
+        run: |
+          docker restart home-invest-ci
+          for i in $(seq 1 60); do
+            if curl --fail --silent --max-time 3 http://127.0.0.1:18099/ >/dev/null; then
+              echo 'PASS: app restarts with persistent volume'; exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+      - name: Diagnostic logs on failure
+        if: failure()
+        run: docker logs --tail 80 home-invest-ci 2>&1 | sed -E 's/(token|password|secret|authorization)([=: ]+)[^ ]+/\1\2[REDACTED]/Ig' || true
+      - name: Remove disposable test environment
+        if: always()
+        run: |
+          docker rm -f home-invest-ci 2>/dev/null || true
+          docker volume rm home-invest-ci-data 2>/dev/null || true
