@@ -1,5 +1,11 @@
 name: Docker financial and security acceptance
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'portfolio/**'
+      - 'tests/**'
+      - '.github/workflows/docker-acceptance.yml'
   pull_request:
     paths:
       - 'portfolio/**'
