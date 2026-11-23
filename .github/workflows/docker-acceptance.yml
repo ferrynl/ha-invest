@@ -59,6 +59,24 @@ jobs:
             echo 'FAIL: optional sensor port published'; exit 1
           fi
           echo 'PASS: optional sensor port not published'
+      - name: Verify anonymous requests cannot access private endpoints
+        run: |
+          python - <<'PY'
+          import urllib.request, urllib.error
+          base='http://127.0.0.1:18099'
+          # Verify no unauthenticated data access to known sensitive resources.
+          for path in ('/data/portfolio.sqlite3', '/portfolio.sqlite3', '/data/', '/backups/'):
+              try:
+                  with urllib.request.urlopen(base+path,timeout=5) as response:
+                      payload=response.read(512)
+                      status=response.status
+              except urllib.error.HTTPError as e:
+                  status=e.code
+                  payload=b''
+              if status==200 and (payload.startswith(b'SQLite format 3') or b'Index of /' in payload):
+                  raise SystemExit('FAIL: private resource exposed at '+path)
+              print('Checked',path,'status',status)
+          PY
       - name: Restart and verify database persistence
         run: |
           docker restart home-invest-ci
