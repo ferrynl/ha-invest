@@ -91,5 +91,16 @@ De [GitHub Checks voor PR #57](https://github.com/ferrynl/ha-invest/actions/runs
 
 De acceptatie gebruikt fictieve gegevens en geeft geen uitsluitsel over openstaande regels in een echte portefeuille. Home Invest 0.70.43 bevat de geteste appcode. PR #57 voegt de schaaltest toe aan GitHub Actions.
 
+## Acceptatie fase 11 (25 november)
+
+De reproduceerbare benchmark gebruikt een lokale HTTP-server met 10.000 fictieve aankopen, 10 brokers, 50 noteringen en 180 dagkoersen per notering. Hij meet de som van de twee warme dashboardrequests en de tijd van één bevestigde aankoop, telkens zeven keer. De releaseworkflow voert dezelfde benchmark uit in het containerimage. Start lokaal met `python scripts/benchmark_portfolio.py` na installatie van de appafhankelijkheden.
+
+- In de lokale vergelijking met Python 3.12.14 en SQLite 3.53.1 daalde het eerste brokerdashboard van 231 ms naar 101 ms. De warmste representatieve dashboardreeks piekte op 118 ms (limiet 2 s) en een aankoop op 8 ms (limiet 1 s).
+- SQLite gebruikt WAL zodat een langlopende lezer een writer niet blokkeert. Een regressietest bevestigt dat de writer commit terwijl de lezer zijn oorspronkelijke momentopname behoudt. De SQLite-wachttijd voor concurrerende schrijvers blijft 30 s. De HTTP-handler meldt een eventuele lock zonder de boeking opnieuw uit te voeren.
+- De achtergrondtaak houdt één koersronde tegelijk aan. Gewijzigde koersen en historie verhogen de databaserevisie, zodat een volgende dashboardaanvraag nieuwe gegevens krijgt. De benchmark verifieert het behoud van de oorspronkelijke koersdatum en het zichtbaar worden van opgeslagen aankopen.
+- De HTTP-server heeft al een limiet van 32 gelijktijdige verzoeken. DuckDB `httpfs` blijft nodig voor het opvragen van externe Parquet-data voor bedrijfsfundamentals. Die taak draait buiten het dashboardpad in een begrensd subprocess.
+- Schema 28 voegt alleen indexen toe. Bij de eerste start op een bestaande database maakt de migratie een back-up. Gebruik voor teruggaan naar een versie met schema 27 een passende back-up van vóór de upgrade.
+- Financiële controle tegen echte brokerexports blijft open in [#66](https://github.com/ferrynl/ha-invest/issues/66). De installatie, ingress en herstelproef op een echte Home Assistant-installatie blijven open in [#67](https://github.com/ferrynl/ha-invest/issues/67).
+
 ## Bij iedere nieuwe projectsessie
 Lees dit document; bekijk actuele GitHub-issues, PRs, checks en release-status; pak hoogste open P0 op; update roadmap zodra afgerond en geverifieerd.

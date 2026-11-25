@@ -103,7 +103,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 content=json.dumps(localize(content,language),separators=(',',':')).encode()
             compressible=public or vary_cookie or (self.command=='GET' and kind=='application/json' and urlsplit(self.path).path not in ('/api/session','/api/users'))
             compressed=compressible and 'gzip' in [part.strip().lower() for part in self.headers.get('Accept-Encoding','').split(',')]
-            if compressed:content=gzip.compress(content,mtime=0)
+            if compressed:content=gzip.compress(content,compresslevel=4,mtime=0)
             digest='"'+hashlib.sha256(content).hexdigest()+'"' if etag else None
             if digest and self.headers.get('If-None-Match')==digest:code=304;content=b''
             self.send_response(code)

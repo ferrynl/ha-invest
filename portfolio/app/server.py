@@ -128,7 +128,6 @@ def refresh(automatic=False, manual=False):
             record(store,'WARNING' if errors or history_errors else 'INFO','market','manual_sync_finished',status['message'],
                    {'mode':'manual','phase':'finished','quotes_updated':quotes_updated,'histories_updated':histories_updated,
                     'quote_errors':errors,'history_errors':history_errors,'provider_paused':yahoo_paused,**paused_details})
-        state_cache.invalidate()
         return True
     finally:
         refresh_lock.release()
