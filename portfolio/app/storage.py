@@ -44,6 +44,10 @@ class Store:
         self.path = self.root / 'portfolio.sqlite3'
         self.lock = RLock()
         migrate(self.path)
+        # Keep SQLite read snapshots available during long dashboard builds
+        # without making a writer wait for all of those readers to finish.
+        with self.connect() as db:
+            db.execute('PRAGMA journal_mode=WAL').fetchone()
 
     @contextmanager
     def connect(self):
@@ -161,12 +165,22 @@ class Store:
         db.execute('BEGIN')
         revision=db.execute('SELECT revision FROM dashboard_revision WHERE id=1').fetchone()[0]
         settings=dict(db.execute("SELECT key,value FROM app_settings WHERE key NOT LIKE 'dashboard_layout:%'"))
-        purchases = [dict(row) for row in db.execute('SELECT * FROM purchases ORDER BY purchased_on,id')]
+        accounts = [dict(row) for row in db.execute('SELECT * FROM broker_accounts ORDER BY id')]
+        params = ()
+        account_filter = ''
+        if account != 'all':
+            account_id = next((row['id'] for row in accounts if str(row['id']) == str(account)), None)
+            if account_id is None:
+                raise LookupError('Brokeraccount niet gevonden.')
+            params = (account_id,)
+            account_filter = ' WHERE account_id=?'
+        purchases = [dict(row) for row in db.execute(
+            'SELECT * FROM purchases' + account_filter + ' ORDER BY purchased_on,id', params)]
         quotes = [] if compact_view else [dict(row) for row in db.execute('SELECT * FROM quotes ORDER BY quoted_at,id')]
         daily = [] if compact_view else [dict(row) for row in db.execute('SELECT * FROM daily_prices ORDER BY day')]
-        dividends = [dict(row) for row in db.execute('SELECT * FROM dividends ORDER BY paid_on,id')]
+        dividends = [dict(row) for row in db.execute(
+            'SELECT * FROM dividends' + account_filter + ' ORDER BY paid_on,id', params)]
         charges=[dict(r) for r in db.execute('SELECT id,account_id,category,amount,currency,paid_on,included_in_net FROM charges ORDER BY paid_on,id')]
-        accounts=[dict(r) for r in db.execute('SELECT * FROM broker_accounts ORDER BY id')]
         categories=[dict(r) for r in db.execute('SELECT * FROM instrument_categories')]
         from fund_holdings import all_saved
         fund_compositions=all_saved(db)
@@ -192,11 +206,9 @@ class Store:
         from history import PortfolioAccumulator
         from dashboard import daily_moves
         accumulator=PortfolioAccumulator() if compact_view and not dividend_history else None
-        if account!='all' and not any(str(a['id'])==str(account) for a in accounts):raise LookupError('Brokeraccount niet gevonden.')
         positions = []
         moves_by_listing = {}
         for key,group in groups.items():
-            if account!='all' and str(key[0])!=str(account):continue
             instrument=key[1:]
             if compact_view:
                 observations,prices=self.history_inputs(db,instrument)
@@ -232,10 +244,13 @@ class Store:
                 positions[-1]['history']=[point for point in chart[:-1] if point['day'] in payment_days]+chart[-1:]
             elif accumulator is not None:
                 accumulator.add(positions[-1]);positions[-1]['history']=chart[-1:];positions[-1]['history_loaded']=False
-        scoped=lambda rows:[r for r in rows if account=='all' or str(r['account_id'])==str(account)]
-        result=dict(fund_compositions=fund_compositions,charges=charges,instrument_categories=categories,purchases=scoped(purchases), positions=positions, quotes=[] if compact_view else quotes, dividends=scoped(dividends), portfolios=[] if dividend_history else accumulator.result() if accumulator else portfolio_values(positions),
+        result=dict(fund_compositions=fund_compositions,charges=charges,instrument_categories=categories,purchases=purchases, positions=positions, quotes=[] if compact_view else quotes, dividends=dividends, portfolios=[] if dividend_history else accumulator.result() if accumulator else portfolio_values(positions),
                     accounts=accounts,settings=settings, database_version=SCHEMA_VERSION,data_revision=revision)
-        suspicious=sorted({row['purchased_on'] for row in purchases if row['purchased_on']<'1900-01-01'})
+        if params:
+            suspicious = [row[0] for row in db.execute(
+                "SELECT DISTINCT purchased_on FROM purchases WHERE purchased_on<'1900-01-01' ORDER BY purchased_on")]
+        else:
+            suspicious = sorted({row['purchased_on'] for row in purchases if row['purchased_on'] < '1900-01-01'})
         if suspicious:result['history_date_issues']=suspicious
         if compact_view:result['compact']=True
         return result

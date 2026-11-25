@@ -1,3 +1,10 @@
+## 0.70.50
+
+- Lees bij het openen van een brokerdashboard alleen de transacties en dividenden van dat brokeraccount. SQLite-indexen versnellen deze selectie en de controle bij verkopen.
+- Laat SQLite dashboardgegevens lezen terwijl een andere verbinding een boeking opslaat. De migratie maakt vooraf een databaseback-up.
+- Behoud geldige dashboards in de cache als een koersronde niets wijzigt. Verklein de compressietijd voor grotere dashboardantwoorden.
+- Controleer financiële regressies en dashboardprestaties op 10.000 fictieve transacties in het release-image.
+
 ## 0.70.49
 
 - Toon zes kalenderjaren aan maandrendementen als rood-groene heatmap op iedere aandeelpagina met een eigen notering. Markeer de lopende maand en laat ontbrekende maanden leeg.

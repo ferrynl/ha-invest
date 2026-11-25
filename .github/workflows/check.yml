@@ -55,6 +55,42 @@ jobs:
           -e PYTHONPATH=/app
           -v "$PWD/tests/test_release_reliability.py:/tests/test_release_reliability.py:ro"
           aandelen-dashboard:test python -m unittest discover -s /tests -p test_release_reliability.py -v
+      - name: Verify financial acceptance and dashboard performance in Docker
+        run: |
+          docker run --rm --network none \
+            -e PYTHONPATH=/app \
+            -v "$PWD/tests:/workspace/tests:ro" \
+            -v "$PWD/scripts/benchmark_portfolio.py:/workspace/scripts/benchmark_portfolio.py:ro" \
+            aandelen-dashboard:test sh -ec '
+              cd /workspace/tests
+              python -m unittest -v test_broker_reconciliation test_european_broker_imports test_conversions test_corporate_actions test_charges test_dividend_dashboard test_forex
+              python /workspace/scripts/benchmark_portfolio.py
+            '
+      - name: Verify isolated add-on startup and restart
+        run: |
+          container=$(docker run -d --network none aandelen-dashboard:test)
+          trap 'docker logs "$container"; docker rm -f "$container" >/dev/null' EXIT
+          for stage in start restart; do
+            if [ "$stage" = restart ]; then docker restart "$container" >/dev/null; fi
+            docker exec -i "$container" python - <<'PYTEST'
+          import socket
+          import time
+          from urllib.error import URLError
+          from urllib.request import urlopen
+
+          for _ in range(30):
+              try:
+                  with urlopen('http://127.0.0.1:8099/', timeout=2) as response:
+                      assert response.status == 200
+                  break
+              except (URLError, TimeoutError):
+                  time.sleep(1)
+          else:
+              raise SystemExit('Home Invest did not start')
+          with socket.socket() as sensor:
+              assert sensor.connect_ex(('127.0.0.1', 8100)) != 0
+          PYTEST
+          done
       - name: Check bundled Defeat Beta reader without network
         run: >-
           docker run --rm --network none aandelen-dashboard:test python -c

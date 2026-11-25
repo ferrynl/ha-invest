@@ -51,6 +51,21 @@ class ReleaseReliabilityTests(unittest.TestCase):
             with reopened.connect() as db:
                 self.assertEqual(db.execute("PRAGMA integrity_check").fetchone()[0], "ok")
 
+    def test_sqlite_read_snapshot_does_not_delay_a_committed_purchase(self):
+        with tempfile.TemporaryDirectory() as folder:
+            store = Store(folder)
+            trade = dict(**STOCK, quantity="1", price="100", purchased_on="2025-01-10")
+            with store.read() as reader:
+                self.assertEqual(reader.execute("PRAGMA journal_mode").fetchone()[0], "wal")
+                reader.execute("BEGIN")
+                self.assertEqual(reader.execute("SELECT COUNT(*) FROM purchases").fetchone()[0], 0)
+                with store.connect() as writer:
+                    writer.execute("PRAGMA busy_timeout=0")
+                    writer.execute("INSERT INTO purchases(symbol,exchange,name,quantity,price,currency,purchased_on,created_at) "
+                                   "VALUES(:symbol,:exchange,:name,:quantity,:price,:currency,:purchased_on,:purchased_on)", trade)
+                self.assertEqual(reader.execute("SELECT COUNT(*) FROM purchases").fetchone()[0], 0)
+            self.assertEqual(len(store.state(compact_view=True)["purchases"]), 1)
+
     def test_large_ledger_compact_state_preserves_totals(self):
         with tempfile.TemporaryDirectory() as folder:
             store = Store(folder)
