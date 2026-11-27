@@ -1,3 +1,7 @@
+## 0.70.51
+
+- Maak het mobiele menu makkelijker te bedienen met een groter aanraakvlak en zichtbare toetsenbordfocus. Verplaats de focus naar het menu bij openen, terug naar de knop bij sluiten en naar de pagina-inhoud na navigatie.
+
 ## 0.70.50
 
 - Lees bij het openen van een brokerdashboard alleen de transacties en dividenden van dat brokeraccount. SQLite-indexen versnellen deze selectie en de controle bij verkopen.

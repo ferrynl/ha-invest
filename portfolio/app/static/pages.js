@@ -109,12 +109,32 @@ function showPage(){
  window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',showPage);
-$('menu-toggle').addEventListener('click',()=>{if(document.body.hasAttribute('data-menu-open'))closeMenu();else{document.body.setAttribute('data-menu-open','');$('sidebar').inert=false;$('nav-overlay').hidden=false;$('menu-toggle').setAttribute('aria-expanded','true');$('menu-toggle').setAttribute('aria-label',ui('Menu sluiten'));}});
+function dismissMenu(){
+ closeMenu();
+ $('menu-toggle').focus();
+}
+$('menu-toggle').addEventListener('click',()=>{
+ if(document.body.hasAttribute('data-menu-open')){dismissMenu();return;}
+ document.body.setAttribute('data-menu-open','');
+ $('sidebar').inert=false;
+ $('nav-overlay').hidden=false;
+ $('menu-toggle').setAttribute('aria-expanded','true');
+ $('menu-toggle').setAttribute('aria-label',ui('Menu sluiten'));
+ const navigation=$('sidebar');
+ const links=Array.from(navigation.querySelectorAll('[data-route]')).filter(link=>link.getClientRects().length);
+ (links.find(link=>link.getAttribute('aria-current')==='page')||links[0])?.focus();
+});
 window.matchMedia('(max-width:850px)').addEventListener('change',closeMenu);
 document.querySelector('.skip-link').addEventListener('click',event=>{event.preventDefault();$('main-content').focus();});
-$('nav-overlay').addEventListener('click',closeMenu);
-document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.body.hasAttribute('data-menu-open')){closeMenu();$('menu-toggle').focus();}});
-document.querySelectorAll('[data-route]').forEach(link=>link.addEventListener('click',closeMenu));
+$('nav-overlay').addEventListener('click',dismissMenu);
+document.addEventListener('keydown',event=>{
+ if(event.key==='Escape'&&document.body.hasAttribute('data-menu-open'))dismissMenu();
+});
+document.querySelectorAll('[data-route]').forEach(link=>link.addEventListener('click',()=>{
+ const fromMobileMenu=document.body.hasAttribute('data-menu-open')&&$('sidebar').contains(link);
+ closeMenu();
+ if(fromMobileMenu)$('main-content').focus({preventScroll:true});
+}));
 function updateExportLinks(){for(const a of exportPanel.querySelectorAll('a')){const url=new URL(a.href);url.searchParams.set('account_id',currentBroker);a.href=url.href;}}
 function renderPages(){
  updateExportLinks();
