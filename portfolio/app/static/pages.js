@@ -120,8 +120,9 @@ $('menu-toggle').addEventListener('click',()=>{
  $('nav-overlay').hidden=false;
  $('menu-toggle').setAttribute('aria-expanded','true');
  $('menu-toggle').setAttribute('aria-label',ui('Menu sluiten'));
- const navigation=$('sidebar').querySelector('nav');
- (navigation.querySelector('[aria-current="page"]:not([hidden])')||navigation.querySelector('a')).focus();
+ const navigation=$('sidebar');
+ const links=Array.from(navigation.querySelectorAll('[data-route]')).filter(link=>link.getClientRects().length);
+ (links.find(link=>link.getAttribute('aria-current')==='page')||links[0])?.focus();
 });
 window.matchMedia('(max-width:850px)').addEventListener('change',closeMenu);
 document.querySelector('.skip-link').addEventListener('click',event=>{event.preventDefault();$('main-content').focus();});
