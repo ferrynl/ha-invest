@@ -1,4 +1,6 @@
 FROM python:3.13-slim-bookworm
+RUN apt-get update && apt-get install -y --no-install-recommends --only-upgrade libpam-modules \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
@@ -11,3 +13,4 @@ RUN python -m pip check && \
     python -c "import pathlib, sysconfig, shutil; shutil.rmtree(pathlib.Path(sysconfig.get_path('stdlib')) / 'ensurepip', ignore_errors=True)"
 EXPOSE 8099 8100
 CMD ["python", "server.py"]
+
