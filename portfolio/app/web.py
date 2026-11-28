@@ -467,7 +467,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 query=parse_qs(urlsplit(self.path).query).get('q',[''])[0].strip()
                 if not 2<=len(query)<=80:return self.respond({'error':'Typ minimaal twee en maximaal 80 tekens.'},400)
                 ticker=query.upper()
-                with store.connect() as db:
+                with store.read() as db:
                     rows = db.execute(
                         """SELECT symbol, exchange, currency, MAX(name) AS name
                            FROM purchases WHERE symbol = ? COLLATE NOCASE
@@ -483,7 +483,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                 if re.fullmatch(r'[A-Z0-9-]{2,12}',ticker) and not any(
                     row['exchange']=='AMSTERDAM' for row in results
                 ):
-                    queries.insert(0,amsterdam)
+                    queries.append(amsterdam)
                 failed=False
                 seen={(row['symbol'].upper(),row['exchange']) for row in results}
                 for term in queries:
@@ -499,6 +499,7 @@ def make_handler(store,auth,cache,status,interval,refresh_lock,refresh_requested
                         if key not in seen:
                             seen.add(key)
                             results.append(row)
+                results.sort(key=lambda row: row['symbol'].upper() != ticker)
                 if failed and not results:
                     return self.respond({'error':'Zoeken bij Yahoo lukt nu niet. Probeer het opnieuw.'},502)
                 return self.respond({'results':results})
