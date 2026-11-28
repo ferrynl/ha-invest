@@ -125,6 +125,14 @@ class HttpTests(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertEqual(json.loads(body)['results'], [listing])
 
+    def test_search_prioritizes_exact_remote_ticker_over_alternative_listing(self):
+        exact = dict(name='Monster Beverage', symbol='MNST', exchange='NASDAQ', currency='USD')
+        alternate = dict(name='Example', symbol='MNST.AS', exchange='AMSTERDAM', currency='EUR')
+        with patch('web.search_stocks', side_effect=[[alternate, exact], [alternate]]):
+            status, body, _ = self.request('GET', '/api/search?q=mnST')
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body)['results'], [exact, alternate])
+
     def test_search_validation_and_provider_failure(self):
         self.assertEqual(self.request('GET', '/api/search?q=a')[0], 400)
         self.assertEqual(self.request('GET', '/api/listing?symbol=bad%20symbol')[0],400)
@@ -134,6 +142,6 @@ class HttpTests(unittest.TestCase):
             status, body, _ = self.request('GET', '/api/search?q=ap')
             self.assertEqual(status, 200)
             self.assertEqual(json.loads(body)['results'][0]['symbol'], 'AAPL')
-            self.assertEqual(search.call_args_list, [call('AP.AS',store=self.module.store), call('ap',store=self.module.store)])
+            self.assertEqual(search.call_args_list, [call('ap',store=self.module.store), call('AP.AS',store=self.module.store)])
         with patch('web.search_stocks', side_effect=TimeoutError):
             self.assertEqual(self.request('GET', '/api/search?q=ap')[0], 502)
